@@ -1,0 +1,7 @@
+apiVersion: mesh.megaease.com/v1beta1
+kind: MeshDeployment
+metadata:
+  name: meshdeployment-sample
+spec:
+  # Add fields here
+  foo: bar
