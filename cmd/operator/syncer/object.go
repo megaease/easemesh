@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/go-test/deep"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -23,8 +23,6 @@ var (
 	ErrOwnerDeleted = errors.New("Owner has been deleted")
 	//ErrIgnored represnets an ignoredable error for syncer
 	ErrIgnored = errors.New("ignored error")
-
-	log = logf.Log.WithName("syncer")
 )
 
 // ObjectSyncer is a syncer.Interface for syncing object to K8s
@@ -36,6 +34,7 @@ type objectSyncer struct {
 	Client         client.Client
 	Scheme         *runtime.Scheme
 	previousObject runtime.Object
+	log            logr.Logger
 }
 
 var _ Interface = &objectSyncer{}
@@ -74,19 +73,19 @@ func (s *objectSyncer) Sync(ctx context.Context) (SyncResult, error) {
 	// don't pass to user error for owner deletion, just don't create the object
 	// nolint: gocritic
 	if err == ErrOwnerDeleted {
-		log.Info(string(result.Operation), "key", key, "kind", s.objectType(), "error", err)
+		s.log.Info(string(result.Operation), "key", key, "kind", s.objectType(), "error", err)
 		err = nil
 	} else if err == ErrIgnored {
-		log.V(1).Info("syncer skipped", "key", key, "kind", s.objectType())
+		s.log.V(1).Info("syncer skipped", "key", key, "kind", s.objectType())
 		err = nil
 	} else if err != nil {
 		result.SetEventData(eventWarning, basicEventReason(s.Name, err),
 			fmt.Sprintf("%s %s failed syncing: %s", s.objectType(), key, err))
-		log.Error(err, string(result.Operation), "key", key, "kind", s.objectType(), "diff", diff)
+		s.log.V(1).Error(err, string(result.Operation), "key", key, "kind", s.objectType(), "diff", diff)
 	} else {
 		result.SetEventData(eventNormal, basicEventReason(s.Name, err),
 			fmt.Sprintf("%s %s %s successfully", s.objectType(), key, result.Operation))
-		log.V(1).Info(string(result.Operation), "key", key, "kind", s.objectType(), "diff", diff)
+		s.log.V(1).Info(string(result.Operation), "key", key, "kind", s.objectType(), "diff", diff)
 	}
 	return result, err
 }

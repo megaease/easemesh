@@ -9,24 +9,16 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/juju/errors"
+	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/controllers/resourcesyncer"
 	"github.com/megaease/easemesh/mesh-operator/syncer"
-)
-
-const (
-	controllerName = "controller.meshdeployment"
-)
-
-var (
-	log = logf.Log.WithName(controllerName)
 )
 
 // MeshDeploymentReconciler reconciles a MeshDeployment object
@@ -40,6 +32,8 @@ type MeshDeploymentReconciler struct {
 // +kubebuilder:rbac:groups=mesh.megaease.com,resources=meshdeployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mesh.megaease.com,resources=meshdeployments/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mesh.megaease.com,resources=meshdeployments/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -64,10 +58,10 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return reconcile.Result{}, err
 	}
 
-	log := log.WithValues("key", req.NamespacedName)
-	log.V(1).Info("reconcile meshdeployment")
+	log := r.Log.WithValues("key", req.NamespacedName)
+	log.V(1).Info("deploy is", "meshdeployment", deploy)
 
-	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, deploy, r.Scheme)
+	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, deploy, r.Scheme, r.Log)
 	err = syncer.Sync(context.TODO(), deploySyncer, r.Recorder)
 	if err != nil {
 		log.V(1).Info("sync deployment resource error")
@@ -80,5 +74,6 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *MeshDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&meshv1beta1.MeshDeployment{}).
+		Owns(&v1.Deployment{}).
 		Complete(r)
 }

@@ -70,7 +70,7 @@ func main() {
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(),
+		Recorder: mgr.GetEventRecorderFor("controller.MeshDeployment"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MeshDeployment")
 		os.Exit(1)

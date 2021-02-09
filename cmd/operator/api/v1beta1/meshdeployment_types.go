@@ -20,14 +20,22 @@ type ServiceSpec struct {
 	Labels map[string]string `json:"labels"`
 }
 
+// DeploySpec is the specification of the desired behavior of the Deployment.
+type DeploySpec struct {
+
+	// Number of desired pods. This is a pointer to distinguish between explicit
+	// zero and not specified. Defaults to 1.
+	// +optional
+	v1.DeploymentSpec `json:",inline"`
+}
+
 // MeshDeploymentSpec defines the desired state of MeshDeployment
 type MeshDeploymentSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
 	Service ServiceSpec `json:"service"`
 	// Deploy describe a service desired state of the K8s deployment
-	Deploy v1.DeploymentSpec `json:"deploy,omitempty"`
+	Deploy DeploySpec `json:"deploy,omitempty"`
 }
 
 // MeshDeploymentStatus defines the observed state of MeshDeployment
@@ -38,6 +46,7 @@ type MeshDeploymentStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:path=meshdeployments,scope=Namespaced
 
 // MeshDeployment is the Schema for the meshdeployments API
 type MeshDeployment struct {

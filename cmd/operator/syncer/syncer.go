@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/iancoleman/strcase"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,14 +31,16 @@ func Sync(ctx context.Context, syncer Interface, recorder record.EventRecorder) 
 }
 
 // New return a syncer.Sync object
-func New(name string, c client.Client, owner client.Object, obj client.Object, scheme *runtime.Scheme, fn controllerutil.MutateFn) Interface {
+func New(name string, c client.Client, owner client.Object, obj client.Object, scheme *runtime.Scheme, log logr.Logger, fn controllerutil.MutateFn) Interface {
 	return &objectSyncer{
 		Name:   name,
 		Owner:  owner,
 		Self:   obj,
 		SyncFn: fn,
 		Client: c,
-		Scheme: scheme}
+		Scheme: scheme,
+		log:    log.WithName("syncer"),
+	}
 }
 
 func getKey(obj client.Object) (types.NamespacedName, error) {

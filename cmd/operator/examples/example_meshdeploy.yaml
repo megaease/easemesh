@@ -1,0 +1,25 @@
+apiVersion: mesh.megaease.com/v1beta1
+kind: MeshDeployment
+metadata:
+  namespace: test
+  name: nginx
+spec:
+  service:
+    name: nginx
+    labels:
+      canary: internal
+  deploy:
+    replicas: 2 # tells deployment to run 2 pods matching the template
+    selector:
+      matchLabels:
+        app: nginx
+    template:
+      metadata:
+        labels:
+          app: nginx
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.14.2
+          ports:
+          - containerPort: 80
