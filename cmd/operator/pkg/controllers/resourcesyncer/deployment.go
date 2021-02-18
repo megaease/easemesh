@@ -89,7 +89,7 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 func (d *deploySyncer) injectSideCarSpec(targetContainer *corev1.Container) error {
 	// Replace with real logic, this is a stub code for test
 
-	targetContainer.Name = "nginx"
+	targetContainer.Name = "easemesh-sidecar"
 	targetContainer.Image = "nginx:1.14.2"
 	targetContainer.Ports = []corev1.ContainerPort{
 		{

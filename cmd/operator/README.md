@@ -97,3 +97,23 @@ If you use the VsCode develop operator, you can leverage `dlv` and `out-cluster`
     ]
 }
 ```
+
+### Run the example
+
+In the examples directory, we have an `MeshDeployment` spec file. In the file, we defined a `test-server-v1` meshdeployment resource, whose deployment contains a test-server container listening on `18080` port.  We could use the following command to deploy the test-server-v1 `MeshDeployment`:
+
+```bash
+kubectl apply -f examples
+```
+
+When we deployed the resource, an injected container named `easemesh-sidecar` will be injected into the pod of the MeshDeployment. A k8s deployment resource owned by the `test-server-v1` will be generated and deployed in the `test` namespace, it has two replicas of pods, assuming a pod named `test-server-v1-7d7bccf78f-2pps5`. The following command can help us to check whether the extra container has been injected
+
+```bash
+kubectl get pods -n test test-server-v1-7d7bccf78f-2pps5 -o jsonpath="{.spec.containers[*].name}"
+```
+
+The output should be:
+
+```bash
+test-server easemesh-sidecar
+```

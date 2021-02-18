@@ -12,11 +12,11 @@ spec:
     replicas: 2 # tells deployment to run 2 pods matching the template
     selector:
       matchLabels:
-        app: test-server
+        app: test-server-v1
     template:
       metadata:
         labels:
-          app: test-server
+          app: test-server-v1
       spec:
         containers:
         - name: test-server
