@@ -1,19 +1,18 @@
 package resourcesyncer
 
 import (
-	"fmt"
+	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
 
 	"github.com/go-logr/logr"
 	"github.com/go-test/deep"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/megaease/easemesh/mesh-operator/api/v1beta1"
-	"github.com/megaease/easemesh/mesh-operator/syncer"
 )
 
 type deploySyncer struct {
@@ -27,7 +26,8 @@ type deploySyncer struct {
 func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
 	scheme *runtime.Scheme, log logr.Logger) syncer.Interface {
 	deploy := &deploySyncer{
-		deploy: meshDeploy,
+		deploy:       meshDeploy,
+		sideCarImage: "nginx:1.14.2",
 	}
 
 	obj := &v1.Deployment{
@@ -39,7 +39,6 @@ func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
 	return syncer.New("Deployment", c, meshDeploy, obj, scheme, log, func() error {
 		previous := obj.DeepCopy()
 		err := deploy.realSyncFn(obj)
-		log.V(1).Info("After concile", "spec", fmt.Sprintf("%+v", obj))
 		diff := deep.Equal(previous, obj)
 		log.V(1).Info("Diff", "diff", diff)
 		return err
@@ -52,9 +51,11 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 		return errors.Errorf("obj should be a deployment but is a %T", obj)
 	}
 
+	sourceDeploySpec := d.deploy.Spec.Deploy.DeploymentSpec
+
 	deploy.Name = d.deploy.Name
 	deploy.Namespace = d.deploy.Namespace
-	err := mergo.Merge(&deploy.Spec, &d.deploy.Spec.Deploy.DeploymentSpec, mergo.WithOverride)
+	err := mergo.Merge(&deploy.Spec, &sourceDeploySpec, mergo.WithOverride)
 	if err != nil {
 		return errors.Wrap(err, "merge deploy failed")
 	}
@@ -66,6 +67,35 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 		deploy.Spec.Template.ObjectMeta.Labels = d.deploy.Spec.Deploy.DeploymentSpec.Selector.MatchLabels
 	}
 
-	// TODO: inject sidecar container
+	if len(deploy.Spec.Template.Spec.Containers) != 2 {
+		deploy.Spec.Template.Spec.Containers = make([]corev1.Container, 2, 2)
+	}
+
+	err = mergo.Merge(&deploy.Spec.Template.Spec.Containers[0],
+		&sourceDeploySpec.Template.Spec.Containers[0],
+		mergo.WithOverride)
+	if err != nil {
+		return errors.Wrap(err, "copy default container error")
+	}
+
+	err = d.injectSideCarSpec(&deploy.Spec.Template.Spec.Containers[1])
+	if err != nil {
+		return errors.Wrap(err, "inject side car error")
+	}
+
+	return nil
+}
+
+func (d *deploySyncer) injectSideCarSpec(targetContainer *corev1.Container) error {
+	// Replace with real logic, this is a stub code for test
+
+	targetContainer.Name = "nginx"
+	targetContainer.Image = "nginx:1.14.2"
+	targetContainer.Ports = []corev1.ContainerPort{
+		{
+			ContainerPort: 80,
+		},
+	}
+
 	return nil
 }

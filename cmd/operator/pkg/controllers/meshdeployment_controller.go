@@ -7,6 +7,10 @@ package controllers
 import (
 	"context"
 
+	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/controllers/resourcesyncer"
+	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
+
 	"github.com/go-logr/logr"
 	"github.com/juju/errors"
 	v1 "k8s.io/api/apps/v1"
@@ -15,10 +19,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/api/v1beta1"
-	"github.com/megaease/easemesh/mesh-operator/controllers/resourcesyncer"
-	"github.com/megaease/easemesh/mesh-operator/syncer"
 )
 
 // MeshDeploymentReconciler reconciles a MeshDeployment object

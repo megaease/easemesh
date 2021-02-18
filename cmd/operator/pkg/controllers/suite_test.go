@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -17,8 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/api/v1beta1"
 	// +kubebuilder:scaffold:imports
 )
 
