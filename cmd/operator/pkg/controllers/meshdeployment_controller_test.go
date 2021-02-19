@@ -82,8 +82,16 @@ var _ = Describe("meshdeployment controller", func() {
 	})
 	Context("normal deploy meshdeployment", func() {
 		deploy := v1.Deployment{}
-		It("should be has a deployment", func() {
+		It("should has a deployment", func() {
 			Expect(k8sClient.Get(context.TODO(), key, &deploy)).To(Succeed())
+		})
+	})
+
+	Context("normal deploy meshdeployment check injected container ", func() {
+		deploy := v1.Deployment{}
+		It("should has a injected container named with easemesh-sidecar", func() {
+			Expect(k8sClient.Get(context.TODO(), key, &deploy)).To(Succeed())
+			Expect(deploy.Spec.Template.Spec.Containers[1].Name).To(Equal("easemesh-sidecar"))
 		})
 	})
 
