@@ -77,9 +77,6 @@ If you use the VsCode develop operator, you can leverage `dlv` and `out-cluster`
 
 ```json
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -106,13 +103,15 @@ In the examples directory, we have an `MeshDeployment` spec file. In the file, w
 kubectl apply -f examples
 ```
 
-When we deployed the resource, an injected container named `easemesh-sidecar` will be injected into the pod of the MeshDeployment. A k8s deployment resource owned by the `test-server-v1` will be generated and deployed in the `test` namespace, it has two replicas of pods, assuming a pod named `test-server-v1-7d7bccf78f-2pps5`. The following command can help us to check whether the extra container has been injected
+When we deployed the resource, a k8s deployment resource owned by the `test-server-v1` will be generated and deployed in the `test` namespace, it has two replicas of pods, assuming a pod named `test-server-v1-7d7bccf78f-2pps5`, into which an container named `easemesh-sidecar` will be injected.
+
+The following command can help us to check whether the extra container has been injected
 
 ```bash
 kubectl get pods -n test test-server-v1-7d7bccf78f-2pps5 -o jsonpath="{.spec.containers[*].name}"
 ```
 
-The output should be:
+The output should contain two containers, names are:
 
 ```bash
 test-server easemesh-sidecar
