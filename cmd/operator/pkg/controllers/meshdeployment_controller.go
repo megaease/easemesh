@@ -47,8 +47,8 @@ type MeshDeploymentReconciler struct {
 func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("meshdeployment", req.NamespacedName)
 	// your logic here
-	deploy := &meshv1beta1.MeshDeployment{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, deploy)
+	meshDeploy := &meshv1beta1.MeshDeployment{}
+	err := r.Client.Get(context.TODO(), req.NamespacedName, meshDeploy)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Object not found, return. Created objects are automatically garbage collected
@@ -59,9 +59,9 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	log := r.Log.WithValues("key", req.NamespacedName)
-	log.V(1).Info("deploy is", "meshdeployment", deploy)
+	log.V(1).Info("deploy is", "meshdeployment", meshDeploy)
 
-	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, deploy, r.Scheme, r.Log)
+	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, meshDeploy, r.Scheme, r.Log)
 	err = syncer.Sync(context.TODO(), deploySyncer, r.Recorder)
 	if err != nil {
 		log.V(1).Info("sync deployment resource error")
