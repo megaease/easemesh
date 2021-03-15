@@ -19,8 +19,9 @@ const (
 	agentVolumeName      = "easeagent-volume"
 	agentVolumeMountPath = "/easeagent-volume"
 
-	agentInitContainerName  = "easeagent-initializer"
-	agentInitContainerImage = "easeagent-initializer:latest"
+	agentInitContainerName      = "easeagent-initializer"
+	agentInitContainerImage     = "easeagent-initializer:latest"
+	agentInitContainerMountPath = "/easeagent-share-volume"
 
 	easeAgentJar       = "-javaagent:" + agentVolumeMountPath + "/easeagent.jar "
 	jolokiaAgentJar    = "-javaagent:" + agentVolumeMountPath + "/jolokia.jar "
@@ -138,12 +139,12 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	if len(deploy.Spec.Template.Spec.Containers) != 2 {
 		newContainers := make([]corev1.Container, 2, 2)
-		err := mergo.Merge(&deploy.Spec.Template.Spec.Containers[0],
-			&newContainers[0],
+		err := mergo.Merge(&newContainers[0], &deploy.Spec.Template.Spec.Containers[0],
 			mergo.WithOverride)
 		if err != nil {
 			return errors.Wrap(err, "copy default container error")
 		}
+		deploy.Spec.Template.Spec.Containers = newContainers
 	}
 
 	// Eg SideCar Params
@@ -161,7 +162,6 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	} else {
 		sideCarContainer.Args = append(sideCarContainer.Args, params.String())
 	}
-
 	deploy.Spec.Template.Spec.Containers[1] = sideCarContainer
 	return nil
 }
@@ -185,7 +185,7 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	}
 
 	labels := make(map[string]string)
-	labels["mesh-serivcename"] = d.meshDeployment.Spec.Service.Name
+	labels["mesh-servicename"] = d.meshDeployment.Spec.Service.Name
 	labels["alive-prob"] = aliveProbeURL
 
 	// TODO:  query cluster-join-url from eg master
@@ -199,9 +199,16 @@ func (d *deploySyncer) injectAgentVolumes(deploy *v1.Deployment) error {
 	agentVolume.Name = agentVolumeName
 	agentVolume.EmptyDir = &corev1.EmptyDirVolumeSource{}
 
-	if len(deploy.Spec.Template.Spec.Volumes) == 0 {
+	volumes := deploy.Spec.Template.Spec.Volumes
+
+	if len(volumes) == 0 {
 		deploy.Spec.Template.Spec.Volumes = []corev1.Volume{agentVolume}
 	} else {
+		for _, volume := range volumes {
+			if volume.Name == agentVolumeName && volume.EmptyDir != nil {
+				return nil
+			}
+		}
 		deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, agentVolume)
 	}
 
@@ -215,15 +222,23 @@ func (d *deploySyncer) injectEaseAgentInitContainer(deploy *v1.Deployment) error
 
 	initContainer.Name = agentInitContainerName
 	initContainer.Image = agentInitContainerImage
+	command := "cp -r " + agentVolumeMountPath + "/. " + agentInitContainerMountPath
+	initContainer.Command = []string{"/bin/sh", "-c", command}
 
-	err := d.injectAgentVolumeMounts(&initContainer)
+	err := d.injectAgentVolumeMounts(&initContainer, agentInitContainerMountPath)
 	if err != nil {
 		return errors.Wrap(err, "inject agent volumeMounts error")
 	}
 
-	if len(deploy.Spec.Template.Spec.InitContainers) != 1 {
+	initContainers := deploy.Spec.Template.Spec.InitContainers
+	if len(initContainers) == 0 {
 		deploy.Spec.Template.Spec.InitContainers = []corev1.Container{initContainer}
 	} else {
+		for _, container := range initContainers {
+			if container.Image == agentInitContainerImage {
+				return nil
+			}
+		}
 		deploy.Spec.Template.Spec.InitContainers = append(deploy.Spec.Template.Spec.InitContainers, initContainer)
 	}
 
@@ -231,11 +246,11 @@ func (d *deploySyncer) injectEaseAgentInitContainer(deploy *v1.Deployment) error
 }
 
 // injectAgentVolumeMounts add volumeMounts for mount AgentVolume which containing the jar into container
-func (d *deploySyncer) injectAgentVolumeMounts(container *corev1.Container) error {
+func (d *deploySyncer) injectAgentVolumeMounts(container *corev1.Container, mountPath string) error {
 
 	volumeMount := corev1.VolumeMount{}
 	volumeMount.Name = agentVolumeName
-	volumeMount.MountPath = agentVolumeMountPath
+	volumeMount.MountPath = mountPath
 
 	if len(container.VolumeMounts) == 0 {
 		container.VolumeMounts = []corev1.VolumeMount{volumeMount}
@@ -249,7 +264,7 @@ func (d *deploySyncer) injectAgentVolumeMounts(container *corev1.Container) erro
 // injectAgentJarIntoApp add volumeMounts for mount AgentVolume and declare JAVA_TOOL_OPTIONS env for Java Application
 func (d *deploySyncer) injectAgentJarIntoApp(container *corev1.Container) error {
 
-	err := d.injectAgentVolumeMounts(container)
+	err := d.injectAgentVolumeMounts(container, agentVolumeMountPath)
 	if err != nil {
 		return errors.Wrap(err, "inject agent volumeMounts error")
 	}
