@@ -1,19 +1,18 @@
 package resourcesyncer
 
 import (
-	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
-	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
-	"strconv"
-
 	"github.com/go-logr/logr"
 	"github.com/go-test/deep"
 	"github.com/imdario/mergo"
+	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"strconv"
 )
 
 const (
@@ -40,12 +39,25 @@ const (
 )
 
 type sideCarParams struct {
-	meshServiceName       string
-	aliveProbeURL         string
+	labels                map[string]string
 	name                  string
 	clusterJoinUrl        string
 	clusterRequestTimeout int
 	clusterRole           string
+}
+
+func (params *sideCarParams) String() string {
+
+	str := " "
+	for k, v := range params.labels {
+		str += " --labels=" + k + "=" + v
+	}
+
+	str += " --name=" + params.name
+	str += " --cluster-request-timeout=" + strconv.Itoa(params.clusterRequestTimeout)
+	str += " --cluster-role=" + params.clusterRole
+	str += " --cluster-join-url=" + params.clusterJoinUrl
+	return str
 }
 
 type deploySyncer struct {
@@ -144,7 +156,11 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	sideCarContainer.Name = params.name
 	sideCarContainer.Image = d.sideCarImage
 
-	// TODO: Add command and args
+	if len(sideCarContainer.Args) == 0 {
+		sideCarContainer.Args = []string{params.String()}
+	} else {
+		sideCarContainer.Args = append(sideCarContainer.Args, params.String())
+	}
 
 	deploy.Spec.Template.Spec.Containers[1] = sideCarContainer
 	return nil
@@ -153,36 +169,24 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params := &sideCarParams{}
 	params.clusterRole = defaultClusterRole
-	params.meshServiceName = d.meshDeployment.Spec.Service.Name
+	params.name = defaultName
+	params.clusterRequestTimeout = defaultRequestTimeoutSecond
 
-	serviceLabels := d.meshDeployment.Spec.Service.Labels
-	if name, ok := serviceLabels["name"]; ok {
-		params.name = name
-	} else {
-		params.name = defaultName
-	}
-
-	clusterRequestTimeout, ok := d.meshDeployment.Labels["clusterRequestTimeout"]
-	if ok {
-		timeout, err := strconv.Atoi(clusterRequestTimeout)
-		if err != nil {
-			return nil, errors.Wrap(err, "MeshDeployment labels error, clusterRequestTimeout expected is int, but get other type")
-		}
-		params.clusterRequestTimeout = timeout
-	} else {
-		params.clusterRequestTimeout = defaultRequestTimeoutSecond
-	}
-
+	var aliveProbeURL string
 	livenessProbe := d.meshDeployment.Spec.Deploy.DeploymentSpec.Template.Spec.Containers[0].LivenessProbe
 	if livenessProbe != nil && livenessProbe.HTTPGet != nil {
 		host := livenessProbe.HTTPGet.Host
 		port := livenessProbe.HTTPGet.Port
 		path := livenessProbe.HTTPGet.Path
 		url := "http://" + host + port.StrVal + path
-		params.aliveProbeURL = url
+		aliveProbeURL = url
 	} else {
-		params.aliveProbeURL = defaultJMXAliveProbe
+		aliveProbeURL = defaultJMXAliveProbe
 	}
+
+	labels := make(map[string]string)
+	labels["mesh-serivcename"] = d.meshDeployment.Spec.Service.Name
+	labels["alive-prob"] = aliveProbeURL
 
 	// TODO:  query cluster-join-url from eg master
 	return params, nil
