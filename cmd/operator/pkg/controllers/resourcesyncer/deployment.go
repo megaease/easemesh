@@ -37,6 +37,9 @@ const (
 	defaultClusterRole          = clusterRoleReader
 	defaultRequestTimeoutSecond = 10
 	defaultName                 = "eg-name"
+
+	sideCarMeshServicenameLabel = "mesh-servicename"
+	sideCarAliveProbeLabel      = "alive-probe"
 )
 
 type sideCarParams struct {
@@ -185,8 +188,8 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	}
 
 	labels := make(map[string]string)
-	labels["mesh-servicename"] = d.meshDeployment.Spec.Service.Name
-	labels["alive-prob"] = aliveProbeURL
+	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
+	labels[sideCarAliveProbeLabel] = aliveProbeURL
 
 	// TODO:  query cluster-join-url from eg master
 	return params, nil
