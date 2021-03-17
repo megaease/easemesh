@@ -6,6 +6,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
+	"github.com/megaease/easemesh/mesh-operator/pkg/util"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,7 +21,7 @@ const (
 	agentVolumeMountPath = "/easeagent-volume"
 
 	agentInitContainerName      = "easeagent-initializer"
-	agentInitContainerImage     = "easeagent-initializer:latest"
+	agentInitContainerImage     = "192.168.50.105:5001/megaease/easeagent-initializer:latest"
 	agentInitContainerMountPath = "/easeagent-share-volume"
 
 	easeAgentJar       = "-javaagent:" + agentVolumeMountPath + "/easeagent.jar "
@@ -29,7 +30,7 @@ const (
 
 	javaToolOptionsEnvName = "JAVA_TOOL_OPTIONS"
 
-	sideCarImageName     = "easegateway:latest"
+	sideCarImageName     = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
 	sideCarContainerName = "easegateway-sidecar"
 
 	defaultJMXAliveProbe = "http://localhost:8080/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
@@ -69,6 +70,7 @@ type deploySyncer struct {
 	meshDeployment *v1beta1.MeshDeployment
 	sideCarImage   string
 	scheme         *runtime.Scheme
+	client         client.Client
 }
 
 // NewDeploymentSyncer return a syncer of the deployment, our operator will
@@ -78,6 +80,7 @@ func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
 	newSyncer := &deploySyncer{
 		meshDeployment: meshDeploy,
 		sideCarImage:   sideCarImageName,
+		client:         c,
 	}
 
 	obj := &v1.Deployment{
@@ -190,7 +193,10 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
 	labels[sideCarAliveProbeLabel] = aliveProbeURL
 
-	// TODO:  query cluster-join-url from eg master
+	meshOperator, _ := util.GetEaseMeshOperator(d.client)
+	masterJoinURL := meshOperator.GetEGMasterJoinURL(d.client)
+	params.clusterJoinUrl = masterJoinURL
+
 	return params, nil
 }
 
