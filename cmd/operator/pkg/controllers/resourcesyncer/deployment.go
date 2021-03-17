@@ -29,7 +29,8 @@ const (
 
 	javaToolOptionsEnvName = "JAVA_TOOL_OPTIONS"
 
-	sideCarImageName = "easegateway:latest"
+	sideCarImageName     = "easegateway:latest"
+	sideCarContainerName = "easegateway-sidecar"
 
 	defaultJMXAliveProbe = "http://localhost:8080/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
 
@@ -140,14 +141,12 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 }
 
 func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
-	if len(deploy.Spec.Template.Spec.Containers) != 2 {
-		newContainers := make([]corev1.Container, 2, 2)
-		err := mergo.Merge(&newContainers[0], &deploy.Spec.Template.Spec.Containers[0],
-			mergo.WithOverride)
-		if err != nil {
-			return errors.Wrap(err, "copy default container error")
+
+	containers := deploy.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == sideCarContainerName {
+			return nil
 		}
-		deploy.Spec.Template.Spec.Containers = newContainers
 	}
 
 	// Eg SideCar Params
@@ -157,7 +156,7 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	}
 
 	sideCarContainer := corev1.Container{}
-	sideCarContainer.Name = params.name
+	sideCarContainer.Name = sideCarContainerName
 	sideCarContainer.Image = d.sideCarImage
 
 	if len(sideCarContainer.Args) == 0 {
@@ -165,7 +164,7 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	} else {
 		sideCarContainer.Args = append(sideCarContainer.Args, params.String())
 	}
-	deploy.Spec.Template.Spec.Containers[1] = sideCarContainer
+	deploy.Spec.Template.Spec.Containers = append(containers, sideCarContainer)
 	return nil
 }
 
