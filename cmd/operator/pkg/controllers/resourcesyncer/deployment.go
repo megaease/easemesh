@@ -148,26 +148,32 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	containers := deploy.Spec.Template.Spec.Containers
 	for _, container := range containers {
 		if container.Name == sideCarContainerName {
-			return nil
+			err := d.completeSideCarSpec(&container)
+			return err
 		}
 	}
 
-	// Eg SideCar Params
+	sideCarContainer := corev1.Container{}
+	err := d.completeSideCarSpec(&sideCarContainer)
+	if err != nil {
+		return err
+	}
+	deploy.Spec.Template.Spec.Containers = append(containers, sideCarContainer)
+	return nil
+}
+
+func (d *deploySyncer) completeSideCarSpec(container *corev1.Container) error {
 	params, err := d.initSideCarParams()
 	if err != nil {
 		return err
 	}
-
-	sideCarContainer := corev1.Container{}
-	sideCarContainer.Name = sideCarContainerName
-	sideCarContainer.Image = d.sideCarImage
-
-	if len(sideCarContainer.Args) == 0 {
-		sideCarContainer.Args = []string{params.String()}
+	container.Name = sideCarContainerName
+	container.Image = d.sideCarImage
+	if len(container.Args) == 0 {
+		container.Args = []string{params.String()}
 	} else {
-		sideCarContainer.Args = append(sideCarContainer.Args, params.String())
+		container.Args = append(container.Args, params.String())
 	}
-	deploy.Spec.Template.Spec.Containers = append(containers, sideCarContainer)
 	return nil
 }
 
