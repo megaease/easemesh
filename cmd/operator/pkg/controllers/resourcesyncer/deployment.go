@@ -53,6 +53,7 @@ type sideCarParams struct {
 	clusterJoinUrl        string
 	clusterRequestTimeout int
 	clusterRole           string
+	clusterName           string
 }
 
 func (params *sideCarParams) String() string {
@@ -66,6 +67,7 @@ func (params *sideCarParams) String() string {
 	str += " --cluster-request-timeout=" + strconv.Itoa(params.clusterRequestTimeout)
 	str += " --cluster-role=" + params.clusterRole
 	str += " --cluster-join-url=" + params.clusterJoinUrl
+	str += " --cluster-name=" + params.clusterName
 	return str
 }
 
@@ -73,6 +75,7 @@ type deploySyncer struct {
 	meshDeployment *v1beta1.MeshDeployment
 	sideCarImage   string
 	clusterJoinURL string
+	clusterName    string
 	scheme         *runtime.Scheme
 	client         client.Client
 }
@@ -80,12 +83,13 @@ type deploySyncer struct {
 // NewDeploymentSyncer return a syncer of the deployment, our operator will
 // inject sidecar into the sub deployment spec of the MeshDeployment
 func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
-	scheme *runtime.Scheme, clusterJoinURL string, log logr.Logger) syncer.Interface {
+	scheme *runtime.Scheme, clusterJoinURL string, clusterName string, log logr.Logger) syncer.Interface {
 	newSyncer := &deploySyncer{
 		meshDeployment: meshDeploy,
 		sideCarImage:   sideCarImageName,
 		client:         c,
 		clusterJoinURL: clusterJoinURL,
+		clusterName:    clusterName,
 	}
 
 	obj := &v1.Deployment{
@@ -220,6 +224,7 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 
 	params.labels = labels
 	params.clusterJoinUrl = d.clusterJoinURL
+	params.clusterName = d.clusterName
 	return params, nil
 }
 

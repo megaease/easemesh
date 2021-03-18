@@ -28,6 +28,7 @@ type MeshDeploymentReconciler struct {
 	Scheme         *runtime.Scheme
 	Recorder       record.EventRecorder
 	ClusterJoinURL string
+	ClusterName    string
 }
 
 // +kubebuilder:rbac:groups=mesh.megaease.com,resources=meshdeployments,verbs=get;list;watch;create;update;patch;delete
@@ -62,7 +63,7 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	log := r.Log.WithValues("key", req.NamespacedName)
 	log.V(1).Info("deploy is", "meshdeployment", meshDeploy)
 
-	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, meshDeploy, r.Scheme, r.ClusterJoinURL, r.Log)
+	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, meshDeploy, r.Scheme, r.ClusterJoinURL, r.ClusterName, r.Log)
 	err = syncer.Sync(context.TODO(), deploySyncer, r.Recorder)
 	if err != nil {
 		log.V(1).Info("sync deployment resource error")
