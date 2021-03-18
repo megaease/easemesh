@@ -6,7 +6,6 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
-	"github.com/megaease/easemesh/mesh-operator/pkg/util"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -42,6 +41,7 @@ const (
 
 	sideCarMeshServicenameLabel = "mesh-servicename"
 	sideCarAliveProbeLabel      = "alive-probe"
+	sideCarApplicationPortLabel = "application-port"
 )
 
 type sideCarParams struct {
@@ -69,6 +69,7 @@ func (params *sideCarParams) String() string {
 type deploySyncer struct {
 	meshDeployment *v1beta1.MeshDeployment
 	sideCarImage   string
+	clusterJoinURL string
 	scheme         *runtime.Scheme
 	client         client.Client
 }
@@ -76,11 +77,12 @@ type deploySyncer struct {
 // NewDeploymentSyncer return a syncer of the deployment, our operator will
 // inject sidecar into the sub deployment spec of the MeshDeployment
 func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
-	scheme *runtime.Scheme, log logr.Logger) syncer.Interface {
+	scheme *runtime.Scheme, clusterJoinURL string, log logr.Logger) syncer.Interface {
 	newSyncer := &deploySyncer{
 		meshDeployment: meshDeploy,
 		sideCarImage:   sideCarImageName,
 		client:         c,
+		clusterJoinURL: clusterJoinURL,
 	}
 
 	obj := &v1.Deployment{
@@ -148,13 +150,13 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	containers := deploy.Spec.Template.Spec.Containers
 	for _, container := range containers {
 		if container.Name == sideCarContainerName {
-			err := d.completeSideCarSpec(&container)
+			err := d.completeSideCarSpec(deploy, &container)
 			return err
 		}
 	}
 
 	sideCarContainer := corev1.Container{}
-	err := d.completeSideCarSpec(&sideCarContainer)
+	err := d.completeSideCarSpec(deploy, &sideCarContainer)
 	if err != nil {
 		return err
 	}
@@ -162,10 +164,20 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 	return nil
 }
 
-func (d *deploySyncer) completeSideCarSpec(container *corev1.Container) error {
+func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, container *corev1.Container) error {
 	params, err := d.initSideCarParams()
 	if err != nil {
 		return err
+	}
+
+	containers := deploy.Spec.Template.Spec.Containers
+	for _, c := range containers {
+		if c.Name == d.meshDeployment.Spec.Service.AppContainerName {
+			if len(c.Ports) != 0 {
+				port := c.Ports[0].ContainerPort
+				params.labels[sideCarApplicationPortLabel] = string(port)
+			}
+		}
 	}
 	container.Name = sideCarContainerName
 	container.Image = d.sideCarImage
@@ -198,11 +210,9 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	labels := make(map[string]string)
 	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
 	labels[sideCarAliveProbeLabel] = aliveProbeURL
+	params.labels[sideCarApplicationPortLabel] = ""
 
-	meshOperator, _ := util.GetEaseMeshOperator(d.client)
-	masterJoinURL := meshOperator.GetEGMasterJoinURL(d.client)
-	params.clusterJoinUrl = masterJoinURL
-
+	params.clusterJoinUrl = d.clusterJoinURL
 	return params, nil
 }
 
