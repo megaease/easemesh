@@ -185,7 +185,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 
 	if len(appContainer.Ports) != 0 {
 		port := appContainer.Ports[0].ContainerPort
-		params.labels[sideCarApplicationPortLabel] = string(port)
+		params.labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
 	}
 
 	livenessProbe := appContainer.LivenessProbe
@@ -315,10 +315,9 @@ func (d *deploySyncer) completeAppContainerSpec(deploy *v1.Deployment) error {
 }
 
 func (d *deploySyncer) getAppContainer(deploy *v1.Deployment) (*corev1.Container, error) {
-	containers := deploy.Spec.Template.Spec.Containers
-	for _, container := range containers {
+	for index, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == d.meshDeployment.Spec.Service.AppContainerName {
-			return &container, nil
+			return &deploy.Spec.Template.Spec.Containers[index], nil
 		}
 	}
 	return nil, errors.Errorf("Application container do not exists. Please confirm application container name is %s.", d.meshDeployment.Spec.Service.AppContainerName)
