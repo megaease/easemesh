@@ -150,20 +150,25 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 
 func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 
-	containers := deploy.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == sideCarContainerName {
-			err := d.completeSideCarSpec(deploy, &container)
-			return err
-		}
-	}
-
 	sideCarContainer := corev1.Container{}
 	err := d.completeSideCarSpec(deploy, &sideCarContainer)
 	if err != nil {
 		return err
 	}
-	deploy.Spec.Template.Spec.Containers = append(containers, sideCarContainer)
+
+	if len(deploy.Spec.Template.Spec.Containers) == 0 {
+		deploy.Spec.Template.Spec.Containers = []corev1.Container{sideCarContainer}
+		return nil
+	}
+
+	for index, container := range deploy.Spec.Template.Spec.Containers {
+		if container.Name == sideCarContainerName {
+			deploy.Spec.Template.Spec.Containers[index] = sideCarContainer
+			return nil
+		}
+	}
+
+	deploy.Spec.Template.Spec.Containers = append(deploy.Spec.Template.Spec.Containers, sideCarContainer)
 	return nil
 }
 
@@ -280,10 +285,15 @@ func (d *deploySyncer) injectAgentVolumeMounts(container *corev1.Container, moun
 
 	if len(container.VolumeMounts) == 0 {
 		container.VolumeMounts = []corev1.VolumeMount{volumeMount}
-	} else {
-		container.VolumeMounts = append(container.VolumeMounts, volumeMount)
+		return nil
 	}
-
+	for index, vm := range container.VolumeMounts {
+		if vm.Name == agentVolumeName {
+			container.VolumeMounts[index] = volumeMount
+			return nil
+		}
+	}
+	container.VolumeMounts = append(container.VolumeMounts, volumeMount)
 	return nil
 }
 
@@ -299,28 +309,8 @@ func (d *deploySyncer) completeAppContainerSpec(deploy *v1.Deployment) error {
 	if err != nil {
 		return errors.Wrap(err, "inject agent volumeMounts error")
 	}
-
-	javaToolOptionsEnv := corev1.EnvVar{
-		Name:  javaToolOptionsEnvName,
-		Value: javaAgentJarOption,
-	}
-	if len(appContainer.Env) == 0 {
-		appContainer.Env = []corev1.EnvVar{javaToolOptionsEnv}
-	} else {
-		appContainer.Env = append(appContainer.Env, javaToolOptionsEnv)
-	}
-
-	varSource := &corev1.EnvVarSource{
-		FieldRef: &corev1.ObjectFieldSelector{
-			FieldPath: k8sPodIPFieldPath,
-		},
-	}
-
-	podIPEnv := corev1.EnvVar{
-		Name:      podIPEnvName,
-		ValueFrom: varSource,
-	}
-	appContainer.Env = append(appContainer.Env, podIPEnv)
+	d.injectEnvIntoContainer(appContainer, javaToolOptionsEnvName, javaToolsOptionEnv)
+	d.injectEnvIntoContainer(appContainer, podIPEnvName, podIPEnv)
 	return nil
 }
 
@@ -332,4 +322,41 @@ func (d *deploySyncer) getAppContainer(deploy *v1.Deployment) (*corev1.Container
 		}
 	}
 	return nil, errors.Errorf("Application container do not exists. Please confirm application container name is %s.", d.meshDeployment.Spec.Service.AppContainerName)
+}
+
+func (d *deploySyncer) injectEnvIntoContainer(container *corev1.Container, envName string, fn func() corev1.EnvVar) {
+	env := fn()
+	if len(container.Env) == 0 {
+		container.Env = []corev1.EnvVar{env}
+		return
+	}
+	for index, env := range container.Env {
+		if env.Name == envName {
+			container.Env[index] = env
+			return
+		}
+	}
+	container.Env = append(container.Env, env)
+
+}
+func javaToolsOptionEnv() corev1.EnvVar {
+	env := corev1.EnvVar{
+		Name:  javaToolOptionsEnvName,
+		Value: javaAgentJarOption,
+	}
+	return env
+}
+
+func podIPEnv() corev1.EnvVar {
+	varSource := &corev1.EnvVarSource{
+		FieldRef: &corev1.ObjectFieldSelector{
+			FieldPath: k8sPodIPFieldPath,
+		},
+	}
+
+	env := corev1.EnvVar{
+		Name:      podIPEnvName,
+		ValueFrom: varSource,
+	}
+	return env
 }
