@@ -62,7 +62,7 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	log := r.Log.WithValues("key", req.NamespacedName)
 	log.V(1).Info("deploy is", "meshdeployment", meshDeploy)
 
-	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, meshDeploy, r.Scheme, r.Log)
+	deploySyncer := resourcesyncer.NewDeploymentSyncer(r.Client, meshDeploy, r.Scheme, r.ClusterJoinURL, r.Log)
 	err = syncer.Sync(context.TODO(), deploySyncer, r.Recorder)
 	if err != nil {
 		log.V(1).Info("sync deployment resource error")
