@@ -28,6 +28,9 @@ const (
 	javaAgentJarOption = easeAgentJar + jolokiaAgentJar
 
 	javaToolOptionsEnvName = "JAVA_TOOL_OPTIONS"
+	podIPEnvName           = "APPLICATION_IP"
+
+	k8sPodIPFieldPath = "status.podIP"
 
 	sideCarImageName     = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
 	sideCarContainerName = "easegateway-sidecar"
@@ -137,7 +140,7 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 		return errors.Wrap(err, "inject side car error")
 	}
 
-	err = d.injectAgentJarIntoApp(&deploy.Spec.Template.Spec.Containers[0])
+	err = d.completeAppContainerSpec(deploy)
 	if err != nil {
 		return errors.Wrap(err, "inject Agent Jar into Application Container error")
 	}
@@ -147,44 +150,59 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 
 func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 
-	containers := deploy.Spec.Template.Spec.Containers
-	for _, container := range containers {
-		if container.Name == sideCarContainerName {
-			err := d.completeSideCarSpec(deploy, &container)
-			return err
-		}
-	}
-
 	sideCarContainer := corev1.Container{}
 	err := d.completeSideCarSpec(deploy, &sideCarContainer)
 	if err != nil {
 		return err
 	}
-	deploy.Spec.Template.Spec.Containers = append(containers, sideCarContainer)
+
+	if len(deploy.Spec.Template.Spec.Containers) == 0 {
+		deploy.Spec.Template.Spec.Containers = []corev1.Container{sideCarContainer}
+		return nil
+	}
+
+	for index, container := range deploy.Spec.Template.Spec.Containers {
+		if container.Name == sideCarContainerName {
+			deploy.Spec.Template.Spec.Containers[index] = sideCarContainer
+			return nil
+		}
+	}
+
+	deploy.Spec.Template.Spec.Containers = append(deploy.Spec.Template.Spec.Containers, sideCarContainer)
 	return nil
 }
 
-func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, container *corev1.Container) error {
+func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContainer *corev1.Container) error {
 	params, err := d.initSideCarParams()
 	if err != nil {
 		return err
 	}
 
-	containers := deploy.Spec.Template.Spec.Containers
-	for _, c := range containers {
-		if c.Name == d.meshDeployment.Spec.Service.AppContainerName {
-			if len(c.Ports) != 0 {
-				port := c.Ports[0].ContainerPort
-				params.labels[sideCarApplicationPortLabel] = string(port)
-			}
-		}
+	appContainer, err := d.getAppContainer(deploy)
+	if err != nil {
+		return err
 	}
-	container.Name = sideCarContainerName
-	container.Image = d.sideCarImage
-	if len(container.Args) == 0 {
-		container.Args = []string{params.String()}
+
+	if len(appContainer.Ports) != 0 {
+		port := appContainer.Ports[0].ContainerPort
+		params.labels[sideCarApplicationPortLabel] = string(port)
+	}
+
+	livenessProbe := appContainer.LivenessProbe
+	if livenessProbe != nil && livenessProbe.HTTPGet != nil {
+		host := livenessProbe.HTTPGet.Host
+		port := livenessProbe.HTTPGet.Port
+		path := livenessProbe.HTTPGet.Path
+		aliveProbeURL := "http://" + host + port.StrVal + path
+		params.labels[sideCarAliveProbeLabel] = aliveProbeURL
+	}
+
+	sideCarContainer.Name = sideCarContainerName
+	sideCarContainer.Image = d.sideCarImage
+	if len(sideCarContainer.Args) == 0 {
+		sideCarContainer.Args = []string{params.String()}
 	} else {
-		container.Args = append(container.Args, params.String())
+		sideCarContainer.Args = append(sideCarContainer.Args, params.String())
 	}
 	return nil
 }
@@ -195,23 +213,12 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params.name = defaultName
 	params.clusterRequestTimeout = defaultRequestTimeoutSecond
 
-	var aliveProbeURL string
-	livenessProbe := d.meshDeployment.Spec.Deploy.DeploymentSpec.Template.Spec.Containers[0].LivenessProbe
-	if livenessProbe != nil && livenessProbe.HTTPGet != nil {
-		host := livenessProbe.HTTPGet.Host
-		port := livenessProbe.HTTPGet.Port
-		path := livenessProbe.HTTPGet.Path
-		url := "http://" + host + port.StrVal + path
-		aliveProbeURL = url
-	} else {
-		aliveProbeURL = defaultJMXAliveProbe
-	}
-
 	labels := make(map[string]string)
 	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
-	labels[sideCarAliveProbeLabel] = aliveProbeURL
-	params.labels[sideCarApplicationPortLabel] = ""
+	labels[sideCarAliveProbeLabel] = defaultJMXAliveProbe
+	labels[sideCarApplicationPortLabel] = ""
 
+	params.labels = labels
 	params.clusterJoinUrl = d.clusterJoinURL
 	return params, nil
 }
@@ -278,29 +285,78 @@ func (d *deploySyncer) injectAgentVolumeMounts(container *corev1.Container, moun
 
 	if len(container.VolumeMounts) == 0 {
 		container.VolumeMounts = []corev1.VolumeMount{volumeMount}
-	} else {
-		container.VolumeMounts = append(container.VolumeMounts, volumeMount)
+		return nil
 	}
-
+	for index, vm := range container.VolumeMounts {
+		if vm.Name == agentVolumeName {
+			container.VolumeMounts[index] = volumeMount
+			return nil
+		}
+	}
+	container.VolumeMounts = append(container.VolumeMounts, volumeMount)
 	return nil
 }
 
-// injectAgentJarIntoApp add volumeMounts for mount AgentVolume and declare JAVA_TOOL_OPTIONS env for Java Application
-func (d *deploySyncer) injectAgentJarIntoApp(container *corev1.Container) error {
+// completeAppContainerSpec add volumeMounts for mount AgentVolume and declare env for Java Application
+func (d *deploySyncer) completeAppContainerSpec(deploy *v1.Deployment) error {
 
-	err := d.injectAgentVolumeMounts(container, agentVolumeMountPath)
+	appContainer, err := d.getAppContainer(deploy)
+	if err != nil {
+		return err
+	}
+
+	err = d.injectAgentVolumeMounts(appContainer, agentVolumeMountPath)
 	if err != nil {
 		return errors.Wrap(err, "inject agent volumeMounts error")
 	}
+	d.injectEnvIntoContainer(appContainer, javaToolOptionsEnvName, javaToolsOptionEnv)
+	d.injectEnvIntoContainer(appContainer, podIPEnvName, podIPEnv)
+	return nil
+}
 
-	javaToolOptionsEnv := corev1.EnvVar{
+func (d *deploySyncer) getAppContainer(deploy *v1.Deployment) (*corev1.Container, error) {
+	containers := deploy.Spec.Template.Spec.Containers
+	for _, container := range containers {
+		if container.Name == d.meshDeployment.Spec.Service.AppContainerName {
+			return &container, nil
+		}
+	}
+	return nil, errors.Errorf("Application container do not exists. Please confirm application container name is %s.", d.meshDeployment.Spec.Service.AppContainerName)
+}
+
+func (d *deploySyncer) injectEnvIntoContainer(container *corev1.Container, envName string, fn func() corev1.EnvVar) {
+	env := fn()
+	if len(container.Env) == 0 {
+		container.Env = []corev1.EnvVar{env}
+		return
+	}
+	for index, env := range container.Env {
+		if env.Name == envName {
+			container.Env[index] = env
+			return
+		}
+	}
+	container.Env = append(container.Env, env)
+
+}
+func javaToolsOptionEnv() corev1.EnvVar {
+	env := corev1.EnvVar{
 		Name:  javaToolOptionsEnvName,
 		Value: javaAgentJarOption,
 	}
-	if len(container.Env) == 0 {
-		container.Env = []corev1.EnvVar{javaToolOptionsEnv}
-	} else {
-		container.Env = append(container.Env, javaToolOptionsEnv)
+	return env
+}
+
+func podIPEnv() corev1.EnvVar {
+	varSource := &corev1.EnvVarSource{
+		FieldRef: &corev1.ObjectFieldSelector{
+			FieldPath: k8sPodIPFieldPath,
+		},
 	}
-	return nil
+
+	env := corev1.EnvVar{
+		Name:      podIPEnvName,
+		ValueFrom: varSource,
+	}
+	return env
 }
