@@ -15,7 +15,8 @@ import (
 // ServiceSpec describes mesh service properties
 type ServiceSpec struct {
 	//Name is mesh service name of the deployment
-	Name string `json:"name"`
+	Name             string `json:"name"`
+	AppContainerName string `json:"appContainerName"`
 	//Labels is dedicated to labeling instance of deployment for traffic control
 	Labels map[string]string `json:"labels"`
 }

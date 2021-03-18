@@ -37,9 +37,11 @@ func init() {
 }
 
 func main() {
+	var clusterJoinURL string
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	flag.StringVar(&clusterJoinURL, "cluster-join-url", ":", "The address the eg master binds to.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -67,10 +69,11 @@ func main() {
 	}
 
 	if err = (&controllers.MeshDeploymentReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("controller.MeshDeployment"),
+		Client:         mgr.GetClient(),
+		Log:            ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
+		Scheme:         mgr.GetScheme(),
+		ClusterJoinURL: clusterJoinURL,
+		Recorder:       mgr.GetEventRecorderFor("controller.MeshDeployment"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MeshDeployment")
 		os.Exit(1)

@@ -24,9 +24,10 @@ import (
 // MeshDeploymentReconciler reconciles a MeshDeployment object
 type MeshDeploymentReconciler struct {
 	client.Client
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Log            logr.Logger
+	Scheme         *runtime.Scheme
+	Recorder       record.EventRecorder
+	ClusterJoinURL string
 }
 
 // +kubebuilder:rbac:groups=mesh.megaease.com,resources=meshdeployments,verbs=get;list;watch;create;update;patch;delete
