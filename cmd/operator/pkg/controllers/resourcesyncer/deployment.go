@@ -33,9 +33,14 @@ const (
 
 	k8sPodIPFieldPath = "status.podIP"
 
-	sideCarImageName     = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
-	sideCarContainerName = "easegateway-sidecar"
-	sideCarMountPath = "/easegateway-sidecar"
+	sideCarImageName                = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
+	sideCarContainerName            = "easegateway-sidecar"
+	sideCarMountPath                = "/easegateway-sidecar"
+	sideCarIngressPortName          = "sidecar-ingress"
+	sideCarIngressPortContainerPort = 13001
+
+	sideCarEgressPortName         = "sidecar-egress"
+	sideCarEressPortContainerPort = 13002
 
 	defaultJMXAliveProbe = "http://localhost:8080/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
 
@@ -193,6 +198,8 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 	command := "/opt/easegateway/bin/easegateway-server -f /easegateway-sidecar/eg-sidecar.yaml"
 	sideCarContainer.Command = []string{"/bin/sh", "-c", command}
 	sideCarContainer.Image = d.sideCarImage
+	d.injectPortIntoContainer(sideCarContainer, sideCarIngressPortName, sideCarIngressPort)
+	d.injectPortIntoContainer(sideCarContainer, sideCarEgressPortName, sideCarEgressPort)
 	d.injectEnvIntoContainer(sideCarContainer, podIPEnvName, podIPEnv)
 	err := d.injectAgentVolumeMounts(sideCarContainer, sideCarMountPath)
 	return err
@@ -275,7 +282,7 @@ func (d *deploySyncer) injectEaseAgentInitContainer(deploy *v1.Deployment) error
 		return err
 	}
 
-	command := "echo '"+ s + "' > /easeagent-share-volume/eg-sidecar.yaml; cp -r " + agentVolumeMountPath + "/. " + agentInitContainerMountPath
+	command := "echo '" + s + "' > /easeagent-share-volume/eg-sidecar.yaml; cp -r " + agentVolumeMountPath + "/. " + agentInitContainerMountPath
 	initContainer.Command = []string{"/bin/sh", "-c", command}
 
 	err = d.injectAgentVolumeMounts(&initContainer, agentInitContainerMountPath)
@@ -359,6 +366,7 @@ func (d *deploySyncer) injectEnvIntoContainer(container *corev1.Container, envNa
 	container.Env = append(container.Env, env)
 
 }
+
 func javaToolsOptionEnv() corev1.EnvVar {
 	env := corev1.EnvVar{
 		Name:  javaToolOptionsEnvName,
@@ -379,4 +387,36 @@ func podIPEnv() corev1.EnvVar {
 		ValueFrom: varSource,
 	}
 	return env
+}
+
+func (d *deploySyncer) injectPortIntoContainer(container *corev1.Container, portName string, fn func() corev1.ContainerPort) {
+	port := fn()
+	if len(container.Ports) == 0 {
+		container.Ports = []corev1.ContainerPort{port}
+		return
+	}
+	for index, p := range container.Ports {
+		if p.Name == portName {
+			container.Ports[index] = port
+			return
+		}
+	}
+	container.Ports = append(container.Ports, port)
+
+}
+
+func sideCarIngressPort() corev1.ContainerPort {
+	port := corev1.ContainerPort{
+		Name:          sideCarIngressPortName,
+		ContainerPort: sideCarIngressPortContainerPort,
+	}
+	return port
+}
+
+func sideCarEgressPort() corev1.ContainerPort {
+	port := corev1.ContainerPort{
+		Name:          sideCarEgressPortName,
+		ContainerPort: sideCarEressPortContainerPort,
+	}
+	return port
 }
