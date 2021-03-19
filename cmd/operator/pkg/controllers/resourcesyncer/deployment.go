@@ -7,6 +7,7 @@ import (
 	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,7 +40,7 @@ const (
 
 	clusterRoleReader           = "reader"
 	defaultClusterRole          = clusterRoleReader
-	defaultRequestTimeoutSecond = 10
+	defaultRequestTimeoutSecond = "10s"
 	defaultName                 = "eg-name"
 
 	sideCarMeshServicenameLabel = "mesh-servicename"
@@ -48,27 +49,35 @@ const (
 )
 
 type sideCarParams struct {
-	labels                map[string]string
-	name                  string
-	clusterJoinUrl        string
-	clusterRequestTimeout int
-	clusterRole           string
-	clusterName           string
+	Name                  string            `yaml:"name"`
+	ClusterJoinUrls       string            `yaml:"cluster-join-urls"`
+	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
+	ClusterRole           string            `yaml:"cluster-role"`
+	ClusterName           string            `yaml:"cluster-name"`
+	Labels                map[string]string `yaml: "Labels"`
 }
 
 func (params *sideCarParams) String() string {
 
 	str := " "
-	for k, v := range params.labels {
-		str += " --labels=" + k + "=" + v
+	for k, v := range params.Labels {
+		str += " --Labels=" + k + "=" + v
 	}
 
-	str += " --name=" + params.name
-	str += " --cluster-request-timeout=" + strconv.Itoa(params.clusterRequestTimeout)
-	str += " --cluster-role=" + params.clusterRole
-	str += " --cluster-join-url=" + params.clusterJoinUrl
-	str += " --cluster-name=" + params.clusterName
+	str += " --name=" + params.Name
+	str += " --cluster-request-timeout=" + params.ClusterRequestTimeout
+	str += " --cluster-role=" + params.ClusterRole
+	str += " --cluster-join-urls=" + params.ClusterJoinUrls
+	str += " --cluster-name=" + params.ClusterName
 	return str
+}
+
+func (params *sideCarParams) Yaml() (string, error) {
+	bytes, err := yaml.Marshal(params)
+	if err != nil {
+		return "", errors.Errorf("obj should be a deployment but is a %T", err)
+	}
+	return string(bytes), nil
 }
 
 type deploySyncer struct {
@@ -122,7 +131,7 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 		return errors.Wrap(err, "merge meshDeployment failed")
 	}
 
-	// FIXME: labels in metadata of PodTemplate will be discarding by unknown reason, we temporarily
+	// FIXME: Labels in metadata of PodTemplate will be discarding by unknown reason, we temporarily
 	// complement it with matchLabel of v1.DeploymentSpec
 
 	if deploy.Spec.Template.ObjectMeta.Labels == nil {
@@ -189,7 +198,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 
 	if len(appContainer.Ports) != 0 {
 		port := appContainer.Ports[0].ContainerPort
-		params.labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
+		params.Labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
 	}
 
 	livenessProbe := appContainer.LivenessProbe
@@ -198,7 +207,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 		port := livenessProbe.HTTPGet.Port
 		path := livenessProbe.HTTPGet.Path
 		aliveProbeURL := "http://" + host + port.StrVal + path
-		params.labels[sideCarAliveProbeLabel] = aliveProbeURL
+		params.Labels[sideCarAliveProbeLabel] = aliveProbeURL
 	}
 
 	sideCarContainer.Name = sideCarContainerName
@@ -213,18 +222,18 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 
 func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params := &sideCarParams{}
-	params.clusterRole = defaultClusterRole
-	params.name = defaultName
-	params.clusterRequestTimeout = defaultRequestTimeoutSecond
+	params.ClusterRole = defaultClusterRole
+	params.Name = defaultName
+	params.ClusterRequestTimeout = defaultRequestTimeoutSecond
 
 	labels := make(map[string]string)
 	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
 	labels[sideCarAliveProbeLabel] = defaultJMXAliveProbe
 	labels[sideCarApplicationPortLabel] = ""
 
-	params.labels = labels
-	params.clusterJoinUrl = d.clusterJoinURL
-	params.clusterName = d.clusterName
+	params.Labels = labels
+	params.ClusterJoinUrls = d.clusterJoinURL
+	params.ClusterName = d.clusterName
 	return params, nil
 }
 
