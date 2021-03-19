@@ -35,6 +35,7 @@ const (
 
 	sideCarImageName     = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
 	sideCarContainerName = "easegateway-sidecar"
+	sideCarMountPath = "/easegateway-sidecar"
 
 	defaultJMXAliveProbe = "http://localhost:8080/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
 
@@ -186,38 +187,15 @@ func (d *deploySyncer) injectSideCarSpec(deploy *v1.Deployment) error {
 }
 
 func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContainer *corev1.Container) error {
-	params, err := d.initSideCarParams()
-	if err != nil {
-		return err
-	}
-
-	appContainer, err := d.getAppContainer(deploy)
-	if err != nil {
-		return err
-	}
-
-	if len(appContainer.Ports) != 0 {
-		port := appContainer.Ports[0].ContainerPort
-		params.Labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
-	}
-
-	livenessProbe := appContainer.LivenessProbe
-	if livenessProbe != nil && livenessProbe.HTTPGet != nil {
-		host := livenessProbe.HTTPGet.Host
-		port := livenessProbe.HTTPGet.Port
-		path := livenessProbe.HTTPGet.Path
-		aliveProbeURL := "http://" + host + port.StrVal + path
-		params.Labels[sideCarAliveProbeLabel] = aliveProbeURL
-	}
 
 	sideCarContainer.Name = sideCarContainerName
+
+	command := "/opt/easegateway/bin/easegateway-server -f /easegateway-sidecar/eg-sidecar.yaml"
+	sideCarContainer.Command = []string{"/bin/sh", "-c", command}
 	sideCarContainer.Image = d.sideCarImage
-	if len(sideCarContainer.Args) == 0 {
-		sideCarContainer.Args = []string{params.String()}
-	} else {
-		sideCarContainer.Args = append(sideCarContainer.Args, params.String())
-	}
-	return nil
+	d.injectEnvIntoContainer(sideCarContainer, podIPEnvName, podIPEnv)
+	err := d.injectAgentVolumeMounts(sideCarContainer, sideCarMountPath)
+	return err
 }
 
 func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
@@ -267,10 +245,40 @@ func (d *deploySyncer) injectEaseAgentInitContainer(deploy *v1.Deployment) error
 
 	initContainer.Name = agentInitContainerName
 	initContainer.Image = agentInitContainerImage
-	command := "cp -r " + agentVolumeMountPath + "/. " + agentInitContainerMountPath
+
+	params, err := d.initSideCarParams()
+	if err != nil {
+		return err
+	}
+
+	appContainer, err := d.getAppContainer(deploy)
+	if err != nil {
+		return err
+	}
+
+	if len(appContainer.Ports) != 0 {
+		port := appContainer.Ports[0].ContainerPort
+		params.Labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
+	}
+
+	livenessProbe := appContainer.LivenessProbe
+	if livenessProbe != nil && livenessProbe.HTTPGet != nil {
+		host := livenessProbe.HTTPGet.Host
+		port := livenessProbe.HTTPGet.Port
+		path := livenessProbe.HTTPGet.Path
+		aliveProbeURL := "http://" + host + port.StrVal + path
+		params.Labels[sideCarAliveProbeLabel] = aliveProbeURL
+	}
+
+	s, err := params.Yaml()
+	if err != nil {
+		return err
+	}
+
+	command := "echo '"+ s + "' > /easeagent-share-volume/eg-sidecar.yaml; cp -r " + agentVolumeMountPath + "/. " + agentInitContainerMountPath
 	initContainer.Command = []string{"/bin/sh", "-c", command}
 
-	err := d.injectAgentVolumeMounts(&initContainer, agentInitContainerMountPath)
+	err = d.injectAgentVolumeMounts(&initContainer, agentInitContainerMountPath)
 	if err != nil {
 		return errors.Wrap(err, "inject agent volumeMounts error")
 	}
@@ -324,7 +332,6 @@ func (d *deploySyncer) completeAppContainerSpec(deploy *v1.Deployment) error {
 		return errors.Wrap(err, "inject agent volumeMounts error")
 	}
 	d.injectEnvIntoContainer(appContainer, javaToolOptionsEnvName, javaToolsOptionEnv)
-	d.injectEnvIntoContainer(appContainer, podIPEnvName, podIPEnv)
 	return nil
 }
 
