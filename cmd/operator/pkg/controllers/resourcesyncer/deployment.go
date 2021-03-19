@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"math/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
 )
@@ -198,6 +199,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 	command := "/opt/easegateway/bin/easegateway-server -f /easegateway-sidecar/eg-sidecar.yaml"
 	sideCarContainer.Command = []string{"/bin/sh", "-c", command}
 	sideCarContainer.Image = d.sideCarImage
+	sideCarContainer.ImagePullPolicy = corev1.PullAlways
 	d.injectPortIntoContainer(sideCarContainer, sideCarIngressPortName, sideCarIngressPort)
 	d.injectPortIntoContainer(sideCarContainer, sideCarEgressPortName, sideCarEgressPort)
 	d.injectEnvIntoContainer(sideCarContainer, podIPEnvName, podIPEnv)
@@ -208,7 +210,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params := &sideCarParams{}
 	params.ClusterRole = defaultClusterRole
-	params.Name = defaultName
+	params.Name =  d.meshDeployment.Spec.Service.Name + "-" + strconv.Itoa(rand.Int())
 	params.ClusterRequestTimeout = defaultRequestTimeoutSecond
 
 	labels := make(map[string]string)
@@ -343,6 +345,9 @@ func (d *deploySyncer) completeAppContainerSpec(deploy *v1.Deployment) error {
 }
 
 func (d *deploySyncer) getAppContainer(deploy *v1.Deployment) (*corev1.Container, error) {
+	if d.meshDeployment.Spec.Service.AppContainerName == "" {
+		return &d.meshDeployment.Spec.Deploy.Template.Spec.Containers[0], nil
+	}
 	for index, container := range deploy.Spec.Template.Spec.Containers {
 		if container.Name == d.meshDeployment.Spec.Service.AppContainerName {
 			return &deploy.Spec.Template.Spec.Containers[index], nil
