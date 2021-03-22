@@ -256,7 +256,7 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	labels[sideCarApplicationPortLabel] = ""
 
 	labelSlice := []string{}
-	for key, value := range d.meshDeployment.Spec.Deploy.Template.Labels {
+	for key, value := range d.meshDeployment.Spec.Service.Labels {
 		labelSlice = append(labelSlice, key+"="+value)
 	}
 
