@@ -61,7 +61,7 @@ type sideCarParams struct {
 	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
 	ClusterRole           string            `yaml:"cluster-role"`
 	ClusterName           string            `yaml:"cluster-name"`
-	Labels                map[string]string `yaml: "Labels,omitempty"`
+	Labels                map[string]string `yaml: "Labels"`
 }
 
 func (params *sideCarParams) String() string {
