@@ -13,8 +13,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"math/rand"
+	"net/url"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -65,6 +67,7 @@ type sideCarParams struct {
 	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
 	ClusterRole           string            `yaml:"cluster-role"`
 	ClusterName           string            `yaml:"cluster-name"`
+	MeshServiceLabels     string            `yaml:"mesh-service-labels"`
 	Labels                map[string]string `yaml: "Labels"`
 }
 
@@ -252,14 +255,21 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	labels[sideCarAliveProbeLabel] = defaultJMXAliveProbe
 	labels[sideCarApplicationPortLabel] = ""
 
+	labelSlice := []string{}
+	for key, value := range d.meshDeployment.Spec.Deploy.Template.Labels {
+		labelSlice = append(labelSlice, key+"="+value)
+	}
+
+	meshServiceLabels := url.QueryEscape(strings.Join(labelSlice, "&"))
+
 	params.Labels = labels
 	params.ClusterJoinUrls = d.clusterJoinURL
 	params.ClusterName = d.clusterName
+	params.MeshServiceLabels = meshServiceLabels
 	return params, nil
 }
 
-
-func (d *deploySyncer) injectInitContainers(deploy *v1.Deployment) error{
+func (d *deploySyncer) injectInitContainers(deploy *v1.Deployment) error {
 	err := d.injectInitContainersIntoDeployment(deploy, agentInitContainerImage, d.easeAgentInitContainer)
 	if err != nil {
 		return errors.Wrap(err, "inject EaseAgent InitContainer error")
