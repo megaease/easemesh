@@ -25,7 +25,7 @@ const (
 	agentInitContainerImage     = "192.168.50.105:5001/megaease/easeagent-initializer:latest"
 	agentInitContainerMountPath = "/easeagent-share-volume"
 
-	easeAgentJar       = "-javaagent:" + agentVolumeMountPath + "/easeagent.jar "
+	easeAgentJar       = "-javaagent:" + agentVolumeMountPath + "/easeagent.jar -Deaseagent.log.conf=" + agentVolumeMountPath + "/log4j2.xml"
 	jolokiaAgentJar    = "-javaagent:" + agentVolumeMountPath + "/jolokia.jar "
 	javaAgentJarOption = easeAgentJar + jolokiaAgentJar
 
@@ -43,7 +43,7 @@ const (
 	sideCarEgressPortName         = "sidecar-egress"
 	sideCarEressPortContainerPort = 13002
 
-	defaultJMXAliveProbe = "http://localhost:8080/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
+	defaultJMXAliveProbe = "http://localhost:8778/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
 
 	clusterRoleReader           = "reader"
 	defaultClusterRole          = clusterRoleReader
@@ -61,7 +61,7 @@ type sideCarParams struct {
 	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
 	ClusterRole           string            `yaml:"cluster-role"`
 	ClusterName           string            `yaml:"cluster-name"`
-	Labels                map[string]string `yaml: "Labels"`
+	Labels                map[string]string `yaml: "Labels,omitempty"`
 }
 
 func (params *sideCarParams) String() string {
@@ -150,6 +150,11 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 		return errors.Wrap(err, "inject Agent Volume error")
 	}
 
+	err = d.completeAppContainerSpec(deploy)
+	if err != nil {
+		return errors.Wrap(err, "inject Agent Jar into Application Container error")
+	}
+
 	err = d.injectEaseAgentInitContainer(deploy)
 	if err != nil {
 		return errors.Wrap(err, "inject EaseAgent InitContainer error")
@@ -158,11 +163,6 @@ func (d *deploySyncer) realSyncFn(obj client.Object) error {
 	err = d.injectSideCarSpec(deploy)
 	if err != nil {
 		return errors.Wrap(err, "inject side car error")
-	}
-
-	err = d.completeAppContainerSpec(deploy)
-	if err != nil {
-		return errors.Wrap(err, "inject Agent Jar into Application Container error")
 	}
 
 	return nil
@@ -210,7 +210,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params := &sideCarParams{}
 	params.ClusterRole = defaultClusterRole
-	params.Name =  d.meshDeployment.Spec.Service.Name + "-" + strconv.Itoa(rand.Int())
+	params.Name = d.meshDeployment.Spec.Service.Name + "-" + strconv.Itoa(rand.Int())
 	params.ClusterRequestTimeout = defaultRequestTimeoutSecond
 
 	labels := make(map[string]string)
@@ -254,6 +254,7 @@ func (d *deploySyncer) injectEaseAgentInitContainer(deploy *v1.Deployment) error
 
 	initContainer.Name = agentInitContainerName
 	initContainer.Image = agentInitContainerImage
+	initContainer.ImagePullPolicy = corev1.PullAlways
 
 	params, err := d.initSideCarParams()
 	if err != nil {
