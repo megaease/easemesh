@@ -6740,6 +6740,9 @@ spec:
                   name:
                     description: Name is mesh service name of the deployment
                     type: string
+                  AppContainerName:
+                    description: AppContainerName is the name of the application container
+                    type: string
                 required:
                 - labels
                 - name
