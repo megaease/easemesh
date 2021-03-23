@@ -16,6 +16,8 @@ import (
 type ServiceSpec struct {
 	//Name is mesh service name of the deployment
 	Name             string `json:"name"`
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=""
 	AppContainerName string `json:"appContainerName"`
 	//Labels is dedicated to labeling instance of deployment for traffic control
 	Labels map[string]string `json:"labels"`
