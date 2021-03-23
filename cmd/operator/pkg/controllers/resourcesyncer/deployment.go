@@ -276,7 +276,7 @@ func (d *deploySyncer) injectInitContainers(deploy *v1.Deployment) error {
 		return errors.Wrap(err, "inject EaseAgent InitContainer error")
 	}
 
-	err = d.injectInitContainersIntoDeployment(deploy, sidecarInitContainerName, d.sidecarInitContainer)
+	err = d.injectInitContainersIntoDeployment(deploy, sidecarImageName, d.sidecarInitContainer)
 	if err != nil {
 		return errors.Wrap(err, "inject sidecar InitContainer error")
 	}
@@ -296,6 +296,7 @@ func (d *deploySyncer) injectInitContainersIntoDeployment(deploy *v1.Deployment,
 		for index, container := range initContainers {
 			if container.Image == containerImageName {
 				deploy.Spec.Template.Spec.InitContainers[index] = initContainer
+				return nil
 			}
 		}
 		deploy.Spec.Template.Spec.InitContainers = append(deploy.Spec.Template.Spec.InitContainers, initContainer)
