@@ -120,7 +120,6 @@ func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
 			Name:      meshDeploy.Name,
 			Namespace: meshDeploy.Namespace,
 		},
-		Spec: meshDeploy.Spec.Deploy.DeploymentSpec,
 	}
 	return syncer.New("Deployment", c, meshDeploy, obj, scheme, log, func() error {
 		previous := obj.DeepCopy()
