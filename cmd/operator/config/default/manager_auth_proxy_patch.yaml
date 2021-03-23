@@ -24,3 +24,5 @@ spec:
         - "--health-probe-bind-address=:8081"
         - "--metrics-bind-address=127.0.0.1:8080"
         - "--leader-elect"
+        - "--cluster-name=cluster-mesh-master"
+        - "--cluster-join-url=http://192.168.50.105:12480"
