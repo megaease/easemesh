@@ -358,14 +358,10 @@ func (d *deploySyncer) sidecarInitContainer(deploy *v1.Deployment) (corev1.Conta
 		return initContainer, err
 	}
 
-	command := "echo name: $POD_NAME >> /opt/eg-sidecar.yaml; echo '" + s + "' >> /opt/eg-sidecar.yaml; done; cp -r /opt/. " + sidecarParamsVolumeMountPath
+	command := "echo name: $POD_NAME >> /opt/eg-sidecar.yaml; echo '" + s + "' >> /opt/eg-sidecar.yaml; cp -r /opt/. " + sidecarParamsVolumeMountPath
 	initContainer.Command = []string{"/bin/sh", "-c", command}
 
 	d.injectVolumeMountIntoContainer(&initContainer, sidecarParamsVolumeName, sidecarVolumeMount)
-
-	//if err != nil {
-	//	return initContainer, errors.Wrap(err, "inject sidecar volumeMounts error")
-	//}
 
 	return initContainer, nil
 
