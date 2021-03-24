@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"math/rand"
 	"net/url"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
@@ -37,8 +36,10 @@ const (
 
 	javaToolOptionsEnvName = "JAVA_TOOL_OPTIONS"
 	podIPEnvName           = "APPLICATION_IP"
+	podNameEnvName         = "POD_NAME"
 
-	k8sPodIPFieldPath = "status.podIP"
+	k8sPodIPFieldPath   = "status.podIP"
+	k8sPodNameFieldPath = "metadata.name"
 
 	sidecarImageName                = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
 	sidecarContainerName            = "easegateway-sidecar"
@@ -62,7 +63,6 @@ const (
 )
 
 type sideCarParams struct {
-	Name                  string            `yaml:"name"`
 	ClusterJoinUrls       string            `yaml:"cluster-join-urls"`
 	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
 	ClusterRole           string            `yaml:"cluster-role"`
@@ -78,7 +78,6 @@ func (params *sideCarParams) String() string {
 		str += " --Labels=" + k + "=" + v
 	}
 
-	str += " --name=" + params.Name
 	str += " --cluster-request-timeout=" + params.ClusterRequestTimeout
 	str += " --cluster-role=" + params.ClusterRole
 	str += " --cluster-join-urls=" + params.ClusterJoinUrls
@@ -247,7 +246,6 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params := &sideCarParams{}
 	params.ClusterRole = defaultClusterRole
-	params.Name = d.meshDeployment.Spec.Service.Name + "-" + strconv.Itoa(rand.Int())
 	params.ClusterRequestTimeout = defaultRequestTimeoutSecond
 
 	labels := make(map[string]string)
@@ -354,15 +352,17 @@ func (d *deploySyncer) sidecarInitContainer(deploy *v1.Deployment) (corev1.Conta
 		params.Labels[sideCarAliveProbeLabel] = aliveProbeURL
 	}
 
+	d.injectEnvIntoContainer(&initContainer, podNameEnvName, podNameEnv)
 	s, err := params.Yaml()
 	if err != nil {
 		return initContainer, err
 	}
 
-	command := "echo '" + s + "' > /opt/eg-sidecar.yaml; cp -r /opt/. " + sidecarParamsVolumeMountPath
+	command := "echo name: $POD_NAME >> /opt/eg-sidecar.yaml; echo '" + s + "' >> /opt/eg-sidecar.yaml; done; cp -r /opt/. " + sidecarParamsVolumeMountPath
 	initContainer.Command = []string{"/bin/sh", "-c", command}
 
 	d.injectVolumeMountIntoContainer(&initContainer, sidecarParamsVolumeName, sidecarVolumeMount)
+
 	//if err != nil {
 	//	return initContainer, errors.Wrap(err, "inject sidecar volumeMounts error")
 	//}
@@ -503,6 +503,20 @@ func podIPEnv() corev1.EnvVar {
 
 	env := corev1.EnvVar{
 		Name:      podIPEnvName,
+		ValueFrom: varSource,
+	}
+	return env
+}
+
+func podNameEnv() corev1.EnvVar {
+	varSource := &corev1.EnvVarSource{
+		FieldRef: &corev1.ObjectFieldSelector{
+			FieldPath: k8sPodNameFieldPath,
+		},
+	}
+
+	env := corev1.EnvVar{
+		Name:      podNameEnvName,
 		ValueFrom: varSource,
 	}
 	return env
