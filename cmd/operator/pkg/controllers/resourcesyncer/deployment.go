@@ -60,6 +60,7 @@ const (
 	sideCarMeshServicenameLabel = "mesh-servicename"
 	sideCarAliveProbeLabel      = "alive-probe"
 	sideCarApplicationPortLabel = "application-port"
+	meshServiceLabelsLabel = "mesh-service-labels"
 )
 
 type sideCarParams struct {
@@ -67,7 +68,6 @@ type sideCarParams struct {
 	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
 	ClusterRole           string            `yaml:"cluster-role"`
 	ClusterName           string            `yaml:"cluster-name"`
-	MeshServiceLabels     string            `yaml:"mesh-service-labels"`
 	Labels                map[string]string `yaml: "Labels"`
 }
 
@@ -248,11 +248,6 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	params.ClusterRole = defaultClusterRole
 	params.ClusterRequestTimeout = defaultRequestTimeoutSecond
 
-	labels := make(map[string]string)
-	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
-	labels[sideCarAliveProbeLabel] = defaultJMXAliveProbe
-	labels[sideCarApplicationPortLabel] = ""
-
 	labelSlice := []string{}
 	for key, value := range d.meshDeployment.Spec.Service.Labels {
 		labelSlice = append(labelSlice, key+"="+value)
@@ -260,10 +255,16 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 
 	meshServiceLabels := url.QueryEscape(strings.Join(labelSlice, "&"))
 
+	labels := make(map[string]string)
+	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
+	labels[sideCarAliveProbeLabel] = defaultJMXAliveProbe
+	labels[sideCarApplicationPortLabel] = ""
+	labels[meshServiceLabelsLabel] = meshServiceLabels
+
+
 	params.Labels = labels
 	params.ClusterJoinUrls = d.clusterJoinURL
 	params.ClusterName = d.clusterName
-	params.MeshServiceLabels = meshServiceLabels
 	return params, nil
 }
 
