@@ -20,6 +20,7 @@ type ServiceSpec struct {
 	// +kubebuilder:default=""
 	AppContainerName string `json:"appContainerName"`
 	//Labels is dedicated to labeling instance of deployment for traffic control
+	// +kubebuilder:validation:Optional
 	Labels map[string]string `json:"labels"`
 }
 
