@@ -60,7 +60,7 @@ const (
 	sideCarMeshServicenameLabel = "mesh-servicename"
 	sideCarAliveProbeLabel      = "alive-probe"
 	sideCarApplicationPortLabel = "application-port"
-	meshServiceLabelsLabel = "mesh-service-labels"
+	meshServiceLabelsLabel      = "mesh-service-labels"
 )
 
 type sideCarParams struct {
@@ -260,7 +260,6 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 	labels[sideCarAliveProbeLabel] = defaultJMXAliveProbe
 	labels[sideCarApplicationPortLabel] = ""
 	labels[meshServiceLabelsLabel] = meshServiceLabels
-
 
 	params.Labels = labels
 	params.ClusterJoinUrls = d.clusterJoinURL
