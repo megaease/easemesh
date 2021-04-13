@@ -40,7 +40,7 @@ func init() {
 
 type ConfigSpec struct {
 	ClusterName          string `yaml:"cluster-name" jsonschema:"required"`
-	ClusterJoinURL       string `yaml:"cluster-join-url" jsonschema:"required"`
+	ClusterJoinURL       string `yaml:"cluster-join-urls" jsonschema:"required"`
 	MetricsAddr          string `yaml:"metrics-bind-address" jsonschema:"required"`
 	EnableLeaderElection bool   `yaml:"leader-elect" jsonschema:"required"`
 	ProbeAddr            string `yaml:"health-probe-bind-address" jsonschema:"required"`
@@ -55,7 +55,7 @@ func main() {
 	var configFile string
 
 	flag.StringVar(&ClusterName, "cluster-name", ":", "The cluster-name of the eg master.")
-	flag.StringVar(&clusterJoinURL, "cluster-join-url", ":", "The address the eg master binds to.")
+	flag.StringVar(&clusterJoinURL, "cluster-join-urls", ":", "The address the eg master binds to.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
