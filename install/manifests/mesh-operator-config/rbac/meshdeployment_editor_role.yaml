@@ -1,0 +1,24 @@
+# permissions for end users to edit meshdeployments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: meshdeployment-editor-role
+rules:
+- apiGroups:
+  - mesh.megaease.com
+  resources:
+  - meshdeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mesh.megaease.com
+  resources:
+  - meshdeployments/status
+  verbs:
+  - get

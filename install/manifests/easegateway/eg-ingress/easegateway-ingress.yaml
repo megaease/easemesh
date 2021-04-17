@@ -1,0 +1,38 @@
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: easegateway-ingress
+spec:
+  selector:
+    matchLabels:
+      app: easegateway
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: easegateway
+    spec:
+      containers:
+        - name: easegateway-ingress
+          image: 192.168.50.105:5001/megaease/easegateway:server-sidecar
+          ports:
+            - containerPort: 2379
+              name: client-port
+            - containerPort: 2380
+              name: peer-port
+            - containerPort: 2381
+              name: admin-port
+          command: ["/bin/sh"]
+          args: ["-c", "/opt/easegateway/bin/easegateway-server -f /opt/eg-config/eg-ingress.yaml"]
+          volumeMounts:
+            - name: easegateway-ingress-config
+              mountPath: /opt/eg-config/eg-ingress.yaml
+              subPath: eg-ingress.yaml
+      volumes:
+        - name: easegateway-ingress-config
+          configMap:
+            name: easegateway-ingress-config-cm
+
+

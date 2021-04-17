@@ -1,0 +1,20 @@
+# permissions for end users to view meshdeployments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: meshdeployment-viewer-role
+rules:
+- apiGroups:
+  - mesh.megaease.com
+  resources:
+  - meshdeployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - mesh.megaease.com
+  resources:
+  - meshdeployments/status
+  verbs:
+  - get
