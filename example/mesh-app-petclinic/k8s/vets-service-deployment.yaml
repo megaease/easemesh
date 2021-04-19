@@ -1,0 +1,59 @@
+apiVersion: mesh.megaease.com/v1beta1
+kind: MeshDeployment
+metadata:
+  namespace: spring-petclinic
+  name: vets-service
+spec:
+  service:
+    name: vets-service
+  deploy:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: vets-service
+    template:
+      metadata:
+        labels:
+          app: vets-service
+      spec:
+        containers:
+          - image: ${REPOSITORY_PREFIX}/vets-service:latest
+            name: vets-service
+            imagePullPolicy: Always
+            livenessProbe:
+              httpGet:
+                port: 8080
+                path: /actuator/health/liveness
+              initialDelaySeconds: 90
+              periodSeconds: 5
+            readinessProbe:
+              httpGet:
+                port: 8080
+                path: /actuator/health/readiness
+              initialDelaySeconds: 15
+            lifecycle:
+              preStop:
+                exec:
+                  command: ["sh", "-c", "sleep 10"]
+            resources:
+              limits:
+                memory: 1Gi
+              requests:
+                cpu: 2000m
+                memory: 1Gi
+            env:
+              - name: SPRING_PROFILES_ACTIVE
+                value: kubernetes
+              - name: SPRING_DATASOURCE_URL
+                value: jdbc:mysql://vets-db-mysql.spring-petclinic.svc.cluster.local:3306/service_instance_db?queryInterceptors=brave.mysql8.TracingQueryInterceptor&exceptionInterceptors=brave.mysql8.TracingExceptionInterceptor&zipkinServiceName=vets-db
+              - name: SPRING_DATASOURCE_USERNAME
+                value: root
+              - name: SPRING_DATASOURCE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: vets-db-mysql
+                    key: mysql-root-password
+            ports:
+              - containerPort: 8080
+        restartPolicy: Always
+
