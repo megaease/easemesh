@@ -1,0 +1,90 @@
+name: api-gateway 
+registerTenant: pet 
+resilience:
+loadBalance:
+  policy: random
+  HeaderHashKey:
+sidecar:
+  discoveryType: eureka
+  address: "127.0.0.1"
+  ingressPort: 13001
+  ingressProtocol: http
+  egressPort: 13002
+  egressProtocol: http
+observability:
+  outputServer:
+    enabled: true
+    bootstrapServer: kafka-0.kafka-hs:9093,kafka-1.kafka-hs:9093,kafka-2.kafka-hs:9093
+    timeout: 10000
+  tracings:
+    enabled: true
+    output:
+        enabled: true
+        topic: log-tracing
+        messageMaxBytes: 999900
+        reportThread: 1
+        queuedMaxSpans: 1000
+        queuedMaxSize: 1000000
+        messageTimeout: 1000
+    topic: log-tracing
+    sampleByQPS: 50
+    request:
+      enabled: true
+      servicePrefix: httpRequest
+    jdbc:
+      enabled: true
+      servicePrefix: jdbc
+    redis:
+      enabled: true
+      servicePrefix: redis
+    remoteInvoke:
+      enabled: true
+      servicePrefix: remoteInvoke
+    kafka:
+      enabled: true
+      servicePrefix: kafka
+    rabbit:
+      enabled: true
+      servicePrefix: rabbitmq
+  metrics:
+    enabled: true
+    access:
+      enabled: true
+      interval: 30
+      topic: application-log
+    request:
+      enabled: true
+      interval: 30
+      topic: application-meter
+    jdbcStatement:
+       enabled: true
+       interval: 30
+       topic: application-meter
+    jdbcConnection:
+       enabled: true
+       interval: 30
+       topic: application-meter
+    rabbit:
+       enabled: true
+       interval: 30
+       topic: platform-meter
+    kafka:
+       enabled: true
+       interval: 30
+       topic: platform-meter
+    redis:
+       enabled: true
+       interval: 30
+       topic: platform-meter
+    jvmGc:
+       enabled: true
+       interval: 30
+       topic: platform-meter
+    jvmMemory:
+       enabled: true
+       interval: 30
+       topic: platform-meter
+    md5Dictionary:
+       enabled: true
+       interval: 300
+       topic: application-meter
