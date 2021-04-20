@@ -65,10 +65,11 @@ spec:
             args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
             resources:
               limits:
-                memory: 1Gi
-              requests:
                 cpu: 2000m
                 memory: 1Gi
+              requests:
+                cpu: 200m
+                memory: 256Mi
             volumeMounts:
               - mountPath: /application/application-sit.yml
                 name: configmap-volume-0
