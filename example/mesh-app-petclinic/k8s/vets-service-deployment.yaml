@@ -25,7 +25,7 @@ data:
     eureka:
       client:
         serviceUrl:
-          defaultZone: http://eureka:8761/eureka/
+          defaultZone: http://127.0.0.1:13009/mesh/eureka
       instance:
         preferIpAddress: true
         lease-expiration-duration-in-seconds: 60
@@ -59,7 +59,7 @@ spec:
                 exec:
                   command: ["sh", "-c", "sleep 10"]
             command: ["/bin/sh"]
-            args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
+            args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
             resources:
               limits:
                 cpu: 2000m
