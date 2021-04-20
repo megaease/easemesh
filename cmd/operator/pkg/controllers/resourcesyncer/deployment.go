@@ -51,7 +51,7 @@ const (
 	sidecarEressPortContainerPort = 13002
 
 	defaultJMXAliveProbe        = "http://localhost:8778/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
-	defaultAgentHttpServerProbe = "http://localhost:9900/healthy"
+	defaultAgentHttpServerProbe = "http://localhost:9900/health"
 
 	clusterRoleReader           = "reader"
 	defaultClusterRole          = clusterRoleReader
