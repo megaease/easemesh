@@ -25,20 +25,20 @@ apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
   namespace: spring-petclinic
-  name: pet-api-gateway
+  name: api-gateway
 spec:
   service:
-    name: pet-api-gateway
+    name: api-gateway
   deploy:
     replicas: 1
     selector:
       matchLabels:
-        app: pet-api-gateway
+        app: api-gateway
     strategy: {}
     template:
       metadata:
         labels:
-          app: pet-api-gateway
+          app: api-gateway
       spec:
         containers:
         - image: 192.168.50.105:5001/megaease/spring-petclinic-api-gateway:latest
