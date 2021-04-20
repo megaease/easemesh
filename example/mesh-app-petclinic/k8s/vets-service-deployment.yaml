@@ -54,26 +54,15 @@ spec:
           app: vets-service
       spec:
         containers:
-          - image: springcommunity/spring-petclinic-vets-service:latest
+          - image: 192.168.50.105:5001/megaease/spring-petclinic-vets-service:latest
             name: vets-service
             imagePullPolicy: IfNotPresent
-            livenessProbe:
-              httpGet:
-                port: 8080
-                path: /actuator/health/liveness
-              initialDelaySeconds: 90
-              periodSeconds: 5
-            readinessProbe:
-              httpGet:
-                port: 8080
-                path: /actuator/health/readiness
-              initialDelaySeconds: 15
             lifecycle:
               preStop:
                 exec:
                   command: ["sh", "-c", "sleep 10"]
             command: ["/bin/sh"]
-            args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /app.jar"]
+            args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
             resources:
               limits:
                 memory: 1Gi
@@ -81,7 +70,7 @@ spec:
                 cpu: 2000m
                 memory: 1Gi
             volumeMounts:
-              - mountPath: /application-sit.yml
+              - mountPath: /application/application-sit.yml
                 name: configmap-volume-0
                 subPath: application-sit.yml
             ports:
@@ -96,4 +85,3 @@ spec:
             name: configmap-volume-0
 
         restartPolicy: Always
-

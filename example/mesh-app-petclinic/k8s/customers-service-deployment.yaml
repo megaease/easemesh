@@ -46,7 +46,7 @@ spec:
           app: customers-service
       spec:
         containers:
-        - image: springcommunity/spring-petclinic-customers-service:latest
+        - image: 192.168.50.105:5001/megaease/spring-petclinic-customers-service:latest
           name: customers-service
           imagePullPolicy: IfNotPresent
           livenessProbe:
@@ -65,7 +65,7 @@ spec:
               exec:
                 command: ["sh", "-c", "sleep 10"]
           command: ["/bin/sh"]
-          args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /app.jar"]
+          args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
           resources:
             limits:
               memory: 1Gi
@@ -75,7 +75,7 @@ spec:
           ports:
           - containerPort: 8080
           volumeMounts:
-          - mountPath: /application-sit.yml
+          - mountPath: /application/application-sit.yml
             name: configmap-volume-0
             subPath: application-sit.yml
         volumes:

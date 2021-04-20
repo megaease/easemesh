@@ -41,7 +41,7 @@ spec:
           app: pet-api-gateway
       spec:
         containers:
-        - image: ${REPOSITORY_PREFIX}/api-gateway:latest
+        - image: 192.168.50.105:5001/megaease/api-gateway:latest
           name: api-gateway
           imagePullPolicy: Always
           livenessProbe:
