@@ -13,6 +13,11 @@ cd ./install
 * SprintCloud PetClinic  [github link](https://github.com/spring-petclinic/spring-petclinic-cloud) micro service example.
 * It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Sprint Cloud Netflix technology stack.
 
+### Environment require
+* Linux kernel version 4.15+
+* Kubernetes version 1.18+
+* Mysql version 14.14+
+
 ### Start PetClinic in Easemesh with K8s:
 1. Enter `./example/script` dir, execute `./install.sh `
 2. In `./example/script` dir, execute `./init_db.sh` to configure database which is mysql with contents and tables provided in [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql).
