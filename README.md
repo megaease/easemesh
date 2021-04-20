@@ -14,8 +14,8 @@ cd ./install
 * It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Sprint Cloud Netflix technology stack.
 
 ### Start PetClinic in Easemesh with K8s:
-1. Enter `./example` dir, execute `./install.sh `
-2. Enter `./example` dir, execute `./init_db.sh` to configure database which is mysql with contents and tables provided in [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql).
+1. Enter `./example/script` dir, execute `./install.sh `
+2. In `./example/script` dir, execute `./init_db.sh` to configure database which is mysql with contents and tables provided in [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql).
 3. Open browser with `$your_domain/pet/#!/welcome`, should see the welcome page of PetClinic. 
 
 ### Canary deployment
