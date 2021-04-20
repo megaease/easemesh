@@ -1,3 +1,33 @@
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: visits-service
+  namespace: spring-petclinic
+data:
+  application-sit-yml: |
+    server:
+      port: 8080
+    spring:
+      application:
+        name:  visits-service
+      datasource:
+        url: jdbc:mysql://km-mysql:3306/service_instance_db?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&verifyServerCertificate=false
+        username: service_instance_db
+        password: service_instance_db
+        schema: classpath*:db/mysql/schema.sql
+        data: classpath*:db/mysql/data.sql
+    eureka:
+      client:
+        serviceUrl:
+          defaultZone: http://eureka:8761/eureka/
+      instance:
+        preferIpAddress: true
+        lease-expiration-duration-in-seconds: 60
+
+---
+
 apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
@@ -36,25 +66,27 @@ spec:
           preStop:
             exec:
               command: ["sh", "-c", "sleep 10"]
+        command: ["/bin/sh"]
+        args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /app.jar"]
         resources:
           limits:
             memory: 1Gi
           requests:
             cpu: 2000m
             memory: 1Gi
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: kubernetes
-        - name: SPRING_DATASOURCE_URL
-          value: jdbc:mysql://visits-db-mysql.spring-petclinic.svc.cluster.local:3306/service_instance_db?queryInterceptors=brave.mysql8.TracingQueryInterceptor&exceptionInterceptors=brave.mysql8.TracingExceptionInterceptor&zipkinServiceName=visits-db
-        - name: SPRING_DATASOURCE_USERNAME
-          value: root
-        - name: SPRING_DATASOURCE_PASSWORD
-          valueFrom:
-             secretKeyRef:
-               name: visits-db-mysql
-               key: mysql-root-password
+        volumeMounts:
+          - mountPath: /application-sit.yml
+            name: configmap-volume-0
+            subPath: application-sit.yml
         ports:
         - containerPort: 8080
+      volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+              - key: application-sit-yml
+                path: application-sit.yml
+            name: visits-service
+          name: configmap-volume-0
       restartPolicy: Always
 status: {}

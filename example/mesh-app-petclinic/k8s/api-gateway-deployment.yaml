@@ -1,3 +1,26 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: customers-service
+  namespace: spring-petclinic
+data:
+  application-sit-yml: |
+    server:
+      port: 8080
+    spring:
+      application:
+        name:  pet-api-gateway
+    eureka:
+      client:
+        serviceUrl:
+          defaultZone: http://eureka:8761/eureka/
+      instance:
+        preferIpAddress: true
+        lease-expiration-duration-in-seconds: 60
+
+---
+
 apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
@@ -42,9 +65,6 @@ spec:
           requests:
             cpu: 2000m
             memory: 1Gi
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: kubernetes
         ports:
         - containerPort: 8080
       restartPolicy: Always
