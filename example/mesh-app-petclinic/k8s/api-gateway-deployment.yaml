@@ -36,36 +36,36 @@ spec:
         app: pet-api-gateway
     strategy: {}
     template:
-    metadata:
-      labels:
-        app: pet-api-gateway
-    spec:
-      containers:
-      - image: ${REPOSITORY_PREFIX}/api-gateway:latest
-        name: api-gateway
-        imagePullPolicy: Always
-        livenessProbe:
-          httpGet:
-            port: 8080
-            path: /actuator/health/liveness
-          initialDelaySeconds: 90
-          periodSeconds: 5
-        readinessProbe:
-          httpGet:
-            port: 8080
-            path: /actuator/health/readiness
-          initialDelaySeconds: 15
-        lifecycle:
-          preStop:
-            exec:
-              command: ["sh", "-c", "sleep 10"]
-        resources:
-          limits:
-            memory: 1Gi
-          requests:
-            cpu: 2000m
-            memory: 1Gi
-        ports:
-        - containerPort: 8080
-      restartPolicy: Always
+      metadata:
+        labels:
+          app: pet-api-gateway
+      spec:
+        containers:
+        - image: ${REPOSITORY_PREFIX}/api-gateway:latest
+          name: api-gateway
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /actuator/health/liveness
+            initialDelaySeconds: 90
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /actuator/health/readiness
+            initialDelaySeconds: 15
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 2000m
+              memory: 1Gi
+          ports:
+          - containerPort: 8080
+        restartPolicy: Always
 status: {}

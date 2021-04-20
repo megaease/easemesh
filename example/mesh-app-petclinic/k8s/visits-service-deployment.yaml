@@ -41,52 +41,50 @@ spec:
     selector:
       matchLabels:
         app: visits-service
-    strategy: {}
     template:
-    metadata:
-      labels:
-        app: visits-service
-    spec:
-      containers:
-      - image: ${REPOSITORY_PREFIX}/visits-service:latest
-        name: visits-service
-        imagePullPolicy: Always
-        livenessProbe:
-          httpGet:
-            port: 8080
-            path: /actuator/health/liveness
-          initialDelaySeconds: 90
-          periodSeconds: 5
-        readinessProbe:
-          httpGet:
-            port: 8080
-            path: /actuator/health/readiness
-          initialDelaySeconds: 15
-        lifecycle:
-          preStop:
-            exec:
-              command: ["sh", "-c", "sleep 10"]
-        command: ["/bin/sh"]
-        args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /app.jar"]
-        resources:
-          limits:
-            memory: 1Gi
-          requests:
-            cpu: 2000m
-            memory: 1Gi
-        volumeMounts:
-          - mountPath: /application-sit.yml
+      metadata:
+        labels:
+          app: visits-service
+      spec:
+        containers:
+        - image: springcommunity/spring-petclinic-visits-service:latest
+          name: visits-service
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /actuator/health/liveness
+            initialDelaySeconds: 90
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /actuator/health/readiness
+            initialDelaySeconds: 15
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          command: ["/bin/sh"]
+          args: ["-c", "java -server  -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /app.jar"]
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 2000m
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /application-sit.yml
+              name: configmap-volume-0
+              subPath: application-sit.yml
+          ports:
+          - containerPort: 8080
+        volumes:
+          - configMap:
+              defaultMode: 420
+              items:
+                - key: application-sit-yml
+                  path: application-sit.yml
+              name: visits-service
             name: configmap-volume-0
-            subPath: application-sit.yml
-        ports:
-        - containerPort: 8080
-      volumes:
-        - configMap:
-            defaultMode: 420
-            items:
-              - key: application-sit-yml
-                path: application-sit.yml
-            name: visits-service
-          name: configmap-volume-0
-      restartPolicy: Always
-status: {}
+        restartPolicy: Always
