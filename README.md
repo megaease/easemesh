@@ -24,6 +24,18 @@ cd ./install
 3. Open browser with `$your_domain/pet/#!/welcome`, should see the welcome page of PetClinic. 
 
 ### Canary deployment
-1. Colored your traffic with HTTP header `X-Canary: lv1`. This can be done by setting NGINX's `proxy_set_header` or with the help of other tools.
+1. Colored your traffic with HTTP header `X-Canary: lv1`. This can be done by using NGINX's `proxy_set_header` cmd or with the help of other tools.
+NGINX Example:
+```
+location /pet/ {
+    set $canary_header "";
+    if ($query_string ~ new) {
+        set $canary_header "lv1";
+    }
+    proxy_set_header X-Canary $canary_header;
+
+...
+```
 2. Deploy canary version's customer service with cmd `kubectl apply -f  ./example/mesh-app-petclinic/k8s/customers-service-deployment-canary.yaml`
-3. Open browser with `$your_domain/pet/#!/welcome`, go to customer page, should see the table with brand new city field. 
+3. Open browser with `$your_domain/pet/#!/owners`, the owner info page remained the same.
+4. Visit with URL `$your_domain/pet/?new#!/owners`, should see the table with brand new city field canary values. 
