@@ -17,11 +17,9 @@ data:
       application:
         name:  vets-service
       datasource:
-        url: jdbc:mysql://km-mysql:3306/service_instance_db?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&verifyServerCertificate=false
-        username: service_instance_db
-        password: service_instance_db
-        schema: classpath*:db/mysql/schema.sql
-        data: classpath*:db/mysql/data.sql
+        url: jdbc:mysql://km-mysql:3306/meshappdemo?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&verifyServerCertificate=false
+        username: meshappdemo
+        password: meshappdemo
     liquibase:
       enabled: true
       change-log: classpath:/db-changelog/changelog-master.xml
