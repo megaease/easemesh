@@ -49,17 +49,6 @@ spec:
         - image: 192.168.50.105:5001/megaease/spring-petclinic-customers-service:latest
           name: customers-service
           imagePullPolicy: IfNotPresent
-          livenessProbe:
-            httpGet:
-              port: 8080
-              path: /actuator/health/liveness
-            initialDelaySeconds: 90
-            periodSeconds: 5
-          readinessProbe:
-            httpGet:
-              port: 8080
-              path: /actuator/health/readiness
-            initialDelaySeconds: 15
           lifecycle:
             preStop:
               exec:
