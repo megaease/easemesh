@@ -50,6 +50,9 @@ const (
 	sidecarEgressPortName         = "sidecar-egress"
 	sidecarEressPortContainerPort = 13002
 
+	sidecarEurekaPortName          = "sidecar-eureka"
+	sidecarEurekaPortContainerPort = 13009
+
 	defaultJMXAliveProbe        = "http://localhost:8778/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
 	defaultAgentHttpServerProbe = "http://localhost:9900/health"
 
@@ -239,6 +242,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 	sideCarContainer.ImagePullPolicy = corev1.PullAlways
 	d.injectPortIntoContainer(sideCarContainer, sidecarIngressPortName, sideCarIngressPort)
 	d.injectPortIntoContainer(sideCarContainer, sidecarEgressPortName, sideCarEgressPort)
+	d.injectPortIntoContainer(sideCarContainer, sidecarEurekaPortName, sideCarEurekaPort)
 	d.injectEnvIntoContainer(sideCarContainer, podIPEnvName, podIPEnv)
 	err := d.injectSidecarVolumeMounts(sideCarContainer, sidecarMountPath)
 	return err
@@ -531,6 +535,14 @@ func sideCarEgressPort() corev1.ContainerPort {
 	port := corev1.ContainerPort{
 		Name:          sidecarEgressPortName,
 		ContainerPort: sidecarEressPortContainerPort,
+	}
+	return port
+}
+
+func sideCarEurekaPort() corev1.ContainerPort {
+	port := corev1.ContainerPort{
+		Name:          sidecarEurekaPortName,
+		ContainerPort: sidecarEurekaPortContainerPort,
 	}
 	return port
 }
