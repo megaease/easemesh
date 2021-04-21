@@ -1,11 +1,5 @@
 name: ingress1
 rules:
-- host: host1
-  paths:
-  - path: /front/
-    backend: mesh-app-frontend
-  - path: /users/
-    backend: mesh-app-backend
 - host: km.megaease.cn
   paths:
   - path: /
