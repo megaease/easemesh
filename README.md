@@ -60,6 +60,8 @@ location /pet/ {
 ```
 * if user's browser is Firefox, it will be routed into canary version. The chrome user will visit the original page. 
 
+2. Developing a canary customer service version, we add extra process to the city field of the customer data. The change can be checked via [this commitment](https://github.com/akwei/spring-petclinic-cloud/commit/3be54a2c7e63c955990cbc1e78dab029b516a3ec)
+
 2. Deploy canary version's customer service with cmd `kubectl apply -f  ./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml`
 3. Open chrome with `$your_domain/pet/#!/owners`, the owner info page remained the same.
 4. Visit the same URL with Firefox, should see the table with brand new city field which will be added "-US" suffix into every record. 
