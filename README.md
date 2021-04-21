@@ -20,7 +20,8 @@ cd ./install
 * Mysql version 14.14+
 ####  Dependence check
 1. Run cmd `kubectl get nodes` to make sure your k8s cluster is healthy. 
-2. Run cmd `mysql -u$your_db_user -p$your_db_pass` to make sure the required db and tables exists. 
+2. Run cmd `mysql -u$your_db_user -p$your_db_pass` to make sure application can connect to db successfully. 
+
 ### Start PetClinic in Easemesh with K8s:
 1. Enter `./example/mesh-app-petclinic` dir, execute `./install.sh `
 2. Using the db table schemes and records provided in [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
