@@ -34,7 +34,7 @@ sidecar:
 observability:
   outputServer:
     enabled: true
-    bootstrapServer: kafka-0.kafka-hs:9093,kafka-1.kafka-hs:9093,kafka-2.kafka-hs:9093
+    bootstrapServer: kafka-0.kafka-hs.default:9093,kafka-1.kafka-hs.default:9093,kafka-2.kafka-hs.default:9093
     timeout: 10000
   tracings:
     enabled: true
