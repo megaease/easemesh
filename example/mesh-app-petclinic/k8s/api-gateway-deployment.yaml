@@ -9,6 +9,13 @@ data:
     server:
       port: 8080
     spring:
+      zipkin:
+          enabled: false
+      sleuth:
+        enabled: false
+        web:
+          servlet:
+          enabled: false
       application:
         name:  pet-api-gateway
       cloud:
@@ -73,7 +80,7 @@ spec:
               exec:
                 command: ["sh", "-c", "sleep 10"]
           command: ["/bin/sh"]
-          args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit  -Dspring.zipkin.enabled=false -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
+          args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
           volumeMounts:
             - mountPath: /application/application-sit.yml
               name: configmap-volume-0
