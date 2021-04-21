@@ -59,7 +59,7 @@ spec:
                 exec:
                   command: ["sh", "-c", "sleep 10"]
             command: ["/bin/sh"]
-            args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
+            args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Dspring.zipkin.enabled=false -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
             resources:
               limits:
                 cpu: 2000m
