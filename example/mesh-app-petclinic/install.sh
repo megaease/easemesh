@@ -10,7 +10,7 @@ COLOR_RED='\033[0;31m'
 COLOR_INFO='\033[0;36m'
 COLOR_NC='\033[0m' # No Color
 
-CONFIG_PATH=$SCRIPT_PATH"/.."
+CONFIG_PATH=$SCRIPT_PATH"/meshservice"
 
 if [ $# -eq 0 ] ; then
     echo "no provied eg server url, use default value: 127.0.0.1:2381"
@@ -47,6 +47,9 @@ echo -e "${COLOR_INFO}create ingress rule ${COLOR_NC}"
 $EGCMD mesh ingress create -f $CONFIG_PATH"/ingress-rule.yaml"
 
 
-K8S_YAML_PATH=$SCRIPT_PATH"/../k8s/"
+K8S_YAML_PATH=$SCRIPT_PATH"/k8s/"
+echo -e "${COLOR_INFO}create k8s ns${COLOR_NC}"
+kubectl create ns spring-petclinic  
+
 echo -e "${COLOR_INFO}deploy k8s mesh deployment ${COLOR_NC}"
 kubectl apply -f $K8S_YAML_PATH
