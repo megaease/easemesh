@@ -1,0 +1,52 @@
+apiVersion: mesh.megaease.com/v1beta1
+kind: MeshDeployment
+metadata:
+  namespace: spring-petclinic
+  name: customers-service
+spec:
+  service:
+    name: customers-service
+    labels:
+      version: canary
+  deploy:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: customers-service
+    template:
+      metadata:
+        labels:
+          app: customers-service
+      spec:
+        containers:
+        - image: 192.168.50.105:5001/megaease/spring-petclinic-customers-service:latest
+          name: customers-service
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          command: ["/bin/sh"]
+          args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit  -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          ports:
+          - containerPort: 8080
+          volumeMounts:
+          - mountPath: /application/application-sit.yml
+            name: configmap-volume-0
+            subPath: application-sit.yml
+        volumes:
+          - configMap:
+              defaultMode: 420
+              items:
+                - key: application-sit-yml
+                  path: application-sit.yml
+              name: customers-service
+            name: configmap-volume-0
+        restartPolicy: Always
