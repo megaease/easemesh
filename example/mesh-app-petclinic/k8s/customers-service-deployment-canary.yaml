@@ -2,7 +2,7 @@ apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
   namespace: spring-petclinic
-  name: customers-service
+  name: customers-service-canary
 spec:
   service:
     name: customers-service
