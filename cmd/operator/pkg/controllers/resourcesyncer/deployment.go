@@ -31,8 +31,7 @@ const (
 	agentInitContainerMountPath = "/easeagent-share-volume"
 
 	easeAgentJar       = " -javaagent:" + agentVolumeMountPath + "/easeagent.jar -Deaseagent.log.conf=" + agentVolumeMountPath + "/log4j2.xml "
-	jolokiaAgentJar    = " -javaagent:" + agentVolumeMountPath + "/jolokia.jar "
-	javaAgentJarOption = easeAgentJar + jolokiaAgentJar
+	javaAgentJarOption = easeAgentJar
 
 	javaToolOptionsEnvName = "JAVA_TOOL_OPTIONS"
 	podIPEnvName           = "APPLICATION_IP"
@@ -53,7 +52,6 @@ const (
 	sidecarEurekaPortName          = "sidecar-eureka"
 	sidecarEurekaPortContainerPort = 13009
 
-	defaultJMXAliveProbe        = "http://localhost:8778/jolokia/exec/com.megaease.easeagent:type=ConfigManager/healthz"
 	defaultAgentHttpServerProbe = "http://localhost:9900/health"
 
 	clusterRoleReader           = "reader"
