@@ -1,6 +1,16 @@
 name: customers-service 
 registerTenant: pet 
 resilience:
+canary:
+  canaryRule:
+  - serviceLabels:
+      version: canary
+    filter:
+      headers:
+        X-canary:
+          values:
+          - lv1
+          regexp: ""
 loadBalance:
   policy: random
   HeaderHashKey:

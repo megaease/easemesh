@@ -14,7 +14,7 @@ data:
       cloud:
         loadbalancer:
           ribbon:
-            enabled: false
+            enabled: true
         gateway:
           routes:
              - id: vets-service
