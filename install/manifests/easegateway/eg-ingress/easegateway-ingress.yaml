@@ -7,12 +7,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: easegateway
+      app: easegateway-ingress
   replicas: 1
   template:
     metadata:
       labels:
-        app: easegateway
+        app: easegateway-ingress
     spec:
       containers:
         - name: easegateway-ingress
@@ -36,3 +36,19 @@ spec:
             name: easegateway-ingress-config-cm
 
 
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: easegateway-ingress-svc
+spec:
+  ports:
+    - nodePort: 30010
+      port: 13010
+      protocol: TCP
+      targetPort: 13010
+  selector:
+    app: easegateway-ingress
+  type: NodePort
