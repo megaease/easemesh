@@ -1,4 +1,4 @@
-# easemesh
+# Easemesh
 A service mesh implementation for connecting, secure, control, and observe services of spring-cloud.
 
 ## Install 
@@ -8,9 +8,9 @@ cd ./install
 ```
 * It will register K8s mesh-deployment CRD, and start easemesh control-plane, IngressGateway. 
 
-## Quick Start
+## Quick start
 ### Background
-* SprintCloud PetClinic  [github link](https://github.com/spring-petclinic/spring-petclinic-cloud) micro service example.
+* Spring Cloud PetClinic  [github link](https://github.com/spring-petclinic/spring-petclinic-cloud) micro service example.
 * It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Sprint Cloud Netflix technology stack.
 
 ![The topology of the spring-petclinic diagram](example/mesh-app-petclinic/backgroud/microservices-architecture-diagram.jpg)
@@ -25,7 +25,7 @@ cd ./install
 1. Run cmd `kubectl get nodes` to make sure your k8s cluster is healthy. 
 2. Run cmd `mysql -u$your_db_user -p$your_db_pass` to make sure application can connect to db successfully. 
 
-### Start PetClinic in Easemesh with K8s:
+### Start petclinic in easemesh:
 
 1. Enter `./example/mesh-app-petclinic` dir, execute `./install.sh `
 2. Using the db table schemes and records provided in [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
