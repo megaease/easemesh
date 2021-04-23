@@ -27,7 +27,7 @@ const (
 	sidecarInitContainerName     = "easegateway-sidecar-initializer"
 
 	agentInitContainerName      = "easeagent-initializer"
-	agentInitContainerImage     = "192.168.50.105:5001/megaease/easeagent-initializer:latest"
+	agentInitContainerImage     = "megaease/easeagent-initializer:latest"
 	agentInitContainerMountPath = "/easeagent-share-volume"
 
 	easeAgentJar       = " -javaagent:" + agentVolumeMountPath + "/easeagent.jar -Deaseagent.log.conf=" + agentVolumeMountPath + "/log4j2.xml "
@@ -40,7 +40,7 @@ const (
 	k8sPodIPFieldPath   = "status.podIP"
 	k8sPodNameFieldPath = "metadata.name"
 
-	sidecarImageName                = "192.168.50.105:5001/megaease/easegateway:server-sidecar"
+	sidecarImageName                = "megaease/easegateway:server-sidecar"
 	sidecarContainerName            = "easegateway-sidecar"
 	sidecarMountPath                = "/easegateway-sidecar"
 	sidecarIngressPortName          = "sidecar-ingress"
@@ -96,24 +96,26 @@ func (params *sideCarParams) Yaml() (string, error) {
 }
 
 type deploySyncer struct {
-	meshDeployment *v1beta1.MeshDeployment
-	sideCarImage   string
-	clusterJoinURL string
-	clusterName    string
-	scheme         *runtime.Scheme
-	client         client.Client
+	meshDeployment   *v1beta1.MeshDeployment
+	sideCarImage     string
+	imageRegistryURL string
+	clusterJoinURL   string
+	clusterName      string
+	scheme           *runtime.Scheme
+	client           client.Client
 }
 
 // NewDeploymentSyncer return a syncer of the deployment, our operator will
 // inject sidecar into the sub deployment spec of the MeshDeployment
 func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
-	scheme *runtime.Scheme, clusterJoinURL string, clusterName string, log logr.Logger) syncer.Interface {
+	scheme *runtime.Scheme, clusterJoinURL string, clusterName string, log logr.Logger, imageRegistryURL string) syncer.Interface {
 	newSyncer := &deploySyncer{
-		meshDeployment: meshDeploy,
-		sideCarImage:   sidecarImageName,
-		client:         c,
-		clusterJoinURL: clusterJoinURL,
-		clusterName:    clusterName,
+		meshDeployment:   meshDeploy,
+		sideCarImage:     sidecarImageName,
+		imageRegistryURL: imageRegistryURL,
+		client:           c,
+		clusterJoinURL:   clusterJoinURL,
+		clusterName:      clusterName,
 	}
 
 	obj := &v1.Deployment{
@@ -236,7 +238,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 
 	command := "/opt/easegateway/bin/easegateway-server -f /easegateway-sidecar/eg-sidecar.yaml"
 	sideCarContainer.Command = []string{"/bin/sh", "-c", command}
-	sideCarContainer.Image = d.sideCarImage
+	sideCarContainer.Image = complateImageURL(d.imageRegistryURL, d.sideCarImage)
 	sideCarContainer.ImagePullPolicy = corev1.PullAlways
 	d.injectPortIntoContainer(sideCarContainer, sidecarIngressPortName, sideCarIngressPort)
 	d.injectPortIntoContainer(sideCarContainer, sidecarEgressPortName, sideCarEgressPort)
@@ -271,12 +273,12 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 }
 
 func (d *deploySyncer) injectInitContainers(deploy *v1.Deployment) error {
-	err := d.injectInitContainersIntoDeployment(deploy, agentInitContainerImage, d.easeAgentInitContainer)
+	err := d.injectInitContainersIntoDeployment(deploy, complateImageURL(d.imageRegistryURL, agentInitContainerImage), d.easeAgentInitContainer)
 	if err != nil {
 		return errors.Wrap(err, "inject EaseAgent InitContainer error")
 	}
 
-	err = d.injectInitContainersIntoDeployment(deploy, sidecarImageName, d.sidecarInitContainer)
+	err = d.injectInitContainersIntoDeployment(deploy, complateImageURL(d.imageRegistryURL, sidecarImageName), d.sidecarInitContainer)
 	if err != nil {
 		return errors.Wrap(err, "inject sidecar InitContainer error")
 	}
@@ -309,7 +311,7 @@ func (d *deploySyncer) easeAgentInitContainer(deploy *v1.Deployment) (corev1.Con
 	initContainer := corev1.Container{}
 
 	initContainer.Name = agentInitContainerName
-	initContainer.Image = agentInitContainerImage
+	initContainer.Image = complateImageURL(d.imageRegistryURL, agentInitContainerImage)
 	initContainer.ImagePullPolicy = corev1.PullAlways
 
 	command := "cp -r " + agentVolumeMountPath + "/. " + agentInitContainerMountPath
@@ -328,7 +330,7 @@ func (d *deploySyncer) sidecarInitContainer(deploy *v1.Deployment) (corev1.Conta
 	initContainer := corev1.Container{}
 
 	initContainer.Name = sidecarInitContainerName
-	initContainer.Image = sidecarImageName
+	initContainer.Image = complateImageURL(d.imageRegistryURL, sidecarImageName)
 	initContainer.ImagePullPolicy = corev1.PullAlways
 
 	params, err := d.initSideCarParams()
@@ -557,4 +559,8 @@ func sidecarVolumeMount() corev1.VolumeMount {
 	volumeMount.Name = sidecarParamsVolumeName
 	volumeMount.MountPath = sidecarParamsVolumeMountPath
 	return volumeMount
+}
+
+func complateImageURL(registryURL string, imageName string) string {
+	return registryURL + "/" + imageName
 }

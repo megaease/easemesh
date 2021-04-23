@@ -26,6 +26,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	DefaultImageRegistryURL = "docker.io"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -39,6 +43,7 @@ func init() {
 }
 
 type ConfigSpec struct {
+	ImageRegistryURL     string `yaml:"image-registry-url" jsonschema:"required"`
 	ClusterName          string `yaml:"cluster-name" jsonschema:"required"`
 	ClusterJoinURL       string `yaml:"cluster-join-urls" jsonschema:"required"`
 	MetricsAddr          string `yaml:"metrics-bind-address" jsonschema:"required"`
@@ -47,15 +52,17 @@ type ConfigSpec struct {
 }
 
 func main() {
-	var ClusterName string
+	var imageRegistryURL string
+	var clusterName string
 	var clusterJoinURL string
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
 	var configFile string
 
-	flag.StringVar(&ClusterName, "cluster-name", ":", "The cluster-name of the eg master.")
-	flag.StringVar(&clusterJoinURL, "cluster-join-urls", ":", "The address the eg master binds to.")
+	flag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The Registry URL of the Image.")
+	flag.StringVar(&clusterName, "cluster-name", "", "The cluster-name of the eg master.")
+	flag.StringVar(&clusterJoinURL, "cluster-join-urls", "", "The address the eg master binds to.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
@@ -80,7 +87,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		ClusterName = spec.ClusterName
+		imageRegistryURL = spec.ImageRegistryURL
+		clusterName = spec.ClusterName
 		clusterJoinURL = spec.ClusterJoinURL
 		metricsAddr = spec.MetricsAddr
 		probeAddr = spec.ProbeAddr
@@ -104,12 +112,13 @@ func main() {
 	}
 
 	if err = (&controllers.MeshDeploymentReconciler{
-		Client:         mgr.GetClient(),
-		Log:            ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
-		Scheme:         mgr.GetScheme(),
-		ClusterJoinURL: clusterJoinURL,
-		ClusterName:    ClusterName,
-		Recorder:       mgr.GetEventRecorderFor("controller.MeshDeployment"),
+		Client:           mgr.GetClient(),
+		Log:              ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
+		Scheme:           mgr.GetScheme(),
+		ClusterJoinURL:   clusterJoinURL,
+		ClusterName:      clusterName,
+		ImageRegistryURL: imageRegistryURL,
+		Recorder:         mgr.GetEventRecorderFor("controller.MeshDeployment"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MeshDeployment")
 		os.Exit(1)
