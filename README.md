@@ -44,11 +44,11 @@ easegateway-cluster-0-${random-suffix}  1/1   Running  0     18h
 
 ubuntu ~ |>kubectl get pod easegateway-cluster-1-${random-suffix}
 NAME              READY  STATUS  RESTARTS  AGE
-easegateway-cluster-1-${random-suffix}  1/1   Running  0     18
+easegateway-cluster-1-${random-suffix}  1/1   Running  0     18h
 
 ubuntu ~ |>kubectl get pod easegateway-cluster-2-${random-suffix}
 NAME              READY  STATUS  RESTARTS  AGE
-easegateway-cluster-2-${random-suffix}  1/1   Running  0     18
+easegateway-cluster-2-${random-suffix}  1/1   Running  0     18h
 ```
 2. Run cmd to check CRD's successfully registration
 ```
@@ -65,7 +65,7 @@ meshdeployments.mesh.megaease.com       2021-03-18T02:54:15Z
 
 ##### Start PetClinic in Easemesh with K8s:
 
-1. Enter `./example/mesh-app-petclinic` dir, execute `./install.sh `
+1. Enter `./example/mesh-app-petclinic` dir, execute `./deploy.sh `
 2. Using the db table schemes and records provided in [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
 3. Run `kubectl get svc mesh-ingress `
 Easemesh will create a k8s `NodePort` type service for Easemesh IngressGateway. Configure it into your traffic gateway's routing address,e.g., configure NGINX with
@@ -87,4 +87,7 @@ location /pet/ {
 3. Deploy it with cmd `kubectl apply -f  ./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml`
 4. Open chrome with `$your_domain/pet/#!/owners`, the owner info page remained the same.
 5. Enable colored traffic from step 1, and visit the same URL again. Should see the table with brand new city field which will be added "-US" suffix into every record. 
+
+#### Undeploy
+* Enter `./example/mesh-app-petclinic` dir, execute `./undeploy.sh`.
 
