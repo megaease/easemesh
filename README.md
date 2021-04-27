@@ -11,10 +11,13 @@ A service mesh implementation for connecting, secure, control, and observe servi
 * ![The architecture diagram](/imgs/architecture.png)
 ### Features
 * Zero-code modification for Java Spring-Cloud application migration, only small configuration update needed.
-* Compatible with popular Java Spring-Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos)
-* Canary Deployment
-* Resilience (Timeout/CircuitBreaker/Retryer/Limiter)
-* Observability(Metrics/Tracing/Log)
+* Compatible with popular Java Spring-Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos). 
+* **Canary Deployment**: routing requests based on colored traffic and different versions of the service.
+* **Resilience**: including Timeout/CircuitBreaker/Retryer/Limiter, complete follow Resilience4j's design.
+* **Observability**, including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened and take corresponding actions immediately.  
+### Dependence projects
+1. MegaEase EaseAgent, [github](https://github.com/megaease/easeagen) 
+2. MegaEase EaseGateway, [github](https://github.com/megaease/easegateway) 
 
 ## Quick Start
 #### Environment require
@@ -83,11 +86,30 @@ location /pet/ {
 ![EaseMesh Canary topology](./imgs/canary-deployment.png)
 
 1. Colored your traffic with HTTP header `X-Canary: lv1`. This can be done by using Chrome browser's **ModHeader** plugin. If users visit the PetClinic website with desired HTTP header, Easemesh will route it into the Customer service's canary version. 
-2. Developing a canary version of Customer service, which adds an  extra process to the city field of the customer data. The change can be checked via [this commitment](https://github.com/akwei/spring-petclinic-cloud/commit/3be54a2c7e63c955990cbc1e78dab029b516a3ec)
-3. Deploy it with cmd `kubectl apply -f  ./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml`
-4. Open chrome with `$your_domain/pet/#!/owners`, the owner info page remained the same.
-5. Enable colored traffic from step 1, and visit the same URL again. Should see the table with brand new city field which will be added "-US" suffix into every record. 
+2. Developing a canary version of Customer service, which adds an  extra process to the city field of the customer data. The change 
+is 
+```
+diff --git a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
+index 360e765..cc2df3d 100644
+--- a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
++++ b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
+@@ -99,7 +99,7 @@ public class Owner {
+     }
+ 
+     public String getAddress() {
+-        return this.address;
++        return this.address + " - US";
+     }
+ 
+     public void setAddress(String address) {k
+```
+3. Build the canary Customer service's image, and update the image's URL into `./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml` file's line [#L22](https://github.com/megaease/easemesh/blob/main/example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml#L22). 
+4. Deploy it with cmd `kubectl apply -f  ./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml`
+5. Open chrome with `$your_domain/pet/#!/owners`, the owner info page remained the same.
+6. Enable colored traffic from step 1, and visit the same URL again. Should see the table with brand new city field which will be added "-US" suffix into every record. 
 
 #### Undeploy
 * Enter `./example/mesh-app-petclinic` dir, execute `./undeploy.sh`.
 
+## License
+EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
