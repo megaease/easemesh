@@ -81,7 +81,7 @@ location /pet/ {
 ```
 4. Open browser with `$your_domain/pet/#!/welcome`, should see the welcome page of the PetClinic website. 
 
-### Canary deployment
+#### Canary deployment
 
 ![EaseMesh Canary topology](./imgs/canary-deployment.png)
 
