@@ -1,4 +1,0 @@
-# Adds namespace to all resources.
-namespace: mesh-operator-system
-resources:
-  - easegateway.yaml
