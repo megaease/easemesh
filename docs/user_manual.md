@@ -210,7 +210,7 @@ circuitBreaker:
 | policies[].slidingWindowType                     | string       | COUNT_BASED or TIME_BASED                                                                                                                                                                                                                                                                                                                                                                                           |
 | policies[].failureRateThreshold                  | int          | Configures the failure rate threshold in percentage.  When the failure rate is equal or greater than the threshold the CircuitBreaker transitions to open and starts short-circuiting calls.                                                                                                                                                                                                                        |
 | policies[].slowCallRateThreshold                 | int          | Configures a threshold in percentage. The CircuitBreaker considers a call as slow when the call duration is greater than slowCallDurationThreshold When the percentage of slow calls is equal or greater the threshold, the CircuitBreaker transitions to open and starts short-circuiting calls.                                                                                                                   |
-| policies[].countingNetworkError                  | bool         |                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| policies[].countingNetworkError                  | bool         | If circuit breaker active in network failure situation or not                                                                                                                                                                                                                                                                                                                                                       |
 | policies[].permittedNumberOfCallsInHalfOpenState | int          | Configures the number of permitted calls when the CircuitBreaker is half open.                                                                                                                                                                                                                                                                                                                                      |
 | policies[].minimumNumberOfCalls                  | int          | Configures the minimum number of calls which are required (per sliding window period) before the CircuitBreaker can calculate the error rate or slow call rate.  For example, if minimumNumberOfCalls is 10, then at least 10 calls must be recorded, before the failure rate can be calculated. If only 9 calls have been recorded the CircuitBreaker will not transition to open even if all 9 calls have failed. |
 | policies[].maxWaitDurationInHalfOpenState        | int          | Configures a maximum wait duration which controls the longest amount of time a CircuitBreaker could stay in Half Open state, before it switches to open. Value 0 means Circuit Breaker would wait infinitely in HalfOpen State until all permitted calls have been completed.                                                                                                                                       |
@@ -468,6 +468,7 @@ tracings:
 2. Update it into your service with cmd `easemesh/bin/meshctl service update ${your_service} observability -f ./tracing.yaml`
 
 * Field description 
+
 | FieldName              | type   | description                                                                                 |
 | ---------------------- | ------ | ------------------------------------------------------------------------------------------- |
 | enabled                | bool   | Enabled this service's global tracing reporting switch                                      |
@@ -480,10 +481,12 @@ tracings:
 | output.queuedMaxSize   | int    | The output Kafka's queue max size                                                           |
 | output.messageTimeout  | int    | The output Kafka's message timeout                                                          |
 
-#### 4.3 Metrics 
-* Background: EaseMesh collects service-level metrics for monitoring services communication inside mesh. The Metrics cover throughput ratio, executions error ratio, executions latency, response distribution and so on. Also EaseMesh supports many kinds of metrics recording, including HTTP-Request, Remote-Invoking, Kafka, JDBC, Redis and RabbitMQ. 
+3. View the tracing recording in MegaEase portal: ![The tracing diagram](/imgs/tracing.png)
+
+#### 4.3 Metrics & AccessLog 
+* Background: EaseMesh collects service-level metrics for monitoring services communication inside mesh. The Metrics cover throughput ratio, executions error ratio, executions latency, response distribution and so on. Also EaseMesh supports many kinds of metrics recording, including Access-Log, HTTP-Request, Remote-Invoking, Kafka, JDBC, Redis and RabbitMQ. 
 * Steps:
-1. We want to enable all tracing recording. Prepare the Tracing configuration named `tracing.yaml` as below:
+1. We want to enable all variable metrics reporting. Prepare the metrics configuration named `metrics.yaml` as below:
 ```
 metrics:
   enabled: true
@@ -532,10 +535,12 @@ metrics:
 
 * Field description 
 
-| FieldName       | type   | description                                                      |
-| --------------- | ------ | ---------------------------------------------------------------- |
-| enabled         | bool   | Enabled this service's global metrics reporting switch           |
-| access.enabled  | bool   | Enabled this metrics section or not                              |
-| access.interval | int    | The reporting interval, it's millisecond, default value is 30000 |
-| access.topic    | string | The metrics reporting Kafka topic name                           |
+| FieldName       | type   | description                                                                 |
+| --------------- | ------ | --------------------------------------------------------------------------- |
+| enabled         | bool   | Enabled this service's global metrics reporting switch                      |
+| access.enabled  | bool   | Enabled access log metrics section or not                                   |
+| access.interval | int    | The access log reporting interval, it's millisecond, default value is 30000 |
+| access.topic    | string | The access log reporting to which Kafka topic                               |
                         
+
+3. View the metrics in MegaEase portal: ![The Metrics diagram](/imgs/metrics.png))
