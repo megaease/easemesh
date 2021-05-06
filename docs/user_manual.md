@@ -257,7 +257,7 @@ timeLimiter:
 2. Get current service's resilience spec by using cmd `easemesh/bin/meshctl service resilience get ${your_service_name}"`, Add a Retryer into the `retryer` section, save it into a new yaml file named `retryer.yaml` .
 ```
 retryer:
-  policy:
+  policies:
     - name: default
       maxAttempts: 3
       waitDuration: 10ms
@@ -281,21 +281,21 @@ retryer:
 3. Once the client uses retryer successfully, the client will receive HTTP response header with field `X-EG-Time-Limiter: time-out`.
 * Field description 
 
-| FieldName                     | type         | description                                                                      |
-| ----------------------------- | ------------ | -------------------------------------------------------------------------------- |
-| policy[].name                 | string       | the name of this retry policy.                                                   |
-| policy[].maxAttempts          | int          | The maximum number of attempts (including the initial call as the first attempt) |
-| policy[].waitDuration         | string       | A based and fixed wait duration between retry attempts.                          |
-| policy[].backoffPolicy        | string       | `ExponentialBackOff` or `RandomBackOff`                                          |
-| policy[].randomizationFactor  | float        | float value between 0 and 1                                                      |
-| policy[].countingNetworkError | bool         | If retry in network failure situation                                            |
-| policy[].failureStatusCodes   | int array    | An HTTP statue codes array when retryer can perform                              |
-| defaultPolicyRef              | string       | default applied policy name                                                      |
-| urls[].methods                | string array | HTTP methods, "POST","PUT","DELETE","GET"....                                    |
-| urls[].url.prefix             | string       | URL matching with prefix                                                         |
-| urls[].url.exact              | string       | URL matching with exactly                                                        |
-| urls[].url.regex              | string       | URL matching with regular expression                                             |
-| urls[].url.policyRef          | string       | the desired apply retry policy name                                              |
+| FieldName                       | type         | description                                                                      |
+| ------------------------------- | ------------ | -------------------------------------------------------------------------------- |
+| policies[].name                 | string       | the name of this retry policies.                                                 |
+| policies[].maxAttempts          | int          | The maximum number of attempts (including the initial call as the first attempt) |
+| policies[].waitDuration         | string       | A based and fixed wait duration between retry attempts.                          |
+| policies[].backoffPolicy        | string       | `ExponentialBackOff` or `RandomBackOff`                                          |
+| policies[].randomizationFactor  | float        | float value between 0 and 1                                                      |
+| policies[].countingNetworkError | bool         | If retry in network failure situation                                            |
+| policies[].failureStatusCodes   | int array    | An HTTP statue codes array when retryer can perform                              |
+| defaultPolicyRef                | string       | default applied policy name                                                      |
+| urls[].methods                  | string array | HTTP methods, "POST","PUT","DELETE","GET"....                                    |
+| urls[].url.prefix               | string       | URL matching with prefix                                                         |
+| urls[].url.exact                | string       | URL matching with exactly                                                        |
+| urls[].url.regex                | string       | URL matching with regular expression                                             |
+| urls[].url.policyRef            | string       | the desired apply retry policy name                                              |
 
 #### 3.2 Canary deployment
 * Background: When new version of service called canary version want to be applied into formal environment, after unit testing, integration testing and regression testing, we still need to deploy these canary version's instances with small amount to accept some real and colored traffic. The colored traffic means when some targeted users with specified labels, the traffic gateway will color this user's traffic with desired labels. When this new instances deal with colored traffic for some while and become stable, we can scale the canary version's number to replace the former version's service instances. 
