@@ -14,18 +14,176 @@
 * [The EaseAgent](https://github.com/megaease/easeagent). It's an APM tool under the Java system, used in a distributed system developed by Java. It provides cross-service call chain tracking and performance information collection for distributed systems.
 * [The EaseMonitor](https://github.com/megaease/easeservice-mgmt-monitor).  It's the monitor component of the service governance. It supports dashboard and plane config data, queries and aggregates multiple types metrics data, queries service trace aggregation and topology analysis. 
   
-##### 1.3 Control Plane 
+#### 1.3 Control Plane 
 1. In order to provide high-available ServiceMesh Control Plane in distributed environment, it requires odd numbers of EaseGateway nodes to form a cluster. The user can deliver their service mesh requirements and obtain running status and information inside the mesh by using RESTful-API or CLI through the Control Plane.
 2. Each EaseGateway nodes synchronize configuration to achieve final-consistency with the help of RAFT algorithm. 
 3. Every EaseGateway nodes run an MeshController for mesh-related logic. 
 
-##### 1.4 Data plane
+#### 1.4 Data plane
 1. The Sidecar, is also an EaseGateway node in every service's Pod. It stands by the user's business service which is implemented with Spring-cloud framework. The Sidecar watches the service's specification modifications and applies them locally. The user's business service will accept Ingress traffic and deliver Egress traffic through its Sidecar.  
 2. The JavaAgent, is a no invasion, service based view and high performance solution to enhance service governance's observability features in Java domain. It collects `JDBC`,`HTTP Servlet`, `HTTP filter`, Spring Boot 2.2.x: `WebClient 、 RestTemplate、FeignClient`, RabbitMQ and Jedis' metrics. It also supports collecting access-log and tracing recording.
 
-##### 1.5 Kubernetes Deployment
+#### 1.5 Kubernetes Deployment
 1. EaseMesh uses Kubernetes CRD(customer resource define) to create a customized Mesh-needed Kubernetes Deployment. 
 2. This EaseMesh CRD can automatically inject Sidecar and add JavaAgent using command into environment variable into user's original Kubernetes deployment.
+
+### 1.6. Install 
+
+##### 1.6.1 Prerequisites
+Before you begin, check the following prerequisites:
+
+1. Deploy kubernetes cluster with 1.18+.
+2. Download the [EaseMesh release](https://github.com/megaease/easemesh/releases). 
+
+
+##### 1.6.2 Install EaseMesh with egctl
+You can install the EaseMesh using the following command:
+
+```bash
+$ cd easemesh/install
+$ bin/egctl mesh install
+EaseGateway control plane deploy success. Waiting startup...
+EaseGateway control plane startup success.
+Starting mesh controller success.
+EaseGateway Ingress deploy success.
+EaseMesh Operator deploy success.
+Done.
+
+```
+
+This command deploys the components with default configuration. You can pass parameters through the command line to modify the configuration. Like following command:
+
+```bash
+$ bin/egctl mesh install --mesh-namespace=mynamespace
+```
+
+You can get all the configurations through ``-h``:
+
+```textmate
+$ bin/egctl mesh install -h
+
+Deploy EaseMesh Components
+
+Usage:
+  egctl mesh install [flags]
+
+Examples:
+egctl mesh install <args>
+
+Flags:
+      --easegateway-control-plane-replicas int    (default 3)
+      --easegateway-image string                  (default "megaease/easegateway:latest")
+      --easegateway-ingress-replicas int          (default 3)
+      --easemesh-operator-image string            (default "megaease/easemesh:latest")
+      --easemesh-operator-replicas int            (default 3)
+      --eg-admin-port int                         (default 2381)
+      --eg-client-port int                        (default 2379)
+      --eg-control-plane-pv-capacity int         The capacity of the PersistentVolume for easegateway control plane storage, the unit is Gib. (default 3)
+      --eg-control-plane-pv-hostpath string      The host path of the PersistentVolume for easegateway control plane storage. (default "/opt/easegateway")
+      --eg-control-plane-pv-name string          The name of PersistentVolume for easegateway control plane storage. (default "easegateway-control-plane-pv")
+      --eg-peer-port int                          (default 2380)
+      --eg-service-admin-port int                 (default 2381)
+      --eg-service-name string                    (default "easegateway-public")
+      --eg-service-peer-port int                  (default 2380)
+  -f, --file string                              A yaml file specifying the install params.
+      --heartbeat-interval int                    (default 5)
+  -h, --help                                     help for install
+      --image-registry-url string                 (default "docker.io")
+      --mesh-namespace string                     (default "easemesh")
+      --registry-type string                      (default "eureka")
+
+Global Flags:
+  -o, --output string   Output format(json, yaml) (default "yaml")
+      --server string   The address of the EaseGateway endpoint (default "localhost:2381")
+
+```
+- Parameters Description 
+
+| ParameterName                     | type   | description                                                                            |
+| -------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| image-registry-url                 | string | Docker Image registry address, EaseMesh use it to pull EaseGateway and EaseMeshOperator Image. You can replace it with your private registry. Default: ``docker.io``.|
+| easegateway-image                  | string | The EaseGateway Image Name. Default: ``megaease/easegateway:latest``.                                      |
+| easemesh-operator-image            | string | The EaseMeshOperator Image. Default: ``megaease/easemesh:latest``.                                         |
+| mesh-namespace                     | string | The Kubernetes Namespace for deployment of EaseMesh. Default: ``easemesh``.                                |
+| easegateway-control-plane-replicas | int    | The replicas of EaseGateway Control Plane's statefulset. Default: ``3``.                                   |
+| easegateway-ingress-replicas       | int    | The replicas of EaseGateway Ingress's deployment. Default: ``easemesh``.                                   |
+| easemesh-operator-replicas         | int    | The replicas of EaseMesh Operator's deployment.  Default: ``easemesh``.                                    |
+| eg-client-port                     | int    | Port of EaseGateway Control Plane listen on for client traffic. Default: ``2379``.                         |
+| eg-peer-port                       | int    | Port of EaseGateway Control Plane listen on for peer traffic. Default: ``2380``.                           |
+| eg-admin-port                      | int    | Port of EaseGateway Control Plane listen on for admin traffic. Default: ``2381``.                          |
+| eg-service-name                    | string | The Kubernetes service for EaseGateway control plane pods. Default: ``easegateway-public``                 |                                                     
+| eg-service-client-port             | int    | Port of the service for pods's client port. Default: ``2379``.                                             |                                                                         |
+| eg-service-peer-port               | int    | Port of the service for pods's peer port. Default: ``2380``.                                               |                                                                    |
+| eg-service-admin-port              | int    | Port of the service for pods's admin port. Default: ``2381``.                                              |                                                                    |
+| eg-control-plane-pv-name           | string | The PersistentVolume for EaseGateway Control Plane storage. Default: ``easegateway-control-plane-pv``.     |
+| eg-control-plane-pv-hostpath       | string | The path on host for EaseGateway Control Plane's PersistentVolume storage. Default: ``/opt/easegateway``.  |
+| eg-control-plane-pv-capacity       | int    | The capacity of EaseGateway Control Plane's PersistentVolume, the unit is Gib.  Default: ``3``.            |
+| registry-type                      | string | The registry type for application service registry. Default: ``eureka``                                    |
+| heartbeat-interval                 | int    | The interval for checking service heartbeat, the unit is second. Default: ``5``                            |  
+| file                               | string | The config file for above parameters.
+    
+
+##### 1.6.3 Check what’s installed      
+The ``egctl mesh install`` command deploys the ``meshdeployments.mesh.megaease.com `` of CRD, the EaseGateway ControlPlane of StatefulSet and the PersistentVolume required for its storage, 
+EaseGatewayIngress and EaseMeshOperator of Deployment and required ConfigMap, Service, etc.
+
+You can check all resources using following command:
+
+```textmate
+$ kubectl get crd | grep meshdeployment
+meshdeployments.mesh.megaease.com                    
+
+$ kubectl get ns | grep easemesh
+easemesh          Active   33s
+
+$ kubectl get statefulsets.apps -n easemesh
+NAME                        READY   AGE
+easegateway-control-plane   3/3     33s
+
+$ kubectl get deployments.apps -n easemesh
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+easegateway-ingress   3/3     3            3           33s
+easemesh-operator     3/3     3            3           33s
+mesh-operator-hahha   3/3     3            3           33s
+
+$ kubectl get pv
+NAME                           CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                                               STORAGECLASS   REASON   AGE
+easegateway-control-plane-pv   3          RWO            Retain           Bound    easemesh/easegateway-control-plane-pv-easegateway-control-plane-0                           44h
+
+$ kubectl get pods -n easemesh
+NAME                                   READY   STATUS    RESTARTS   AGE
+easegateway-control-plane-0            1/1     Running   0          33s
+easegateway-control-plane-1            1/1     Running   0          33s
+easegateway-control-plane-2            1/1     Running   0          33s
+easegateway-ingress-847b7bddbb-9q7nf   1/1     Running   0          33s
+easegateway-ingress-847b7bddbb-px9n7   1/1     Running   0          33s
+easegateway-ingress-847b7bddbb-wj8ss   1/1     Running   0          33s
+easemesh-operator-5fd5d55f8f-6d5bj     2/2     Running   0          33s
+easemesh-operator-5fd5d55f8f-g89f9     2/2     Running   0          33s
+easemesh-operator-5fd5d55f8f-j6ksk     2/2     Running   0          33s
+
+$ kubectl get svc -n easemesh
+NAME                                               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+easegateway-hs                                     ClusterIP   None             <none>        2381/TCP,2380/TCP,2379/TCP   33s
+easegateway-ingress                                NodePort    10.106.94.98     <none>        13010:30010/TCP              33s
+easegateway-public                                 ClusterIP   10.104.166.129   <none>        2381/TCP,2380/TCP,2379/TCP   33s
+mesh-operator-controller-manager-metrics-service   ClusterIP   10.97.62.250     <none>        8443/TCP                     33s
+```
+
+##### 1.6.4 Access EaseGateway Control Plane
+You can use the ``ClusterIP:AdminPort`` of easegateway-public service to access EaseGateway Control Plane by ``egctl``, like following command:
+
+```bash
+# Query Objects
+$ bin/egctl object list --server 10.104.166.129:2381
+- heartbeatInterval: 5s
+  kind: MeshController
+  name: easemesh-controller
+  registryType: eureka
+
+```
+
+Now you can deploy application in EaseMesh according to the following document.
 
 ### 2.Deploy application in EaseMesh 
 #### 2.1 Background
@@ -46,6 +204,7 @@ description: "demo tenant"
 3. Check the tenant's creation by running cmd `eashmesh/bin/meshctl tenant get ${your_tenant_name}` 
 
 3. Create a new application the configure file named "my_service.yaml" with content below
+
 ```
 name: ${your_service_name} 
 registerTenant: ${your_tenant_name} 
@@ -65,8 +224,8 @@ sidecar:
 5. Check the service's creation by running cmd `eashmesh/bin/meshctl service get ${your_service_name}`
 
 6. Prepare your application image, and put it into the  your application the configure file named "my_meshdeployment.yaml", here we prepare a Java Spring-cloud application using Eureka discovery center:  
+
 ```
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -149,7 +308,7 @@ spec:
             name: ${your_service}-volume-0
         restartPolicy: Always
 ```
-Check the Kuberentes creation by running cmd `kubectl get pod -n ${your_ns} ${your_service}`
+Check the Kubernetes creation by running cmd `kubectl get pod -n ${your_ns} ${your_service}`
 * **Note**
 1. The configmap section is optional, depends on whether your application need it or not.
 2. The Kubernetes namespace is also optional, you can choice to use the "default" namespace. Once you decide to use a particular namespace, make sure it is already exist.(you can run `kuberctl create ns ${your_ns}` to create yours)
