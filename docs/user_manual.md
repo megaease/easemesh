@@ -1,6 +1,32 @@
 ### 1.Introduction  
 * EaseMesh supports multiple micro service governance features such as traffic management, resilience features and observability. 
 
+#### 1.1 Architecture
+* The EaseMesh architecture is divided into two components. There are Control plane and Data plane. 
+* The Control Plane's responsibility is to manage and monitor all services inside mesh, and accept user's declaring specs through CLT or console. 
+* The Data Plane is composed by the Sidecar and JavaAgent in every deployed service Kubernetes Pod. They combined together to host traffic and gather the produced metrics/logs/tracings transparently from user's business service. The EaseMesh accepts out-side-mesh traffic by providing an Mesh-ingress which is an EaseGateway Node too. 
+* The EaseMesh runs above Kubernetes which is the most popular and powerful orchestration platform currently, so that it can focus on handling Service Mesh about features. 
+
+* ![The architecture diagram](../imgs/architecture.png)
+
+#### 1.2 Reply components
+* [The EaseGateway](https://github.com/megaease/easegateway). It's the all-rounder gateway system to have built-in distributed storage, traffic scheduling, high performance and observability. 
+* [The EaseAgent](https://github.com/megaease/easeagent). It's an APM tool under the Java system, used in a distributed system developed by Java. It provides cross-service call chain tracking and performance information collection for distributed systems.
+* [The EaseMonitor](https://github.com/megaease/easeservice-mgmt-monitor).  It's the monitor component of the service governance. It supports dashboard and plane config data, queries and aggregates multiple types metrics data, queries service trace aggregation and topology analysis. 
+  
+##### 1.3 Control Plane 
+1. In order to provide high-available ServiceMesh Control Plane in distributed environment, it requires odd numbers of EaseGateway nodes to form a cluster. The user can deliver their service mesh requirements and obtain running status and information inside the mesh by using RESTful-API or CLI through the Control Plane.
+2. Each EaseGateway nodes synchronize configuration to achieve final-consistency with the help of RAFT algorithm. 
+3. Every EaseGateway nodes run an MeshController for mesh-related logic. 
+
+##### 1.4 Data plane
+1. The Sidecar, is also an EaseGateway node in every service's Pod. It stands by the user's business service which is implemented with Spring-cloud framework. The Sidecar watches the service's specification modifications and applies them locally. The user's business service will accept Ingress traffic and deliver Egress traffic through its Sidecar.  
+2. The JavaAgent, is a no invasion, service based view and high performance solution to enhance service governance's observability features in Java domain. It collects `JDBC`,`HTTP Servlet`, `HTTP filter`, Spring Boot 2.2.x: `WebClient 、 RestTemplate、FeignClient`, RabbitMQ and Jedis' metrics. It also supports collecting access-log and tracing recording.
+
+##### 1.5 Kubernetes Deployment
+1. EaseMesh uses Kubernetes CRD(customer resource define) to create a customized Mesh-needed Kubernetes Deployment. 
+2. This EaseMesh CRD can automatically inject Sidecar and add JavaAgent using command into environment variable into user's original Kubernetes deployment.
+
 ### 2.Deploy application in EaseMesh 
 #### 2.1 Background
 * EaseMesh can apply Java Spring Cloud application with only limited configuration modifications. No code modifications or recompiling needed. 
@@ -126,7 +152,7 @@ spec:
 Check the Kuberentes creation by running cmd `kubectl get pod -n ${your_ns} ${your_service}`
 * **Note**
 1. The configmap section is optional, depends on whether your application need it or not.
-2. The Kubernets namespace is also optional, you can choice to use the "default" namespace. Once you decide to use a particular namespace, make sure it is already exist.(you can run `kuberctl create ns ${your_ns}` to create yours)
+2. The Kubernetes namespace is also optional, you can choice to use the "default" namespace. Once you decide to use a particular namespace, make sure it is already exist.(you can run `kuberctl create ns ${your_ns}` to create yours)
 3. The Eureka URL is always `http://127.0.0.1:13009/mesh/eureka`. If you are using Consul, the URL will be `http://127.0.0.1:13009`. In Nacos scenario, the URL will be `http://127.0.0.1:13009/nacos/v1`
 ### 3. Traffic Management 
 #### 3.1 Resilience 
@@ -134,7 +160,7 @@ Check the Kuberentes creation by running cmd `kubectl get pod -n ${your_ns} ${yo
 ##### 3.1.1 RateLimiter
 * Background: RateLimiter can establish your services' high availability and reliability, also it can be used for scaling APIs.  Protect your servers from overwhelm by peek traffic. 
 * Steps: 
-1. Deploy your application in EaseMesh, use cmd `eashmesh/bin/meshctl service get ${your_service_name}` to see current mesh service configuration and cmd `kubectl get pods ${your_service_pod_name}` to get whole kubernetes pods and make sure there are pods running for it. 
+1. Deploy your application in EaseMesh, use cmd `eashmesh/bin/meshctl service get ${your_service_name}` to see current mesh service configuration and cmd `kubectl get pods ${your_service_pod_name}` to get whole Kubernetes pods and make sure there are pods running for it. 
 2. We want to limit an API by specified HTTP method `POST` and `GET` and its URL which starts with prefix `/prefix` for accepting 50 request for 100 millisecond in service side. EaseMesh also supports URL matching with exact matching and regular expression matching. Once one request hit the current cycle's limit but there still have historical accumulated token left, it should wait for 100 millisecond for trying to get permitted. Available token will refresh every 10 millisecond for one cycle. 
 3. Get current service's resilience spec by using cmd `easemesh/bin/meshctl service resilience get ${your_service_name"`, Add a RateLimiter into the `rateLimiter` section, save it into a new yaml file named `rateLimiter.yaml` 
 ```
