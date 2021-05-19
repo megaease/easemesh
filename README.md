@@ -27,8 +27,10 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [EaseGateway](h
 * **Microservices governance enhancement:** Although the microservices architecture makes services loosely coupled, helps CI/CD, it also complicates the system maintenance. EaseMesh can provide rich profiling data and problem-solving features for better microservices governance.
 
 #### Principles
-* **Zero code modification:** Get the enhancements provided by Service Mesh with little impact to your original Spring Cloud microservices architecture.  
-* **Service-oriented observability:** Service-centered view of metrics/tracing/log. So it will be clearer and more effective for knowing your services' SLA and solving your services' operational problems. 
+* **Spring Cloud Compatibility: ** Spring Cloud domain service management and resilient desgin.
+* **No Code Changes:** Using sidecar & Java-agent for completed service governance and integrated observability.
+* **Service Insight:** Service running metrics/tracing/logs monitoring. 
+ 
 
 ### Architecture Diagram
 * ![The architecture diagram](/imgs/architecture.png)
