@@ -1,5 +1,5 @@
 # EaseMesh
-A service mesh compatible with the Spring Cloud ecosystem. Using [EaseGateway](https://github.com/megaease/easegateway) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
+A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
 
 - [EaseMesh](#easemesh)
   - [1. Purposes](#1-purposes)
@@ -48,7 +48,7 @@ Shortly, **the EashMesh leverages the Kubernetes sidecar and Java Agent techniqu
 
 ## 5. Dependent Projects
 1. [MegaEase EaseAgent](https://github.com/megaease/easeagent) 
-2. [MegaEase EaseGateway](https://github.com/megaease/easegateway) 
+2. [MegaEase Easegress](https://github.com/megaease/easegress) 
 
 ## 6. Quick Start
 ### 6.1 Environment Requirement 
@@ -69,7 +69,7 @@ Shortly, **the EashMesh leverages the Kubernetes sidecar and Java Agent techniqu
     $ cd ./install
     $ ./egctl mesh install
     ```
-    **Note:** EaseMesh installation needs [EaseGateway](https://github.com/megaease/easegateway) and [EaseAgent](https://github.com/megaease/easeagent)'s image. They are provided in Docker Hub. If you want to get them from your private image repository, run `./egctl mesh install --image-registry-url ${your_image-registry-url}` instead. 
+    **Note:** EaseMesh installation needs [easegress](https://github.com/megaease/easegress) and [EaseAgent](https://github.com/megaease/easeagent)'s image. They are provided in Docker Hub. If you want to get them from your private image repository, run `./egctl mesh install --image-registry-url ${your_image-registry-url}` instead. 
 
 2. Checking control plane and ingress gateway's status 
 
@@ -78,17 +78,17 @@ Shortly, **the EashMesh leverages the Kubernetes sidecar and Java Agent techniqu
     NAME              READY  STATUS  RESTARTS  AGE
     mesh-ingress-${random-suffix}  1/1   Running  0     18h
 
-    $ kubectl get pod easegateway-cluster-0-${random-suffix}
+    $ kubectl get pod easegress-cluster-0-${random-suffix}
     NAME              READY  STATUS  RESTARTS  AGE
-    easegateway-cluster-0-${random-suffix}  1/1   Running  0     18h
+    easegress-cluster-0-${random-suffix}  1/1   Running  0     18h
 
-    $ kubectl get pod easegateway-cluster-1-${random-suffix}
+    $ kubectl get pod easegress-cluster-1-${random-suffix}
     NAME              READY  STATUS  RESTARTS  AGE
-    easegateway-cluster-1-${random-suffix}  1/1   Running  0     18h
+    easegress-cluster-1-${random-suffix}  1/1   Running  0     18h
 
-    $ kubectl get pod easegateway-cluster-2-${random-suffix}
+    $ kubectl get pod easegress-cluster-2-${random-suffix}
     NAME              READY  STATUS  RESTARTS  AGE
-    easegateway-cluster-2-${random-suffix}  1/1   Running  0     18h
+    easegress-cluster-2-${random-suffix}  1/1   Running  0     18h
     ```
 
 
