@@ -6731,6 +6731,9 @@ spec:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file'
                 properties:
+                  appContainerName:
+                    default: ""
+                    type: string
                   labels:
                     additionalProperties:
                       type: string
@@ -6740,11 +6743,7 @@ spec:
                   name:
                     description: Name is mesh service name of the deployment
                     type: string
-                  appContainerName:
-                    description: AppContainerName is the name of the application container
-                    type: string
                 required:
-                - labels
                 - name
                 type: object
             required:

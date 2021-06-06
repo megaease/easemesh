@@ -71,7 +71,7 @@ var _ = Describe("meshdeployment controller", func() {
 			},
 		}
 		Expect(k8sClient.Create(context.TODO(), &meshDeployment)).To(Succeed())
-		deploySyncer := resourcesyncer.NewDeploymentSyncer(k8sClient, &meshDeployment, scheme.Scheme, "", "", log)
+		deploySyncer := resourcesyncer.NewDeploymentSyncer(k8sClient, &meshDeployment, scheme.Scheme, "", "", log, "")
 		Expect(syncer.Sync(context.TODO(), deploySyncer, &mockRecorder{})).To(Succeed())
 
 	})
@@ -96,10 +96,6 @@ var _ = Describe("meshdeployment controller", func() {
 	})
 
 })
-
-func fromInt(i int) *int {
-	return &i
-}
 
 func fromInt32(i int32) *int32 {
 	return &i

@@ -1,6 +1,10 @@
 package resourcesyncer
 
 import (
+	"net/url"
+	"strconv"
+	"strings"
+
 	"github.com/go-logr/logr"
 	"github.com/go-test/deep"
 	"github.com/imdario/mergo"
@@ -12,10 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"net/url"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
-	"strings"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 
 	sidecarParamsVolumeName      = "sidecar-params-volume"
 	sidecarParamsVolumeMountPath = "/sidecar-params-volume"
-	sidecarInitContainerName     = "easegateway-sidecar-initializer"
+	sidecarInitContainerName     = "easegress-sidecar-initializer"
 
 	agentInitContainerName      = "easeagent-initializer"
 	agentInitContainerImage     = "megaease/easeagent-initializer:latest"
@@ -40,9 +41,9 @@ const (
 	k8sPodIPFieldPath   = "status.podIP"
 	k8sPodNameFieldPath = "metadata.name"
 
-	sidecarImageName                = "megaease/easegateway:server-sidecar"
-	sidecarContainerName            = "easegateway-sidecar"
-	sidecarMountPath                = "/easegateway-sidecar"
+	sidecarImageName                = "megaease/easegress:server-sidecar"
+	sidecarContainerName            = "easemesh-sidecar"
+	sidecarMountPath                = "/easegress-sidecar"
 	sidecarIngressPortName          = "sidecar-ingress"
 	sidecarIngressPortContainerPort = 13001
 
@@ -70,7 +71,7 @@ type sideCarParams struct {
 	ClusterRequestTimeout string            `yaml:"cluster-request-timeout"`
 	ClusterRole           string            `yaml:"cluster-role"`
 	ClusterName           string            `yaml:"cluster-name"`
-	Labels                map[string]string `yaml: "Labels"`
+	Labels                map[string]string `yaml:"Labels"`
 }
 
 func (params *sideCarParams) String() string {
@@ -101,7 +102,6 @@ type deploySyncer struct {
 	imageRegistryURL string
 	clusterJoinURL   string
 	clusterName      string
-	scheme           *runtime.Scheme
 	client           client.Client
 }
 
@@ -236,7 +236,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 
 	sideCarContainer.Name = sidecarContainerName
 
-	command := "/opt/easegateway/bin/easegateway-server -f /easegateway-sidecar/eg-sidecar.yaml"
+	command := "/opt/easegress/bin/easegress -f /easegress-sidecar/eg-sidecar.yaml"
 	sideCarContainer.Command = []string{"/bin/sh", "-c", command}
 	sideCarContainer.Image = complateImageURL(d.imageRegistryURL, d.sideCarImage)
 	sideCarContainer.ImagePullPolicy = corev1.PullAlways
