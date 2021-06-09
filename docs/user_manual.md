@@ -1,4 +1,26 @@
 # Mesh Service  
+- [Mesh Service](#mesh-service)
+  - [Create a mesh service](#create-a-mesh-service)
+  - [Canary deployment](#canary-deployment)
+  - [Sidecar Traffic](#sidecar-traffic)
+    - [Inbound](#inbound)
+    - [Outbound](#outbound)
+    - [Config](#config)
+  - [Resilience](#resilience)
+    - [CircuitBreaker](#circuitbreaker)
+    - [RateLimiter](#ratelimiter)
+    - [Retryer](#retryer)
+    - [TimeLimiter](#timelimiter)
+- [Observability](#observability)
+  - [Tracing](#tracing)
+    - [Turn-on tracing](#turn-on-tracing)
+    - [Turn-off tracing](#turn-off-tracing)
+  - [Metrics](#metrics)
+    - [Turn-on metrics reporting](#turn-on-metrics-reporting)
+    - [Turn-off metrics reporting](#turn-off-metrics-reporting)
+  - [Log](#log)
+    - [Turn-on Log](#turn-on-log)
+    - [Turn-off Log](#turn-off-log)
 ![Architecture](../imgs/architecture.png)
 
 1. EaseMesh divides the main components into two parts, one is **Control plane**, the other is **Data plane**. In the control plane, EaseMesh uses the Easegress cluster to form a reliable decision delivery and persistence unit. The data plane is composed of each mesh service with the user's business logic and EaseMesh's enhancement units, including EaseAgent and Easegress-sidecar. And there is also a Mesh Ingress unit for routing and handling South-North way traffic.   
@@ -244,15 +266,18 @@ MeshController will create a dedicated pipeline to handle inbound traffic:
 1. Accept business traffic from outside in one port.
 2. Use RateLimiter (See below) to do rate limiting.
 3. Transport traffic to the service.
+
 ### Outbound
 MeshController will create dedicated pipelines to handle outbound traffic:
 1. Accept business traffic from service in one port.
 2. Use CircuitBreaker, Retryer, TimeLimiter to do protection for receiving services according to their own config.
 3. Use load balance to choose the service instance.
 4. Transport traffic to the chosen service instance.
+
 Please notice the sidecar only handle business traffic, which means it doesn't hijack traffic to:
 1. Middlewares, such as Redis, Kafka, Mysql, etc.
 2. Any other control plane, such as Istio pilot.
+
 But we are compatible with the Java ecosystem, so we adapt the mainstream service discovery registry like Eureka, Nacos, and Consul. We do hijack traffic to the service discovery, so it's required that the service **changes service registry address to sidecar address** in the startup-config.
 ### Config
 * **Note: Please remember to change the YAML's placholders to your real service name tenant name.**
@@ -272,13 +297,13 @@ sidecar:
   egressPort: 13002
   egressProtocol: http
 ```
-Checking out the [mesh service](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#38) and [sidecar](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#87) structure definitions for more field descriptions. 
+Checking out the [mesh service](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Service) and [sidecar](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Sidecar) structure definitions for more field descriptions. 
 
 ## Resilience
 We leverage the core concept of the mature fault tolerate library [resilience4j](https://resilience4j.readme.io/) to do the resilience. We choose the pipeline-filter model of Easegress to let us assemble any of them together. Besides the function of every protection, we must know which side the protection takes effect in the Mesh scenario. We use the 2 clean terms: **sender** and **receiver** (of the request).
 ### CircuitBreaker
-The original [Martin Flower article](https://martinfowler.com/bliki/CircuitBreaker.html) describes it well enough. And [Filter CircuitBreaker](https://github.com/megaease/easegress/blob/main/doc/filters.md#circuitbreaker)  gives config and examples of it clearly.
-In Mesh, `CircuitBreaker` takes effect in **sender** side. For example:
+The original [Martin Flower article](https://martinfowler.com/bliki/CircuitBreaker.html) describes it well enough. And [Filter CircuitBreaker](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.CircuitBreaker)  gives config and examples of it clearly.
+In Mesh, `CircuitBreaker` takes effect in **sender** side. For example, modifying YAML below and named it with `circuitBreaker.yaml`:
 ```yaml
 name: ${your-service-name}
 registerTenant: ${your-tenant-name}
@@ -300,10 +325,15 @@ resilience:
         prefix: /service-c/
         policyRef: count-based-example
 ```
+Applying it with cmd
+```bash
+$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f circuitBreaker.yaml
+```
+
 The `sender` is `${your-service-name}`, `receiver`  side contains `service-b`  and `service-c`. So the circuit breaker takes effect in `${your-service-name}`, and all responses from both `service-b` and `service-c` count to one circuit breaker here. Of course if the items of `urls` reference to different policies, the counting process will be in the respective circuit breaker.
 ### RateLimiter
-[Filter RateLimiter](https://github.com/megaease/easegress/blob/main/doc/filters.md#ratelimiter) gives config and examples of it.
-In Mesh, `RateLimter` takes effect in `receiver` side. For example:
+[Filter RateLimiter](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.RateLimiter) gives config and examples of it.
+In Mesh, `RateLimter` takes effect in `receiver` side. For example, modifying YAML below and named it with `reateLimiter.yaml`:
 ```yaml
 name: ${your-service-name}
 registerTenant: tenant-exmaple
@@ -320,10 +350,15 @@ resilience:
         regex: ^/pets/\d+$
       policyRef: policy-example
 ```
+Applying it with cmd
+```bash
+$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f rateLimiter.yaml
+```
 So all matching requests **to** `${your-service-name}` matching will go into the rate limiter `policy-example`. Please notice the requests **from** `${your-service-name}` has no relationship with the rate limiter.
 ### Retryer
-[Filter Retryer](https://github.com/megaease/easegress/blob/main/doc/filters.md#retry) gives config and examples of it.
-In Mesh, `Retry` takes effect in `sender` side. For example:
+[Filter Retryer](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Retryer) gives config and examples of it.
+In Mesh, `Retry` takes effect in `sender` side. For example
+, modifying YAML below and named it with `retryer.yaml`:
 ```yaml
 name: ${your-service-name}
 registerTenant: ${your-tenant-name}
@@ -339,10 +374,14 @@ policies:
         prefix: /books/
       policyRef: policy-example
 ```
+Applying it with cmd
+```bash
+$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f retryer.yaml
+```
 All matching requests **from** `${your-service-name}` will be retried if the response code is one of `500`, `503`, and `504`.
 ### TimeLimiter
-[Filter TimeLimiter](https://github.com/megaease/easegress/blob/main/doc/filters.md#timelimiter) gives config and examples of it.
-In Mesh, `TimeLimiter` takes effect in `sender` side. For example:
+[Filter TimeLimiter](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.TimeLimiter) gives config and examples of it.
+In Mesh, `TimeLimiter` takes effect in `sender` side. For example, modifying YAML below and named it with `timeLimiter.yaml`:
 ```yaml
 name: ${your-service-name}
 registerTenant: ${your-tenant-name}
@@ -352,11 +391,15 @@ urls:
     exact: /users/1
   timeoutDuration: 500ms
 ```
+Applying it with cmd
+```bash
+$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f timeLimiter.yaml
+```
 All matching requests **from** `${your-service-name}` have a timeout in `500ms`.
 
 
 # Observability
-Observability for microservices in EaseMesh can be cataloged into three areas, distributed tracing, metrics, and logging. Users can see the details of a request, such as the complete request path,  invocation dependencies, and latency of each sub-requests so that problems can be diagnosed. Metrics can reflect the health level of the system and summarize its state. Logging is used to provide more details based on the requested access.  
+Observability for microservices in EaseMesh can be cataloged into three areas, distributed tracing, metrics, and logging. Users can see the details of a request, such as the complete request path,  invocation dependencies, and la/ency of each sub-requests so that problems can be diagnosed. Metrics can reflect the health level of the system and summarize its state. Logging is used to provide more details based on the requested access.  
 
 ## Tracing
 * Tracing is disabled by default in EaseMesh. It can be enabled dynamically during the lifetime of the mesh services. Currently, EaseMesh supports tracing these kinds of service protocols:
@@ -372,7 +415,7 @@ Observability for microservices in EaseMesh can be cataloged into three areas, d
 
 * EaseMesh relies on `EaseAgent` for non-intrusive collecting metrics, and Kafka to store all collected tracing data. 
 ### Turn-on tracing
-1. Configuring mesh service's [ObservabilityOutputServer](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L312) to enable EaseMesh output tracing related data into Kafka. Modifying example YAML below, and name it with `outputservice.yaml` 
+1. Configuring mesh service's [ObservabilityOutputServer](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityOutputServer) to enable EaseMesh output tracing related data into Kafka. Modifying example YAML below, and name it with `outputservice.yaml` 
 ```yaml
  outputServer:
   enabled: true
@@ -383,7 +426,7 @@ Observability for microservices in EaseMesh can be cataloged into three areas, d
 ```bash
 $ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./outputservice.yaml
 ```
-3. Finding the desired enable tracing service protocol in [ObservabilityTracings](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L357) structure. For example, turning on the switch in `ObservabilityTracings.remoteInvoke`  can record mesh service's HTTP RPC tracing data. Also, EaseMesh allows users to configure how Java Agent should report tracing data, such as the reporting sample rate, reporting thread numbers in JavaAgent, and so on. **Note: the reporting configuration is global inside one mesh service's tracing** . Modifying example YAML below and name it with `enableRPCInvoke.yaml`   
+3. Finding the desired enable tracing service protocol in [ObservabilityTracings](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings) structure. For example, turning on the switch in `ObservabilityTracings.remoteInvoke`  can record mesh service's HTTP RPC tracing data. Also, EaseMesh allows users to configure how Java Agent should report tracing data, such as the reporting sample rate, reporting thread numbers in JavaAgent, and so on. **Note: the reporting configuration is global inside one mesh service's tracing** . Modifying example YAML below and name it with `enableRPCInvoke.yaml`   
 ```yaml
 tracings:
   enabled: true              # The global enable switch
@@ -423,7 +466,7 @@ $ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./
 ![tracing](../imgs/tracing.png)
 
 ### Turn-off tracing
-1. If you want to disable tracing for one mesh service, then set this mesh service's global [tracing switch](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L359) to `off`. For example prepare YAML as below and name it with `disableTracing.yaml`
+1. If you want to disable tracing for one mesh service, then set this mesh service's global [tracing switch](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings) to `off`. For example prepare YAML as below and name it with `disableTracing.yaml`
 ```yaml
 tracings:
   enabled: false             # The global enable switch
@@ -492,7 +535,7 @@ $ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./
 ### Turn-on metrics reporting  
 * EaseMesh also reports the mesh service's Metrics into the Kafka used by Tracing. So you can check out how to enable the output Kafka in the Tracing section. 
 
-1. Finding the desired enable metrics type in [ObservabilityMetrics](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L399) structure. For example, turning on switch in `ObservabilityMetrics.request`  can report mesh service's HTTP request-related metrics.Modifying example YAML below and name it with `enableHTTPRequest.yaml`  
+1. Finding the desired enable metrics type in [ObservabilityMetrics](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityMetrics) structure. For example, turning on switch in `ObservabilityMetrics.request`  can report mesh service's HTTP request-related metrics.Modifying example YAML below and name it with `enableHTTPRequest.yaml`  
 ```yaml
 metrics:
   enabled: true                  # the global metrics reporting switch 
@@ -546,7 +589,7 @@ $ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./
 ![metrics](../imgs/metrics.png)
 
 ### Turn-off metrics reporting
-1. If you want to disable metrics reporting for one mesh service, then set this mesh service's global [metrics reporting switch](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L390) to `off`. For example prepare YAML as below and name it with `disableMetrics.yaml`
+1. If you want to disable metrics reporting for one mesh service, then set this mesh service's global [metrics reporting switch](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityMetrics) to `off`. For example prepare YAML as below and name it with `disableMetrics.yaml`
 ```yaml
 metrics:
   enabled: false             # The global enable switch
@@ -584,7 +627,7 @@ $ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./
 ### Turn-on Log
 * EaseMesh also reports the mesh service's Logs into the Kafka used by Tracing. So you can check out how to enable the output Kafka in the Tracing section.  
 
-1. Finding the `access` section in [ObservabilityMetrics](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L399) structure. Turning on switch in `ObservabilityMetrics.access`  can enable access logging for mesh service's HTTP APIs.Modifying example YAML below and name it with `enableLog.yaml`  
+1. Finding the `access` section in [ObservabilityMetrics](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityMetrics) structure. Turning on switch in `ObservabilityMetrics.access`  can enable access logging for mesh service's HTTP APIs.Modifying example YAML below and name it with `enableLog.yaml`  
 ```yaml
 metrics:
   enabled: true                  # the global metrics reporting switch 
