@@ -8,7 +8,7 @@
 ## Create a mesh service
 1. You can choose to deploy a new mesh service in an existing tenant, or creating a new one for it. Modifying the YAML content below and name it with `new_tenant.yaml`:
 ```yaml
-name: ${tenant_name} 
+name: ${your-tenant-name}
 description: "this is a test tenant for EaseMesh demoing"
 ```
 Applying it with cmd
@@ -17,11 +17,12 @@ $ ./eashmesh/bin/meshctl tenant create -f ./new_tenant.yaml
 ```
 
 2. Creating your mesh service in EaseMesh. Note, we only need to add this new service's logic entity now. The actual business logic and the way to deploy will be introduced later. Modifying the YAML content below and name it with `new_service.yaml`:
+* **Note: Please remember to change the YAML's placholders such as ${your-service-name} to your real service name before applying.**
 ```yaml
-name: ${your_service_name} 
-registerTenant: ${tenant_name} 
+name: ${your-service-name}
+registerTenant: ${your-tenant-name}
 loadBalance:
-  policy: random
+  policy: roundRobin
   HeaderHashKey:
 sidecar:
   discoveryType: eureka
@@ -42,18 +43,18 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ${your_configmap_name} 
-  namespace: ${your_ns} 
+  namespace: ${your-ns-name} 
 data:
   application-sit-yml: |
     server:
       port: 8080
     spring:
       application:
-        name:  $(your_service_name) 
+        name:  $(your-service-name} 
       datasource:
         url: jdbc:mysql://mysql.default:3306/${your_db_name}?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&verifyServerCertificate=false
-        username: ${your_db_username} 
-        password: {$your_db_password} 
+        username: ${your-db-username} 
+        password: {$your-db-password} 
       jpa:
         database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
       sleuth:
@@ -72,24 +73,24 @@ data:
 apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
-  namespace: ${your_ns} 
-  name: ${your_service_name} 
+  namespace: ${your-ns-name} 
+  name: ${your-service-name} 
 spec:
   service:
-    name: ${your_service_name} 
+    name: ${your-service-name}
   deploy:
     replicas: 2 
     selector:
       matchLabels:
-        app: ${your_service_name} 
+        app: ${your-service-name}
     template:
       metadata:
         labels:
-          app: ${your_service_name} 
+          app: ${your-service-name} 
       spec:
         containers:
-        - image: ${your_image_url} 
-          name: ${your_service_name} 
+        - image: ${your-image-url} 
+          name: ${your-service-name} 
           imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
@@ -116,7 +117,7 @@ spec:
               items:
                 - key: application-sit-yml
                   path: application-sit.yml
-              name: ${your_service_name} 
+              name: ${your-service-name} 
             name: ${your_service}-volume-0
         restartPolicy: Always
 ```
@@ -126,7 +127,7 @@ $ kubectl apply -f ./mesh_deployment.yaml
 ```
 Checking the deployment result in K8s by running cmd 
 ```bash
-kubectl get pod -n ${your_ns} ${your_service_name}
+kubectl get pod -n ${your-ns-name} ${your-service-name}
 ```
 
 4. For service register/discovery, EaseMesh supports three mainstream solutions, Eureka/Consul/Nacos. Check out the corresponding URL below:
@@ -149,26 +150,26 @@ Canary deployments are a pattern for rolling out releases to a subset of servers
 apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
-  namespace: ${your_ns} 
+  namespace: ${your-ns-name} 
   name: ${your_service-name}-canary 
 spec:
   service:
-    name: ${your_service_name} 
+    name: ${your-service-name} 
     labels:
     - version: canary       # These map is used to label these canary instances
   deploy:
     replicas: 2 
     selector:
       matchLabels:
-        app: ${your_service_name}   #Note! service_name should remain the same with the origin mesh service  
+        app: ${your-service-name}   #Note! service name should remain the same with the origin mesh service  
     template:
       metadata:
         labels:
-          app: ${your_service_name} 
+          app: ${your-service-name} 
       spec:
         containers:
-        - image: ${your_image_new_url}    # the canary instance's new image URL
-          name: ${your_service_name} 
+        - image: ${your-image-new-url}    # the canary instance's new image URL
+          name: ${your-service-name} 
           imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
@@ -195,20 +196,20 @@ spec:
               items:
                 - key: application-sit-yml
                   path: application-sit.yml
-              name: ${your_service_name} 
+              name: ${your-service-name} 
             name: ${your_service}-volume-0
         restartPolicy: Always
 
 ```
 2. Checking the original normal instances and canary instances with cmd 
 ```bash
-$ kubectl get pod -l app: ${your_service_name}
+$ kubectl get pod -l app: ${your-service-name}
 
 NAME                                      READY   STATUS    RESTARTS   AGE
-${your_service_name}-6c59797565-qv927      2/2     Running   0          8d
-${your_service_name}-6c59797565-wmgw7      2/2     Running   0          8d
-${your_service_name}-canary-84586f7675-lhrr5      2/2     Running   0          5min 
-${your_service_name}-canary-7fbbfd777b-hbshm      2/2     Running   0          5min 
+${your-service-name}-6c59797565-qv927      2/2     Running   0          8d
+${your-service-name}-6c59797565-wmgw7      2/2     Running   0          8d
+${your-service-name}-canary-84586f7675-lhrr5      2/2     Running   0          5min 
+${your-service-name}-canary-7fbbfd777b-hbshm      2/2     Running   0          5min 
 ```
 
 3. When canary instances are ready for work, it's time to set the policy for traffic-matching. In this example, we would like to color traffic for the canary instance with HTTP header filed `X-Mesh-Canary: lv1`(Note, we want exact matching here, can be set to a Regular Expression) and all mesh service's APIs are the canary targets. Modifying the canary rule YAML content below and named it with `canary-rule.yaml`
@@ -228,10 +229,130 @@ canary:
 ```
 Applying it with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} canary -f ./canary-rule.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} canary -f ./canary-rule.yaml
 ```
 
 4. Visiting your mesh service with and without HTTP header `X-Mesh-Canary: lv1`, the colored traffic will be handled by canary instances.
+
+## Sidecar Traffic
+In `EaseMesh`, we use `EaseMeshController` based on `Easegress` to play the `Sidecar` role. As a sidecar, the mesh controller will handle inbound and outbound traffic. The inbound traffic means business traffic from outside to sidecar, and the outbound traffic means business traffic from sidecar to outside. We make them clean by the simple diagram:
+`Inbound traffic: OtherServices/Gateway -> Sidecar -> Service`
+`Outbound traffic: Service -> Sidecar -> OtherServices`
+The diagram above is a logical direction of the **request** of traffic, the responses flow in the opposite direction which is the same category with corresponding requests.
+### Inbound
+MeshController will create a dedicated pipeline to handle inbound traffic:
+1. Accept business traffic from outside in one port.
+2. Use RateLimiter (See below) to do rate limiting.
+3. Transport traffic to the service.
+### Outbound
+MeshController will create dedicated pipelines to handle outbound traffic:
+1. Accept business traffic from service in one port.
+2. Use CircuitBreaker, Retryer, TimeLimiter to do protection for receiving services according to their own config.
+3. Use load balance to choose the service instance.
+4. Transport traffic to the chosen service instance.
+Please notice the sidecar only handle business traffic, which means it doesn't hijack traffic to:
+1. Middlewares, such as Redis, Kafka, Mysql, etc.
+2. Any other control plane, such as Istio pilot.
+But we are compatible with the Java ecosystem, so we adapt the mainstream service discovery registry like Eureka, Nacos, and Consul. We do hijack traffic to the service discovery, so it's required that the service **changes service registry address to sidecar address** in the startup-config.
+### Config
+* **Note: Please remember to change the YAML's placholders to your real service name tenant name.**
+```yaml
+name: ${your-service-name}
+registerTenant: ${your-tenant-name} 
+loadBalance:
+  policy: roundRobin
+sidecar:
+  discoveryType: eureka
+  address: "127.0.0.1"
+  # Inbound traffic: OtherServices/Gateway -> Sidecar(http://127.0.0.1:13001) -> Service
+  ingressPort: 13001
+  ingressProtocol: http
+  # Outbound traffic: Service -> Sidecar(http://127.0.0.1:13002) -> OtherServices
+  # The OtherServices means multiple service instances under roundRobin policy.
+  egressPort: 13002
+  egressProtocol: http
+```
+Checking out the [mesh service](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#38) and [sidecar](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#87) structure definitions for more field descriptions. 
+
+## Resilience
+We leverage the core concept of the mature fault tolerate library [resilience4j](https://resilience4j.readme.io/) to do the resilience. We choose the pipeline-filter model of Easegress to let us assemble any of them together. Besides the function of every protection, we must know which side the protection takes effect in the Mesh scenario. We use the 2 clean terms: **sender** and **receiver** (of the request).
+### CircuitBreaker
+The original [Martin Flower article](https://martinfowler.com/bliki/CircuitBreaker.html) describes it well enough. And [Filter CircuitBreaker](https://github.com/megaease/easegress/blob/main/doc/filters.md#circuitbreaker)  gives config and examples of it clearly.
+In Mesh, `CircuitBreaker` takes effect in **sender** side. For example:
+```yaml
+name: ${your-service-name}
+registerTenant: ${your-tenant-name}
+resilience:
+  circuitBreaker:
+    policies:
+      - name: count-based-example
+        slidingWindowType: COUNT_BASED
+        failureRateThreshold: 50
+        slidingWindowSize: 100
+        failureStatusCodes: [500, 503, 504]
+    urls:
+      - methods: [GET]
+        url:
+        prefix: /service-b/
+        policyRef: count-based-example
+      - methods: [GET, POST]
+        url:
+        prefix: /service-c/
+        policyRef: count-based-example
+```
+The `sender` is `${your-service-name}`, `receiver`  side contains `service-b`  and `service-c`. So the circuit breaker takes effect in `${your-service-name}`, and all responses from both `service-b` and `service-c` count to one circuit breaker here. Of course if the items of `urls` reference to different policies, the counting process will be in the respective circuit breaker.
+### RateLimiter
+[Filter RateLimiter](https://github.com/megaease/easegress/blob/main/doc/filters.md#ratelimiter) gives config and examples of it.
+In Mesh, `RateLimter` takes effect in `receiver` side. For example:
+```yaml
+name: ${your-service-name}
+registerTenant: tenant-exmaple
+resilience:
+  policies:
+    - name: policy-example
+      timeoutDuration: 100ms
+      limitRefreshPeriod: 10ms
+      limitForPeriod: 50
+      defaultPolicyRef: policy-example
+  urls:
+    - methods: [GET, POST, PUT, DELETE]
+      url:
+        regex: ^/pets/\d+$
+      policyRef: policy-example
+```
+So all matching requests **to** `${your-service-name}` matching will go into the rate limiter `policy-example`. Please notice the requests **from** `${your-service-name}` has no relationship with the rate limiter.
+### Retryer
+[Filter Retryer](https://github.com/megaease/easegress/blob/main/doc/filters.md#retry) gives config and examples of it.
+In Mesh, `Retry` takes effect in `sender` side. For example:
+```yaml
+name: ${your-service-name}
+registerTenant: ${your-tenant-name}
+policies:
+  - name: policy-example
+    maxAttempts: 3
+    waitDuration: 500ms
+    failureStatusCodes: [500, 503, 504]
+    defaultPolicyRef: policy-example
+  urls:
+    - methods: [GET, POST, PUT, DELETE]
+      url:
+        prefix: /books/
+      policyRef: policy-example
+```
+All matching requests **from** `${your-service-name}` will be retried if the response code is one of `500`, `503`, and `504`.
+### TimeLimiter
+[Filter TimeLimiter](https://github.com/megaease/easegress/blob/main/doc/filters.md#timelimiter) gives config and examples of it.
+In Mesh, `TimeLimiter` takes effect in `sender` side. For example:
+```yaml
+name: ${your-service-name}
+registerTenant: ${your-tenant-name}
+urls:
+- methods: [POST]
+  url:
+    exact: /users/1
+  timeoutDuration: 500ms
+```
+All matching requests **from** `${your-service-name}` have a timeout in `500ms`.
 
 
 # Observability
@@ -260,7 +381,7 @@ Observability for microservices in EaseMesh can be cataloged into three areas, d
 ```
 2. Updating mesh service's observability configurations with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./outputservice.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./outputservice.yaml
 ```
 3. Finding the desired enable tracing service protocol in [ObservabilityTracings](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.proto#L357) structure. For example, turning on the switch in `ObservabilityTracings.remoteInvoke`  can record mesh service's HTTP RPC tracing data. Also, EaseMesh allows users to configure how Java Agent should report tracing data, such as the reporting sample rate, reporting thread numbers in JavaAgent, and so on. **Note: the reporting configuration is global inside one mesh service's tracing** . Modifying example YAML below and name it with `enableRPCInvoke.yaml`   
 ```yaml
@@ -296,7 +417,7 @@ tracings:
 ```
 4. Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./enableRPCInvoke.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./enableRPCInvoke.yaml
 ```
 5. Checking the web console for your mesh service's RPC tracing informations:
 ![tracing](../imgs/tracing.png)
@@ -315,7 +436,7 @@ tracings:
 ```
 Then applying it for your mesh service 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./disableTracing.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableTracing.yaml
 ```
 2. For only disabling one tracing feature for one mesh service, find the corresponding section, then turn off its switch is enough. For example, to shut down one mesh service's Redis tracing feature, you can prepare YAML as bellow and name it with `disableRedisTracing.yaml`
 ```yaml
@@ -348,12 +469,12 @@ tracings:
 ```  
 Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./disableRedisTracing.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableRedisTracing.yaml
 ```
 
 ## Metrics
 * The EaseMesh uses EaseAgent(JavaAgent based on Java Byte buddy technology) to collect mesh services' basic metrics in a non-intrusive way. It will collect the data from a service perspective with very low CPU, memory, I/O resource usage. The supported metric types including:
-* For the metric details for every type, checkout the EaseAgent's [develop-guide.md](https://github.com/akwei/easeagent-1/blob/update-development-guide/doc/development-guide.md).
+* For the metric details for every type, checkout the EaseAgent's [develop-guide.md](https://github.com/megaease/easeagent/blob/master/doc/development-guide.md).
 
 
 | Name              | Description                                                                                                                                                                                                                                                                                                 |
@@ -419,7 +540,7 @@ metrics:
 
 2. Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./enableHTTPRequest.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./enableHTTPRequest.yaml
 ```
 3. Checking the web console for your mesh service's HTTP request metrics 
 ![metrics](../imgs/metrics.png)
@@ -435,7 +556,7 @@ metrics:
 ```
 Then applying it for your mesh service 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./disableMetrics.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableMetrics.yaml
 ```
 2. For only disabling one type of metrics reporting for one mesh service, find the corresponding section, then turn off its switch is enough. For example, to shut down one mesh service's HTTP request metrics reporting, you can prepare YAML as bellow and name it with `disableHTTPReqMetrics.yaml`
 
@@ -454,7 +575,7 @@ metrics:
 ```
 then applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./disableHTTPReqMetrics.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableHTTPReqMetrics.yaml
 ```
 
 ## Log
@@ -511,7 +632,7 @@ metrics:
 
 2. Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./enableLog.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./enableLog.yaml
 ```
 3. Checking the web console for your mesh service's HTTP log 
 ![metrics](../imgs/accesslog.png)
@@ -531,6 +652,6 @@ metrics:
 ```
 then applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your_service_name} observability -f ./disableLog.yaml
+$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableLog.yaml
 ```
  
