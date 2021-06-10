@@ -1,7 +1,8 @@
-# Mesh Service  
-- [Mesh Service](#mesh-service)
-  - [Create a mesh service](#create-a-mesh-service)
-  - [Canary deployment](#canary-deployment)
+# EaseMesh Manual  
+
+- [EaseMesh Manual](#easemesh-manual)
+  - [Mesh service](#mesh-service)
+  - [MeshDeployment](#meshdeployment)
   - [Sidecar Traffic](#sidecar-traffic)
     - [Inbound](#inbound)
     - [Outbound](#outbound)
@@ -21,13 +22,19 @@
   - [Log](#log)
     - [Turn-on Log](#turn-on-log)
     - [Turn-off Log](#turn-off-log)
+
+
 ![Architecture](../imgs/architecture.png)
 
 1. EaseMesh divides the main components into two parts, one is **Control plane**, the other is **Data plane**. In the control plane, EaseMesh uses the Easegress cluster to form a reliable decision delivery and persistence unit. The data plane is composed of each mesh service with the user's business logic and EaseMesh's enhancement units, including EaseAgent and Easegress-sidecar. And there is also a Mesh Ingress unit for routing and handling South-North way traffic.   
 2. EaseMesh is a solution for better service governance in the Java domain. `Mesh services` are first-class citizens. All governance is aimed at the mesh service concept. 
 3. The `tenant` is used to group several mesh services of the same business domain. Mesh services can communicate with each other in the same tenant. In EaseMesh, there is a special global tenant that is visible to the entire mesh. Users can put some global, shared services in this special tenant.
 
-## Create a mesh service
+## Mesh service
+
+Services are the first citizens for the EaseMesh. Developer need to breakdown our business logic into small unit and implement it as a service.
+A service could have co-exist multiple versions, a version of the service is a [MeshDeployment](#meshdeployment)` which binds to Kubernetes Deployment resource
+
 1. You can choose to deploy a new mesh service in an existing tenant, or creating a new one for it. Modifying the YAML content below and name it with `new_tenant.yaml`:
 ```yaml
 name: ${your-tenant-name}
@@ -35,11 +42,13 @@ description: "this is a test tenant for EaseMesh demoing"
 ```
 Applying it with cmd
 ```bash
-$ ./eashmesh/bin/meshctl tenant create -f ./new_tenant.yaml
+$ ./emctl tenant create -f ./new_tenant.yaml
 ```
 
 2. Creating your mesh service in EaseMesh. Note, we only need to add this new service's logic entity now. The actual business logic and the way to deploy will be introduced later. Modifying the YAML content below and name it with `new_service.yaml`:
-* **Note: Please remember to change the YAML's placholders such as ${your-service-name} to your real service name before applying.**
+
+* **Note: Please remember to change the YAML's placeholders such as ${your-service-name} to your real service name before applying.**
+
 ```yaml
 name: ${your-service-name}
 registerTenant: ${your-tenant-name}
@@ -54,12 +63,17 @@ sidecar:
   egressPort: 13002
   egressProtocol: http
 ```
+
+>Service Reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Service
+
 Apply it with cmd
 ```bash
-$ ./eashmesh/bin/meshctl service create -f ./new_service.yaml
+$ ./eashmesh/bin/emctl service create -f ./new_service.yaml
 ```
 
-3. With steps 1 and 2, now we have a new tenant and a new mesh service. They are both logic units without actual processing entities. EaseMesh relies on Kubernetes to transparent the resource management and deployment details. In K8s, we need to build the business logic (your **Java Spring Cloud application**) into an image and tell K8s the number of your instances and resources, with so-called declarative API, mostly in a YAML form. We will use a K8s [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/) to store your application's configurations and an [Custom Rousce Define(CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) called `MeshDeployment` to describe the way you want your application instances run in K8s. Here is a Java Spring Cloud application example that visiting MySQL, Eureka for service discovery/register. Preparing the deployment YAML by modifying content below, and naming it with `mesh_deployment.yaml`
+
+3. With steps 1 and 2, now we have a new tenant and a new mesh service. They are both logic units without actual processing entities. EaseMesh relies on Kubernetes to transparent the resource management and deployment details. In K8s, we need to build the business logic (your **Java Spring Cloud application**) into an image and tell K8s the number of your instances and resources, with so-called declarative API, mostly in a YAML form. We will use a K8s [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/) to store your application's configurations and an [Custom Resource Define(CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) called `MeshDeployment` to describe the way you want your application instances run in K8s. Here is a Java Spring Cloud application example that visiting MySQL, Eureka for service discovery/register. Preparing the deployment YAML by modifying content below, and naming it with `mesh_deployment.yaml`
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -162,7 +176,7 @@ kubectl get pod -n ${your-ns-name} ${your-service-name}
 
 5. Communications between internal mesh services can be done through Spring Cloud's recommended clients, such as `WebClient`, `RestTemplate`, and `FeignClient`. The original HTTP domain-based RPC remains unchanged. Please notice, EaseMesh will host the Ease-West way traffic by its mesh service name, so it is necessary to keep the mesh service name the same as the original Spring Cloud application name for HTTP domain-based RPC.
 
-## Canary deployment 
+## MeshDeployment
 ![canary-deployment](./../imgs/canary-deployment.png)
 
 Canary deployments are a pattern for rolling out releases to a subset of servers. The idea is to first deploy the change to a small subset of servers, test it with real users' traffic, and then roll the change out to the rest of the servers. The canary deployment serves as an early warning indicator with less impact on downtime: if the canary deployment fails, the rest of the servers aren't impacted. In order to be safer, we can divide traffic into two kinds, normal traffic, and colored traffic. Only the colored traffic will be routed to the canary instance. The traffic can be colored with the users' model, then setting into standard HTTP header fields. 
@@ -251,7 +265,7 @@ canary:
 ```
 Applying it with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} canary -f ./canary-rule.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} canary -f ./canary-rule.yaml
 ```
 
 4. Visiting your mesh service with and without HTTP header `X-Mesh-Canary: lv1`, the colored traffic will be handled by canary instances.
@@ -327,7 +341,7 @@ resilience:
 ```
 Applying it with cmd
 ```bash
-$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f circuitBreaker.yaml
+$ ./eashmesh/bin/emctl service resilience update ${your-service-name}  -f circuitBreaker.yaml
 ```
 
 The `sender` is `${your-service-name}`, `receiver`  side contains `service-b`  and `service-c`. So the circuit breaker takes effect in `${your-service-name}`, and all responses from both `service-b` and `service-c` count to one circuit breaker here. Of course if the items of `urls` reference to different policies, the counting process will be in the respective circuit breaker.
@@ -352,7 +366,7 @@ resilience:
 ```
 Applying it with cmd
 ```bash
-$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f rateLimiter.yaml
+$ ./eashmesh/bin/emctl service resilience update ${your-service-name}  -f rateLimiter.yaml
 ```
 So all matching requests **to** `${your-service-name}` matching will go into the rate limiter `policy-example`. Please notice the requests **from** `${your-service-name}` has no relationship with the rate limiter.
 ### Retryer
@@ -376,7 +390,7 @@ policies:
 ```
 Applying it with cmd
 ```bash
-$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f retryer.yaml
+$ ./eashmesh/bin/emctl service resilience update ${your-service-name}  -f retryer.yaml
 ```
 All matching requests **from** `${your-service-name}` will be retried if the response code is one of `500`, `503`, and `504`.
 ### TimeLimiter
@@ -393,7 +407,7 @@ urls:
 ```
 Applying it with cmd
 ```bash
-$ ./eashmesh/bin/meshctl service resilience update ${your-service-name}  -f timeLimiter.yaml
+$ ./eashmesh/bin/emctl service resilience update ${your-service-name}  -f timeLimiter.yaml
 ```
 All matching requests **from** `${your-service-name}` have a timeout in `500ms`.
 
@@ -424,7 +438,7 @@ Observability for microservices in EaseMesh can be cataloged into three areas, d
 ```
 2. Updating mesh service's observability configurations with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./outputservice.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./outputservice.yaml
 ```
 3. Finding the desired enable tracing service protocol in [ObservabilityTracings](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings) structure. For example, turning on the switch in `ObservabilityTracings.remoteInvoke`  can record mesh service's HTTP RPC tracing data. Also, EaseMesh allows users to configure how Java Agent should report tracing data, such as the reporting sample rate, reporting thread numbers in JavaAgent, and so on. **Note: the reporting configuration is global inside one mesh service's tracing** . Modifying example YAML below and name it with `enableRPCInvoke.yaml`   
 ```yaml
@@ -460,7 +474,7 @@ tracings:
 ```
 4. Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./enableRPCInvoke.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./enableRPCInvoke.yaml
 ```
 5. Checking the web console for your mesh service's RPC tracing informations:
 ![tracing](../imgs/tracing.png)
@@ -479,7 +493,7 @@ tracings:
 ```
 Then applying it for your mesh service 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableTracing.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./disableTracing.yaml
 ```
 2. For only disabling one tracing feature for one mesh service, find the corresponding section, then turn off its switch is enough. For example, to shut down one mesh service's Redis tracing feature, you can prepare YAML as bellow and name it with `disableRedisTracing.yaml`
 ```yaml
@@ -512,7 +526,7 @@ tracings:
 ```  
 Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableRedisTracing.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./disableRedisTracing.yaml
 ```
 
 ## Metrics
@@ -583,7 +597,7 @@ metrics:
 
 2. Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./enableHTTPRequest.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./enableHTTPRequest.yaml
 ```
 3. Checking the web console for your mesh service's HTTP request metrics 
 ![metrics](../imgs/metrics.png)
@@ -599,7 +613,7 @@ metrics:
 ```
 Then applying it for your mesh service 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableMetrics.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./disableMetrics.yaml
 ```
 2. For only disabling one type of metrics reporting for one mesh service, find the corresponding section, then turn off its switch is enough. For example, to shut down one mesh service's HTTP request metrics reporting, you can prepare YAML as bellow and name it with `disableHTTPReqMetrics.yaml`
 
@@ -618,7 +632,7 @@ metrics:
 ```
 then applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableHTTPReqMetrics.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./disableHTTPReqMetrics.yaml
 ```
 
 ## Log
@@ -675,7 +689,7 @@ metrics:
 
 2. Applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./enableLog.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./enableLog.yaml
 ```
 3. Checking the web console for your mesh service's HTTP log 
 ![metrics](../imgs/accesslog.png)
@@ -695,6 +709,6 @@ metrics:
 ```
 then applying YAML with cmd 
 ```bash
-$ ./easemesh/bin/meshctl service update ${your-service-name} observability -f ./disableLog.yaml
+$ ./easemesh/bin/emctl service update ${your-service-name} observability -f ./disableLog.yaml
 ```
  
