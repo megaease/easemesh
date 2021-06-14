@@ -20,13 +20,14 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
 ## 1. Purposes
 Why do we reinvent another wheel?
 
-* **Service mesh compatible with Spring Cloud ecosystem:** The microservices developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely. 
+* **Service mesh compatible with Spring Cloud ecosystem:** The micro-services developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely. 
 
 * **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
 
-Shortly, **the EashMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java application have service governance and integrated observability without change a line of source code**.
+> Shortly, **the EaseMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java application have service governance and integrated observability without change a line of source code**.
 
 ## 2. Principles
+
 * **Spring Cloud Compatibility:** Spring Cloud domain service management and resilient design.
 * **No Code Changes:** Using sidecar & Java-agent for completed service governance and integrated observability.
 * **Service Insight:** Service running metrics/tracing/logs monitoring. 
