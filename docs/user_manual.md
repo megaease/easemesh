@@ -325,14 +325,15 @@ sidecar:
 
 ## Resilience
 
-We borrow the core concept of the mature fault tolerate library [resilience4j](https://resilience4j.readme.io/) to implement the resilience. With the pipeline-filter(plugin) model of Easegress, We can assemble any of them together. Besides the function of each protection, we must know which side the protection takes effect in the Mesh scenario. We use the 2 clean terms: **sender** and **receiver** (of the request).
+We borrow the core concept of the mature JAVA fault tolerate library [resilience4j](https://resilience4j.readme.io/) to implement the resilience. With the pipeline-filter(plugin) model of Easegress, We can assemble any of them together. Besides the function of each protection, we must know which side the protection takes effect in the Mesh scenario. We use the 2 clean terms: **sender** and **receiver** (of the request).
 
 - sender: In general sender is a client which shots requests to the server
 - receiver: In general receiver is a server that receives requests
 
 
 ### CircuitBreaker
-In Mesh, `CircuitBreaker` takes effect in **sender** side. For example, 
+
+In Mesh, `CircuitBreaker` takes effect in **sender** side, in another word, it applies on outbound traffic. For example, 
 
 ```yaml
 name: ${your-service-name}
@@ -356,12 +357,13 @@ resilience:
         policyRef: count-based-example
 ```
 
-> CircuitBreaker reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.CircuitBreaker 
+> CircuitBreaker Spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.CircuitBreaker 
 
-The `sender` is `${your-service-name}`, `receiver`  side contains `service-b`  and `service-c`. So the circuit breaker takes effect in `${your-service-name}`, and all responses from both `service-b` and `service-c` count to one circuit breaker here. Of course if the items of `urls` reference to different policies, the counting process will be in the respective circuit breaker.
+The `sender` is `${your-service-name}`, `receiver`  side contains `service-b`  and `service-c`. So the circuit-breaker takes effect in `${your-service-name}`, and all responses from both `service-b` and `service-c` count to one circuit breaker here. Of course if the items of `urls` reference to different policies, the counting process will be in the respective circuit-breaker.
 
 ### RateLimiter
-In Mesh, `RateLimter` takes effect in `receiver` side. For example:
+
+In Mesh, `RateLimiter` takes effect in `receiver` side, in another word, it applies on inbound traffic. For example:
 
 ```yaml
 name: ${your-service-name}
@@ -380,12 +382,14 @@ resilience:
       policyRef: policy-example
 ```
 
-> RateLimiter reference :https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.RateLimiter
+> RateLimiter Spec reference :https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.RateLimiter
 
-So all matching requests **to** `${your-service-name}` matching will go into the rate limiter `policy-example`. Please notice the requests **from** `${your-service-name}` has no relationship with the rate limiter.
+So all inbound traffic of `${your-service-name}` will be rate-limited by it, when the traffic character matches the policy. Please notice outbound traffic **from** `${your-service-name}` has no relationship with the rate limiter.
 
 ### Retryer
-In Mesh, `Retry` takes effect in `sender` side. For example :
+
+In Mesh, `Retry` takes effect in `sender` side, in another word, it applies on outbound traffic. For example :
+
 ```yaml
 name: ${your-service-name}
 registerTenant: ${your-tenant-name}
@@ -402,9 +406,9 @@ policies:
       policyRef: policy-example
 ```
 
-> Retryer reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Retryer 
+> Retryer Spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Retryer 
 
-All matching requests **from** `${your-service-name}` will be retried if the response code is one of `500`, `503`, and `504`.
+All matching outbound traffic **from** `${your-service-name}` will be retried if the response code is one of `500`, `503`, and `504`.
 
 ### TimeLimiter
 In Mesh, `TimeLimiter` takes effect in `sender` side. For example:
@@ -418,29 +422,30 @@ urls:
     exact: /users/1
   timeoutDuration: 500ms
 ```
-> TimeLimiter reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.TimeLimiter
+> TimeLimiter Spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.TimeLimiter
 
-All matching requests **from** `${your-service-name}` have a timeout in `500ms`.
+All matching outbound traffic **from** `${your-service-name}` have a timeout in `500ms`.
 
 
 ## Observability
-Observability for Microservices in EaseMesh can be cataloged into three areas, distributed tracing, metrics, and logging. Users can see the details of a request, such as the complete request path,  invocation dependencies, and la/ency of each sub-requests so that problems can be diagnosed. Metrics can reflect the health level of the system and summarize its state. Logging is used to provide more details based on the requested access.  
+
+Observability for micro-services in EaseMesh can be cataloged into three areas, distributed tracing, metrics, and logging. Users can see the details of a request, such as the complete request path,  invocation dependencies, and latency of each sub-requests so that issues can be diagnosed. Metrics can reflect the health level of the system and summarize its state. Logging is used to provide more details based on the requested access for helping resolving issues.  
 
 ### Tracing
-* Tracing is disabled by default in EaseMesh. It can be enabled dynamically during the lifetime of the mesh services. Currently, EaseMesh supports tracing these kinds of service protocols:
+* Tracing is disabled by default in EaseMesh. It can be enabled dynamically during the lifetime of the mesh services. Currently, the EaseMesh follow [OpenZipkin B3 specification](https://github.com/openzipkin/b3-propagation) to supports tracing these kinds of invocation :
 
 | Name           | Description                                                                                                                                                                                                          |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HTTP based RPC | Information about communication between mesh service via HTTP protocol, such as latency, status code, request path and so on. Currently, EaseMesh supports tracing for `WebClient`, `RestTemplate` and `FeignClient` |
-| JDBC           | Information about MySQL SQL execution times, latency, successful rate and so on.                                                                                                                                     |
-| Redis          | Information about Redis command execution times, latency, successful rate and so on.                                                                                                                                 |
-| RabbitMQ       | Information about RabbitMQ command execution times, latency, successful rate and so on.                                                                                                                              |
-| Kafka          | Information about Kafka topics' read/write times, latency, successful rate and so on.                                                                                                                                |
-| HTTP APIs      | Information about the mesh service's HTTP APIs' latency, successful rate, status code and so on.                                                                                                                     |
+| HTTP based RPC | Information about communication between mesh service via HTTP protocol, such as latency, status code, request path and so on. Currently, EaseMesh supports tracing for `WebClient`, `RestTemplate` and `FeignClient`, the more HTTP RPC libraries will be supported soon |
+| JDBC           | Information about MySQL SQL execution latency, statement, results and so on.                                                                                                                                     |
+| Redis          | Information about Redis command latency, key, and so on.                                                                                                                                 |
+| RabbitMQ       | Information about RabbitMQ command latency, topic, routine key and so on.                                                                                                                              |
+| Kafka          | Information about Kafka topics' latency and so on.                                                                                                                                |
 
-* EaseMesh relies on `EaseAgent` for non-intrusive collecting metrics, and Kafka to store all collected tracing data. 
+* EaseMesh relies on `EaseAgent` for non-intrusive collecting span data, and Kafka to store all collected tracing data. 
 
 #### Turn-on tracing
+
 1. Configuring mesh service's `ObservabilityOutputServer` to enable EaseMesh output tracing related data into Kafka. Modify example YAML below, and apply it 
 
 ```yaml
@@ -449,7 +454,7 @@ Observability for Microservices in EaseMesh can be cataloged into three areas, d
   bootstrapServer: ${your_kafka_host_one}:9093,${your_kafka_host_two}:9093,${your_kafka_host_three}:9093
   timeout: 30000   
 ```
-> OutputServer reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityOutputServer 
+> OutputServer spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityOutputServer 
 
 2. Finding the desired enable tracing service protocol in [ObservabilityTracings](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings) structure. For example, turning on the switch in `ObservabilityTracings.remoteInvoke`  can record mesh service's HTTP RPC tracing data. Also, EaseMesh allows users to configure how Java Agent should report tracing data, such as the reporting sample rate, reporting thread numbers in JavaAgent, and so on. **Note: the reporting configuration is global inside one mesh service's tracing** . Modify example YAML below and applying it 
 
@@ -485,13 +490,14 @@ tracings:
     servicePrefix: rabbit
 ```
 
->ObservabilityTracings reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings
+>ObservabilityTracings spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings
 
-4. Checking the web console for your mesh service's RPC tracing information:
+4. Tracing data are organized as spans, each span is stored in the backend storage service, which provides online analysis and computing functions. MegaEase provides a sophisticated view to help users rapidly diagnosing problems. Checking the web console for your mesh service's RPC tracing information:
 
 ![tracing](../imgs/tracing.png)
 
 #### Turn-off tracing
+
 1. If you want to disable tracing for one mesh service, then set this mesh service's global [tracing switch](https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityTracings) to `off`. For example, you can prepare YAML as below and apply it 
 
 ```yaml
@@ -538,7 +544,9 @@ tracings:
 
 
 ### Metrics
-* The EaseMesh uses EaseAgent( JavaAgent based on Java Byte buddy technology) to collect mesh services' basic metrics in a non-intrusive way. It will collect the data from a service perspective with very low CPU, memory, I/O resource usage. The supported metric types including:
+
+* The EaseMesh leverage [EaseAgent( JavaAgent based on Java Byte buddy technology)](https://github.com/megaease/easeagent) to collect mesh services' application metrics in a non-intrusive way. It will collect the data from a service perspective with very low CPU, memory, I/O resource consumption. The supported metric types including:
+
 * For the metric details for every type, checkout the EaseAgent's [develop-guide.md](https://github.com/megaease/easeagent/blob/master/doc/development-guide.md).
 
 * Here are the metics that EaseMesh already supported:
@@ -557,6 +565,7 @@ tracings:
 | Redis             | The mesh service's Redis client's metics such as redis P25 execution duration, redis M1 count, redis P99 execution duration and so on.                                                                                                                                                                      |
 | MD5 Dictionary    | The mesh service's JDBC statement's complete SQL sentences and MD5 values.                                                                                                                                                                                                                                  |
 #### Turn-on metrics reporting  
+
 * EaseMesh also reports the mesh service's Metrics into the Kafka used by Tracing. So you can check out how to enable the output Kafka in the Tracing section. 
 
 1. Finding the desired enable metrics type in `ObservabilityMetrics` structure. For example, turning on switch in `ObservabilityMetrics.request`  can report mesh service's HTTP request-related metrics.Modify example YAML below and apply it   
@@ -606,12 +615,14 @@ metrics:
     topic: application-meter
 ```
 
-> Metrics reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityMetrics 
+> Metrics Spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.ObservabilityMetrics 
 
 2. Checking the web console for your mesh service's HTTP request metrics 
+
 ![metrics](../imgs/metrics.png)
 
 #### Turn-off metrics reporting
+
 1. If you want to disable metrics reporting for one mesh service, then set this mesh service's global `metrics reporting switch` to `off`. For example prepare YAML as below and apply it 
 
 ```yaml
