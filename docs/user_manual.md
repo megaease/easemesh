@@ -273,6 +273,7 @@ canary:
 In `EaseMesh`, we use `EaseMeshController` based on `Easegress` to play the `Sidecar` role. As a sidecar, the mesh controller will handle inbound and outbound traffic. The inbound traffic means business traffic from outside to sidecar, and the outbound traffic means business traffic from sidecar to outside. We make them clean by the simple diagram:
 
 **InBound Traffic**
+
 ![inbound traffic](../imgs/inbound-traffic.png)
 
 ### Inbound
@@ -283,7 +284,9 @@ MeshController will create a dedicated pipeline to handle inbound traffic:
 
 
 **OutBound Traffic**
+
 ![outbound traffic](../imgs/outbound-traffic.png)
+
 ### Outbound
 MeshController will create dedicated pipelines to handle outbound traffic:
 1. Accept business traffic from service in one port.
