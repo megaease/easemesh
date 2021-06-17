@@ -15,7 +15,7 @@ import (
 // ServiceSpec describes mesh service properties
 type ServiceSpec struct {
 	//Name is mesh service name of the deployment
-	Name             string `json:"name"`
+	Name string `json:"name"`
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=""
 	AppContainerName string `json:"appContainerName"`
