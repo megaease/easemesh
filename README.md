@@ -156,8 +156,7 @@ Why do we reinvent another wheel?
 
 5. Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record. 
 
-
-    ![plugin](./imgs/chrome_plugin.png)
+![plugin](./imgs/chrome_plugin.png)
 
 ### 7.3 Clean
 * Running `./example/mesh-app-petclinic/undeploy.sh`.
