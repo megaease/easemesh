@@ -64,6 +64,8 @@ func addInstallArgs(cmd *cobra.Command, args *installbase.InstallArgs) {
 	cmd.Flags().StringVar(&args.MeshControlPlanePersistVolumeCapacity, "mesh-control-plane-pv-capacity", installbase.DefaultMeshControlPlanePersistVolumeCapacity,
 		installbase.MeshControlPlanePVNotExistedHelpStr)
 
+	cmd.Flags().Int32Var(&args.MeshIngressServicePort, "mesh-ingress-service-port", installbase.DefaultMeshIngressServicePort, "A port on which mesh ingress controller listening")
+
 	cmd.Flags().StringVar(&args.EaseMeshRegistryType, "registry-type", installbase.DefaultMeshRegistryType, installbase.MeshRegistryTypeHelpStr)
 	cmd.Flags().IntVar(&args.HeartbeatInterval, "heartbeat-interval", installbase.DefaultHeartbeatInterval, "")
 
@@ -72,7 +74,7 @@ func addInstallArgs(cmd *cobra.Command, args *installbase.InstallArgs) {
 	cmd.Flags().StringVar(&args.EaseMeshOperatorImage, "easemesh-operator-image", installbase.DefaultEaseMeshOperatorImage, "")
 
 	cmd.Flags().IntVar(&args.EasegressControlPlaneReplicas, "easemesh-control-plane-replicas", installbase.DefaultMeshControlPlaneReplicas, "")
-	cmd.Flags().IntVar(&args.EasegressIngressReplicas, "easeemesh-ingress-replicas", installbase.DefaultMeshIngressReplicas, "")
+	cmd.Flags().IntVar(&args.MeshIngressReplicas, "easeemesh-ingress-replicas", installbase.DefaultMeshIngressReplicas, "")
 	cmd.Flags().IntVar(&args.EaseMeshOperatorReplicas, "easemesh-operator-replicas", installbase.DefaultMeshOperatorReplicas, "")
 	cmd.Flags().StringVarP(&args.SpecFile, "file", "f", "", "A yaml file specifying the install params.")
 	cmd.Flags().BoolVar(&args.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed, default true")

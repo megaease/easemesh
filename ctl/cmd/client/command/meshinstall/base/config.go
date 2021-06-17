@@ -37,7 +37,8 @@ type InstallArgs struct {
 	MeshControlPlanePersistVolumeCapacity string
 	MeshControlPlaneCheckHealthzMaxTime   int
 
-	EasegressIngressReplicas int
+	MeshIngressReplicas    int
+	MeshIngressServicePort int32
 
 	// EaseMesh Controller  params
 	EaseMeshRegistryType string
@@ -67,10 +68,11 @@ type EasegressConfig struct {
 }
 
 type MeshControllerConfig struct {
-	Name              string `yaml:"name" jsonschema:"required"`
-	Kind              string `yaml:"kind" jsonschema:"required"`
-	RegistryType      string `yaml:"registryType" jsonschema:"required"`
-	HeartbeatInterval string `yaml:"heartbeatInterval" jsonschema:"required"`
+	Name              string `json:"name" jsonschema:"required"`
+	Kind              string `json:"kind" jsonschema:"required"`
+	RegistryType      string `json:"registryType" jsonschema:"required"`
+	HeartbeatInterval string `json:"heartbeatInterval" jsonschema:"required"`
+	IngressPort       int32  `json:"ingressPort" jsonschema:"omitempty"`
 }
 
 type MeshOperatorConfig struct {
@@ -88,7 +90,7 @@ type EasegressReaderParams struct {
 	ClusterRole           string            `yaml:"cluster-role" jsonschema:"required"`
 	ClusterName           string            `yaml:"cluster-name" jsonschema:"required"`
 	Name                  string            `yaml:"name" jsonschema:"required"`
-	Labels                map[string]string `yaml:"Labels" jsonschema:"required"`
+	Labels                map[string]string `yaml:"labels" jsonschema:"required"`
 }
 type StageContext struct {
 	Cmd                 *cobra.Command

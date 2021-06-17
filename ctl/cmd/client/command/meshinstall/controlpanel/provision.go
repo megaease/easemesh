@@ -28,6 +28,7 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 		Kind:              installbase.MeshControllerKind,
 		RegistryType:      args.EaseMeshRegistryType,
 		HeartbeatInterval: strconv.Itoa(args.HeartbeatInterval) + "s",
+		IngressPort:       args.MeshIngressServicePort,
 	}
 
 	configBody, err := json.Marshal(meshControllerConfig)

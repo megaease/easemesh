@@ -8,7 +8,6 @@ import (
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -49,7 +48,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 			MatchLabels: meshIngressLabel(),
 		}
 
-		var replicas = int32(args.EasegressIngressReplicas)
+		var replicas = int32(args.MeshIngressReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = meshIngressLabel()
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
@@ -153,16 +152,21 @@ func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDev
 
 func (v *containerVisitor) VisitorLivenessProbe(c *v1.Container) (*v1.Probe, error) {
 
+	/* FIXME: K8s probe report connection reset, but the port can be accessed via localhost/127.0.0.1
+	maybe the default admin API port should listen on all interface instead of loopback address.
+
 	return &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
-				Host: "127.0.0.1",
+				Host: "localhost",
 				Port: intstr.FromInt(installbase.DefaultMeshAdminPort),
 				Path: "/apis/v1/healthz",
 			},
 		},
 		InitialDelaySeconds: 50,
 	}, nil
+	*/
+	return nil, nil
 }
 
 func (v *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, error) {

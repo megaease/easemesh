@@ -15,11 +15,9 @@ func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 
 	service.Spec.Ports = []v1.ServicePort{
 		{
-			// FIXME: Don't specific a fix nodeport port number,
-			// in the future, we need to specific a nodeport port via client argument
-			Port:       13010,
+			Port:       args.MeshIngressServicePort,
 			Protocol:   v1.ProtocolTCP,
-			TargetPort: intstr.IntOrString{IntVal: 13010},
+			TargetPort: intstr.IntOrString{IntVal: args.MeshIngressServicePort},
 		},
 	}
 	service.Spec.Selector = meshIngressLabel()

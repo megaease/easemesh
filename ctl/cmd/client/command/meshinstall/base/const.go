@@ -88,6 +88,7 @@ const (
 	DefaultMeshIngressConfig         = "easemesh-ingress-config"
 	DefaultMeshIngressService        = "easemesh-ingress-service"
 	DefaultMeshIngressControllerName = "easemesh-ingress-easegress"
+	DefaultMeshIngressServicePort    = 19527
 )
 
 const (
