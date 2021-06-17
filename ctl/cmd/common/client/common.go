@@ -52,7 +52,7 @@ func WrapRetryOptions(retryCount int, retryWaitTime time.Duration, conditionFunc
 	}
 }
 
-func (h *httpJSONClient) setupClient(reqBody interface{}, timeout time.Duration, extraHeaders map[string]string) *resty.Client {
+func (h *httpJSONClient) setupClient(timeout time.Duration, extraHeaders map[string]string) *resty.Client {
 
 	client := resty.New()
 	client.
@@ -69,8 +69,6 @@ func (h *httpJSONClient) setupClient(reqBody interface{}, timeout time.Duration,
 			client.SetHeader(k, v)
 		}
 	}
-	client.R().
-		SetBody(reqBody)
 	return client
 }
 func closeRawBody(r *resty.Response) {
@@ -80,8 +78,8 @@ func closeRawBody(r *resty.Response) {
 }
 
 func (h *httpJSONClient) Post(url string, reqBody interface{}, timeout time.Duration, extraHeaders map[string]string) HTTPJSONResponseHandler {
-	client := h.setupClient(reqBody, timeout, extraHeaders)
-	r, err := client.R().Post(url)
+	client := h.setupClient(timeout, extraHeaders)
+	r, err := client.R().SetBody(reqBody).Post(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
 		defer closeRawBody(r)
 
@@ -93,8 +91,8 @@ func (h *httpJSONClient) Post(url string, reqBody interface{}, timeout time.Dura
 }
 
 func (h *httpJSONClient) Delete(url string, reqBody interface{}, timeout time.Duration, extraHeaders map[string]string) HTTPJSONResponseHandler {
-	client := h.setupClient(reqBody, timeout, extraHeaders)
-	r, err := client.R().Delete(url)
+	client := h.setupClient(timeout, extraHeaders)
+	r, err := client.R().SetBody(reqBody).Delete(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
 		defer closeRawBody(r)
 
@@ -106,8 +104,8 @@ func (h *httpJSONClient) Delete(url string, reqBody interface{}, timeout time.Du
 }
 
 func (h *httpJSONClient) Patch(url string, reqBody interface{}, timeout time.Duration, extraHeaders map[string]string) HTTPJSONResponseHandler {
-	client := h.setupClient(reqBody, timeout, extraHeaders)
-	r, err := client.R().Patch(url)
+	client := h.setupClient(timeout, extraHeaders)
+	r, err := client.R().SetBody(reqBody).Patch(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
 		defer closeRawBody(r)
 
@@ -119,8 +117,8 @@ func (h *httpJSONClient) Patch(url string, reqBody interface{}, timeout time.Dur
 }
 
 func (h *httpJSONClient) Put(url string, reqBody interface{}, timeout time.Duration, extraHeaders map[string]string) HTTPJSONResponseHandler {
-	client := h.setupClient(reqBody, timeout, extraHeaders)
-	r, err := client.R().Put(url)
+	client := h.setupClient(timeout, extraHeaders)
+	r, err := client.R().SetBody(reqBody).Put(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
 		defer closeRawBody(r)
 
@@ -133,7 +131,7 @@ func (h *httpJSONClient) Put(url string, reqBody interface{}, timeout time.Durat
 
 func (h *httpJSONClient) Get(url string, reqBody interface{}, timeout time.Duration, extraHeaders map[string]string) HTTPJSONResponseHandler {
 
-	client := h.setupClient(reqBody, timeout, extraHeaders)
+	client := h.setupClient(timeout, extraHeaders)
 	r, err := client.R().Get(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
 		defer closeRawBody(r)

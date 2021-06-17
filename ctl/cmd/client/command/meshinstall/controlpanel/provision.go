@@ -18,7 +18,7 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 
 	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, args.MeshNameSpace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
-		installbase.DefaultMeshClientPortName)
+		installbase.DefaultMeshAdminPortName)
 	if err != nil {
 		return errors.Wrap(err, "get mesh control panel entrypoint failed")
 	}
@@ -41,8 +41,8 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 		_, err = client.NewHTTPJSON().
 			Post(url, configBody, time.Second*5, nil).
 			HandleResponse(func(body []byte, statusCode int) (interface{}, error) {
-				if statusCode < 400 {
-					return nil, errors.Errorf("setup EaseMesh Controller panel error, controller panel return statusCode %d, body: %s", statusCode, string(body))
+				if statusCode >= 400 {
+					return nil, errors.Errorf("setup EaseMesh controller panel error, controller panel return statusCode %d, body: %s", statusCode, string(body))
 				}
 				return nil, nil
 			})
