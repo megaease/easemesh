@@ -106,6 +106,8 @@ func Clear(context *installbase.StageContext) error {
 		{"configmaps", installbase.DefaultMeshControlPlaneConfig},
 	}
 
+	clearEaseMeshControlPanelProvision(context.Cmd, context.Client, &context.Arguments)
+
 	installbase.DeleteResources(context.Client, statefulsetResource, context.Arguments.MeshNameSpace, installbase.DeleteStatefulsetResource)
 	installbase.DeleteResources(context.Client, coreV1Resources, context.Arguments.MeshNameSpace, installbase.DeleteCoreV1Resource)
 	return nil
