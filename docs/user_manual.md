@@ -251,13 +251,13 @@ ${your-service-name}-canary-7fbbfd777b-hbshm      2/2     Running   0          5
 ```yaml
 canary:
   canaryRules:
-  - serviceLabels:
+  - serviceInstanceLabels:
       version: canary   # The canary instances must have this `version: canary` label.
     headers:
         X-Mesh-Canary:
-          exact: lv1    # The colored traffic with this exatc matching HTTP header value.
+          exact: lv1    # The colored traffic with this exact matching HTTP header value.
     urls:
-      - methods: ["*"]
+      - methods: ["GET","POST","PUT","DELETE"]
         url:
           prefix: "/"  # Routing colored traffic to canary instances all HTTP APIs.
 
@@ -437,13 +437,13 @@ Observability for micro-services in EaseMesh can be cataloged into three areas, 
 ### Tracing
 * Tracing is disabled by default in EaseMesh. It can be enabled dynamically during the lifetime of the mesh services. Currently, the EaseMesh follow [OpenZipkin B3 specification](https://github.com/openzipkin/b3-propagation) to supports tracing these kinds of invocation :
 
-| Name           | Description                                                                                                                                                                                                          |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name           | Description                                                                                                                                                                                                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | HTTP based RPC | Information about communication between mesh service via HTTP protocol, such as latency, status code, request path and so on. Currently, EaseMesh supports tracing for `WebClient`, `RestTemplate` and `FeignClient`, the more HTTP RPC libraries will be supported soon |
-| JDBC           | Information about MySQL SQL execution latency, statement, results and so on.                                                                                                                                     |
-| Redis          | Information about Redis command latency, key, and so on.                                                                                                                                 |
-| RabbitMQ       | Information about RabbitMQ command latency, topic, routine key and so on.                                                                                                                              |
-| Kafka          | Information about Kafka topics' latency and so on.                                                                                                                                |
+| JDBC           | Information about MySQL SQL execution latency, statement, results and so on.                                                                                                                                                                                             |
+| Redis          | Information about Redis command latency, key, and so on.                                                                                                                                                                                                                 |
+| RabbitMQ       | Information about RabbitMQ command latency, topic, routine key and so on.                                                                                                                                                                                                |
+| Kafka          | Information about Kafka topics' latency and so on.                                                                                                                                                                                                                       |
 
 * EaseMesh relies on `EaseAgent` for non-intrusive collecting span data, and Kafka to store all collected tracing data. 
 
