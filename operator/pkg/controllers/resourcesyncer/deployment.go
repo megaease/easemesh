@@ -236,7 +236,7 @@ func (d *deploySyncer) completeSideCarSpec(deploy *v1.Deployment, sideCarContain
 
 	sideCarContainer.Name = sidecarContainerName
 
-	command := "/opt/easegress/bin/easegress -f /easegress-sidecar/eg-sidecar.yaml"
+	command := "/opt/easegress/bin/easegress-server -f /easegress-sidecar/eg-sidecar.yaml"
 	sideCarContainer.Command = []string{"/bin/sh", "-c", command}
 	sideCarContainer.Image = complateImageURL(d.imageRegistryURL, d.sideCarImage)
 	sideCarContainer.ImagePullPolicy = corev1.PullAlways

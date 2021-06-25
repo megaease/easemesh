@@ -1,0 +1,10 @@
+kind: ingress
+apiVersion: mesh.megaease.com/v1alpla1
+metadata:
+  name: pet-ingress
+spec:
+  rules:
+  - host: demo.megaease.cn
+    paths:
+    - path: /
+      backend: api-gateway 

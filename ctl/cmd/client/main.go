@@ -44,6 +44,7 @@ func main() {
 	rootCmd.AddCommand(
 		command.InstallCmd(),
 		command.ResetCmd(),
+		command.ApplyCmd(),
 		completionCmd,
 	)
 
