@@ -14,7 +14,7 @@ func init() {
 }
 
 var exampleUsage = ` # EaseMesh command line tool for management and operation
-  emctl <subcommand> 
+  emctl <subcommand>
 `
 
 func main() {
@@ -45,6 +45,8 @@ func main() {
 		command.InstallCmd(),
 		command.ResetCmd(),
 		command.ApplyCmd(),
+		command.DeleteCmd(),
+		command.GetCmd(),
 		completionCmd,
 	)
 

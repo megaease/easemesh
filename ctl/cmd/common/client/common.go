@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/pkg/errors"
 )
 
 type UnmarshalFunc func([]byte, int) (interface{}, error)
@@ -94,7 +93,7 @@ func (h *httpJSONClient) Post(url string, reqBody interface{}, timeout time.Dura
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -106,7 +105,7 @@ func (h *httpJSONClient) PostByContext(url string, reqBody interface{}, ctx cont
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -119,7 +118,7 @@ func (h *httpJSONClient) Delete(url string, reqBody interface{}, timeout time.Du
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -132,7 +131,7 @@ func (h *httpJSONClient) DeleteByContext(url string, reqBody interface{}, ctx co
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -145,7 +144,7 @@ func (h *httpJSONClient) Patch(url string, reqBody interface{}, timeout time.Dur
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -158,7 +157,7 @@ func (h *httpJSONClient) PatchByContext(url string, reqBody interface{}, ctx con
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -171,7 +170,7 @@ func (h *httpJSONClient) Put(url string, reqBody interface{}, timeout time.Durat
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -184,7 +183,7 @@ func (h *httpJSONClient) PutByContext(url string, reqBody interface{}, ctx conte
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -197,7 +196,7 @@ func (h *httpJSONClient) Get(url string, reqBody interface{}, timeout time.Durat
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})
@@ -210,7 +209,7 @@ func (h *httpJSONClient) GetByContext(url string, reqBody interface{}, ctx conte
 		defer closeRawBody(r)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Post to url %s error", url)
+			return nil, err
 		}
 		return fn(r.Body(), r.StatusCode())
 	})

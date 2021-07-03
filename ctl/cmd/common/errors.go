@@ -22,7 +22,7 @@ func ExitWithErrorf(format string, a ...interface{}) {
 	ExitWithError(fmt.Errorf(format, a...))
 }
 
-func OutputErrorInfo(format string, a ...interface{}) {
-	color.New(color.FgRed).Fprint(os.Stderr, "Error: ")
-	fmt.Fprintf(os.Stderr, format, a...)
+func OutputErrorf(format string, a ...interface{}) {
+	color.New(color.FgRed).Fprintf(os.Stderr, "Error: ")
+	fmt.Fprintf(os.Stderr, format+"\n", a...)
 }

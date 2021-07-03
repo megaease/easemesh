@@ -300,7 +300,7 @@ func DeleteResources(client *kubernetes.Clientset, resourceAndName [][]string, n
 	for _, s := range resourceAndName {
 		err := deletefunc(client, s[0], namespace, s[1])
 		if err != nil {
-			common.OutputErrorInfo("clear resource %s of %s in %s error: %s\n", s[1], s[0], namespace, err)
+			common.OutputErrorf("clear resource %s of %s in %s error: %s\n", s[1], s[0], namespace, err)
 		}
 	}
 }
@@ -327,7 +327,7 @@ func listPodByLabels(client *kubernetes.Clientset, labels map[string]string, nam
 
 	podList, err := client.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
-		common.OutputErrorInfo("Ignore error %s", err)
+		common.OutputErrorf("Ignore error %s", err)
 		return nil
 	}
 

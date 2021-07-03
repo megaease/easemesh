@@ -20,33 +20,39 @@ type Arguments struct {
 }
 
 func Run(cmd *cobra.Command, args *Arguments) {
+	if args.YamlFile == "" {
+		common.ExitWithErrorf("no resource specified")
+	}
+
 	vss, err := util.NewVisitorBuilder().
 		FilenameParam(&util.FilenameOptions{Recursive: args.Recursive, Filenames: []string{args.YamlFile}}).
 		Do()
 
 	if err != nil {
-		common.ExitWithErrorf("parse spec files error: %s", err)
+		common.ExitWithErrorf("build visitor failed: %v", err)
 	}
+
 	var errs []error
 	for _, vs := range vss {
 		vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				common.OutputErrorInfo("visit an error %s", e)
+				common.OutputErrorf("visit failed: %v", e)
 				errs = append(errs, e)
 				return nil
 			}
+
 			err := WrapApplierByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Apply()
 			if err != nil {
 				errs = append(errs, err)
-				common.OutputErrorInfo("apply %s of resource %s failed: %s\n", mo.Name(), mo.GetKind(), err)
+				common.OutputErrorf("%s/%s applied failed: %s\n", mo.Kind(), mo.Name(), err)
 			} else {
-				fmt.Printf("%s of resource %s has been successfully applied\n", mo.Name(), mo.GetKind())
+				fmt.Printf("%s/%s applied successfully\n", mo.Kind(), mo.Name())
 			}
 			return nil
 		})
 	}
 
 	if len(errs) > 0 {
-		common.ExitWithErrorf("appling resources has errors occurred")
+		common.ExitWithErrorf("applying resources has errors occurred")
 	}
 }

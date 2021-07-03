@@ -62,7 +62,7 @@ func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernet
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
-		common.OutputErrorInfo("clear: get mesh control panel entrypoint failed %s", err)
+		common.OutputErrorf("clear: get mesh control panel entrypoint failed %s", err)
 		return
 	}
 
@@ -80,7 +80,7 @@ func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernet
 				return nil, nil
 			})
 		if err != nil {
-			common.OutputErrorInfo("delete mesh controller configuration from %s failed %s", url, err)
+			common.OutputErrorf("delete mesh controller configuration from %s failed %s", url, err)
 		}
 	}
 }

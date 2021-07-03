@@ -2,6 +2,7 @@ package meshclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 
 	"github.com/megaease/easemesh-api/v1alpha1"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type serviceGetter struct {
@@ -40,7 +40,7 @@ func (s *serviceInterface) Get(ctx context.Context, serviceID string) (*resource
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", s.client.server, MeshServiceURL, statusCode, string(b))
 			}
 			service := &v1alpha1.Service{}
-			err := yaml.Unmarshal(b, service)
+			err := json.Unmarshal(b, service)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Service error")
 			}
@@ -91,7 +91,7 @@ func (s *serviceInterface) Create(ctx context.Context, service *resource.Service
 
 func (s *serviceInterface) Delete(ctx context.Context, serviceID string) error {
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, serviceID), nil, ctx, nil).
+		DeleteByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, serviceID), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, NotFoundError
@@ -104,7 +104,7 @@ func (s *serviceInterface) Delete(ctx context.Context, serviceID string) error {
 	return err
 }
 
-func (s *serviceInterface) List(ctx context.Context) ([]resource.Service, error) {
+func (s *serviceInterface) List(ctx context.Context) ([]*resource.Service, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+s.client.server+MeshServicesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -117,16 +117,18 @@ func (s *serviceInterface) List(ctx context.Context) ([]resource.Service, error)
 			}
 
 			services := []v1alpha1.Service{}
-			err := yaml.Unmarshal(b, services)
+			err := json.Unmarshal(b, &services)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal services result error")
 			}
-			results := []resource.Service{}
+			results := []*resource.Service{}
 			for _, ss := range services {
 				results = append(results, resource.ToService(&ss))
 			}
 			return results, nil
 		})
-
-	return result.([]resource.Service), err
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.Service), err
 }

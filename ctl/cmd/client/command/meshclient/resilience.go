@@ -2,6 +2,7 @@ package meshclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common/client"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type resilienceGetter struct {
@@ -37,7 +37,7 @@ func (r *resilienceInterface) Get(ctx context.Context, serviceID string) (*resou
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", r.client.server, MeshServiceResilienceURL, statusCode, string(b))
 			}
 			resilience := &v1alpha1.Resilience{}
-			err := yaml.Unmarshal(b, resilience)
+			err := json.Unmarshal(b, resilience)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Resilience error")
 			}
@@ -87,7 +87,7 @@ func (r *resilienceInterface) Create(ctx context.Context, resilience *resource.R
 
 func (r *resilienceInterface) Delete(ctx context.Context, serviceID string) error {
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, serviceID), nil, ctx, nil).
+		DeleteByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, serviceID), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete resilience %s error", serviceID)
@@ -101,7 +101,7 @@ func (r *resilienceInterface) Delete(ctx context.Context, serviceID string) erro
 	return err
 }
 
-func (r *resilienceInterface) List(ctx context.Context) ([]resource.Resilience, error) {
+func (r *resilienceInterface) List(ctx context.Context) ([]*resource.Resilience, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+r.client.server+MeshServicesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -114,11 +114,11 @@ func (r *resilienceInterface) List(ctx context.Context) ([]resource.Resilience, 
 			}
 
 			services := []v1alpha1.Service{}
-			err := yaml.Unmarshal(b, services)
+			err := json.Unmarshal(b, &services)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal services result error")
 			}
-			results := []resource.Resilience{}
+			results := []*resource.Resilience{}
 			for _, ss := range services {
 				if ss.Resilience != nil {
 					results = append(results, resource.ToResilience(ss.Name, ss.Resilience))
@@ -126,6 +126,8 @@ func (r *resilienceInterface) List(ctx context.Context) ([]resource.Resilience, 
 			}
 			return results, nil
 		})
-
-	return result.([]resource.Resilience), err
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.Resilience), err
 }

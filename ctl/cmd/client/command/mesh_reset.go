@@ -41,7 +41,7 @@ func reset(cmd *cobra.Command, args *installbase.InstallArgs) {
 	for _, f := range clearFuncs {
 		err := f(&stageContext)
 		if err != nil {
-			common.OutputErrorInfo("ignored a reseting resource error %s", err)
+			common.OutputErrorf("ignored a reseting resource error %s", err)
 		}
 	}
 

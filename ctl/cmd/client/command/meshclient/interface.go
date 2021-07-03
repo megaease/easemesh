@@ -50,7 +50,7 @@ type TenantInterface interface {
 	Patch(context.Context, *resource.Tenant) error
 	Create(context.Context, *resource.Tenant) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.Tenant, error)
+	List(context.Context) ([]*resource.Tenant, error)
 }
 
 type ServiceInterface interface {
@@ -58,28 +58,28 @@ type ServiceInterface interface {
 	Patch(context.Context, *resource.Service) error
 	Create(context.Context, *resource.Service) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.Service, error)
+	List(context.Context) ([]*resource.Service, error)
 }
 type LoadBalanceInterface interface {
 	Get(context.Context, string) (*resource.LoadBalance, error)
 	Patch(context.Context, *resource.LoadBalance) error
 	Create(context.Context, *resource.LoadBalance) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.LoadBalance, error)
+	List(context.Context) ([]*resource.LoadBalance, error)
 }
 type CanaryInterface interface {
 	Get(context.Context, string) (*resource.Canary, error)
 	Patch(context.Context, *resource.Canary) error
 	Create(context.Context, *resource.Canary) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.Canary, error)
+	List(context.Context) ([]*resource.Canary, error)
 }
 type ObservabilityOutputServerInterface interface {
 	Get(context.Context, string) (*resource.ObservabilityOutputServer, error)
 	Patch(context.Context, *resource.ObservabilityOutputServer) error
 	Create(context.Context, *resource.ObservabilityOutputServer) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.ObservabilityOutputServer, error)
+	List(context.Context) ([]*resource.ObservabilityOutputServer, error)
 }
 
 type ObservabilityMetricInterface interface {
@@ -87,7 +87,7 @@ type ObservabilityMetricInterface interface {
 	Patch(context.Context, *resource.ObservabilityMetrics) error
 	Create(context.Context, *resource.ObservabilityMetrics) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.ObservabilityMetrics, error)
+	List(context.Context) ([]*resource.ObservabilityMetrics, error)
 }
 
 type ObservabilityTracingInterface interface {
@@ -95,7 +95,7 @@ type ObservabilityTracingInterface interface {
 	Patch(context.Context, *resource.ObservabilityTracings) error
 	Create(context.Context, *resource.ObservabilityTracings) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.ObservabilityTracings, error)
+	List(context.Context) ([]*resource.ObservabilityTracings, error)
 }
 
 type ResilienceInterface interface {
@@ -103,7 +103,7 @@ type ResilienceInterface interface {
 	Patch(context.Context, *resource.Resilience) error
 	Create(context.Context, *resource.Resilience) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.Resilience, error)
+	List(context.Context) ([]*resource.Resilience, error)
 }
 
 type IngressInterface interface {
@@ -111,5 +111,5 @@ type IngressInterface interface {
 	Patch(context.Context, *resource.Ingress) error
 	Create(context.Context, *resource.Ingress) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]resource.Ingress, error)
+	List(context.Context) ([]*resource.Ingress, error)
 }

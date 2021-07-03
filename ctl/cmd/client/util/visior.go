@@ -167,11 +167,16 @@ func (v *StreamVisitor) Visit(fn VisitorFunc) error {
 			return errors.Errorf("error parsing %s: %v", v.Source, err)
 		}
 		// TODO: This needs to be able to handle object in other encodings and schemas.
-		ext.Raw = bytes.TrimSpace(ext.Raw)
+		jsonBuff, err := ext.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		ext.Raw = bytes.TrimSpace(jsonBuff)
 		if len(ext.Raw) == 0 || bytes.Equal(ext.Raw, []byte("null")) {
 			continue
 		}
-		info, err := v.decodeMeshObject(ext.Raw, v.Source)
+		info, err := v.decodeMeshObject(jsonBuff, v.Source)
 		if err != nil {
 			if fnErr := fn(info, err); fnErr != nil {
 				return fnErr
@@ -239,4 +244,42 @@ func readHttpWithRetries(client *resty.Client, duration time.Duration, u string,
 		return nil, errors.Errorf("unable to read URL %q, status code=%d", u, r.StatusCode())
 	}
 	return r.RawBody(), nil
+}
+
+type CommandVisitor struct {
+	Kind string
+	Name string
+
+	oc resource.ObjectCreator
+}
+
+func NewCommandVistor(kind, name string) *CommandVisitor {
+	return &CommandVisitor{
+		Kind: kind,
+		Name: name,
+		oc:   resource.NewObjectCreator(),
+	}
+}
+
+func (v *CommandVisitor) Visit(fn VisitorFunc) error {
+	vk := resource.VersionKind{
+		APIVersion: resource.DefaultAPIVersion,
+		Kind:       v.Kind,
+	}
+
+	var mo resource.MeshObject
+	var err error
+
+	if v.Name == "" {
+		mo, err = v.oc.NewFromKind(vk)
+	} else {
+		mo, err = v.oc.NewFromResource(resource.MeshResource{
+			VersionKind: vk,
+			MetaData: resource.MetaData{
+				Name: v.Name,
+			},
+		})
+	}
+
+	return fn(mo, err)
 }

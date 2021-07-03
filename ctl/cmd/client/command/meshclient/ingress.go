@@ -2,6 +2,7 @@ package meshclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/common/client"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type ingressGetter struct {
@@ -38,7 +38,7 @@ func (i *ingressInterface) Get(ctx context.Context, ingressID string) (*resource
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", i.client.server, MeshIngressURL, statusCode, string(b))
 			}
 			ingress := &v1alpha1.Ingress{}
-			err := yaml.Unmarshal(b, ingress)
+			err := json.Unmarshal(b, ingress)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tanent error")
 			}
@@ -90,7 +90,7 @@ func (t *ingressInterface) Create(ctx context.Context, ingress *resource.Ingress
 
 func (i *ingressInterface) Delete(ctx context.Context, ingressID string) error {
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingressID), nil, ctx, nil).
+		DeleteByContext(fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingressID), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete ingress %s error", ingressID)
@@ -104,7 +104,7 @@ func (i *ingressInterface) Delete(ctx context.Context, ingressID string) error {
 	return err
 }
 
-func (i *ingressInterface) List(ctx context.Context) ([]resource.Ingress, error) {
+func (i *ingressInterface) List(ctx context.Context) ([]*resource.Ingress, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+i.client.server+MeshIngressesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -116,13 +116,20 @@ func (i *ingressInterface) List(ctx context.Context) ([]resource.Ingress, error)
 				return nil, errors.Errorf("call GET %s%s failed, return statuscode %d text %s", i.client.server, MeshIngressesURL, statusCode, string(b))
 			}
 
-			results := []resource.Ingress{}
-			err := yaml.Unmarshal(b, results)
+			ingresses := []v1alpha1.Ingress{}
+			err := json.Unmarshal(b, &ingresses)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal tanent result error")
+				return nil, errors.Wrapf(err, "unmarshal ingress result error")
+			}
+
+			results := []*resource.Ingress{}
+			for _, ingress := range ingresses {
+				results = append(results, resource.ToIngress(&ingress))
 			}
 			return results, nil
 		})
-
-	return result.([]resource.Ingress), err
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.Ingress), err
 }
