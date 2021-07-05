@@ -33,14 +33,12 @@ func Run(cmd *cobra.Command, args *Arguments) {
 	case 0:
 		common.ExitWithErrorf("no resource specified")
 	case 1:
-		kind := resource.AdaptCommndKind(cmdArgs[0])
 		visitorBulder.CommandParam(&util.CommandOptions{
-			Kind: kind,
+			Kind: cmdArgs[0],
 		})
 	case 2:
-		kind := resource.AdaptCommndKind(cmdArgs[0])
 		visitorBulder.CommandParam(&util.CommandOptions{
-			Kind: kind,
+			Kind: cmdArgs[0],
 			Name: cmdArgs[1],
 		})
 	default:

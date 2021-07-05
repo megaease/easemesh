@@ -26,3 +26,10 @@ func OutputErrorf(format string, a ...interface{}) {
 	color.New(color.FgRed).Fprintf(os.Stderr, "Error: ")
 	fmt.Fprintf(os.Stderr, format+"\n", a...)
 }
+
+func OutputError(err error) {
+	if err != nil {
+		color.New(color.FgRed).Fprint(os.Stderr, "Error: ")
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+	}
+}

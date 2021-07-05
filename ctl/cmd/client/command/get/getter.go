@@ -2,18 +2,11 @@ package get
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/common"
-
-	yamljsontool "github.com/ghodss/yaml"
-	"github.com/olekukonko/tablewriter"
-	"gopkg.in/yaml.v2"
 )
 
 type (
@@ -22,95 +15,11 @@ type (
 	}
 
 	baseGetter struct {
-		client       meshclient.MeshClient
-		timeout      time.Duration
-		outputFormat string
-	}
-
-	gjsonField struct {
-		Key string
-		// Use key if empty
-		KeyShown          string
-		DisableUppercases bool
+		client  meshclient.MeshClient
+		timeout time.Duration
+		printer *printer
 	}
 )
-
-func (g *baseGetter) printObjects(objects []resource.MeshObject) {
-	if len(objects) == 0 {
-		fmt.Println("No resource")
-		return
-	}
-	switch g.outputFormat {
-	case "table":
-		g.printTable(objects)
-	case "json":
-		g.printJSON(objects)
-	case "yaml":
-		g.printYAML(objects)
-	default:
-		common.ExitWithErrorf("unsupported output format: %s", g.outputFormat)
-	}
-}
-
-func (g *baseGetter) printTable(objects []resource.MeshObject) {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Kind", "Name", "Labels"})
-
-	table.SetBorder(false)
-	table.SetRowLine(false)
-	table.SetColumnSeparator("")
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderLine(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-
-	for _, object := range objects {
-		var labels string
-		for k, v := range object.Labels() {
-			labels += k + "=" + v
-		}
-		table.Append([]string{
-			object.Kind(),
-			object.Name(),
-			labels,
-		})
-	}
-
-	table.Render()
-}
-
-func (g *baseGetter) printJSON(objects []resource.MeshObject) {
-	yamlBuff, err := yaml.Marshal(objects)
-	if err != nil {
-		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
-	}
-
-	jsonBuff, err := yamljsontool.YAMLToJSON(yamlBuff)
-	if err != nil {
-		common.ExitWithErrorf("transform yaml %s to json failed: %v", yamlBuff, err)
-	}
-
-	var v interface{}
-	err = json.Unmarshal(jsonBuff, &v)
-	if err != nil {
-		common.ExitWithErrorf("unmarshal %s to json failed: %v", jsonBuff, err)
-	}
-
-	prettyJSONBuff, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		common.ExitWithErrorf("unmarshal %#v to json failed: %v", v, err)
-	}
-
-	fmt.Printf("%s\n", prettyJSONBuff)
-}
-
-func (g *baseGetter) printYAML(objects []resource.MeshObject) {
-	yamlBuff, err := yaml.Marshal(objects)
-	if err != nil {
-		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
-	}
-
-	fmt.Printf("%s", yamlBuff)
-}
 
 var _ Getter = &serviceGetter{}
 
@@ -123,9 +32,9 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration, outputFormat string) Getter {
 
 	base := baseGetter{
-		client:       client,
-		timeout:      timeout,
-		outputFormat: outputFormat,
+		client:  client,
+		timeout: timeout,
+		printer: newPrinter(outputFormat),
 	}
 
 	switch object.Kind() {
@@ -164,7 +73,7 @@ func (s *serviceGetter) Get() error {
 			return err
 		}
 
-		s.printObjects([]resource.MeshObject{service})
+		s.printer.printObjects([]resource.MeshObject{service})
 	} else {
 		services, err := s.client.V1Alpha1().Service().List(ctx)
 		if err != nil {
@@ -176,7 +85,7 @@ func (s *serviceGetter) Get() error {
 			objects[i] = services[i]
 		}
 
-		s.printObjects(objects)
+		s.printer.printObjects(objects)
 	}
 
 	return nil
@@ -197,7 +106,7 @@ func (c *canaryGetter) Get() error {
 			return err
 		}
 
-		c.printObjects([]resource.MeshObject{canary})
+		c.printer.printObjects([]resource.MeshObject{canary})
 	} else {
 		canaries, err := c.client.V1Alpha1().Canary().List(ctx)
 		if err != nil {
@@ -209,7 +118,7 @@ func (c *canaryGetter) Get() error {
 			objects[i] = canaries[i]
 		}
 
-		c.printObjects(objects)
+		c.printer.printObjects(objects)
 	}
 
 	return nil
@@ -230,7 +139,7 @@ func (o *observabilityTracingsGetter) Get() error {
 			return err
 		}
 
-		o.printObjects([]resource.MeshObject{tracings})
+		o.printer.printObjects([]resource.MeshObject{tracings})
 	} else {
 		tracings, err := o.client.V1Alpha1().ObservabilityTracings().List(ctx)
 		if err != nil {
@@ -242,7 +151,7 @@ func (o *observabilityTracingsGetter) Get() error {
 			objects[i] = tracings[i]
 		}
 
-		o.printObjects(objects)
+		o.printer.printObjects(objects)
 	}
 
 	return nil
@@ -263,7 +172,7 @@ func (o *observabilityMetricsGetter) Get() error {
 			return err
 		}
 
-		o.printObjects([]resource.MeshObject{metrics})
+		o.printer.printObjects([]resource.MeshObject{metrics})
 	} else {
 		metrics, err := o.client.V1Alpha1().ObservabilityMetrics().List(ctx)
 		if err != nil {
@@ -275,7 +184,7 @@ func (o *observabilityMetricsGetter) Get() error {
 			objects[i] = metrics[i]
 		}
 
-		o.printObjects(objects)
+		o.printer.printObjects(objects)
 	}
 
 	return nil
@@ -296,7 +205,7 @@ func (o *observabilityOutputServerGetter) Get() error {
 			return err
 		}
 
-		o.printObjects([]resource.MeshObject{server})
+		o.printer.printObjects([]resource.MeshObject{server})
 	} else {
 		servers, err := o.client.V1Alpha1().ObservabilityOutputServer().List(ctx)
 		if err != nil {
@@ -308,7 +217,7 @@ func (o *observabilityOutputServerGetter) Get() error {
 			objects[i] = servers[i]
 		}
 
-		o.printObjects(objects)
+		o.printer.printObjects(objects)
 	}
 
 	return nil
@@ -329,7 +238,7 @@ func (l *loadBalanceGetter) Get() error {
 			return err
 		}
 
-		l.printObjects([]resource.MeshObject{lb})
+		l.printer.printObjects([]resource.MeshObject{lb})
 	} else {
 		lbs, err := l.client.V1Alpha1().LoadBalance().List(ctx)
 		if err != nil {
@@ -341,7 +250,7 @@ func (l *loadBalanceGetter) Get() error {
 			objects[i] = lbs[i]
 		}
 
-		l.printObjects(objects)
+		l.printer.printObjects(objects)
 	}
 
 	return nil
@@ -362,7 +271,7 @@ func (t *tenantGetter) Get() error {
 			return err
 		}
 
-		t.printObjects([]resource.MeshObject{tenant})
+		t.printer.printObjects([]resource.MeshObject{tenant})
 	} else {
 		tenants, err := t.client.V1Alpha1().Tenant().List(ctx)
 		if err != nil {
@@ -374,7 +283,7 @@ func (t *tenantGetter) Get() error {
 			objects[i] = tenants[i]
 		}
 
-		t.printObjects(objects)
+		t.printer.printObjects(objects)
 	}
 
 	return nil
@@ -395,7 +304,7 @@ func (r *resilienceGetter) Get() error {
 			return err
 		}
 
-		r.printObjects([]resource.MeshObject{resilience})
+		r.printer.printObjects([]resource.MeshObject{resilience})
 	} else {
 		resiliences, err := r.client.V1Alpha1().Resilience().List(ctx)
 		if err != nil {
@@ -407,7 +316,7 @@ func (r *resilienceGetter) Get() error {
 			objects[i] = resiliences[i]
 		}
 
-		r.printObjects(objects)
+		r.printer.printObjects(objects)
 	}
 
 	return nil
@@ -428,7 +337,7 @@ func (i *ingressGetter) Get() error {
 			return err
 		}
 
-		i.printObjects([]resource.MeshObject{ingress})
+		i.printer.printObjects([]resource.MeshObject{ingress})
 	} else {
 		ingresses, err := i.client.V1Alpha1().Ingress().List(ctx)
 		if err != nil {
@@ -440,7 +349,7 @@ func (i *ingressGetter) Get() error {
 			objects[i] = ingresses[i]
 		}
 
-		i.printObjects(objects)
+		i.printer.printObjects(objects)
 	}
 
 	return nil

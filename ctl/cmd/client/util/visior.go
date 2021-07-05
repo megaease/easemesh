@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
@@ -255,9 +256,35 @@ type CommandVisitor struct {
 
 func NewCommandVistor(kind, name string) *CommandVisitor {
 	return &CommandVisitor{
-		Kind: kind,
+		Kind: adaptCommandKind(kind),
 		Name: name,
 		oc:   resource.NewObjectCreator(),
+	}
+}
+
+func adaptCommandKind(kind string) string {
+	low := strings.ToLower
+	switch low(kind) {
+	case low(resource.KindService):
+		return resource.KindService
+	case low(resource.KindTenant):
+		return resource.KindTenant
+	case low(resource.KindLoadBalance):
+		return resource.KindLoadBalance
+	case low(resource.KindCanary):
+		return resource.KindCanary
+	case low(resource.KindObservabilityTracings):
+		return resource.KindObservabilityTracings
+	case low(resource.KindObservabilityOutputServer):
+		return resource.KindObservabilityOutputServer
+	case low(resource.KindObservabilityMetrics):
+		return resource.KindObservabilityMetrics
+	case low(resource.KindResilience):
+		return resource.KindResilience
+	case low(resource.KindIngress):
+		return resource.KindIngress
+	default:
+		return kind
 	}
 }
 

@@ -1,8 +1,6 @@
 package resource
 
 import (
-	"strings"
-
 	"github.com/megaease/easemesh-api/v1alpha1"
 )
 
@@ -113,32 +111,6 @@ type (
 		Spec         *IngressSpec `yaml:"spec" jsonschema:"omitempty"`
 	}
 )
-
-func AdaptCommndKind(kind string) string {
-	low := strings.ToLower
-	switch low(kind) {
-	case low(KindService):
-		return KindService
-	case low(KindTenant):
-		return KindTenant
-	case low(KindLoadBalance):
-		return KindLoadBalance
-	case low(KindCanary):
-		return KindCanary
-	case low(KindObservabilityTracings):
-		return KindObservabilityTracings
-	case low(KindObservabilityOutputServer):
-		return KindObservabilityOutputServer
-	case low(KindObservabilityMetrics):
-		return KindObservabilityMetrics
-	case low(KindResilience):
-		return KindResilience
-	case low(KindIngress):
-		return KindIngress
-	default:
-		return kind
-	}
-}
 
 var _ MeshObject = &Service{}
 var _ MeshObject = &Tenant{}

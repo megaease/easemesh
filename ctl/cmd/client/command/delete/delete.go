@@ -35,9 +35,8 @@ func Run(cmd *cobra.Command, args *Arguments) {
 		if len(cmdArgs) != 2 {
 			common.ExitWithErrorf("invalid command args: support <resource kind> <resource name>")
 		}
-		kind := resource.AdaptCommndKind(cmdArgs[0])
 		visitorBulder.CommandParam(&util.CommandOptions{
-			Kind: kind,
+			Kind: cmdArgs[0],
 			Name: cmdArgs[1],
 		})
 	}
