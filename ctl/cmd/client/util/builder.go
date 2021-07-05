@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"strings"
@@ -12,23 +11,33 @@ import (
 
 var FileExtensions = []string{".json", ".yaml", ".yml"}
 
-type VisitorBuilder struct {
-	visitors          []Visitor
-	decoder           Decoder
-	httpGetAttempts   int
-	errs              []error
-	singleItemImplied bool
-	filenameOptions   *FilenameOptions
-	stdinInUse        bool
-}
+type (
+	VisitorBuilder struct {
+		visitors          []Visitor
+		decoder           Decoder
+		httpGetAttempts   int
+		errs              []error
+		singleItemImplied bool
+		commandOptions    *CommandOptions
+		filenameOptions   *FilenameOptions
+		stdinInUse        bool
+	}
+
+	CommandOptions struct {
+		// Kind is required.
+		Kind string
+		// Name is allowed to be empty.
+		Name string
+	}
+
+	FilenameOptions struct {
+		Filenames []string
+		Recursive bool
+	}
+)
 
 func NewVisitorBuilder() *VisitorBuilder {
 	return &VisitorBuilder{httpGetAttempts: 3, decoder: newDefaultDecoder()}
-}
-
-type FilenameOptions struct {
-	Filenames []string
-	Recursive bool
 }
 
 func (b *VisitorBuilder) HttpAttemptCount(httpGetAttempts int) *VisitorBuilder {
@@ -41,18 +50,40 @@ func (b *VisitorBuilder) FilenameParam(filenameOptions *FilenameOptions) *Visito
 	return b
 }
 
-func (b *VisitorBuilder) URL(httpAttemptCount int, urls ...*url.URL) *VisitorBuilder {
-	for _, u := range urls {
-		b.visitors = append(b.visitors, &URLVisitor{
-			URL:              u,
-			StreamVisitor:    NewStreamVisitor(nil, b.decoder, u.String()),
-			HttpAttemptCount: httpAttemptCount,
-		})
+func (b *VisitorBuilder) CommandParam(commandOptions *CommandOptions) *VisitorBuilder {
+	b.commandOptions = commandOptions
+	return b
+}
+
+func (b *VisitorBuilder) Command() *VisitorBuilder {
+	if b.commandOptions == nil {
+		return b
 	}
+
+	b.visitors = append(b.visitors, NewCommandVisitor(
+		b.commandOptions.Kind,
+		b.commandOptions.Name,
+	))
+
 	return b
 }
 
 func (b *VisitorBuilder) Do() ([]Visitor, error) {
+	b.Command()
+	b.File()
+
+	if len(b.errs) != 0 {
+		return nil, fmt.Errorf("%+v", b.errs)
+	}
+
+	return b.visitors, nil
+}
+
+func (b *VisitorBuilder) File() *VisitorBuilder {
+	if b.filenameOptions == nil {
+		return b
+	}
+
 	recursive := b.filenameOptions.Recursive
 	paths := b.filenameOptions.Filenames
 	for _, s := range paths {
@@ -73,7 +104,19 @@ func (b *VisitorBuilder) Do() ([]Visitor, error) {
 			b.Path(recursive, s)
 		}
 	}
-	return b.visitors, nil
+
+	return b
+}
+
+func (b *VisitorBuilder) URL(httpAttemptCount int, urls ...*url.URL) *VisitorBuilder {
+	for _, u := range urls {
+		b.visitors = append(b.visitors, &URLVisitor{
+			URL:              u,
+			StreamVisitor:    NewStreamVisitor(nil, b.decoder, u.String()),
+			HttpAttemptCount: httpAttemptCount,
+		})
+	}
+	return b
 }
 
 func (b *VisitorBuilder) Stdin() *VisitorBuilder {
@@ -107,10 +150,5 @@ func (b *VisitorBuilder) Path(recursive bool, paths ...string) *VisitorBuilder {
 	if len(b.visitors) == 0 {
 		b.errs = append(b.errs, fmt.Errorf("error reading %v: recognized file extensions are %v", paths, FileExtensions))
 	}
-	return b
-}
-
-func (b *VisitorBuilder) Stream(r io.Reader, name string) *VisitorBuilder {
-	b.visitors = append(b.visitors, NewStreamVisitor(r, b.decoder, name))
 	return b
 }

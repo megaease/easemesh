@@ -6,6 +6,7 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
 )
@@ -28,7 +29,7 @@ type serviceApplier struct {
 
 func WrapApplierByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Applier {
-	switch object.GetKind() {
+	switch object.Kind() {
 	case resource.KindService:
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCanary:
@@ -47,7 +48,10 @@ func WrapApplierByMeshObject(object resource.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
+	default:
+		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
 	}
+
 	return nil
 }
 
@@ -62,12 +66,12 @@ func (s *serviceApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = s.client.V1Alpha1().Service().Patch(ctx, s.object)
 			if err != nil {
-				return errors.Wrapf(err, "update service %s error", s.object.Name)
+				return errors.Wrapf(err, "update service %s error", s.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = s.client.V1Alpha1().Service().Create(ctx, s.object)
 			if err != nil {
-				return errors.Wrapf(err, "create service %s error", s.object.Name)
+				return errors.Wrapf(err, "create service %s error", s.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply service %s error", s.object.Name())
@@ -92,12 +96,12 @@ func (c *canaryApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = c.client.V1Alpha1().Canary().Patch(ctx, c.object)
 			if err != nil {
-				return errors.Wrapf(err, "update canary %s error", c.object.Name)
+				return errors.Wrapf(err, "update canary %s error", c.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = c.client.V1Alpha1().Canary().Create(ctx, c.object)
 			if err != nil {
-				return errors.Wrapf(err, "create canary %s error", c.object.Name)
+				return errors.Wrapf(err, "create canary %s error", c.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply canary %s error", c.object.Name())
@@ -122,12 +126,12 @@ func (o *observabilityTracingsApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = o.client.V1Alpha1().ObservabilityTracings().Patch(ctx, o.object)
 			if err != nil {
-				return errors.Wrapf(err, "update observabilityTracings %s error", o.object.Name)
+				return errors.Wrapf(err, "update observabilityTracings %s error", o.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = o.client.V1Alpha1().ObservabilityTracings().Create(ctx, o.object)
 			if err != nil {
-				return errors.Wrapf(err, "create observabilityTracings %s error", o.object.Name)
+				return errors.Wrapf(err, "create observabilityTracings %s error", o.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply observabilityTracings %s error", o.object.Name())
@@ -152,12 +156,12 @@ func (o *observabilityMetricsApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = o.client.V1Alpha1().ObservabilityMetrics().Patch(ctx, o.object)
 			if err != nil {
-				return errors.Wrapf(err, "update observabilityMetrics %s error", o.object.Name)
+				return errors.Wrapf(err, "update observabilityMetrics %s error", o.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = o.client.V1Alpha1().ObservabilityMetrics().Create(ctx, o.object)
 			if err != nil {
-				return errors.Wrapf(err, "create observabilityMetrics %s error", o.object.Name)
+				return errors.Wrapf(err, "create observabilityMetrics %s error", o.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply observabilityMetrics %s error", o.object.Name())
@@ -182,12 +186,12 @@ func (o *observabilityOutputServerApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = o.client.V1Alpha1().ObservabilityOutputServer().Patch(ctx, o.object)
 			if err != nil {
-				return errors.Wrapf(err, "update observabilityOutputServer %s error", o.object.Name)
+				return errors.Wrapf(err, "update observabilityOutputServer %s error", o.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = o.client.V1Alpha1().ObservabilityOutputServer().Create(ctx, o.object)
 			if err != nil {
-				return errors.Wrapf(err, "create observabilityOutputServer %s error", o.object.Name)
+				return errors.Wrapf(err, "create observabilityOutputServer %s error", o.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply observabilityOutputServer %s error", o.object.Name())
@@ -212,12 +216,12 @@ func (l *loadBalanceApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = l.client.V1Alpha1().LoadBalance().Patch(ctx, l.object)
 			if err != nil {
-				return errors.Wrapf(err, "update loadbalance %s error", l.object.Name)
+				return errors.Wrapf(err, "update loadbalance %s error", l.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = l.client.V1Alpha1().LoadBalance().Create(ctx, l.object)
 			if err != nil {
-				return errors.Wrapf(err, "create loadbalance %s error", l.object.Name)
+				return errors.Wrapf(err, "create loadbalance %s error", l.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply loadbalance %s error", l.object.Name())
@@ -241,12 +245,12 @@ func (t *tenantApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = t.client.V1Alpha1().Tenant().Patch(ctx, t.object)
 			if err != nil {
-				return errors.Wrapf(err, "update tenant %s error", t.object.Name)
+				return errors.Wrapf(err, "update tenant %s error", t.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = t.client.V1Alpha1().Tenant().Create(ctx, t.object)
 			if err != nil {
-				return errors.Wrapf(err, "create tenant %s error", t.object.Name)
+				return errors.Wrapf(err, "create tenant %s error", t.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply tenant %s error", t.object.Name())
@@ -270,12 +274,12 @@ func (r *resilienceApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = r.client.V1Alpha1().Resilience().Patch(ctx, r.object)
 			if err != nil {
-				return errors.Wrapf(err, "update resilience %s error", r.object.Name)
+				return errors.Wrapf(err, "update resilience %s error", r.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = r.client.V1Alpha1().Resilience().Create(ctx, r.object)
 			if err != nil {
-				return errors.Wrapf(err, "create resilience %s error", r.object.Name)
+				return errors.Wrapf(err, "create resilience %s error", r.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply resilience %s error", r.object.Name())
@@ -299,12 +303,12 @@ func (i *ingressApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = i.client.V1Alpha1().Ingress().Patch(ctx, i.object)
 			if err != nil {
-				return errors.Wrapf(err, "update resilience %s error", i.object.Name)
+				return errors.Wrapf(err, "update resilience %s error", i.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = i.client.V1Alpha1().Ingress().Create(ctx, i.object)
 			if err != nil {
-				return errors.Wrapf(err, "create resilience %s error", i.object.Name)
+				return errors.Wrapf(err, "create resilience %s error", i.object.Name())
 			}
 		default:
 			return errors.Wrapf(err, "apply resilience %s error", i.object.Name())

@@ -2,84 +2,118 @@ package resource
 
 import "github.com/pkg/errors"
 
-type ObjectCreator interface {
-	New(*VersionKind) (MeshObject, error)
-}
+type (
+	ObjectCreator interface {
+		NewFromKind(VersionKind) (MeshObject, error)
+		NewFromResource(MeshResource) (MeshObject, error)
+	}
 
-type createObjectFunc func(*VersionKind) (MeshObject, error)
+	objectCreator struct{}
+)
 
 func NewObjectCreator() ObjectCreator {
-	fn := func(kind *VersionKind) (MeshObject, error) {
-		switch kind.Kind {
-		case KindService:
-			return &Service{}, nil
-		case KindTenant:
-			return &Tenant{}, nil
-		case KindLoadBalance:
-			return &LoadBalance{}, nil
-		case KindCanary:
-			return &Canary{}, nil
-		case KindObservabilityTracings:
-			return &ObservabilityTracings{}, nil
-		case KindObservabilityOutputServer:
-			return &ObservabilityOutputServer{}, nil
-		case KindObservabilityMetrics:
-			return &ObservabilityMetrics{}, nil
-		case KindResilience:
-			return &Resilience{}, nil
-		case KindIngress:
-			return &Ingress{}, nil
-		}
-		return nil, errors.Errorf("unknown VersionKind object version: %s, kind: %s", kind.APIVersion, kind.Kind)
+	return &objectCreator{}
+}
+
+func (oc *objectCreator) NewFromKind(kind VersionKind) (MeshObject, error) {
+	return oc.new(kind, MetaData{})
+}
+
+func (oc *objectCreator) NewFromResource(resource MeshResource) (MeshObject, error) {
+	return oc.new(resource.VersionKind, resource.MetaData)
+}
+
+func (oc *objectCreator) new(kind VersionKind, metaData MetaData) (MeshObject, error) {
+	apiVersion := kind.APIVersion
+	if apiVersion == "" {
+		apiVersion = DefaultAPIVersion
 	}
-	var f createObjectFunc = fn
-	return f
+
+	switch kind.Kind {
+	case KindService:
+		return &Service{
+			MeshResource: NewServiceResource(apiVersion, metaData.Name),
+		}, nil
+	case KindTenant:
+		return &Tenant{
+			MeshResource: NewTenantResource(apiVersion, metaData.Name),
+		}, nil
+	case KindLoadBalance:
+		return &LoadBalance{
+			MeshResource: NewLoadBalanceResource(apiVersion, metaData.Name),
+		}, nil
+	case KindCanary:
+		return &Canary{
+			MeshResource: NewCanaryResource(apiVersion, metaData.Name),
+		}, nil
+	case KindObservabilityTracings:
+		return &ObservabilityTracings{
+			MeshResource: NewObservabilityTracingsResource(apiVersion, metaData.Name),
+		}, nil
+	case KindObservabilityOutputServer:
+		return &ObservabilityOutputServer{
+			MeshResource: NewObservabilityOutputServerResource(apiVersion, metaData.Name),
+		}, nil
+	case KindObservabilityMetrics:
+		return &ObservabilityMetrics{
+			MeshResource: NewObservabilityMetricsResource(apiVersion, metaData.Name),
+		}, nil
+	case KindResilience:
+		return &Resilience{
+			MeshResource: NewResilienceResource(apiVersion, metaData.Name),
+		}, nil
+	case KindIngress:
+		return &Ingress{
+			MeshResource: NewIngressResource(apiVersion, metaData.Name),
+		}, nil
+	default:
+		return nil, errors.Errorf("unsupported kind %s", kind.Kind)
+	}
 }
 
-func (c createObjectFunc) New(k *VersionKind) (MeshObject, error) {
-	return c(k)
-}
-func ForIngressResource(service string) MeshResource {
-	return meshResource(apiVersion, KindIngress, service)
+func NewIngressResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindIngress, name)
 }
 
-func ForServiceMeshResource(service string) MeshResource {
-	return meshResource(apiVersion, KindService, service)
+func NewServiceResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindService, name)
 }
 
-func ForCanaryMeshResource(id string) MeshResource {
-	return meshResource(apiVersion, KindCanary, id)
+func NewCanaryResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindCanary, name)
 }
 
-func ForLoadBalanceResource(id string) MeshResource {
-	return meshResource(apiVersion, KindLoadBalance, id)
+func NewLoadBalanceResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindLoadBalance, name)
 }
 
-func ForResilienceResource(id string) MeshResource {
-	return meshResource(apiVersion, KindResilience, id)
+func NewResilienceResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindResilience, name)
 }
 
-func ForObservabilityTracingsResource(id string) MeshResource {
-	return meshResource(apiVersion, KindObservabilityTracings, id)
+func NewObservabilityTracingsResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindObservabilityTracings, name)
 }
 
-func ForObservabilityMetricsResource(id string) MeshResource {
-	return meshResource(apiVersion, KindObservabilityMetrics, id)
+func NewObservabilityMetricsResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindObservabilityMetrics, name)
 }
 
-func ForObservabilityOutputServerResource(id string) MeshResource {
-	return meshResource(apiVersion, KindObservabilityOutputServer, id)
+func NewObservabilityOutputServerResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindObservabilityOutputServer, name)
 }
-func ForTenantResource(id string) MeshResource {
-	return meshResource(apiVersion, KindTenant, id)
+func NewTenantResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindTenant, name)
 }
 
-func meshResource(api, kind, id string) MeshResource {
+func NewMeshResource(api, kind, name string) MeshResource {
 	return MeshResource{
-		APIVersion: api,
-		Kind:       kind,
+		VersionKind: VersionKind{
+			APIVersion: api,
+			Kind:       kind,
+		},
 		MetaData: MetaData{
-			Name: id,
+			Name: name,
 		},
 	}
 }

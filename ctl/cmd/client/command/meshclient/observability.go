@@ -2,6 +2,7 @@ package meshclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common/client"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type observabilityGetter struct {
@@ -44,7 +44,7 @@ func (o *observabilityTracingInterface) Get(ctx context.Context, serviceID strin
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", o.client.server, MeshServiceTracingsURL, statusCode, string(b))
 			}
 			tracing := &v1alpha1.ObservabilityTracings{}
-			err := yaml.Unmarshal(b, tracing)
+			err := json.Unmarshal(b, tracing)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.ObservabilityTracings error")
 			}
@@ -94,7 +94,7 @@ func (o *observabilityTracingInterface) Create(ctx context.Context, tracings *re
 
 func (o *observabilityTracingInterface) Delete(ctx context.Context, serviceID string) error {
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceTracingsURL, serviceID), nil, ctx, nil).
+		DeleteByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceTracingsURL, serviceID), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete observabilityTracings %s error", serviceID)
@@ -108,7 +108,7 @@ func (o *observabilityTracingInterface) Delete(ctx context.Context, serviceID st
 	return err
 }
 
-func (o *observabilityTracingInterface) List(ctx context.Context) ([]resource.ObservabilityTracings, error) {
+func (o *observabilityTracingInterface) List(ctx context.Context) ([]*resource.ObservabilityTracings, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+o.client.server+MeshServicesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -121,11 +121,11 @@ func (o *observabilityTracingInterface) List(ctx context.Context) ([]resource.Ob
 			}
 
 			services := []v1alpha1.Service{}
-			err := yaml.Unmarshal(b, services)
+			err := json.Unmarshal(b, &services)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal services result error")
 			}
-			results := []resource.ObservabilityTracings{}
+			results := []*resource.ObservabilityTracings{}
 			for _, ss := range services {
 				if ss.Observability != nil && ss.Observability.Tracings != nil {
 					results = append(results, resource.ToObservabilityTracings(ss.Name, ss.Observability.Tracings))
@@ -134,7 +134,7 @@ func (o *observabilityTracingInterface) List(ctx context.Context) ([]resource.Ob
 			return results, nil
 		})
 
-	return result.([]resource.ObservabilityTracings), err
+	return result.([]*resource.ObservabilityTracings), err
 }
 
 type observabilityMetricInterface struct {
@@ -154,7 +154,7 @@ func (o *observabilityMetricInterface) Get(ctx context.Context, serviceID string
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", o.client.server, MeshServiceMetricsURL, statusCode, string(b))
 			}
 			metrics := &v1alpha1.ObservabilityMetrics{}
-			err := yaml.Unmarshal(b, metrics)
+			err := json.Unmarshal(b, metrics)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Service error")
 			}
@@ -218,7 +218,7 @@ func (o *observabilityMetricInterface) Delete(ctx context.Context, serviceID str
 	return err
 }
 
-func (o *observabilityMetricInterface) List(ctx context.Context) ([]resource.ObservabilityMetrics, error) {
+func (o *observabilityMetricInterface) List(ctx context.Context) ([]*resource.ObservabilityMetrics, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+o.client.server+MeshServicesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -231,11 +231,11 @@ func (o *observabilityMetricInterface) List(ctx context.Context) ([]resource.Obs
 			}
 
 			services := []v1alpha1.Service{}
-			err := yaml.Unmarshal(b, services)
+			err := json.Unmarshal(b, &services)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal services result error")
 			}
-			results := []resource.ObservabilityMetrics{}
+			results := []*resource.ObservabilityMetrics{}
 			for _, ss := range services {
 				if ss.Observability != nil && ss.Observability.Metrics != nil {
 					results = append(results, resource.ToObservabilityMetrics(ss.Name, ss.Observability.Metrics))
@@ -244,7 +244,7 @@ func (o *observabilityMetricInterface) List(ctx context.Context) ([]resource.Obs
 			return results, nil
 		})
 
-	return result.([]resource.ObservabilityMetrics), err
+	return result.([]*resource.ObservabilityMetrics), err
 }
 
 type observabilityOutputServerInterface struct {
@@ -264,7 +264,7 @@ func (o *observabilityOutputServerInterface) Get(ctx context.Context, serviceID 
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", o.client.server, MeshServiceOutputServerURL, statusCode, string(b))
 			}
 			output := &v1alpha1.ObservabilityOutputServer{}
-			err := yaml.Unmarshal(b, output)
+			err := json.Unmarshal(b, output)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.ObservabilityOutputServer error")
 			}
@@ -328,7 +328,7 @@ func (o *observabilityOutputServerInterface) Delete(ctx context.Context, service
 	return err
 }
 
-func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]resource.ObservabilityOutputServer, error) {
+func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]*resource.ObservabilityOutputServer, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+o.client.server+MeshServicesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -341,11 +341,11 @@ func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]resour
 			}
 
 			services := []v1alpha1.Service{}
-			err := yaml.Unmarshal(b, services)
+			err := json.Unmarshal(b, &services)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal services result error")
 			}
-			results := []resource.ObservabilityOutputServer{}
+			results := []*resource.ObservabilityOutputServer{}
 			for _, ss := range services {
 				if ss.Observability != nil && ss.Observability.OutputServer != nil {
 					results = append(results, resource.ToObservabilityOutputServer(ss.Name, ss.Observability.OutputServer))
@@ -353,6 +353,8 @@ func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]resour
 			}
 			return results, nil
 		})
-
-	return result.([]resource.ObservabilityOutputServer), err
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.ObservabilityOutputServer), err
 }

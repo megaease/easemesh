@@ -2,6 +2,7 @@ package meshclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common/client"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type tenantGetter struct {
@@ -37,7 +37,7 @@ func (t *tenantInterface) Get(ctx context.Context, tenantID string) (*resource.T
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", t.client.server, MeshTenantURL, statusCode, string(b))
 			}
 			tenant := &v1alpha1.Tenant{}
-			err := yaml.Unmarshal(b, tenant)
+			err := json.Unmarshal(b, tenant)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tanent error")
 			}
@@ -89,7 +89,7 @@ func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) e
 
 func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID), nil, ctx, nil).
+		DeleteByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete tenant %s error", tenantID)
@@ -103,7 +103,7 @@ func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
 	return err
 }
 
-func (t *tenantInterface) List(ctx context.Context) ([]resource.Tenant, error) {
+func (t *tenantInterface) List(ctx context.Context) ([]*resource.Tenant, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantsURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -115,13 +115,20 @@ func (t *tenantInterface) List(ctx context.Context) ([]resource.Tenant, error) {
 				return nil, errors.Errorf("call GET %s%s failed, return statuscode %d text %s", t.client.server, MeshTenantsURL, statusCode, string(b))
 			}
 
-			results := []resource.Tenant{}
-			err := yaml.Unmarshal(b, results)
+			tenants := []v1alpha1.Tenant{}
+			err := json.Unmarshal(b, &tenants)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal tanent result error")
 			}
+
+			results := []*resource.Tenant{}
+			for _, tenant := range tenants {
+				results = append(results, resource.ToTenant(&tenant))
+			}
 			return results, nil
 		})
-
-	return result.([]resource.Tenant), err
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.Tenant), err
 }

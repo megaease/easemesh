@@ -159,7 +159,7 @@ func checkEasegressControlPlaneStatus(cmd *cobra.Command, kubeClient *kubernetes
 
 				members, err := unmarshalMember(body)
 				if err != nil {
-					common.OutputErrorInfo("parse member body error: %s", err)
+					common.OutputErrorf("parse member body error: %s", err)
 					return true
 				}
 
@@ -182,7 +182,7 @@ func checkEasegressControlPlaneStatus(cmd *cobra.Command, kubeClient *kubernetes
 				return nil, nil
 			})
 		if err != nil {
-			common.OutputErrorInfo("check mesh control plane status failed, ignored check next node, current error is: %s", err)
+			common.OutputErrorf("check mesh control plane status failed, ignored check next node, current error is: %s", err)
 		} else {
 			return nil
 		}

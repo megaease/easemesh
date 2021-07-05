@@ -43,7 +43,7 @@ func (i *installation) ClearResource(context *installbase.StageContext) {
 	for _, f := range context.ClearFuncs {
 		err := f(context)
 		if err != nil {
-			common.OutputErrorInfo("clear resource error:%s", err)
+			common.OutputErrorf("clear resource error:%s", err)
 		}
 	}
 }

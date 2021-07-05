@@ -5,100 +5,101 @@ import (
 )
 
 const (
-	apiVersion = "mesh.megaease.com/v1alpha1"
-)
-const (
+	DefaultAPIVersion = "mesh.megaease.com/v1alpha1"
+
 	LoadBalanceRoundRobinPolicy = "roundRobin"
 	DefaultSideIngressProtocol  = "http"
 	DefaultSideEgressProtocol   = "http"
 	DefaultSideIngressPort      = 13001
 	DefaultSideEgressPort       = 13002
-)
 
-const (
-	KindService = "service"
-	KindCanary  = "canary"
-	//
-	KindObservabilityMetrics      = "observabilityMetrics"
-	KindObservabilityTracings     = "observabilityTracings"
-	KindObservabilityOutputServer = "observabilityOutputServer"
-	//
-	KindTenant      = "tenant"
-	KindLoadBalance = "loadbalance"
-	KindResilience  = "resilience"
+	KindService = "Service"
+	KindCanary  = "Canary"
 
-	//
-	KindIngress = "ingress"
+	KindObservabilityMetrics      = "ObservabilityMetrics"
+	KindObservabilityTracings     = "ObservabilityTracings"
+	KindObservabilityOutputServer = "ObservabilityOutputServer"
+
+	KindTenant      = "Tenant"
+	KindLoadBalance = "Loadbalance"
+	KindResilience  = "Resilience"
+
+	KindIngress = "Ingress"
 )
 
 type (
+	VersionKind struct {
+		APIVersion string `yaml:"apiVersion" jsonschema:"required"`
+		Kind       string `yaml:"kind" jsonschema:"required"`
+	}
+
 	MetaData struct {
 		Name   string            `yaml:"name" jsonschema:"required"`
 		Labels map[string]string `yaml:"labels" jsonschema:"omitempty"`
 	}
 
 	MeshResource struct {
-		APIVersion string   `yaml:"apiVersion" jsonschema:"required"`
-		Kind       string   `yaml:"kind" jsonschema:"required"`
-		MetaData   MetaData `yaml:"metadata" jsonschema:"required"`
+		VersionKind `yaml:",inline"`
+		MetaData    MetaData `yaml:"metadata" jsonschema:"required"`
 	}
 
 	MeshObject interface {
 		Name() string
-		GetKind() string
-		GetAPIVersion() string
-	}
-
-	VersionKind struct {
-		APIVersion string `yaml:"apiVersion" jsonschema:"required"`
-		Kind       string `yaml:"kind" jsonschema:"required"`
+		Kind() string
+		APIVersion() string
+		Labels() map[string]string
 	}
 )
 
 type (
 	Tenant struct {
-		MeshResource
-		Spec v1alpha1.Tenant `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Services     []string `yaml:"services" jsonschema:"omitempty"`
+		Description  string   `yaml:"description" jsonschema:"omitempty"`
 	}
 
 	ServiceSpec struct {
-		RegisterTenant string                `yaml:"registerTenant" jsonschema:"omitempty"`
-		LoadBalance    *v1alpha1.LoadBalance `yaml:"loadbalance" jsonschema:"omitempty"`
-		SideCar        *v1alpha1.Sidecar     `yaml:"sideCar" jsonschema:"omitempty"`
+		RegisterTenant string `yaml:"registerTenant" jsonschema:"required"`
+
+		Sidecar       *v1alpha1.Sidecar       `yaml:"sidecar" jsonschema:"required"`
+		Resilience    *v1alpha1.Resilience    `yaml:"resilience" jsonschema:"omitempty"`
+		Canary        *v1alpha1.Canary        `yaml:"canary" jsonschema:"omitempty"`
+		LoadBalance   *v1alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
+		Observability *v1alpha1.Observability `yaml:"observability" jsonschema:"omitempty"`
 	}
 
 	Service struct {
-		MeshResource
-		Spec ServiceSpec `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *ServiceSpec `yaml:"spec" jsonschema:"omitempty"`
 	}
 
 	Canary struct {
-		MeshResource
-		Spec v1alpha1.Canary `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.Canary `yaml:"spec" jsonschema:"omitempty"`
 	}
 
 	ObservabilityTracings struct {
-		MeshResource
-		Spec v1alpha1.ObservabilityTracings `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ObservabilityTracings `yaml:"spec" jsonschema:"omitempty"`
 	}
 
 	ObservabilityOutputServer struct {
-		MeshResource
-		Spec v1alpha1.ObservabilityOutputServer `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ObservabilityOutputServer `yaml:"spec" jsonschema:"omitempty"`
 	}
 
 	ObservabilityMetrics struct {
-		MeshResource
-		Spec v1alpha1.ObservabilityMetrics `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ObservabilityMetrics `yaml:"spec" jsonschema:"omitempty"`
 	}
 	LoadBalance struct {
-		MeshResource
-		Spec v1alpha1.LoadBalance `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.LoadBalance `yaml:"spec" jsonschema:"omitempty"`
 	}
 
 	Resilience struct {
-		MeshResource
-		Spec v1alpha1.Resilience `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.Resilience `yaml:"spec" jsonschema:"omitempty"`
 	}
 
 	IngressSpec struct {
@@ -106,8 +107,8 @@ type (
 	}
 
 	Ingress struct {
-		MeshResource
-		Spec IngressSpec `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *IngressSpec `yaml:"spec" jsonschema:"omitempty"`
 	}
 )
 
@@ -120,27 +121,27 @@ var _ MeshObject = &Resilience{}
 var _ MeshObject = &Ingress{}
 
 func (s *ServiceSpec) Default() {
-	if s.SideCar.DiscoveryType == "" {
-		s.SideCar.DiscoveryType = "eureka"
+	if s.Sidecar.DiscoveryType == "" {
+		s.Sidecar.DiscoveryType = "eureka"
 	}
 
-	if s.SideCar.Address == "" {
-		s.SideCar.Address = "127.0.0.1"
+	if s.Sidecar.Address == "" {
+		s.Sidecar.Address = "127.0.0.1"
 	}
 
-	if s.SideCar.IngressPort == 0 {
-		s.SideCar.IngressPort = DefaultSideIngressPort
+	if s.Sidecar.IngressPort == 0 {
+		s.Sidecar.IngressPort = DefaultSideIngressPort
 	}
 
-	if s.SideCar.IngressProtocol == "" {
-		s.SideCar.IngressProtocol = DefaultSideIngressProtocol
+	if s.Sidecar.IngressProtocol == "" {
+		s.Sidecar.IngressProtocol = DefaultSideIngressProtocol
 	}
 
-	if s.SideCar.EgressPort == 0 {
-		s.SideCar.EgressPort = DefaultSideEgressPort
+	if s.Sidecar.EgressPort == 0 {
+		s.Sidecar.EgressPort = DefaultSideEgressPort
 	}
-	if s.SideCar.EgressProtocol == "" {
-		s.SideCar.EgressProtocol = DefaultSideEgressProtocol
+	if s.Sidecar.EgressProtocol == "" {
+		s.Sidecar.EgressProtocol = DefaultSideEgressProtocol
 	}
 	if s.LoadBalance.Policy == "" {
 		s.LoadBalance.Policy = LoadBalanceRoundRobinPolicy
@@ -151,119 +152,157 @@ func (m *MeshResource) Name() string {
 	return m.MetaData.Name
 }
 
-func (m *MeshResource) GetKind() string {
-	return m.Kind
+func (m *MeshResource) Kind() string {
+	return m.VersionKind.Kind
 }
 
-func (m *MeshResource) GetAPIVersion() string {
-	return m.APIVersion
+func (m *MeshResource) APIVersion() string {
+	return m.VersionKind.APIVersion
 }
 
-func (s *Ingress) ToV1Alpha1() (result v1alpha1.Ingress) {
-	result.Name = s.Name()
-	result.Rules = s.Spec.Rules
-	return
+func (m *MeshResource) Labels() map[string]string {
+	return m.MetaData.Labels
 }
 
-func (s *Service) ToV1Alpha1() (result v1alpha1.Service) {
-	result.Name = s.Name()
-	result.RegisterTenant = s.Spec.RegisterTenant
-	result.LoadBalance = s.Spec.LoadBalance
-	result.Sidecar = s.Spec.SideCar
-	return
-}
-
-func (t *Tenant) ToV1Alpha1() (result v1alpha1.Tenant) {
-	result.Name = t.Name()
-	result.Services = t.Spec.Services
-	result.Description = t.Spec.Description
+func (ing *Ingress) ToV1Alpha1() *v1alpha1.Ingress {
+	result := &v1alpha1.Ingress{}
+	result.Name = ing.Name()
+	if ing.Spec != nil {
+		result.Rules = ing.Spec.Rules
+	}
 	return result
 }
 
-func (l *LoadBalance) ToV1Alpha1() (result v1alpha1.LoadBalance) {
-	result = l.Spec
-	return
+func (s *Service) ToV1Alpha1() *v1alpha1.Service {
+	result := &v1alpha1.Service{}
+	result.Name = s.Name()
+	if s.Spec != nil {
+		result.RegisterTenant = s.Spec.RegisterTenant
+		result.Resilience = s.Spec.Resilience
+		result.Canary = s.Spec.Canary
+		result.LoadBalance = s.Spec.LoadBalance
+		result.Sidecar = s.Spec.Sidecar
+		result.Observability = s.Spec.Observability
+	}
+	return result
 }
 
-func (c *Canary) ToV1Alpha1() (result v1alpha1.Canary) {
-	result = c.Spec
-	return
+func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
+	result := &v1alpha1.Tenant{}
+	result.Name = t.Name()
+	result.Services = t.Services
+	result.Description = t.Description
+	return result
 }
 
-func (r *Resilience) ToV1Alpha1() (result v1alpha1.Resilience) {
-	result = r.Spec
-	return
+func (l *LoadBalance) ToV1Alpha1() *v1alpha1.LoadBalance {
+	return l.Spec
 }
 
-func (r *ObservabilityTracings) ToV1Alpha1() (result v1alpha1.ObservabilityTracings) {
-	result = r.Spec
-	return
+func (c *Canary) ToV1Alpha1() *v1alpha1.Canary {
+	return c.Spec
 }
 
-func (r *ObservabilityOutputServer) ToV1Alpha1() (result v1alpha1.ObservabilityOutputServer) {
-	result = r.Spec
-	return
+func (r *Resilience) ToV1Alpha1() *v1alpha1.Resilience {
+	return r.Spec
 }
 
-func (r *ObservabilityMetrics) ToV1Alpha1() (result v1alpha1.ObservabilityMetrics) {
-	result = r.Spec
-	return
+func (r *ObservabilityTracings) ToV1Alpha1() (result *v1alpha1.ObservabilityTracings) {
+	return r.Spec
 }
 
-func ToIngress(ingress *v1alpha1.Ingress) (result Ingress) {
-	result.MeshResource = ForIngressResource(ingress.Name)
+func (r *ObservabilityOutputServer) ToV1Alpha1() (result *v1alpha1.ObservabilityOutputServer) {
+	return r.Spec
+}
+
+func (r *ObservabilityMetrics) ToV1Alpha1() (result *v1alpha1.ObservabilityMetrics) {
+	return r.Spec
+}
+
+func ToIngress(ingress *v1alpha1.Ingress) *Ingress {
+	result := &Ingress{
+		Spec: &IngressSpec{},
+	}
+	result.MeshResource = NewIngressResource(DefaultAPIVersion, ingress.Name)
 	result.Spec.Rules = ingress.Rules
-	return
+	return result
 }
 
-func ToService(service *v1alpha1.Service) (result Service) {
-	result.MeshResource = ForServiceMeshResource(service.Name)
-	result.Spec.SideCar = service.Sidecar
+func ToService(service *v1alpha1.Service) *Service {
+	result := &Service{
+		Spec: &ServiceSpec{},
+	}
+	result.MeshResource = NewServiceResource(DefaultAPIVersion, service.Name)
+	result.Spec.RegisterTenant = service.RegisterTenant
+	result.Spec.Sidecar = service.Sidecar
+	result.Spec.Resilience = service.Resilience
+	result.Spec.Canary = service.Canary
 	result.Spec.LoadBalance = service.LoadBalance
-	return
+	result.Spec.Observability = service.Observability
+	return result
 }
 
-func ToCanary(name string, canary *v1alpha1.Canary) (result Canary) {
-	result.MeshResource = ForCanaryMeshResource(name)
+func ToCanary(name string, canary *v1alpha1.Canary) *Canary {
+	result := &Canary{
+		Spec: &v1alpha1.Canary{},
+	}
+	result.MeshResource = NewCanaryResource(DefaultAPIVersion, name)
 	result.Spec.CanaryRules = canary.CanaryRules
-	return
+	return result
 }
 
-func ToObservabilityTracings(serviceID string, tracing *v1alpha1.ObservabilityTracings) (result ObservabilityTracings) {
-	result.MeshResource = ForObservabilityTracingsResource(serviceID)
-	result.Spec = *tracing
-	return
+func ToObservabilityTracings(serviceID string, tracing *v1alpha1.ObservabilityTracings) *ObservabilityTracings {
+	result := &ObservabilityTracings{
+		Spec: &v1alpha1.ObservabilityTracings{},
+	}
+	result.MeshResource = NewObservabilityTracingsResource(DefaultAPIVersion, serviceID)
+	result.Spec = tracing
+	return result
 }
 
-func ToObservabilityMetrics(serviceID string, metrics *v1alpha1.ObservabilityMetrics) (result ObservabilityMetrics) {
-	result.MeshResource = ForObservabilityMetricsResource(serviceID)
-	result.Spec = *metrics
-	return
+func ToObservabilityMetrics(serviceID string, metrics *v1alpha1.ObservabilityMetrics) *ObservabilityMetrics {
+	result := &ObservabilityMetrics{
+		Spec: &v1alpha1.ObservabilityMetrics{},
+	}
+	result.MeshResource = NewObservabilityMetricsResource(DefaultAPIVersion, serviceID)
+	result.Spec = metrics
+	return result
 }
 
-func ToObservabilityOutputServer(serviceID string, output *v1alpha1.ObservabilityOutputServer) (result ObservabilityOutputServer) {
-	result.MeshResource = ForObservabilityOutputServerResource(serviceID)
-	result.Spec = *output
-	return
+func ToObservabilityOutputServer(serviceID string, output *v1alpha1.ObservabilityOutputServer) *ObservabilityOutputServer {
+	result := &ObservabilityOutputServer{
+		Spec: &v1alpha1.ObservabilityOutputServer{},
+	}
+	result.MeshResource = NewObservabilityOutputServerResource(DefaultAPIVersion, serviceID)
+	result.Spec = output
+	return result
 }
 
-func ToLoadbalance(name string, loadBalance *v1alpha1.LoadBalance) (result LoadBalance) {
-	result.MeshResource = ForLoadBalanceResource(name)
-	result.Spec = *loadBalance
-	return
+func ToLoadbalance(name string, loadBalance *v1alpha1.LoadBalance) *LoadBalance {
+	result := &LoadBalance{
+		Spec: &v1alpha1.LoadBalance{},
+	}
+	result.MeshResource = NewLoadBalanceResource(DefaultAPIVersion, name)
+	result.Spec = loadBalance
+	return result
 }
 
-func ToTenant(tenant *v1alpha1.Tenant) (result Tenant) {
-	result.MeshResource = ForTenantResource(tenant.Name)
-	result.Spec.Services = tenant.Services
-	return
+func ToTenant(tenant *v1alpha1.Tenant) *Tenant {
+	result := &Tenant{}
+	result.MeshResource = NewTenantResource(DefaultAPIVersion, tenant.Name)
+	result.Services = tenant.Services
+	result.Description = tenant.Description
+	return result
 }
 
-func ToResilience(name string, resilience *v1alpha1.Resilience) (result Resilience) {
-	result.MeshResource = ForResilienceResource(name)
+func ToResilience(name string, resilience *v1alpha1.Resilience) *Resilience {
+	result := &Resilience{
+		Spec: &v1alpha1.Resilience{},
+	}
+	result.MeshResource = NewResilienceResource(DefaultAPIVersion, name)
 	result.Spec.RateLimiter = resilience.RateLimiter
 	result.Spec.Retryer = resilience.Retryer
 	result.Spec.CircuitBreaker = resilience.CircuitBreaker
 	result.Spec.TimeLimiter = resilience.TimeLimiter
-	return
+	return result
 }

@@ -2,6 +2,7 @@ package meshclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common/client"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type canaryGetter struct {
@@ -40,7 +40,7 @@ func (c *canaryInterface) Get(ctx context.Context, serviceID string) (*resource.
 				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", c.client.server, MeshServiceCanaryURL, statusCode, string(b))
 			}
 			canary := &v1alpha1.Canary{}
-			err := yaml.Unmarshal(b, canary)
+			err := json.Unmarshal(b, canary)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Canary error")
 			}
@@ -57,7 +57,7 @@ func (c *canaryInterface) Patch(ctx context.Context, canary *resource.Canary) er
 	jsonClient := client.NewHTTPJSON()
 	update := canary.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+c.client.server+MeshServiceCanaryURL, canary.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+c.client.server+MeshServiceCanaryURL, canary.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch canary %s error", canary.Name())
@@ -89,7 +89,7 @@ func (c *canaryInterface) Create(ctx context.Context, canary *resource.Canary) e
 
 func (c *canaryInterface) Delete(ctx context.Context, serviceID string) error {
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+c.client.server+MeshServiceCanaryURL, serviceID), nil, ctx, nil).
+		DeleteByContext(fmt.Sprintf("http://"+c.client.server+MeshServiceCanaryURL, serviceID), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete canary %s error", serviceID)
@@ -103,7 +103,7 @@ func (c *canaryInterface) Delete(ctx context.Context, serviceID string) error {
 	return err
 }
 
-func (c *canaryInterface) List(ctx context.Context) ([]resource.Canary, error) {
+func (c *canaryInterface) List(ctx context.Context) ([]*resource.Canary, error) {
 	result, err := client.NewHTTPJSON().
 		GetByContext(fmt.Sprintf("http://"+c.client.server+MeshServicesURL), nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -116,11 +116,11 @@ func (c *canaryInterface) List(ctx context.Context) ([]resource.Canary, error) {
 			}
 
 			services := []v1alpha1.Service{}
-			err := yaml.Unmarshal(b, services)
+			err := json.Unmarshal(b, &services)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal services result error")
 			}
-			results := []resource.Canary{}
+			results := []*resource.Canary{}
 			for _, ss := range services {
 				if ss.Canary != nil {
 					results = append(results, resource.ToCanary(ss.Name, ss.Canary))
@@ -128,6 +128,8 @@ func (c *canaryInterface) List(ctx context.Context) ([]resource.Canary, error) {
 			}
 			return results, nil
 		})
-
-	return result.([]resource.Canary), err
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.Canary), err
 }

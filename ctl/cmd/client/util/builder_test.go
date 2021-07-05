@@ -26,7 +26,7 @@ func writeTestFile(t *testing.T, path string, contents string) {
 }
 
 const (
-	aTenant = `kind: tenant
+	aTenant = `kind: Tenant
 apiVersion: mesh.megaease.com/v1alpha1
 metadata:
   name: tenant_{id}
@@ -34,7 +34,7 @@ spec:
   service: []
 `
 
-	aService = `kind: service
+	aService = `kind: Service
 apiVersion: mesh.megaease.com/v1alpha1
 metadata:
   name: service_{id}
