@@ -60,7 +60,7 @@ func (b *VisitorBuilder) Command() *VisitorBuilder {
 		return b
 	}
 
-	b.visitors = append(b.visitors, NewCommandVistor(
+	b.visitors = append(b.visitors, NewCommandVisitor(
 		b.commandOptions.Kind,
 		b.commandOptions.Name,
 	))

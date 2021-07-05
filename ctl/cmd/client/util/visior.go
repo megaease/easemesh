@@ -254,7 +254,7 @@ type CommandVisitor struct {
 	oc resource.ObjectCreator
 }
 
-func NewCommandVistor(kind, name string) *CommandVisitor {
+func NewCommandVisitor(kind, name string) *CommandVisitor {
 	return &CommandVisitor{
 		Kind: adaptCommandKind(kind),
 		Name: name,
