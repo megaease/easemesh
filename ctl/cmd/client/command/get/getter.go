@@ -11,13 +11,12 @@ import (
 
 type (
 	Getter interface {
-		Get() error
+		Get() ([]resource.MeshObject, error)
 	}
 
 	baseGetter struct {
 		client  meshclient.MeshClient
 		timeout time.Duration
-		printer *printer
 	}
 )
 
@@ -29,12 +28,11 @@ type serviceGetter struct {
 }
 
 func WrapGetterByMeshObject(object resource.MeshObject,
-	client meshclient.MeshClient, timeout time.Duration, outputFormat string) Getter {
+	client meshclient.MeshClient, timeout time.Duration) Getter {
 
 	base := baseGetter{
 		client:  client,
 		timeout: timeout,
-		printer: newPrinter(outputFormat),
 	}
 
 	switch object.Kind() {
@@ -63,21 +61,21 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 	return nil
 }
 
-func (s *serviceGetter) Get() error {
+func (s *serviceGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
 
 	if s.object.Name() != "" {
 		service, err := s.client.V1Alpha1().Service().Get(ctx, s.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		s.printer.printObjects([]resource.MeshObject{service})
+		return []resource.MeshObject{service}, nil
 	} else {
 		services, err := s.client.V1Alpha1().Service().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(services))
@@ -85,10 +83,8 @@ func (s *serviceGetter) Get() error {
 			objects[i] = services[i]
 		}
 
-		s.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type canaryGetter struct {
@@ -96,21 +92,21 @@ type canaryGetter struct {
 	object *resource.Canary
 }
 
-func (c *canaryGetter) Get() error {
+func (c *canaryGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
 	defer cancelFunc()
 
 	if c.object.Name() != "" {
 		canary, err := c.client.V1Alpha1().Canary().Get(ctx, c.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		c.printer.printObjects([]resource.MeshObject{canary})
+		return []resource.MeshObject{canary}, nil
 	} else {
 		canaries, err := c.client.V1Alpha1().Canary().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(canaries))
@@ -118,10 +114,8 @@ func (c *canaryGetter) Get() error {
 			objects[i] = canaries[i]
 		}
 
-		c.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type observabilityTracingsGetter struct {
@@ -129,21 +123,21 @@ type observabilityTracingsGetter struct {
 	object *resource.ObservabilityTracings
 }
 
-func (o *observabilityTracingsGetter) Get() error {
+func (o *observabilityTracingsGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
 	if o.object.Name() != "" {
 		tracings, err := o.client.V1Alpha1().ObservabilityTracings().Get(ctx, o.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		o.printer.printObjects([]resource.MeshObject{tracings})
+		return []resource.MeshObject{tracings}, nil
 	} else {
 		tracings, err := o.client.V1Alpha1().ObservabilityTracings().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(tracings))
@@ -151,10 +145,8 @@ func (o *observabilityTracingsGetter) Get() error {
 			objects[i] = tracings[i]
 		}
 
-		o.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type observabilityMetricsGetter struct {
@@ -162,21 +154,21 @@ type observabilityMetricsGetter struct {
 	object *resource.ObservabilityMetrics
 }
 
-func (o *observabilityMetricsGetter) Get() error {
+func (o *observabilityMetricsGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
 	if o.object.Name() != "" {
 		metrics, err := o.client.V1Alpha1().ObservabilityMetrics().Get(ctx, o.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		o.printer.printObjects([]resource.MeshObject{metrics})
+		return []resource.MeshObject{metrics}, nil
 	} else {
 		metrics, err := o.client.V1Alpha1().ObservabilityMetrics().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(metrics))
@@ -184,10 +176,8 @@ func (o *observabilityMetricsGetter) Get() error {
 			objects[i] = metrics[i]
 		}
 
-		o.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type observabilityOutputServerGetter struct {
@@ -195,21 +185,21 @@ type observabilityOutputServerGetter struct {
 	object *resource.ObservabilityOutputServer
 }
 
-func (o *observabilityOutputServerGetter) Get() error {
+func (o *observabilityOutputServerGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
 	if o.object.Name() != "" {
 		server, err := o.client.V1Alpha1().ObservabilityOutputServer().Get(ctx, o.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		o.printer.printObjects([]resource.MeshObject{server})
+		return []resource.MeshObject{server}, nil
 	} else {
 		servers, err := o.client.V1Alpha1().ObservabilityOutputServer().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(servers))
@@ -217,10 +207,8 @@ func (o *observabilityOutputServerGetter) Get() error {
 			objects[i] = servers[i]
 		}
 
-		o.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type loadBalanceGetter struct {
@@ -228,21 +216,21 @@ type loadBalanceGetter struct {
 	object *resource.LoadBalance
 }
 
-func (l *loadBalanceGetter) Get() error {
+func (l *loadBalanceGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), l.timeout)
 	defer cancelFunc()
 
 	if l.object.Name() != "" {
 		lb, err := l.client.V1Alpha1().LoadBalance().Get(ctx, l.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		l.printer.printObjects([]resource.MeshObject{lb})
+		return []resource.MeshObject{lb}, nil
 	} else {
 		lbs, err := l.client.V1Alpha1().LoadBalance().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(lbs))
@@ -250,10 +238,8 @@ func (l *loadBalanceGetter) Get() error {
 			objects[i] = lbs[i]
 		}
 
-		l.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type tenantGetter struct {
@@ -261,21 +247,21 @@ type tenantGetter struct {
 	object *resource.Tenant
 }
 
-func (t *tenantGetter) Get() error {
+func (t *tenantGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), t.timeout)
 	defer cancelFunc()
 
 	if t.object.Name() != "" {
 		tenant, err := t.client.V1Alpha1().Tenant().Get(ctx, t.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		t.printer.printObjects([]resource.MeshObject{tenant})
+		return []resource.MeshObject{tenant}, nil
 	} else {
 		tenants, err := t.client.V1Alpha1().Tenant().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(tenants))
@@ -283,10 +269,8 @@ func (t *tenantGetter) Get() error {
 			objects[i] = tenants[i]
 		}
 
-		t.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type resilienceGetter struct {
@@ -294,21 +278,21 @@ type resilienceGetter struct {
 	object *resource.Resilience
 }
 
-func (r *resilienceGetter) Get() error {
+func (r *resilienceGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), r.timeout)
 	defer cancelFunc()
 
 	if r.object.Name() != "" {
 		resilience, err := r.client.V1Alpha1().Resilience().Get(ctx, r.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		r.printer.printObjects([]resource.MeshObject{resilience})
+		return []resource.MeshObject{resilience}, nil
 	} else {
 		resiliences, err := r.client.V1Alpha1().Resilience().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(resiliences))
@@ -316,10 +300,8 @@ func (r *resilienceGetter) Get() error {
 			objects[i] = resiliences[i]
 		}
 
-		r.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }
 
 type ingressGetter struct {
@@ -327,21 +309,21 @@ type ingressGetter struct {
 	object *resource.Ingress
 }
 
-func (i *ingressGetter) Get() error {
+func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), i.timeout)
 	defer cancelFunc()
 
 	if i.object.Name() != "" {
 		ingress, err := i.client.V1Alpha1().Ingress().Get(ctx, i.object.Name())
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		i.printer.printObjects([]resource.MeshObject{ingress})
+		return []resource.MeshObject{ingress}, nil
 	} else {
 		ingresses, err := i.client.V1Alpha1().Ingress().List(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		objects := make([]resource.MeshObject, len(ingresses))
@@ -349,8 +331,6 @@ func (i *ingressGetter) Get() error {
 			objects[i] = ingresses[i]
 		}
 
-		i.printer.printObjects(objects)
+		return objects, nil
 	}
-
-	return nil
 }

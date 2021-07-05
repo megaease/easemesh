@@ -1,4 +1,4 @@
-package get
+package printer
 
 import (
 	"encoding/json"
@@ -13,16 +13,16 @@ import (
 )
 
 type (
-	printer struct {
+	Printer struct {
 		outputFormat string
 	}
 )
 
-func newPrinter(outputFormat string) *printer {
-	return &printer{outputFormat: outputFormat}
+func New(outputFormat string) *Printer {
+	return &Printer{outputFormat: outputFormat}
 }
 
-func (p *printer) printObjects(objects []resource.MeshObject) {
+func (p *Printer) PrintObjects(objects []resource.MeshObject) {
 	if len(objects) == 0 {
 		fmt.Println("No resource")
 		return
@@ -39,7 +39,7 @@ func (p *printer) printObjects(objects []resource.MeshObject) {
 	}
 }
 
-func (p *printer) printTable(objects []resource.MeshObject) {
+func (p *Printer) printTable(objects []resource.MeshObject) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Kind", "Name", "Labels"})
 
@@ -65,7 +65,7 @@ func (p *printer) printTable(objects []resource.MeshObject) {
 	table.Render()
 }
 
-func (p *printer) printJSON(objects []resource.MeshObject) {
+func (p *Printer) printJSON(objects []resource.MeshObject) {
 	yamlBuff, err := yaml.Marshal(objects)
 	if err != nil {
 		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
@@ -90,7 +90,7 @@ func (p *printer) printJSON(objects []resource.MeshObject) {
 	fmt.Printf("%s\n", prettyJSONBuff)
 }
 
-func (p *printer) printYAML(objects []resource.MeshObject) {
+func (p *Printer) printYAML(objects []resource.MeshObject) {
 	yamlBuff, err := yaml.Marshal(objects)
 	if err != nil {
 		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
+	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
@@ -50,6 +51,7 @@ func Run(cmd *cobra.Command, args *Arguments) {
 		common.ExitWithErrorf("build visitor failed: %s", err)
 	}
 
+	printer := printer.New(args.OutputFormat)
 	var errs []error
 	for _, vs := range vss {
 		vs.Visit(func(mo resource.MeshObject, e error) error {
@@ -64,13 +66,13 @@ func Run(cmd *cobra.Command, args *Arguments) {
 				resourceID += "/" + mo.Name()
 			}
 
-			err := WrapGetterByMeshObject(mo, meshclient.New(args.Server),
-				args.Timeout, args.OutputFormat).
-				Get()
+			objects, err := WrapGetterByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Get()
 			if err != nil {
 				errs = append(errs, err)
 				common.OutputErrorf("%s get failed: %s\n", resourceID, err)
 			}
+
+			printer.PrintObjects(objects)
 
 			return nil
 		})
