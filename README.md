@@ -1,3 +1,4 @@
+
 # EaseMesh
 A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
 
@@ -61,45 +62,11 @@ Why do we reinvent another wheel?
 
 ### 6.2 Sanity Checking
 * Running `kubectl get nodes` to check your Kubernetes cluster's healthy.
-* Running  `mysql -u$your_db_user -p$your_db_pass` to check the connection to your DB.
+
 
 ### 6.3 Installation
 
-1. Registering K8s mesh-deployment CRD, and starting EaseMesh control-plane, IngressGateway with commands below:
-
-    ```shell
-    $ cd ./install
-    $ ./emctl install
-    ```
-    **Note:** EaseMesh installation needs [easegress](https://github.com/megaease/easegress) and [EaseAgent](https://github.com/megaease/easeagent)'s image. They are provided in Docker Hub. If you want to get them from your private image repository, run `./emctl install --image-registry-url ${your_image-registry-url}` instead.
-
-2. Checking control plane and ingress gateway's status
-
-    ```shell
-    $ kubectl get pod mesh-ingress-${random-suffix}
-    NAME              READY  STATUS  RESTARTS  AGE
-    mesh-ingress-${random-suffix}  1/1   Running  0     18h
-
-    $ kubectl get pod easegress-cluster-0-${random-suffix}
-    NAME              READY  STATUS  RESTARTS  AGE
-    easegress-cluster-0-${random-suffix}  1/1   Running  0     18h
-
-    $ kubectl get pod easegress-cluster-1-${random-suffix}
-    NAME              READY  STATUS  RESTARTS  AGE
-    easegress-cluster-1-${random-suffix}  1/1   Running  0     18h
-
-    $ kubectl get pod easegress-cluster-2-${random-suffix}
-    NAME              READY  STATUS  RESTARTS  AGE
-    easegress-cluster-2-${random-suffix}  1/1   Running  0     18h
-    ```
-
-
-3. Verifying the EaseMesh operator
-
-    ```shell
-    $ kubectl get crd | grep meshdeployment
-    meshdeployments.mesh.megaease.com       2021-03-18T02:54:15Z
-    ```
+Please check out [install.md](./docs/install.md) to install EaseMesh.
 
 ## 7. Demonstration
 

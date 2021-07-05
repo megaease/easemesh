@@ -11,7 +11,7 @@ As we said in [Purpose](../README.md#1-purposes) and [Principles](../README.md#2
 
 1. Easy to integrate
 2. Java-compatible ecosystem
-3. High service-level agreement
+3. High SLA
 
 ## Roadmap 2021
 
