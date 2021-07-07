@@ -1,6 +1,8 @@
 package resource
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+)
 
 type (
 	ObjectCreator interface {

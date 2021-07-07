@@ -54,7 +54,7 @@ func (t *tenantInterface) Patch(ctx context.Context, tenant *resource.Tenant) er
 	jsonClient := client.NewHTTPJSON()
 	update := tenant.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch tenant %s error", tenant.Name())
@@ -73,7 +73,7 @@ func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) e
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
 		// Current URL form should be corrected in the feature
-		PostByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create tenant %s error", tenant.Name())

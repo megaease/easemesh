@@ -55,22 +55,24 @@ func Run(cmd *cobra.Command, args *Arguments) {
 
 	var errs []error
 	for _, vs := range vss {
-		vs.Visit(func(mo resource.MeshObject, e error) error {
+		err := vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				common.OutputErrorf("visit failed: %v", e)
-				errs = append(errs, e)
-				return nil
+				return fmt.Errorf("visit failed: %v", e)
 			}
 
 			err := WrapDeleterByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Delete()
 			if err != nil {
-				errs = append(errs, err)
-				common.OutputErrorf("%s/%s deleted failed: %s\n", mo.Kind(), mo.Name(), err)
-			} else {
-				fmt.Printf("%s/%s deleted successfully\n", mo.Kind(), mo.Name())
+				return fmt.Errorf("%s/%s deleted failed: %s", mo.Kind(), mo.Name(), err)
 			}
+
+			fmt.Printf("%s/%s deleted successfully\n", mo.Kind(), mo.Name())
 			return nil
 		})
+
+		if err != nil {
+			common.OutputError(err)
+			errs = append(errs, err)
+		}
 	}
 
 	if len(errs) > 0 {

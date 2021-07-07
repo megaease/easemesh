@@ -73,7 +73,7 @@ func (c *canaryInterface) Patch(ctx context.Context, canary *resource.Canary) er
 func (c *canaryInterface) Create(ctx context.Context, canary *resource.Canary) error {
 	created := canary.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+c.client.server+MeshServiceCanaryURL, canary.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+c.client.server+MeshServiceCanaryURL, canary.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create canary %s error", canary.Name())

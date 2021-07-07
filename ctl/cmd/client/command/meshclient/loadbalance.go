@@ -55,7 +55,7 @@ func (s *loadbalanceInterface) Patch(ctx context.Context, loadbalance *resource.
 	jsonClient := client.NewHTTPJSON()
 	update := loadbalance.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch loadbalance %s error", loadbalance.Name())
@@ -71,7 +71,7 @@ func (s *loadbalanceInterface) Patch(ctx context.Context, loadbalance *resource.
 func (s *loadbalanceInterface) Create(ctx context.Context, loadbalance *resource.LoadBalance) error {
 	created := loadbalance.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create loadbalance %s error", loadbalance.Name())

@@ -28,7 +28,6 @@ type serviceInterface struct {
 }
 
 func (s *serviceInterface) Get(ctx context.Context, serviceID string) (*resource.Service, error) {
-
 	jsonClient := client.NewHTTPJSON()
 	r, err := jsonClient.
 		GetByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, serviceID), nil, ctx, nil).
@@ -57,7 +56,7 @@ func (s *serviceInterface) Patch(ctx context.Context, service *resource.Service)
 	jsonClient := client.NewHTTPJSON()
 	update := service.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, service.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, service.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, NotFoundError
@@ -75,7 +74,7 @@ func (s *serviceInterface) Create(ctx context.Context, service *resource.Service
 	created := service.ToV1Alpha1()
 
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, service.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceURL, service.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create service %s error", service.Name())
