@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/common"
 	"github.com/megaease/easemeshctl/cmd/common/client"
@@ -16,9 +17,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
+func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
 
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, args.MeshNameSpace,
+	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNameSpace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
@@ -27,10 +28,10 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 
 	meshControllerConfig := installbase.MeshControllerConfig{
 		Name:              installbase.DefaultMeshControllerName,
-		Kind:              installbase.MeshControllerKind,
-		RegistryType:      args.EaseMeshRegistryType,
-		HeartbeatInterval: strconv.Itoa(args.HeartbeatInterval) + "s",
-		IngressPort:       args.MeshIngressServicePort,
+		Kind:              flags.MeshControllerKind,
+		RegistryType:      installFlags.EaseMeshRegistryType,
+		HeartbeatInterval: strconv.Itoa(installFlags.HeartbeatInterval) + "s",
+		IngressPort:       installFlags.MeshIngressServicePort,
 	}
 
 	configBody, err := json.Marshal(meshControllerConfig)
@@ -56,9 +57,9 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 	return errors.Wrapf(err, "call EaseMesh control panel %v error", entrypoints)
 }
 
-func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) {
+func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
 
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, args.MeshNameSpace,
+	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNameSpace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {

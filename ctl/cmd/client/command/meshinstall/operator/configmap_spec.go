@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -14,12 +15,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func configMapSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	cfg := installbase.MeshOperatorConfig{
-		ImageRegistryURL:     args.ImageRegistryURL,
+		ImageRegistryURL:     installFlags.ImageRegistryURL,
 		ClusterName:          installbase.DefaultMeshControlPlaneName,
-		ClusterJoinURLs:      "http://" + installbase.DefaultMeshControlPlaneHeadfulServiceName + "." + args.MeshNameSpace + ":" + strconv.Itoa(args.EgPeerPort),
+		ClusterJoinURLs:      "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + installFlags.MeshNameSpace + ":" + strconv.Itoa(installFlags.EgPeerPort),
 		MetricsAddr:          "127.0.0.1:8080",
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
@@ -28,7 +29,7 @@ func configMapSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      meshOperatorConfigMap,
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 		},
 	}
 	operatorConfig, err := yaml.Marshal(cfg)
@@ -39,11 +40,11 @@ func configMapSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 		configMap.Data = data
 	}
 
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, args *installbase.InstallArgs) error {
+	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
 		if err != nil {
 			return errors.Wrap(err, "ConfigMap build error")
 		}
-		err = installbase.DeployConfigMap(configMap, client, args.MeshNameSpace)
+		err = installbase.DeployConfigMap(configMap, client, installFlags.MeshNameSpace)
 		if err != nil {
 			return fmt.Errorf("create configMap failed: %v ", err)
 		}

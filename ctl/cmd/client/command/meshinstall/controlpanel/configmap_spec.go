@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	yamljsontool "github.com/ghodss/yaml"
@@ -15,17 +16,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func configMapSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	var host = "0.0.0.0"
 
 	var config = installbase.EasegressConfig{
 		Name:                    installbase.DefaultMeshControlPlaneName,
 		ClusterName:             installbase.DefaultMeshControlPlaneName,
 		ClusterRole:             installbase.WriterClusterRole,
-		ClusterListenClientUrls: []string{"http://" + "0.0.0.0:" + strconv.Itoa(args.EgClientPort)},
-		ClusterListenPeerUrls:   []string{"http://" + "0.0.0.0:" + strconv.Itoa(args.EgPeerPort)},
+		ClusterListenClientUrls: []string{"http://" + "0.0.0.0:" + strconv.Itoa(installFlags.EgClientPort)},
+		ClusterListenPeerUrls:   []string{"http://" + "0.0.0.0:" + strconv.Itoa(installFlags.EgPeerPort)},
 		ClusterJoinUrls:         []string{},
-		ApiAddr:                 host + ":" + strconv.Itoa(args.EgAdminPort),
+		ApiAddr:                 host + ":" + strconv.Itoa(installFlags.EgAdminPort),
 		DataDir:                 "/opt/eg-data/data",
 		WalDir:                  "",
 		CpuProfileFile:          "",
@@ -35,14 +36,14 @@ func configMapSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 		StdLogLevel:             "INFO",
 	}
 
-	for i := 0; i < args.EasegressControlPlaneReplicas; i++ {
+	for i := 0; i < installFlags.EasegressControlPlaneReplicas; i++ {
 		config.ClusterJoinUrls = append(config.ClusterJoinUrls,
 			fmt.Sprintf("http://%s-%d.%s.%s:%d",
 				installbase.DefaultMeshControlPlaneName,
 				i,
 				installbase.DefaultMeshControlPlaneHeadlessServiceName,
-				args.MeshNameSpace,
-				args.EgPeerPort))
+				installFlags.MeshNameSpace,
+				installFlags.EgPeerPort))
 	}
 
 	configData := map[string]string{}
@@ -58,13 +59,13 @@ func configMapSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlaneConfig,
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 		},
 		Data: params,
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployConfigMap(configMap, kubeClient, args.MeshNameSpace)
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNameSpace)
 		if err != nil {
 			return err
 		}

@@ -2,8 +2,8 @@ package get
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
@@ -13,18 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Arguments struct {
-	Server       string
-	Timeout      time.Duration
-	OutputFormat string
-}
-
-func Run(cmd *cobra.Command, args *Arguments) {
-	switch args.OutputFormat {
+func Run(cmd *cobra.Command, flags *flags.Get) {
+	switch flags.OutputFormat {
 	case "table", "yaml", "json":
 	default:
 		common.ExitWithErrorf("unsupported output format %s (support table, yaml, json)",
-			args.OutputFormat)
+			flags.OutputFormat)
 	}
 
 	visitorBulder := util.NewVisitorBuilder()
@@ -52,7 +46,7 @@ func Run(cmd *cobra.Command, args *Arguments) {
 		common.ExitWithErrorf("build visitor failed: %s", err)
 	}
 
-	printer := printer.New(args.OutputFormat)
+	printer := printer.New(flags.OutputFormat)
 	var errs []error
 	for _, vs := range vss {
 		err := vs.Visit(func(mo resource.MeshObject, e error) error {
@@ -65,7 +59,7 @@ func Run(cmd *cobra.Command, args *Arguments) {
 				resourceID += "/" + mo.Name()
 			}
 
-			objects, err := WrapGetterByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Get()
+			objects, err := WrapGetterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Get()
 			if err != nil {
 				return fmt.Errorf("%s get failed: %s", resourceID, err)
 			}

@@ -1,6 +1,7 @@
 package controlpanel
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/spf13/cobra"
@@ -10,12 +11,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func namespaceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func namespaceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	ns := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
-		Name:   args.MeshNameSpace,
+		Name:   installFlags.MeshNameSpace,
 		Labels: map[string]string{},
 	}}
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, args *installbase.InstallArgs) error {
+	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
 		err := installbase.CreateNameSpace(ns, client)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err

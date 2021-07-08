@@ -1,6 +1,7 @@
 package meshingress
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -11,7 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type deploymentSpecFunc func(*installbase.InstallArgs) *appsV1.Deployment
+type deploymentSpecFunc func(*flags.Install) *appsV1.Deployment
 
 func meshIngressLabel() map[string]string {
 	selector := map[string]string{}
@@ -19,14 +20,14 @@ func meshIngressLabel() map[string]string {
 	return selector
 }
 
-func deploymentSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func deploymentSpec(installFlags *flags.Install) installbase.InstallFunc {
 	deployment := deploymentConfigVolumeSpec(
 		deploymentContainerSpec(
 			deploymentBaseSpec(
-				deploymentInitialize(nil))))(args)
+				deploymentInitialize(nil))))(installFlags)
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployDeployment(deployment, kubeClient, args.MeshNameSpace)
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployDeployment(deployment, kubeClient, installFlags.MeshNameSpace)
 		if err != nil {
 			return errors.Wrapf(err, "deployment operation %s failed", deployment.Name)
 		}
@@ -35,20 +36,20 @@ func deploymentSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 }
 
 func deploymentInitialize(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
+	return func(installFlags *flags.Install) *appsV1.Deployment {
 		return &appsV1.Deployment{}
 	}
 }
 
 func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.Deployment {
+		spec := fn(installFlags)
 		spec.Name = installbase.DefaultMeshIngressControllerName
 		spec.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: meshIngressLabel(),
 		}
 
-		var replicas = int32(args.MeshIngressReplicas)
+		var replicas = int32(installFlags.MeshIngressReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = meshIngressLabel()
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
@@ -58,13 +59,13 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
 func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
+	return func(installFlags *flags.Install) *appsV1.Deployment {
 
-		spec := fn(args)
+		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisistor("easegress-ingress",
-			args.ImageRegistryURL+"/"+args.EasegressImage,
+			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
 			v1.PullAlways,
-			newVisitor(args))
+			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
 		return spec
@@ -73,8 +74,8 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
 func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.Deployment {
+		spec := fn(installFlags)
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
 			{
 				Name: "eg-ingress-config",
@@ -92,14 +93,14 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 type containerVisitor struct {
-	args *installbase.InstallArgs
+	installFlags *flags.Install
 }
 
-func newVisitor(args *installbase.InstallArgs) installbase.ContainerVisitor {
-	return &containerVisitor{args}
+func newVisitor(installFlags *flags.Install) installbase.ContainerVisitor {
+	return &containerVisitor{installFlags}
 }
 
-func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
+func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
 
 	return []string{"/bin/sh"},
 		[]string{"-c", "/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-ingress.yaml"}
@@ -110,15 +111,15 @@ func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.Containe
 	return []v1.ContainerPort{
 		{
 			Name:          installbase.DefaultMeshAdminPortName,
-			ContainerPort: installbase.DefaultMeshAdminPort,
+			ContainerPort: flags.DefaultMeshAdminPort,
 		},
 		{
 			Name:          installbase.DefaultMeshClientPortName,
-			ContainerPort: installbase.DefaultMeshClientPort,
+			ContainerPort: flags.DefaultMeshClientPort,
 		},
 		{
 			Name:          installbase.DefaultMeshPeerPortName,
-			ContainerPort: installbase.DefaultMeshPeerPort,
+			ContainerPort: flags.DefaultMeshPeerPort,
 		},
 	}, nil
 }

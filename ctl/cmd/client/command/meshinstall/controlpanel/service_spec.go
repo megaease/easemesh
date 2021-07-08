@@ -1,9 +1,10 @@
 package controlpanel
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
-	"github.com/pkg/errors"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,14 +18,14 @@ func meshControlPanelLabel() map[string]string {
 	return selector
 }
 
-func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	labels := meshControlPanelLabel()
 
 	headlessService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlaneHeadlessServiceName,
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 		},
 	}
 
@@ -33,25 +34,25 @@ func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	headlessService.Spec.Ports = []v1.ServicePort{
 		{
 			Name:       installbase.DefaultMeshAdminPortName,
-			Port:       int32(args.EgAdminPort),
+			Port:       int32(installFlags.EgAdminPort),
 			TargetPort: intstr.IntOrString{IntVal: 2381},
 		},
 		{
 			Name:       installbase.DefaultMeshPeerPortName,
-			Port:       int32(args.EgPeerPort),
+			Port:       int32(installFlags.EgPeerPort),
 			TargetPort: intstr.IntOrString{IntVal: 2380},
 		},
 		{
 			Name:       installbase.DefaultMeshClientPortName,
-			Port:       int32(args.EgClientPort),
+			Port:       int32(installFlags.EgClientPort),
 			TargetPort: intstr.IntOrString{IntVal: 2379},
 		},
 	}
 
 	headfulService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      args.EgServiceName,
-			Namespace: args.MeshNameSpace,
+			Name:      installFlags.EgServiceName,
+			Namespace: installFlags.MeshNameSpace,
 		},
 	}
 
@@ -59,17 +60,17 @@ func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	headfulService.Spec.Ports = []v1.ServicePort{
 		{
 			Name:       installbase.DefaultMeshAdminPortName,
-			Port:       int32(args.EgAdminPort),
+			Port:       int32(installFlags.EgAdminPort),
 			TargetPort: intstr.IntOrString{IntVal: 2381},
 		},
 		{
 			Name:       installbase.DefaultMeshPeerPortName,
-			Port:       int32(args.EgPeerPort),
+			Port:       int32(installFlags.EgPeerPort),
 			TargetPort: intstr.IntOrString{IntVal: 2380},
 		},
 		{
 			Name:       installbase.DefaultMeshClientPortName,
-			Port:       int32(args.EgClientPort),
+			Port:       int32(installFlags.EgClientPort),
 			TargetPort: intstr.IntOrString{IntVal: 2379},
 		},
 	}
@@ -77,23 +78,23 @@ func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlanePlubicServiceName,
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 		},
 	}
 	service.Spec.Ports = []v1.ServicePort{
 		{
 			Name:       installbase.DefaultMeshAdminPortName,
-			Port:       int32(args.EgAdminPort),
+			Port:       int32(installFlags.EgAdminPort),
 			TargetPort: intstr.IntOrString{IntVal: 2381},
 		},
 		{
 			Name:       installbase.DefaultMeshPeerPortName,
-			Port:       int32(args.EgPeerPort),
+			Port:       int32(installFlags.EgPeerPort),
 			TargetPort: intstr.IntOrString{IntVal: 2380},
 		},
 		{
 			Name:       installbase.DefaultMeshClientPortName,
-			Port:       int32(args.EgClientPort),
+			Port:       int32(installFlags.EgClientPort),
 			TargetPort: intstr.IntOrString{IntVal: 2379},
 		},
 	}
@@ -103,17 +104,17 @@ func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	service.Spec.Type = v1.ServiceTypeNodePort
 	service.Spec.Selector = labels
 
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployService(headlessService, client, args.MeshNameSpace)
+	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployService(headlessService, client, installFlags.MeshNameSpace)
 		if err != nil {
 			return errors.Wrap(err, "deploy easemesh controlpanel inner service failed")
 		}
-		err = installbase.DeployService(service, client, args.MeshNameSpace)
+		err = installbase.DeployService(service, client, installFlags.MeshNameSpace)
 		if err != nil {
 			return errors.Wrap(err, "deploy easemesh controlpanel public service failed")
 		}
 
-		err = installbase.DeployService(headfulService, client, args.MeshNameSpace)
+		err = installbase.DeployService(headfulService, client, installFlags.MeshNameSpace)
 		if err != nil {
 			return errors.Wrap(err, "deploy easemesh controlpanel headful service failed")
 		}

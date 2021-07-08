@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -20,11 +21,11 @@ const (
 	RoleVerbDelete = "delete"
 )
 
-func roleSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func roleSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	operatorLeaderElectionRole := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 			Name:      meshOperatorLeaderElectionRole,
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -41,8 +42,8 @@ func roleSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 		},
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployRole(operatorLeaderElectionRole, kubeClient, args.MeshNameSpace)
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployRole(operatorLeaderElectionRole, kubeClient, installFlags.MeshNameSpace)
 		if err != nil {
 			return err
 		}
@@ -50,7 +51,7 @@ func roleSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	}
 }
 
-func clusterRoleSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func clusterRoleSpec(installFlags *flags.Install) installbase.InstallFunc {
 	operatorManagerClusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: meshOperatorManagerClusterRole,
@@ -114,7 +115,7 @@ func clusterRoleSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 		},
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
 		for _, clusterRole := range []*rbacv1.ClusterRole{operatorManagerClusterRole, metricsReaderClusterRole, operatorProxyClusterRole} {
 			err := installbase.DeployClusterRole(clusterRole, kubeClient)
 			if err != nil {
@@ -126,11 +127,11 @@ func clusterRoleSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	}
 }
 
-func roleBindingSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func roleBindingSpec(installFlags *flags.Install) installbase.InstallFunc {
 	operatorLeaderElectionRoleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      meshOperatorLeaderElectionRoleBinding,
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
@@ -141,13 +142,13 @@ func roleBindingSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: args.MeshNameSpace,
+				Namespace: installFlags.MeshNameSpace,
 			},
 		},
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployRoleBinding(operatorLeaderElectionRoleBinding, kubeClient, args.MeshNameSpace)
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployRoleBinding(operatorLeaderElectionRoleBinding, kubeClient, installFlags.MeshNameSpace)
 		if err != nil {
 			return err
 		}
@@ -155,7 +156,7 @@ func roleBindingSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 	}
 }
 
-func clusterRoleBindingSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func clusterRoleBindingSpec(installFlags *flags.Install) installbase.InstallFunc {
 	operatorManagerClusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: meshOperatorManagerClusterRoleBinding,
@@ -169,7 +170,7 @@ func clusterRoleBindingSpec(args *installbase.InstallArgs) installbase.InstallFu
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: args.MeshNameSpace,
+				Namespace: installFlags.MeshNameSpace,
 			},
 		},
 	}
@@ -187,7 +188,7 @@ func clusterRoleBindingSpec(args *installbase.InstallArgs) installbase.InstallFu
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: args.MeshNameSpace,
+				Namespace: installFlags.MeshNameSpace,
 			},
 		},
 	}
@@ -205,12 +206,12 @@ func clusterRoleBindingSpec(args *installbase.InstallArgs) installbase.InstallFu
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: args.MeshNameSpace,
+				Namespace: installFlags.MeshNameSpace,
 			},
 		},
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
 
 		clusterRoleBindings := []*rbacv1.ClusterRoleBinding{
 			operatorManagerClusterRoleBinding,

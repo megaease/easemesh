@@ -2,8 +2,8 @@ package delete
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/util"
@@ -12,24 +12,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Arguments struct {
-	Server    string
-	YamlFile  string
-	Recursive bool
-	Timeout   time.Duration
-}
-
-func Run(cmd *cobra.Command, args *Arguments) {
+func Run(cmd *cobra.Command, flags *flags.Delete) {
 	visitorBulder := util.NewVisitorBuilder()
 
 	cmdArgs := cmd.Flags().Args()
 
-	if len(cmdArgs) == 0 && args.YamlFile == "" {
+	if len(cmdArgs) == 0 && flags.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")
 	}
 
 	if len(cmdArgs) != 0 {
-		if args.YamlFile != "" {
+		if flags.YamlFile != "" {
 			common.ExitWithErrorf("file and command args are both specified")
 		}
 		if len(cmdArgs) != 2 {
@@ -41,10 +34,10 @@ func Run(cmd *cobra.Command, args *Arguments) {
 		})
 	}
 
-	if args.YamlFile != "" {
+	if flags.YamlFile != "" {
 		visitorBulder.FilenameParam(&util.FilenameOptions{
-			Recursive: args.Recursive,
-			Filenames: []string{args.YamlFile},
+			Recursive: flags.Recursive,
+			Filenames: []string{flags.YamlFile},
 		})
 	}
 
@@ -60,7 +53,7 @@ func Run(cmd *cobra.Command, args *Arguments) {
 				return fmt.Errorf("visit failed: %v", e)
 			}
 
-			err := WrapDeleterByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Delete()
+			err := WrapDeleterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Delete()
 			if err != nil {
 				return fmt.Errorf("%s/%s deleted failed: %s", mo.Kind(), mo.Name(), err)
 			}

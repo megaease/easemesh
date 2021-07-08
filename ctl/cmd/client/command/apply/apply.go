@@ -2,8 +2,8 @@ package apply
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/util"
@@ -12,20 +12,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Arguments struct {
-	Server    string
-	YamlFile  string
-	Recursive bool
-	Timeout   time.Duration
-}
-
-func Run(cmd *cobra.Command, args *Arguments) {
-	if args.YamlFile == "" {
+func Run(cmd *cobra.Command, flags *flags.Apply) {
+	if flags.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")
 	}
 
 	vss, err := util.NewVisitorBuilder().
-		FilenameParam(&util.FilenameOptions{Recursive: args.Recursive, Filenames: []string{args.YamlFile}}).
+		FilenameParam(&util.FilenameOptions{
+			Recursive: flags.Recursive,
+			Filenames: []string{flags.YamlFile},
+		}).
 		Do()
 
 	if err != nil {
@@ -39,7 +35,7 @@ func Run(cmd *cobra.Command, args *Arguments) {
 				return fmt.Errorf("visit failed: %v", e)
 			}
 
-			err := WrapApplierByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Apply()
+			err := WrapApplierByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Apply()
 			if err != nil {
 				return fmt.Errorf("%s/%s applied failed: %s", mo.Kind(), mo.Name(), err)
 			}
