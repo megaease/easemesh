@@ -22,7 +22,7 @@ func InstallCmd() *cobra.Command {
 		Use:     "install",
 		Short:   "Deploy infrastructure components of the EaseMesh",
 		Long:    "",
-		Example: "emctl install <args>",
+		Example: "emctl install --clean-when-failed",
 	}
 	flags := &flags.Install{}
 	flags.AttachCmd(cmd)

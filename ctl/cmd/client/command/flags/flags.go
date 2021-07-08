@@ -31,11 +31,11 @@ const (
 	// Ingress resource name
 	DefaultMeshIngressServicePort = 19527
 
-	MeshControlPlanePVNameHelpStr     = "The name of PersistentVolume for EaseMesh control plane storage."
-	MeshControlPlanePVHostPathHelpStr = "The host path of the PersistentVolume for EaseMesh control plane storage."
-	MeshControlPlanePVCapacityHelpStr = "The capacity of the PersistentVolume for EaseMesh control plane storage."
+	MeshControlPlanePVNameHelpStr     = "The name of PersistentVolume for EaseMesh control plane storage"
+	MeshControlPlanePVHostPathHelpStr = "The host path of the PersistentVolume for EaseMesh control plane storage"
+	MeshControlPlanePVCapacityHelpStr = "The capacity of the PersistentVolume for EaseMesh control plane storage"
 
-	MeshRegistryTypeHelpStr = "The registry type for application service registry, one of: eureka|consul|nacos."
+	MeshRegistryTypeHelpStr = "The registry type for application service registry, support eureka, consul, nacos"
 
 	MeshControlPlaneStartupFailedHelpStr = `
 		EaseMesh Control Plane deploy failed. Please check the K8S resource under the %s namespace for finding errors as follows:
@@ -44,10 +44,8 @@ const (
 
 		$ kubectl get pods -n %s
 	`
-	MeshControlPlanePVNotExistedHelpStr = `
-
-PersistentVolume does not have enough resources, the required number is %d, but only %d.
-EaseMesh control plane needs PersistentVolume to store data. You need to create PersistentVolume in advance and specify its storageClassName as %s.
+	MeshControlPlanePVNotExistedHelpStr = `EaseMesh control plane needs PersistentVolume to store data.
+You need to create PersistentVolume in advance and specify its storageClassName as the value of --mesh-storage-class-name.
 
 You can create PersistentVolume by the following definition:
 
@@ -58,11 +56,11 @@ metadata:
     app: easemesh
   name: easemesh-pv
 spec:
-  storageClassName: %s
+  storageClassName: {easemesh-storage}
   accessModes:
   - {ReadWriteOnce}
   capacity:
-    storage: {%s}
+    storage: {3Gi}
   hostPath:
     path: {/opt/easemesh/}
     type: "DirectoryOrCreate"`
@@ -154,31 +152,29 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&i.MeshControlPlaneCheckHealthzMaxTime,
 		"mesh-control-plane-check-healthz-max-time",
 		DefaultMeshControlPlaneCheckHealthzMaxTime,
-		"Max timeout in second for checking control panel component whether ready or not (default 60 seconds)")
+		"Max timeout in second for checking control panel component whether ready or not")
 
-	cmd.Flags().IntVar(&i.EgServicePeerPort, "mesh-control-plane-service-peer-port", DefaultMeshPeerPort, "")
-	cmd.Flags().IntVar(&i.EgServiceAdminPort, "mesh-control-plane-service-admin-port", DefaultMeshAdminPort, "")
+	cmd.Flags().IntVar(&i.EgServicePeerPort, "mesh-control-plane-service-peer-port", DefaultMeshPeerPort, "Port of Easegress cluster peer")
+	cmd.Flags().IntVar(&i.EgServiceAdminPort, "mesh-control-plane-service-admin-port", DefaultMeshAdminPort, "Port of Easegress admin address")
 
-	// cmd.Flags().StringVar(&i.EGControlPlanePersistVolumeName, "eg-control-plane-pv-name", DefaultEgControlPlanePVName, egControlPlanePVNameHelpStr)
-	// cmd.Flags().StringVar(&i.EGControlPlanePersistVolumeHostPath, "eg-control-plane-pv-hostpath", DefaultEgControlPlanePVHostPath, egControlPlanePVHostPathHelpStr)
-	cmd.Flags().StringVar(&i.MeshControlPlaneStorageClassName, "mesh-storage-class-name", DefaultMeshControlPlaneStorageClassName, "")
+	cmd.Flags().StringVar(&i.MeshControlPlaneStorageClassName, "mesh-storage-class-name", DefaultMeshControlPlaneStorageClassName, "Mesh storage class name")
 	cmd.Flags().StringVar(&i.MeshControlPlanePersistVolumeCapacity, "mesh-control-plane-pv-capacity", DefaultMeshControlPlanePersistVolumeCapacity,
 		MeshControlPlanePVNotExistedHelpStr)
 
-	cmd.Flags().Int32Var(&i.MeshIngressServicePort, "mesh-ingress-service-port", DefaultMeshIngressServicePort, "A port on which mesh ingress controller listening")
+	cmd.Flags().Int32Var(&i.MeshIngressServicePort, "mesh-ingress-service-port", DefaultMeshIngressServicePort, "Port of mesh ingress controller")
 
 	cmd.Flags().StringVar(&i.EaseMeshRegistryType, "registry-type", DefaultMeshRegistryType, MeshRegistryTypeHelpStr)
-	cmd.Flags().IntVar(&i.HeartbeatInterval, "heartbeat-interval", DefaultHeartbeatInterval, "")
+	cmd.Flags().IntVar(&i.HeartbeatInterval, "heartbeat-interval", DefaultHeartbeatInterval, "Heartbeart interval for mesh service")
 
-	cmd.Flags().StringVar(&i.ImageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "")
-	cmd.Flags().StringVar(&i.EasegressImage, "easegress-image", DefaultEasegressImage, "")
-	cmd.Flags().StringVar(&i.EaseMeshOperatorImage, "easemesh-operator-image", DefaultEaseMeshOperatorImage, "")
+	cmd.Flags().StringVar(&i.ImageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "Image registry URL")
+	cmd.Flags().StringVar(&i.EasegressImage, "easegress-image", DefaultEasegressImage, "Easegress image name")
+	cmd.Flags().StringVar(&i.EaseMeshOperatorImage, "easemesh-operator-image", DefaultEaseMeshOperatorImage, "Mesh operator image name")
 
-	cmd.Flags().IntVar(&i.EasegressControlPlaneReplicas, "easemesh-control-plane-replicas", DefaultMeshControlPlaneReplicas, "")
-	cmd.Flags().IntVar(&i.MeshIngressReplicas, "easemesh-ingress-replicas", DefaultMeshIngressReplicas, "")
-	cmd.Flags().IntVar(&i.EaseMeshOperatorReplicas, "easemesh-operator-replicas", DefaultMeshOperatorReplicas, "")
-	cmd.Flags().StringVarP(&i.SpecFile, "file", "f", "", "A yaml file specifying the install params.")
-	cmd.Flags().BoolVar(&i.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed, default true")
+	cmd.Flags().IntVar(&i.EasegressControlPlaneReplicas, "easemesh-control-plane-replicas", DefaultMeshControlPlaneReplicas, "Mesh control plane reaplicas")
+	cmd.Flags().IntVar(&i.MeshIngressReplicas, "easemesh-ingress-replicas", DefaultMeshIngressReplicas, "Mesh ingress controller replicas")
+	cmd.Flags().IntVar(&i.EaseMeshOperatorReplicas, "easemesh-operator-replicas", DefaultMeshOperatorReplicas, "Mesh operator controller replicas")
+	cmd.Flags().StringVarP(&i.SpecFile, "file", "f", "", "A yaml file specifying the install params")
+	cmd.Flags().BoolVar(&i.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")
 }
 
 func (r *Reset) AttachCmd(cmd *cobra.Command) {
@@ -188,7 +184,7 @@ func (r *Reset) AttachCmd(cmd *cobra.Command) {
 
 func (o *OperationGlobal) AttachCmd(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.MeshNameSpace, "mesh-namespace", DefaultMeshNameSpace, "EaseMesh namespace in kubernetes")
-	cmd.Flags().StringVar(&o.EgServiceName, "mesh-control-plane-service-name", DefaultMeshControlPlaneHeadfulServiceName, "")
+	cmd.Flags().StringVar(&o.EgServiceName, "mesh-control-plane-service-name", DefaultMeshControlPlaneHeadfulServiceName, "Mesh control plane service name")
 }
 
 func (a *AdminGlobal) AttachCmd(cmd *cobra.Command) {
