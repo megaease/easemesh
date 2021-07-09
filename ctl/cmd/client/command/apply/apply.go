@@ -2,30 +2,27 @@ package apply
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-type Arguments struct {
-	Server    string
-	YamlFile  string
-	Recursive bool
-	Timeout   time.Duration
-}
-
-func Run(cmd *cobra.Command, args *Arguments) {
-	if args.YamlFile == "" {
+func Run(cmd *cobra.Command, flags *flags.Apply) {
+	if flags.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")
 	}
 
 	vss, err := util.NewVisitorBuilder().
-		FilenameParam(&util.FilenameOptions{Recursive: args.Recursive, Filenames: []string{args.YamlFile}}).
+		FilenameParam(&util.FilenameOptions{
+			Recursive: flags.Recursive,
+			Filenames: []string{flags.YamlFile},
+		}).
 		Do()
 
 	if err != nil {
@@ -34,22 +31,24 @@ func Run(cmd *cobra.Command, args *Arguments) {
 
 	var errs []error
 	for _, vs := range vss {
-		vs.Visit(func(mo resource.MeshObject, e error) error {
+		err := vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				common.OutputErrorf("visit failed: %v", e)
-				errs = append(errs, e)
-				return nil
+				return errors.Wrap(e, "visit failed")
 			}
 
-			err := WrapApplierByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Apply()
+			err := WrapApplierByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Apply()
 			if err != nil {
-				errs = append(errs, err)
-				common.OutputErrorf("%s/%s applied failed: %s\n", mo.Kind(), mo.Name(), err)
-			} else {
-				fmt.Printf("%s/%s applied successfully\n", mo.Kind(), mo.Name())
+				return fmt.Errorf("%s/%s applied failed: %s", mo.Kind(), mo.Name(), err)
 			}
+
+			fmt.Printf("%s/%s applied successfully\n", mo.Kind(), mo.Name())
 			return nil
 		})
+
+		if err != nil {
+			common.OutputError(err)
+			errs = append(errs, err)
+		}
 	}
 
 	if len(errs) > 0 {

@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -11,13 +12,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	labels := meshOperatorLabels()
 
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshOperatorControllerManagerServiceName,
-			Namespace: args.MeshNameSpace,
+			Namespace: installFlags.MeshNameSpace,
 		},
 	}
 	service.Spec.Ports = []v1.ServicePort{
@@ -28,10 +29,10 @@ func serviceSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 		},
 	}
 	service.Spec.Selector = labels
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployService(service, kubeClient, args.MeshNameSpace)
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployService(service, kubeClient, installFlags.MeshNameSpace)
 		if err != nil {
-			return errors.Wrapf(err, "Create operator service %s error", args.MeshNameSpace)
+			return errors.Wrapf(err, "Create operator service %s error", installFlags.MeshNameSpace)
 		}
 		return err
 	}

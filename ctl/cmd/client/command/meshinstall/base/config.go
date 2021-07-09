@@ -3,6 +3,7 @@ package installbase
 import (
 	"path"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/spf13/cobra"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
@@ -14,42 +15,6 @@ var (
 	DefaultKubernetesConfigPath = path.Join(DefaultKubernetesConfigDir, DefaultKubernetesConfig)
 )
 
-type InstallArgs struct {
-	ImageRegistryURL string
-	MeshNameSpace    string
-
-	CleanWhenFailed bool
-
-	// Easegress Control Plane params
-	EasegressImage                string
-	EasegressControlPlaneReplicas int
-	EgClientPort                  int
-	EgAdminPort                   int
-	EgPeerPort                    int
-
-	EgServiceName      string
-	EgServicePeerPort  int
-	EgServiceAdminPort int
-
-	MeshControlPlaneStorageClassName      string
-	MeshControlPlanePersistVolumeName     string
-	MeshControlPlanePersistVolumeHostPath string
-	MeshControlPlanePersistVolumeCapacity string
-	MeshControlPlaneCheckHealthzMaxTime   int
-
-	MeshIngressReplicas    int
-	MeshIngressServicePort int32
-
-	// EaseMesh Controller  params
-	EaseMeshRegistryType string
-	HeartbeatInterval    int
-
-	// EaseMesh Operator params
-	EaseMeshOperatorImage    string
-	EaseMeshOperatorReplicas int
-
-	SpecFile string
-}
 type EasegressConfig struct {
 	Name                    string   `yaml:"name" jsonschema:"required"`
 	ClusterName             string   `yaml:"cluster-name" jsonschema:"required"`
@@ -95,13 +60,13 @@ type EasegressReaderParams struct {
 type StageContext struct {
 	Cmd                 *cobra.Command
 	Client              *kubernetes.Clientset
-	Arguments           InstallArgs
+	Flags               *flags.Install
 	APIExtensionsClient *apiextensions.Clientset
 	ClearFuncs          []func(*StageContext) error
 }
 
-type InstallFunc func(*cobra.Command, *kubernetes.Clientset, *InstallArgs) error
+type InstallFunc func(*cobra.Command, *kubernetes.Clientset, *flags.Install) error
 
-func (i InstallFunc) Deploy(cmd *cobra.Command, c *kubernetes.Clientset, args *InstallArgs) error {
-	return i(cmd, c, args)
+func (i InstallFunc) Deploy(cmd *cobra.Command, c *kubernetes.Clientset, flags *flags.Install) error {
+	return i(cmd, c, flags)
 }

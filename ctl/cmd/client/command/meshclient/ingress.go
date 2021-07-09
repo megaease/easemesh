@@ -55,7 +55,7 @@ func (i *ingressInterface) Patch(ctx context.Context, ingress *resource.Ingress)
 	jsonClient := client.NewHTTPJSON()
 	update := ingress.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingress.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingress.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch ingress %s error", ingress.Name())
@@ -74,7 +74,7 @@ func (t *ingressInterface) Create(ctx context.Context, ingress *resource.Ingress
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
 		// Current URL form should be corrected in the feature
-		PostByContext(fmt.Sprintf("http://"+t.client.server+MeshIngressURL, ingress.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+t.client.server+MeshIngressURL, ingress.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create ingress %s error", ingress.Name())

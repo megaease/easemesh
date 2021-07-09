@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -13,17 +14,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type deploymentSpecFunc func(args *installbase.InstallArgs) *appsV1.Deployment
+type deploymentSpecFunc func(installFlags *flags.Install) *appsV1.Deployment
 
-func operatorDeploymentSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func operatorDeploymentSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	deployment := deploymentConfigVolumeSpec(
 		deploymentManagerContainerSpec(
 			deploymentRBACContainerSpec(
-				deploymentBaseSpec(deploymentInitialize(nil)))))(args)
+				deploymentBaseSpec(deploymentInitialize(nil)))))(installFlags)
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployDeployment(deployment, kubeClient, args.MeshNameSpace)
+	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployDeployment(deployment, kubeClient, installFlags.MeshNameSpace)
 		if err != nil {
 			return errors.Wrapf(err, "deployment operation %s failed", deployment.Name)
 		}
@@ -38,14 +39,14 @@ func meshOperatorLabels() map[string]string {
 }
 
 func deploymentInitialize(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
+	return func(installFlags *flags.Install) *appsV1.Deployment {
 		return &appsV1.Deployment{}
 	}
 }
 
 func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.Deployment {
+		spec := fn(installFlags)
 
 		labels := meshOperatorLabels()
 		spec.Name = installbase.DefaultMeshOperatorName
@@ -53,7 +54,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 			MatchLabels: labels,
 		}
 
-		var replicas = int32(args.EaseMeshOperatorReplicas)
+		var replicas = int32(installFlags.EaseMeshOperatorReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = labels
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
@@ -67,8 +68,8 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentRBACContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.Deployment {
+		spec := fn(installFlags)
 		rbacContainer := v1.Container{}
 		rbacContainer.Name = "kube-rbac-proxy"
 		rbacContainer.Image = "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
@@ -91,8 +92,8 @@ func deploymentRBACContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.Deployment {
+		spec := fn(installFlags)
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
 			{
 				Name: "config-volume",
@@ -112,12 +113,12 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
 func deploymentManagerContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
-	return func(args *installbase.InstallArgs) *appsV1.Deployment {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.Deployment {
+		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisistor("operator-manager",
-			args.ImageRegistryURL+"/"+args.EaseMeshOperatorImage,
+			installFlags.ImageRegistryURL+"/"+installFlags.EaseMeshOperatorImage,
 			v1.PullAlways,
-			newVisitor(args))
+			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers =
 			append(spec.Spec.Template.Spec.Containers, *container)
@@ -125,15 +126,15 @@ func deploymentManagerContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	}
 }
 
-func newVisitor(args *installbase.InstallArgs) installbase.ContainerVisitor {
-	return &containerVisitor{args: args}
+func newVisitor(installFlags *flags.Install) installbase.ContainerVisitor {
+	return &containerVisitor{installFlags: installFlags}
 }
 
 type containerVisitor struct {
-	args *installbase.InstallArgs
+	installFlags *flags.Install
 }
 
-func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
+func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
 	return []string{"/manager"},
 		[]string{"--config=/opt/mesh/operator-config.yaml"}
 }

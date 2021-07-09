@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -30,20 +31,20 @@ const (
 
 // Deploy deploy resources of operator
 func Deploy(context *installbase.StageContext) error {
-	err := installbase.BatchDeployResources(context.Cmd, context.Client, &context.Arguments, []installbase.InstallFunc{
-		configMapSpec(&context.Arguments),
-		serviceSpec(&context.Arguments),
-		roleSpec(&context.Arguments),
-		clusterRoleSpec(&context.Arguments),
-		roleBindingSpec(&context.Arguments),
-		clusterRoleBindingSpec(&context.Arguments),
-		operatorDeploymentSpec(&context.Arguments),
+	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags, []installbase.InstallFunc{
+		configMapSpec(context.Flags),
+		serviceSpec(context.Flags),
+		roleSpec(context.Flags),
+		clusterRoleSpec(context.Flags),
+		roleBindingSpec(context.Flags),
+		clusterRoleBindingSpec(context.Flags),
+		operatorDeploymentSpec(context.Flags),
 	})
 	if err != nil {
 		return err
 	}
 
-	return checkOperatorStatus(context.Client, &context.Arguments)
+	return checkOperatorStatus(context.Client, context.Flags)
 }
 
 // PreCheck check prerequisite for installing mesh operator
@@ -74,9 +75,9 @@ func Clear(context *installbase.StageContext) error {
 		{"clusterrolebindings", meshOperatorProxyClusterRoleBinding},
 		{"clusterroles", meshOperatorProxyClusterRole},
 	}
-	installbase.DeleteResources(context.Client, appsV1Resources, context.Arguments.MeshNameSpace, installbase.DeleteAppsV1Resource)
-	installbase.DeleteResources(context.Client, coreV1Resources, context.Arguments.MeshNameSpace, installbase.DeleteCoreV1Resource)
-	installbase.DeleteResources(context.Client, rbacV1Resources, context.Arguments.MeshNameSpace, installbase.DeleteRbacV1Resources)
+	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNameSpace, installbase.DeleteAppsV1Resource)
+	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNameSpace, installbase.DeleteCoreV1Resource)
+	installbase.DeleteResources(context.Client, rbacV1Resources, context.Flags.MeshNameSpace, installbase.DeleteRbacV1Resources)
 
 	return nil
 }
@@ -86,16 +87,16 @@ func Clear(context *installbase.StageContext) error {
 func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
-		return fmt.Sprintf("Begin to install mesh operator in the namespace: %s", context.Arguments.MeshNameSpace)
+		return fmt.Sprintf("Begin to install mesh operator in the namespace: %s", context.Flags.MeshNameSpace)
 	case installbase.EndPhase:
 		return fmt.Sprintf("\nMesh operator deployed successfully, deployment: %s\n%s", installbase.DefaultMeshOperatorName,
-			installbase.FormatPodStatus(context.Client, context.Arguments.MeshNameSpace,
+			installbase.FormatPodStatus(context.Client, context.Flags.MeshNameSpace,
 				installbase.AdaptListPodFunc(meshOperatorLabels())))
 	}
 	return ""
 }
 
-func checkOperatorStatus(client *kubernetes.Clientset, args *installbase.InstallArgs) error {
+func checkOperatorStatus(client *kubernetes.Clientset, installFlags *flags.Install) error {
 	i := 0
 	for {
 		time.Sleep(time.Millisecond * 100)
@@ -103,7 +104,7 @@ func checkOperatorStatus(client *kubernetes.Clientset, args *installbase.Install
 		if i > 600 {
 			return errors.Errorf("easemesh operator deploy failed, mesh operator (EG deployment) not ready")
 		}
-		ready, err := installbase.CheckDeploymentResourceStatus(client, args.MeshNameSpace,
+		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNameSpace,
 			installbase.DefaultMeshOperatorName,
 			installbase.DeploymentReadyPredict)
 		if ready {

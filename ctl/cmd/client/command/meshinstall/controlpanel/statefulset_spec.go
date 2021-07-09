@@ -3,6 +3,7 @@ package controlpanel
 import (
 	"fmt"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/common"
 	"github.com/pkg/errors"
@@ -15,17 +16,17 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type statefulsetSpecFunc func(args *installbase.InstallArgs) *appsV1.StatefulSet
+type statefulsetSpecFunc func(installFlags *flags.Install) *appsV1.StatefulSet
 
-func statefulsetSpec(args *installbase.InstallArgs) installbase.InstallFunc {
+func statefulsetSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	statefulSet := statefulsetPVCSpec(
 		statefulsetContainerSpec(
 			baseStatefulSetSpec(
-				initialStatefulSetSpec(nil))))(args)
+				initialStatefulSetSpec(nil))))(installFlags)
 
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, args *installbase.InstallArgs) error {
-		err := installbase.DeployStatefulset(statefulSet, client, args.MeshNameSpace)
+	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
+		err := installbase.DeployStatefulset(statefulSet, client, installFlags.MeshNameSpace)
 		if err != nil {
 			return errors.Wrapf(err, "deploy statefulset %s failed", statefulSet.ObjectMeta.Name)
 		}
@@ -34,14 +35,14 @@ func statefulsetSpec(args *installbase.InstallArgs) installbase.InstallFunc {
 }
 
 func initialStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.StatefulSet {
+	return func(installFlags *flags.Install) *appsV1.StatefulSet {
 		return &appsV1.StatefulSet{}
 	}
 }
 
 func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.StatefulSet {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.StatefulSet {
+		spec := fn(installFlags)
 		labels := meshControlPanelLabel()
 		spec.Name = installbase.DefaultMeshControlPlaneName
 		spec.Spec.ServiceName = installbase.DefaultMeshControlPlaneHeadlessServiceName
@@ -50,7 +51,7 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 			MatchLabels: labels,
 		}
 
-		var replicas = int32(args.EasegressControlPlaneReplicas)
+		var replicas = int32(installFlags.EasegressControlPlaneReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = labels
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
@@ -69,15 +70,15 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	}
 }
 func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.StatefulSet {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.StatefulSet {
+		spec := fn(installFlags)
 		pvc := v1.PersistentVolumeClaim{}
 		pvc.Name = installbase.DefaultMeshControlPlanePVName
 		pvc.Spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
-		pvc.Spec.StorageClassName = &args.MeshControlPlaneStorageClassName
+		pvc.Spec.StorageClassName = &installFlags.MeshControlPlaneStorageClassName
 
 		pvc.Spec.Resources.Requests = v1.ResourceList{
-			v1.ResourceStorage: resource.MustParse(args.MeshControlPlanePersistVolumeCapacity),
+			v1.ResourceStorage: resource.MustParse(installFlags.MeshControlPlanePersistVolumeCapacity),
 		}
 		spec.Spec.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
 		return spec
@@ -85,12 +86,12 @@ func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 }
 
 func statefulsetContainerSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(args *installbase.InstallArgs) *appsV1.StatefulSet {
-		spec := fn(args)
+	return func(installFlags *flags.Install) *appsV1.StatefulSet {
+		spec := fn(installFlags)
 		container, err := installbase.AcceptContainerVisistor("easegress",
-			args.ImageRegistryURL+"/"+args.EasegressImage,
+			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
 			v1.PullAlways,
-			newContainerVisistor(args))
+			newContainerVisistor(installFlags))
 		if err != nil {
 			common.ExitWithErrorf("generate mesh controlpanel container spec failed: %s", err)
 			return nil
@@ -102,12 +103,12 @@ func statefulsetContainerSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 }
 
 type containerVisitor struct {
-	args *installbase.InstallArgs
+	installFlags *flags.Install
 }
 
 var _ installbase.ContainerVisitor = &containerVisitor{}
 
-func (m *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
+func (m *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
 
 	return []string{"/bin/sh"},
 		[]string{
@@ -119,15 +120,15 @@ func (m *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.Containe
 	return []v1.ContainerPort{
 		{
 			Name:          installbase.DefaultMeshAdminPortName,
-			ContainerPort: installbase.DefaultMeshAdminPort,
+			ContainerPort: flags.DefaultMeshAdminPort,
 		},
 		{
 			Name:          installbase.DefaultMeshClientPortName,
-			ContainerPort: installbase.DefaultMeshClientPort,
+			ContainerPort: flags.DefaultMeshClientPort,
 		},
 		{
 			Name:          installbase.DefaultMeshPeerPortName,
-			ContainerPort: installbase.DefaultMeshPeerPort,
+			ContainerPort: flags.DefaultMeshPeerPort,
 		},
 	}, nil
 }
@@ -150,11 +151,11 @@ func (m *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
 		{
 			// Kubernetes leverage shell syntax to help refering another environment
 			Name:  "EG_CLUSTER_ADVERTISE_CLIENT_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.args.MeshNameSpace, m.args.EgClientPort),
+			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNameSpace, m.installFlags.EgClientPort),
 		},
 		{
 			Name:  "EG_CLUSTER_INITIAL_ADVERTISE_PEER_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.args.MeshNameSpace, m.args.EgPeerPort),
+			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNameSpace, m.installFlags.EgPeerPort),
 		},
 	}, nil
 }
@@ -231,7 +232,7 @@ func (m *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, er
 	// 	Handler: v1.Handler{
 	// 		HTTPGet: &v1.HTTPGetAction{
 	// 			Host: "127.0.0.1",
-	// 			Port: intstr.FromInt(m.args.EgAdminPort),
+	// 			Port: intstr.FromInt(m.installFlags.EgAdminPort),
 	// 			Path: "/apis/v1/healthz",
 	// 		},
 	// 	},
@@ -250,6 +251,6 @@ func (m *containerVisitor) VisitorSecurityContext(c *v1.Container) (*v1.Security
 	return nil, nil
 }
 
-func newContainerVisistor(args *installbase.InstallArgs) installbase.ContainerVisitor {
-	return &containerVisitor{args: args}
+func newContainerVisistor(installFlags *flags.Install) installbase.ContainerVisitor {
+	return &containerVisitor{installFlags: installFlags}
 }

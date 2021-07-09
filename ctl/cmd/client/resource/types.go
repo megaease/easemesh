@@ -21,7 +21,7 @@ const (
 	KindObservabilityOutputServer = "ObservabilityOutputServer"
 
 	KindTenant      = "Tenant"
-	KindLoadBalance = "Loadbalance"
+	KindLoadBalance = "LoadBalance"
 	KindResilience  = "Resilience"
 
 	KindIngress = "Ingress"

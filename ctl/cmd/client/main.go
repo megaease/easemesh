@@ -14,8 +14,43 @@ func init() {
 }
 
 var exampleUsage = ` # EaseMesh command line tool for management and operation
-  emctl <subcommand>
-`
+# Install EaseMesh Components
+emctl install --clean-when-failed
+
+# Apply Tenant (kind is case-insensitive in command line)
+emctl apply -f tenant-001.yaml
+
+# Apply Service
+emctl apply -f service-001.yaml
+
+# Apply LoadBalance
+emctl apply -f loadbalance.yaml
+
+# Apply Ingress
+emctl apply -f ingress.yaml
+
+# Get service.
+emctl get service
+emctl get service -o yaml
+emctl get service service-001 -o json
+
+# Get LoadBalance
+emctl get loadbalance
+emctl get loadbalance service-001 -o yaml
+
+
+# Delete service
+emctl delete service service-001
+emctl delete service -f service-001.yaml
+
+# Delete LoadBalance
+emctl delete loadbalance service-001
+
+# NOTE: The manipulation of the kinds attached to Service below is the same with LoadBalance:
+# - Sidecar
+# - Resilience
+# - Canary
+# - ObservabilityMetrics, ObservabilityTracings, ObservabilityOutputServer`
 
 func main() {
 	rootCmd := &cobra.Command{

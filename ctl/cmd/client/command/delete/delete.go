@@ -2,34 +2,28 @@ package delete
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-type Arguments struct {
-	Server    string
-	YamlFile  string
-	Recursive bool
-	Timeout   time.Duration
-}
-
-func Run(cmd *cobra.Command, args *Arguments) {
+func Run(cmd *cobra.Command, flags *flags.Delete) {
 	visitorBulder := util.NewVisitorBuilder()
 
 	cmdArgs := cmd.Flags().Args()
 
-	if len(cmdArgs) == 0 && args.YamlFile == "" {
+	if len(cmdArgs) == 0 && flags.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")
 	}
 
 	if len(cmdArgs) != 0 {
-		if args.YamlFile != "" {
+		if flags.YamlFile != "" {
 			common.ExitWithErrorf("file and command args are both specified")
 		}
 		if len(cmdArgs) != 2 {
@@ -41,10 +35,10 @@ func Run(cmd *cobra.Command, args *Arguments) {
 		})
 	}
 
-	if args.YamlFile != "" {
+	if flags.YamlFile != "" {
 		visitorBulder.FilenameParam(&util.FilenameOptions{
-			Recursive: args.Recursive,
-			Filenames: []string{args.YamlFile},
+			Recursive: flags.Recursive,
+			Filenames: []string{flags.YamlFile},
 		})
 	}
 
@@ -55,22 +49,24 @@ func Run(cmd *cobra.Command, args *Arguments) {
 
 	var errs []error
 	for _, vs := range vss {
-		vs.Visit(func(mo resource.MeshObject, e error) error {
+		err := vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				common.OutputErrorf("visit failed: %v", e)
-				errs = append(errs, e)
-				return nil
+				return errors.Wrap(e, "visit failed")
 			}
 
-			err := WrapDeleterByMeshObject(mo, meshclient.New(args.Server), args.Timeout).Delete()
+			err := WrapDeleterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Delete()
 			if err != nil {
-				errs = append(errs, err)
-				common.OutputErrorf("%s/%s deleted failed: %s\n", mo.Kind(), mo.Name(), err)
-			} else {
-				fmt.Printf("%s/%s deleted successfully\n", mo.Kind(), mo.Name())
+				return errors.Wrapf(err, "%s/%s deleted failed", mo.Kind(), mo.Name())
 			}
+
+			fmt.Printf("%s/%s deleted successfully\n", mo.Kind(), mo.Name())
 			return nil
 		})
+
+		if err != nil {
+			common.OutputError(err)
+			errs = append(errs, err)
+		}
 	}
 
 	if len(errs) > 0 {

@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/common"
+
 	"github.com/spf13/cobra"
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -244,9 +246,9 @@ func GetMeshControlPanelEntryPoints(client *kubernetes.Clientset, namespace, res
 	return entrypoints, nil
 }
 
-func BatchDeployResources(cmd *cobra.Command, client *kubernetes.Clientset, args *InstallArgs, installFuncs []InstallFunc) error {
+func BatchDeployResources(cmd *cobra.Command, client *kubernetes.Clientset, flags *flags.Install, installFuncs []InstallFunc) error {
 	for _, installer := range installFuncs {
-		err := installer.Deploy(cmd, client, args)
+		err := installer.Deploy(cmd, client, flags)
 		if err != nil {
 			return err
 		}

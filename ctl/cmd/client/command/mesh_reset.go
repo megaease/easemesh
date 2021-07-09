@@ -1,6 +1,7 @@
 package command
 
 import (
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/controlpanel"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/crd"
@@ -12,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func reset(cmd *cobra.Command, args *installbase.InstallArgs) {
+func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 	kubeClient, err := installbase.NewKubernetesClient()
 	if err != nil {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
@@ -33,7 +34,7 @@ func reset(cmd *cobra.Command, args *installbase.InstallArgs) {
 	stageContext := installbase.StageContext{
 		Cmd:                 cmd,
 		Client:              kubeClient,
-		Arguments:           *args,
+		Flags:               &flags.Install{OperationGlobal: resetFlags.OperationGlobal},
 		APIExtensionsClient: apiExtensionClient,
 		ClearFuncs:          nil,
 	}
@@ -48,17 +49,19 @@ func reset(cmd *cobra.Command, args *installbase.InstallArgs) {
 }
 
 func ResetCmd() *cobra.Command {
-	iargs := &installbase.InstallArgs{}
+	flags := &flags.Reset{}
+
 	cmd := &cobra.Command{
 		Use:     "reset",
 		Short:   "Reset infrastructure components of the EaseMesh",
 		Long:    "",
 		Example: "emctl reset",
-		Run: func(cmd *cobra.Command, args []string) {
-			reset(cmd, iargs)
-		},
 	}
 
-	baseCmdArgs(cmd, iargs)
+	flags.AttachCmd(cmd)
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		reset(cmd, flags)
+	}
+
 	return cmd
 }

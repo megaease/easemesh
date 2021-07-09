@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/controlpanel"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/crd"
@@ -17,70 +18,36 @@ import (
 )
 
 func InstallCmd() *cobra.Command {
-	iArgs := &installbase.InstallArgs{}
 	cmd := &cobra.Command{
 		Use:     "install",
 		Short:   "Deploy infrastructure components of the EaseMesh",
 		Long:    "",
-		Example: "emctl install <args>",
-		Run: func(cmd *cobra.Command, args []string) {
-			if iArgs.SpecFile != "" {
-				var buff []byte
-				var err error
-				buff, err = ioutil.ReadFile(iArgs.SpecFile)
-				if err != nil {
-					common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
-				}
+		Example: "emctl install --clean-when-failed",
+	}
+	flags := &flags.Install{}
+	flags.AttachCmd(cmd)
 
-				err = yaml.Unmarshal(buff, &iArgs)
-				if err != nil {
-					common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
-				}
+	cmd.Run = func(cmd *cobra.Command, args []string) {
+		if flags.SpecFile != "" {
+			var buff []byte
+			var err error
+			buff, err = ioutil.ReadFile(flags.SpecFile)
+			if err != nil {
+				common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 			}
-			install(cmd, iArgs)
-		},
+
+			err = yaml.Unmarshal(buff, flags)
+			if err != nil {
+				common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
+			}
+		}
+		install(cmd, flags)
 	}
 
-	addInstallArgs(cmd, iArgs)
 	return cmd
 }
 
-func addInstallArgs(cmd *cobra.Command, args *installbase.InstallArgs) {
-	baseCmdArgs(cmd, args)
-	cmd.Flags().IntVar(&args.EgClientPort, "mesh-control-plane-client-port", installbase.DefaultMeshClientPort, "Mesh control plane client port for remote accessing")
-	cmd.Flags().IntVar(&args.EgAdminPort, "mesh-control-plane-admin-port", installbase.DefaultMeshAdminPort, "Port of mesh control plane admin for management")
-	cmd.Flags().IntVar(&args.EgPeerPort, "mesh-control-plane-peer-port", installbase.DefaultMeshPeerPort, "Port of mesh control plane for consensus each other")
-	cmd.Flags().IntVar(&args.MeshControlPlaneCheckHealthzMaxTime,
-		"mesh-control-plane-check-healthz-max-time",
-		installbase.DefaultMeshControlPlaneCheckHealthzMaxTime,
-		"Max timeout in second for checking control panel component whether ready or not (default 60 seconds)")
-
-	cmd.Flags().IntVar(&args.EgServicePeerPort, "mesh-control-plane-service-peer-port", installbase.DefaultMeshPeerPort, "")
-	cmd.Flags().IntVar(&args.EgServiceAdminPort, "mesh-control-plane-service-admin-port", installbase.DefaultMeshAdminPort, "")
-
-	// cmd.Flags().StringVar(&args.EGControlPlanePersistVolumeName, "eg-control-plane-pv-name", installbase.DefaultEgControlPlanePVName, egControlPlanePVNameHelpStr)
-	// cmd.Flags().StringVar(&args.EGControlPlanePersistVolumeHostPath, "eg-control-plane-pv-hostpath", installbase.DefaultEgControlPlanePVHostPath, egControlPlanePVHostPathHelpStr)
-	cmd.Flags().StringVar(&args.MeshControlPlaneStorageClassName, "mesh-storage-class-name", installbase.DefaultMeshControlPlaneStorageClassName, "")
-	cmd.Flags().StringVar(&args.MeshControlPlanePersistVolumeCapacity, "mesh-control-plane-pv-capacity", installbase.DefaultMeshControlPlanePersistVolumeCapacity,
-		installbase.MeshControlPlanePVNotExistedHelpStr)
-
-	cmd.Flags().Int32Var(&args.MeshIngressServicePort, "mesh-ingress-service-port", installbase.DefaultMeshIngressServicePort, "A port on which mesh ingress controller listening")
-
-	cmd.Flags().StringVar(&args.EaseMeshRegistryType, "registry-type", installbase.DefaultMeshRegistryType, installbase.MeshRegistryTypeHelpStr)
-	cmd.Flags().IntVar(&args.HeartbeatInterval, "heartbeat-interval", installbase.DefaultHeartbeatInterval, "")
-
-	cmd.Flags().StringVar(&args.ImageRegistryURL, "image-registry-url", installbase.DefaultImageRegistryURL, "")
-	cmd.Flags().StringVar(&args.EasegressImage, "easegress-image", installbase.DefaultEasegressImage, "")
-	cmd.Flags().StringVar(&args.EaseMeshOperatorImage, "easemesh-operator-image", installbase.DefaultEaseMeshOperatorImage, "")
-
-	cmd.Flags().IntVar(&args.EasegressControlPlaneReplicas, "easemesh-control-plane-replicas", installbase.DefaultMeshControlPlaneReplicas, "")
-	cmd.Flags().IntVar(&args.MeshIngressReplicas, "easeemesh-ingress-replicas", installbase.DefaultMeshIngressReplicas, "")
-	cmd.Flags().IntVar(&args.EaseMeshOperatorReplicas, "easemesh-operator-replicas", installbase.DefaultMeshOperatorReplicas, "")
-	cmd.Flags().StringVarP(&args.SpecFile, "file", "f", "", "A yaml file specifying the install params.")
-	cmd.Flags().BoolVar(&args.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed, default true")
-}
-
-func install(cmd *cobra.Command, args *installbase.InstallArgs) {
+func install(cmd *cobra.Command, flags *flags.Install) {
 	var err error
 	kubeClient, err := installbase.NewKubernetesClient()
 	if err != nil {
@@ -93,7 +60,7 @@ func install(cmd *cobra.Command, args *installbase.InstallArgs) {
 	}
 
 	context := &installbase.StageContext{
-		Arguments:           *args,
+		Flags:               flags,
 		Client:              kubeClient,
 		Cmd:                 cmd,
 		APIExtensionsClient: apiExtensionClient,
@@ -108,7 +75,7 @@ func install(cmd *cobra.Command, args *installbase.InstallArgs) {
 
 	err = install.DoInstallStage(context)
 	if err != nil {
-		if args.CleanWhenFailed {
+		if flags.CleanWhenFailed {
 			install.ClearResource(context)
 		}
 		common.ExitWithErrorf("install mesh infrastructure error: %s", err)

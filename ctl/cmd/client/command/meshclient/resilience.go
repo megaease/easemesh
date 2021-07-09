@@ -54,7 +54,7 @@ func (r *resilienceInterface) Patch(ctx context.Context, resilience *resource.Re
 	jsonClient := client.NewHTTPJSON()
 	update := resilience.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch resilience %s error", resilience.Name())
@@ -71,7 +71,7 @@ func (r *resilienceInterface) Patch(ctx context.Context, resilience *resource.Re
 func (r *resilienceInterface) Create(ctx context.Context, resilience *resource.Resilience) error {
 	created := resilience.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create resilience %s error", resilience.Name())

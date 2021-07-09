@@ -171,7 +171,7 @@ func (o *observabilityMetricInterface) Patch(ctx context.Context, metrics *resou
 	jsonClient := client.NewHTTPJSON()
 	update := metrics.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceMetricsURL, metrics.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceMetricsURL, metrics.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch observabilityMetrics %s error", metrics.Name())
@@ -188,7 +188,7 @@ func (o *observabilityMetricInterface) Patch(ctx context.Context, metrics *resou
 func (o *observabilityMetricInterface) Create(ctx context.Context, metrics *resource.ObservabilityMetrics) error {
 	created := metrics.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceMetricsURL, metrics.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceMetricsURL, metrics.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create observabilityMetrics %s error", metrics.Name())
@@ -281,7 +281,7 @@ func (o *observabilityOutputServerInterface) Patch(ctx context.Context, output *
 	jsonClient := client.NewHTTPJSON()
 	update := output.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceOutputServerURL, output.Name()), &update, ctx, nil).
+		PutByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceOutputServerURL, output.Name()), update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch observabilityOutputServer %s error", output.Name())
@@ -298,7 +298,7 @@ func (o *observabilityOutputServerInterface) Patch(ctx context.Context, output *
 func (o *observabilityOutputServerInterface) Create(ctx context.Context, output *resource.ObservabilityOutputServer) error {
 	created := output.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceOutputServerURL, output.Name()), &created, ctx, nil).
+		PostByContext(fmt.Sprintf("http://"+o.client.server+MeshServiceOutputServerURL, output.Name()), created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create observabilityOutputServer %s error", output.Name())
