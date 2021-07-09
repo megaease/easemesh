@@ -9,6 +9,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -50,12 +51,12 @@ func Run(cmd *cobra.Command, flags *flags.Delete) {
 	for _, vs := range vss {
 		err := vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				return fmt.Errorf("visit failed: %v", e)
+				return errors.Wrap(e, "visit failed")
 			}
 
 			err := WrapDeleterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Delete()
 			if err != nil {
-				return fmt.Errorf("%s/%s deleted failed: %s", mo.Kind(), mo.Name(), err)
+				return errors.Wrapf(err, "%s/%s deleted failed", mo.Kind(), mo.Name())
 			}
 
 			fmt.Printf("%s/%s deleted successfully\n", mo.Kind(), mo.Name())

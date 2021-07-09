@@ -1,8 +1,6 @@
 package get
 
 import (
-	"fmt"
-
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/command/printer"
@@ -10,6 +8,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +50,7 @@ func Run(cmd *cobra.Command, flags *flags.Get) {
 	for _, vs := range vss {
 		err := vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				return fmt.Errorf("visit failed: %v", e)
+				return errors.Wrap(e, "visit failed")
 			}
 
 			resourceID := mo.Kind()
@@ -61,7 +60,7 @@ func Run(cmd *cobra.Command, flags *flags.Get) {
 
 			objects, err := WrapGetterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Get()
 			if err != nil {
-				return fmt.Errorf("%s get failed: %s", resourceID, err)
+				return errors.Wrapf(err, "%s get failed", resourceID)
 			}
 
 			printer.PrintObjects(objects)

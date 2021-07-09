@@ -9,6 +9,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ func Run(cmd *cobra.Command, flags *flags.Apply) {
 	for _, vs := range vss {
 		err := vs.Visit(func(mo resource.MeshObject, e error) error {
 			if e != nil {
-				return fmt.Errorf("visit failed: %v", e)
+				return errors.Wrap(e, "visit failed")
 			}
 
 			err := WrapApplierByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Apply()
