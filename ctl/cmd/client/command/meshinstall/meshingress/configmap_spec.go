@@ -48,7 +48,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshIngressConfig,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 	}
 	if err == nil {
@@ -60,7 +60,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		if err != nil {
 			return errors.Wrapf(err, "Create MeshIngress %s configmap spec error", configMap.Name)
 		}
-		err = installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNameSpace)
+		err = installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "Deploy configmap %s error", configMap.Name)
 		}

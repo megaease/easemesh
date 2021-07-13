@@ -18,6 +18,7 @@
 package command
 
 import (
+	stdcontext "context"
 	"fmt"
 	"io/ioutil"
 
@@ -28,10 +29,12 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
+	"github.com/megaease/easemeshctl/cmd/client/command/rcfile"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func InstallCmd() *cobra.Command {
@@ -98,5 +101,38 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 		common.ExitWithErrorf("install mesh infrastructure error: %s", err)
 	}
 
+	postInstall(context)
+
 	fmt.Println("Done.")
+}
+
+func postInstall(context *installbase.StageContext) {
+	namespace := context.Flags.MeshNamespace
+	name := installbase.DefaultMeshControlPlanePlubicServiceName
+	service, err := context.Client.CoreV1().Services(namespace).Get(stdcontext.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		common.ExitWithErrorf("get service %s/%s failed: %v", namespace, name, err)
+	}
+
+	rc, err := rcfile.New()
+	if err != nil {
+		common.ExitWithErrorf("new rcfile failed: %v", err)
+	}
+
+	for _, port := range service.Spec.Ports {
+		if port.Name == installbase.DefaultMeshAdminPortName {
+			rc.Server = fmt.Sprintf("%s:%d", service.Spec.ClusterIP, port.Port)
+		}
+	}
+
+	if rc.Server == "" {
+		common.ExitWithErrorf("%s of service %s/%s not found", installbase.DefaultMeshAdminPortName, namespace, name)
+	}
+
+	err = rc.Marshal()
+	if err != nil {
+		common.ExitWithError(err)
+	} else {
+		fmt.Printf("run commands file: %s\n", rc.Path())
+	}
 }

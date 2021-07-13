@@ -42,7 +42,7 @@ func roleSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	operatorLeaderElectionRole := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 			Name:      meshOperatorLeaderElectionRole,
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -60,7 +60,7 @@ func roleSpec(installFlags *flags.Install) installbase.InstallFunc {
 	}
 
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployRole(operatorLeaderElectionRole, kubeClient, installFlags.MeshNameSpace)
+		err := installbase.DeployRole(operatorLeaderElectionRole, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
 			return err
 		}
@@ -148,7 +148,7 @@ func roleBindingSpec(installFlags *flags.Install) installbase.InstallFunc {
 	operatorLeaderElectionRoleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      meshOperatorLeaderElectionRoleBinding,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
@@ -159,13 +159,13 @@ func roleBindingSpec(installFlags *flags.Install) installbase.InstallFunc {
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: installFlags.MeshNameSpace,
+				Namespace: installFlags.MeshNamespace,
 			},
 		},
 	}
 
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployRoleBinding(operatorLeaderElectionRoleBinding, kubeClient, installFlags.MeshNameSpace)
+		err := installbase.DeployRoleBinding(operatorLeaderElectionRoleBinding, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func clusterRoleBindingSpec(installFlags *flags.Install) installbase.InstallFunc
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: installFlags.MeshNameSpace,
+				Namespace: installFlags.MeshNamespace,
 			},
 		},
 	}
@@ -205,7 +205,7 @@ func clusterRoleBindingSpec(installFlags *flags.Install) installbase.InstallFunc
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: installFlags.MeshNameSpace,
+				Namespace: installFlags.MeshNamespace,
 			},
 		},
 	}
@@ -223,7 +223,7 @@ func clusterRoleBindingSpec(installFlags *flags.Install) installbase.InstallFunc
 			{
 				Kind:      "ServiceAccount",
 				Name:      "default",
-				Namespace: installFlags.MeshNameSpace,
+				Namespace: installFlags.MeshNamespace,
 			},
 		},
 	}

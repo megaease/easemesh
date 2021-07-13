@@ -42,7 +42,7 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	headlessService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlaneHeadlessServiceName,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 	}
 
@@ -69,7 +69,7 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	headfulService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installFlags.EgServiceName,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 	}
 
@@ -95,7 +95,7 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlanePlubicServiceName,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 	}
 	service.Spec.Ports = []v1.ServicePort{
@@ -122,16 +122,16 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	service.Spec.Selector = labels
 
 	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployService(headlessService, client, installFlags.MeshNameSpace)
+		err := installbase.DeployService(headlessService, client, installFlags.MeshNamespace)
 		if err != nil {
 			return errors.Wrap(err, "deploy easemesh controlpanel inner service failed")
 		}
-		err = installbase.DeployService(service, client, installFlags.MeshNameSpace)
+		err = installbase.DeployService(service, client, installFlags.MeshNamespace)
 		if err != nil {
 			return errors.Wrap(err, "deploy easemesh controlpanel public service failed")
 		}
 
-		err = installbase.DeployService(headfulService, client, installFlags.MeshNameSpace)
+		err = installbase.DeployService(headfulService, client, installFlags.MeshNamespace)
 		if err != nil {
 			return errors.Wrap(err, "deploy easemesh controlpanel headful service failed")
 		}

@@ -59,7 +59,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 				installbase.DefaultMeshControlPlaneName,
 				i,
 				installbase.DefaultMeshControlPlaneHeadlessServiceName,
-				installFlags.MeshNameSpace,
+				installFlags.MeshNamespace,
 				installFlags.EgPeerPort))
 	}
 
@@ -76,13 +76,13 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlaneConfig,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 		Data: params,
 	}
 
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNameSpace)
+		err := installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
 			return err
 		}

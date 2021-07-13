@@ -43,20 +43,21 @@ type tenantInterface struct {
 }
 
 func (t *tenantInterface) Get(ctx context.Context, tenantID string) (*resource.Tenant, error) {
+	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID)
 	re, err := client.NewHTTPJSON().
-		GetByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID), nil, ctx, nil).
+		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "get tenant %s error", tenantID)
 			}
 
 			if statusCode >= 300 {
-				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", t.client.server, MeshTenantURL, statusCode, string(b))
+				return nil, errors.Errorf("call %s failed, return status code: %d text:%s", url, statusCode, string(b))
 			}
 			tenant := &v1alpha1.Tenant{}
 			err := json.Unmarshal(b, tenant)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tanent error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tenant error")
 			}
 			return resource.ToTenant(tenant), nil
 		})
@@ -69,9 +70,10 @@ func (t *tenantInterface) Get(ctx context.Context, tenantID string) (*resource.T
 
 func (t *tenantInterface) Patch(ctx context.Context, tenant *resource.Tenant) error {
 	jsonClient := client.NewHTTPJSON()
+	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name())
 	update := tenant.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name()), update, ctx, nil).
+		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch tenant %s error", tenant.Name())
@@ -80,17 +82,18 @@ func (t *tenantInterface) Patch(ctx context.Context, tenant *resource.Tenant) er
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call PUT %s%s failed, return statuscode %d text %s", t.client.server, MeshTenantURL, statusCode, string(b))
+			return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) error {
 	created := tenant.ToV1Alpha1()
+	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name())
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
 		// Current URL form should be corrected in the feature
-		PostByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name()), created, ctx, nil).
+		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create tenant %s error", tenant.Name())
@@ -99,14 +102,15 @@ func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) e
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call Post %s%s failed, return statuscode %d text %s", t.client.server, MeshTenantsURL, statusCode, string(b))
+			return nil, errors.Errorf("call Post %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
+	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID)
 	_, err := client.NewHTTPJSON().
-		DeleteByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID), nil, ctx, nil).
+		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete tenant %s error", tenantID)
@@ -115,27 +119,28 @@ func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call DELETE %s%s failed, return statuscode %d text %s", t.client.server, MeshTenantURL, statusCode, string(b))
+			return nil, errors.Errorf("call DELETE %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (t *tenantInterface) List(ctx context.Context) ([]*resource.Tenant, error) {
+	url := fmt.Sprintf("http://" + t.client.server + MeshTenantsURL)
 	result, err := client.NewHTTPJSON().
-		GetByContext(fmt.Sprintf("http://"+t.client.server+MeshTenantsURL), nil, ctx, nil).
+		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list tanent error")
+				return nil, errors.Wrap(NotFoundError, "list tenant error")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
-				return nil, errors.Errorf("call GET %s%s failed, return statuscode %d text %s", t.client.server, MeshTenantsURL, statusCode, string(b))
+				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
 			}
 
 			tenants := []v1alpha1.Tenant{}
 			err := json.Unmarshal(b, &tenants)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal tanent result error")
+				return nil, errors.Wrapf(err, "unmarshal tenant result error")
 			}
 
 			results := []*resource.Tenant{}

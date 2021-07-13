@@ -63,7 +63,7 @@ func NewKubernetesApiExtensionsClient() (*apiextensions.Clientset, error) {
 	return clientset, nil
 }
 
-func CreateNameSpace(namespace *v1.Namespace, clientSet *kubernetes.Clientset) error {
+func CreateNamespace(namespace *v1.Namespace, clientSet *kubernetes.Clientset) error {
 	_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace.Name, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})

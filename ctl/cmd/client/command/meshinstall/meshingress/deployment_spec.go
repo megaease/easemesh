@@ -44,7 +44,7 @@ func deploymentSpec(installFlags *flags.Install) installbase.InstallFunc {
 				deploymentInitialize(nil))))(installFlags)
 
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployDeployment(deployment, kubeClient, installFlags.MeshNameSpace)
+		err := installbase.DeployDeployment(deployment, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "deployment operation %s failed", deployment.Name)
 		}
