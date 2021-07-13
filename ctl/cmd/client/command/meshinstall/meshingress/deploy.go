@@ -57,8 +57,8 @@ func Clear(context *installbase.StageContext) error {
 		{"configmap", installbase.DefaultMeshIngressConfig},
 	}
 
-	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNameSpace, installbase.DeleteAppsV1Resource)
-	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNameSpace, installbase.DeleteCoreV1Resource)
+	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNamespace, installbase.DeleteAppsV1Resource)
+	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
 	return nil
 }
 
@@ -67,10 +67,10 @@ func Clear(context *installbase.StageContext) error {
 func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
-		return fmt.Sprintf("Begin to install mesh ingress controller in the namespace:%s", context.Flags.MeshNameSpace)
+		return fmt.Sprintf("Begin to install mesh ingress controller in the namespace:%s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
 		return fmt.Sprintf("\nMesh ingress controller deployed successfully, deployment:%s\n%s", installbase.DefaultMeshIngressControllerName,
-			installbase.FormatPodStatus(context.Client, context.Flags.MeshNameSpace,
+			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(meshIngressLabel())))
 	}
 	return ""
@@ -84,7 +84,7 @@ func checkMeshIngressStatus(client *kubernetes.Clientset, installFlags *flags.In
 		if i > 600 {
 			return errors.Errorf("easeMesh meshingress controller deploy failed, mesh ingress controller (EG deployment) not ready")
 		}
-		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNameSpace,
+		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
 			installbase.DefaultMeshIngressControllerName,
 			installbase.DeploymentReadyPredict)
 		if ready {

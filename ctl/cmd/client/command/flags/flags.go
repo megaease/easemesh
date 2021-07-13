@@ -20,12 +20,15 @@ package flags
 import (
 	"time"
 
+	"github.com/megaease/easemeshctl/cmd/client/command/rcfile"
+	"github.com/megaease/easemeshctl/cmd/common"
+
 	"github.com/spf13/cobra"
 )
 
 const (
 	// DefaultMeshNamespace all mesh infrastructure component should be deployed in this namespace
-	DefaultMeshNameSpace = "easemesh"
+	DefaultMeshNamespace = "easemesh"
 
 	DefaultMeshControlPlaneReplicas = 3
 	DefaultMeshIngressReplicas      = 1
@@ -89,7 +92,7 @@ spec:
 
 type (
 	OperationGlobal struct {
-		MeshNameSpace string
+		MeshNamespace string
 		EgServiceName string
 	}
 
@@ -160,6 +163,26 @@ type (
 	}
 )
 
+var (
+	globalRCFile *rcfile.RCFile
+)
+
+func init() {
+	rc, err := rcfile.New()
+	if err != nil {
+		globalRCFile = &rcfile.RCFile{}
+		common.OutputErrorf("new rcfile failed: %v", err)
+		return
+	}
+
+	err = rc.Unmarshal()
+	if err != nil {
+		common.OutputErrorf("unmarshal rcfile failed: %v", err)
+	}
+
+	globalRCFile = rc
+}
+
 func (i *Install) AttachCmd(cmd *cobra.Command) {
 	i.OperationGlobal = &OperationGlobal{}
 	i.OperationGlobal.AttachCmd(cmd)
@@ -200,12 +223,17 @@ func (r *Reset) AttachCmd(cmd *cobra.Command) {
 }
 
 func (o *OperationGlobal) AttachCmd(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.MeshNameSpace, "mesh-namespace", DefaultMeshNameSpace, "EaseMesh namespace in kubernetes")
+	cmd.Flags().StringVar(&o.MeshNamespace, "mesh-namespace", DefaultMeshNamespace, "EaseMesh namespace in kubernetes")
 	cmd.Flags().StringVar(&o.EgServiceName, "mesh-control-plane-service-name", DefaultMeshControlPlaneHeadfulServiceName, "Mesh control plane service name")
 }
 
 func (a *AdminGlobal) AttachCmd(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&a.Server, "server", "s", "127.0.0.1:2381", "An address to access the EaseMesh control plane")
+	server := "127.0.0.1:2381"
+	if globalRCFile.Server != "" {
+		server = globalRCFile.Server
+	}
+
+	cmd.Flags().StringVarP(&a.Server, "server", "s", server, "An address to access the EaseMesh control plane")
 	cmd.Flags().DurationVarP(&a.Timeout, "timeout", "t", 30*time.Second, "A duration that limit max time out for requesting the EaseMesh control plane")
 }
 

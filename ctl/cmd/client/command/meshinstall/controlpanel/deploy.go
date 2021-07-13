@@ -90,7 +90,7 @@ func PreCheck(context *installbase.StageContext) error {
 			// we regarded it as availablePVCount
 			for _, pvNameSuffix := range boundedPVCSuffixes {
 				if pv.Spec.ClaimRef.Kind == "PersistentVolumeClaim" &&
-					pv.Spec.ClaimRef.Namespace == context.Flags.MeshNameSpace &&
+					pv.Spec.ClaimRef.Namespace == context.Flags.MeshNamespace &&
 					strings.HasSuffix(pv.Spec.ClaimRef.Name, pvNameSuffix) {
 					availablePVCount++
 					break
@@ -100,12 +100,7 @@ func PreCheck(context *installbase.StageContext) error {
 	}
 
 	if availablePVCount < context.Flags.EasegressControlPlaneReplicas {
-		return errors.Errorf(flags.MeshControlPlanePVNotExistedHelpStr,
-			context.Flags.EasegressControlPlaneReplicas,
-			availablePVCount,
-			context.Flags.MeshControlPlaneStorageClassName,
-			context.Flags.MeshControlPlaneStorageClassName,
-			context.Flags.MeshControlPlanePersistVolumeCapacity)
+		return errors.Errorf(flags.MeshControlPlanePVNotExistedHelpStr)
 	}
 
 	return nil
@@ -126,8 +121,8 @@ func Clear(context *installbase.StageContext) error {
 
 	clearEaseMeshControlPanelProvision(context.Cmd, context.Client, context.Flags)
 
-	installbase.DeleteResources(context.Client, statefulsetResource, context.Flags.MeshNameSpace, installbase.DeleteStatefulsetResource)
-	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNameSpace, installbase.DeleteCoreV1Resource)
+	installbase.DeleteResources(context.Client, statefulsetResource, context.Flags.MeshNamespace, installbase.DeleteStatefulsetResource)
+	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
 	return nil
 }
 
@@ -136,10 +131,10 @@ func Clear(context *installbase.StageContext) error {
 func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
-		return fmt.Sprintf("Begin to install mesh control plane service in the namespace %s", context.Flags.MeshNameSpace)
+		return fmt.Sprintf("Begin to install mesh control plane service in the namespace %s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
 		return fmt.Sprintf("\nControl panel statefulset %s\n%s", installbase.DefaultMeshControlPlaneName,
-			installbase.FormatPodStatus(context.Client, context.Flags.MeshNameSpace,
+			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(meshControlPanelLabel())))
 	}
 	return ""
@@ -159,7 +154,7 @@ func checkEasegressControlPlaneStatus(cmd *cobra.Command, kubeClient *kubernetes
 	// Wait a fix time for the Easegress cluster to start
 	time.Sleep(time.Second * 10)
 
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNameSpace,
+	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {

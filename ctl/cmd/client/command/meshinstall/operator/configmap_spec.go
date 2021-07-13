@@ -37,7 +37,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	cfg := installbase.MeshOperatorConfig{
 		ImageRegistryURL:     installFlags.ImageRegistryURL,
 		ClusterName:          installbase.DefaultMeshControlPlaneName,
-		ClusterJoinURLs:      "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + installFlags.MeshNameSpace + ":" + strconv.Itoa(installFlags.EgPeerPort),
+		ClusterJoinURLs:      "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + installFlags.MeshNamespace + ":" + strconv.Itoa(installFlags.EgPeerPort),
 		MetricsAddr:          "127.0.0.1:8080",
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
@@ -46,7 +46,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      meshOperatorConfigMap,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 	}
 	operatorConfig, err := yaml.Marshal(cfg)
@@ -61,7 +61,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		if err != nil {
 			return errors.Wrap(err, "ConfigMap build error")
 		}
-		err = installbase.DeployConfigMap(configMap, client, installFlags.MeshNameSpace)
+		err = installbase.DeployConfigMap(configMap, client, installFlags.MeshNamespace)
 		if err != nil {
 			return fmt.Errorf("create configMap failed: %v ", err)
 		}

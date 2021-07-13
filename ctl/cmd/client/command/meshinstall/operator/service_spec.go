@@ -35,7 +35,7 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshOperatorControllerManagerServiceName,
-			Namespace: installFlags.MeshNameSpace,
+			Namespace: installFlags.MeshNamespace,
 		},
 	}
 	service.Spec.Ports = []v1.ServicePort{
@@ -47,9 +47,9 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	}
 	service.Spec.Selector = labels
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployService(service, kubeClient, installFlags.MeshNameSpace)
+		err := installbase.DeployService(service, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
-			return errors.Wrapf(err, "Create operator service %s error", installFlags.MeshNameSpace)
+			return errors.Wrapf(err, "Create operator service %s error", installFlags.MeshNamespace)
 		}
 		return err
 	}

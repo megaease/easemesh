@@ -43,16 +43,16 @@ type loadbalanceInterface struct {
 }
 
 func (s *loadbalanceInterface) Get(ctx context.Context, serviceID string) (*resource.LoadBalance, error) {
-
 	jsonClient := client.NewHTTPJSON()
+	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, serviceID)
 	r, err := jsonClient.
-		GetByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, serviceID), nil, ctx, nil).
+		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "get loadbalance %s error", serviceID)
 			}
 			if statusCode >= 300 {
-				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", s.client.server, MeshServiceLoadBalanceURL, statusCode, string(b))
+				return nil, errors.Errorf("call %s failed, return status code: %d text:%s", url, statusCode, string(b))
 			}
 			loadbalance := &v1alpha1.LoadBalance{}
 			err := json.Unmarshal(b, loadbalance)
@@ -70,9 +70,10 @@ func (s *loadbalanceInterface) Get(ctx context.Context, serviceID string) (*reso
 
 func (s *loadbalanceInterface) Patch(ctx context.Context, loadbalance *resource.LoadBalance) error {
 	jsonClient := client.NewHTTPJSON()
+	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name())
 	update := loadbalance.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name()), update, ctx, nil).
+		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch loadbalance %s error", loadbalance.Name())
@@ -80,15 +81,16 @@ func (s *loadbalanceInterface) Patch(ctx context.Context, loadbalance *resource.
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call PUT %s%s failed, return statuscode %d text %s", s.client.server, MeshServiceLoadBalanceURL, statusCode, string(b))
+			return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (s *loadbalanceInterface) Create(ctx context.Context, loadbalance *resource.LoadBalance) error {
+	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name())
 	created := loadbalance.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name()), created, ctx, nil).
+		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create loadbalance %s error", loadbalance.Name())
@@ -97,14 +99,15 @@ func (s *loadbalanceInterface) Create(ctx context.Context, loadbalance *resource
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call Post %s%s failed, return statuscode %d text %s", s.client.server, MeshServiceLoadBalanceURL, statusCode, string(b))
+			return nil, errors.Errorf("call Post %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (s *loadbalanceInterface) Delete(ctx context.Context, serviceID string) error {
+	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, serviceID)
 	_, err := client.NewHTTPJSON().
-		DeleteByContext(fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, serviceID), nil, ctx, nil).
+		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete loadbalance %s error", serviceID)
@@ -112,21 +115,22 @@ func (s *loadbalanceInterface) Delete(ctx context.Context, serviceID string) err
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call DELETE %s%s failed, return statuscode %d text %s", s.client.server, MeshServiceLoadBalanceURL, statusCode, string(b))
+			return nil, errors.Errorf("call DELETE %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (s *loadbalanceInterface) List(ctx context.Context) ([]*resource.LoadBalance, error) {
+	url := "http://" + s.client.server + MeshServicesURL
 	result, err := client.NewHTTPJSON().
-		GetByContext(fmt.Sprintf("http://"+s.client.server+MeshServicesURL), nil, ctx, nil).
+		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrap(NotFoundError, "list service error")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
-				return nil, errors.Errorf("call GET %s%s failed, return statuscode %d text %s", s.client.server, MeshServicesURL, statusCode, string(b))
+				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
 			}
 
 			services := []v1alpha1.Service{}

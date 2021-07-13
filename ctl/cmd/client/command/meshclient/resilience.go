@@ -43,15 +43,16 @@ type resilienceInterface struct {
 }
 
 func (r *resilienceInterface) Get(ctx context.Context, serviceID string) (*resource.Resilience, error) {
+	url := fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, serviceID)
 	re, err := client.NewHTTPJSON().
-		GetByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, serviceID), nil, ctx, nil).
+		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "get resilience %s error", serviceID)
 			}
 
 			if statusCode >= 300 {
-				return nil, errors.Errorf("call %s%s failed, return status code: %d text:%s", r.client.server, MeshServiceResilienceURL, statusCode, string(b))
+				return nil, errors.Errorf("call %s failed, return status code %d text %s", url, statusCode, string(b))
 			}
 			resilience := &v1alpha1.Resilience{}
 			err := json.Unmarshal(b, resilience)
@@ -69,9 +70,10 @@ func (r *resilienceInterface) Get(ctx context.Context, serviceID string) (*resou
 
 func (r *resilienceInterface) Patch(ctx context.Context, resilience *resource.Resilience) error {
 	jsonClient := client.NewHTTPJSON()
+	url := fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name())
 	update := resilience.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name()), update, ctx, nil).
+		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch resilience %s error", resilience.Name())
@@ -80,15 +82,16 @@ func (r *resilienceInterface) Patch(ctx context.Context, resilience *resource.Re
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call PUT %s%s failed, return statuscode %d text %s", r.client.server, MeshServiceResilienceURL, statusCode, string(b))
+			return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (r *resilienceInterface) Create(ctx context.Context, resilience *resource.Resilience) error {
+	url := fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name())
 	created := resilience.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, resilience.Name()), created, ctx, nil).
+		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create resilience %s error", resilience.Name())
@@ -97,14 +100,15 @@ func (r *resilienceInterface) Create(ctx context.Context, resilience *resource.R
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call Post %s%s failed, return statuscode %d text %s", r.client.server, MeshServiceResilienceURL, statusCode, string(b))
+			return nil, errors.Errorf("call Post %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (r *resilienceInterface) Delete(ctx context.Context, serviceID string) error {
+	url := fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, serviceID)
 	_, err := client.NewHTTPJSON().
-		DeleteByContext(fmt.Sprintf("http://"+r.client.server+MeshServiceResilienceURL, serviceID), nil, ctx, nil).
+		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete resilience %s error", serviceID)
@@ -113,21 +117,22 @@ func (r *resilienceInterface) Delete(ctx context.Context, serviceID string) erro
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
 			}
-			return nil, errors.Errorf("call DELETE %s%s failed, return statuscode %d text %s", r.client.server, MeshServiceResilienceURL, statusCode, string(b))
+			return nil, errors.Errorf("call DELETE %s failed, return statuscode %d text %s", url, statusCode, string(b))
 		})
 	return err
 }
 
 func (r *resilienceInterface) List(ctx context.Context) ([]*resource.Resilience, error) {
+	url := fmt.Sprintf("http://" + r.client.server + MeshServicesURL)
 	result, err := client.NewHTTPJSON().
-		GetByContext(fmt.Sprintf("http://"+r.client.server+MeshServicesURL), nil, ctx, nil).
+		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrap(NotFoundError, "list service error")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
-				return nil, errors.Errorf("call GET %s%s failed, return statuscode %d text %s", r.client.server, MeshServicesURL, statusCode, string(b))
+				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
 			}
 
 			services := []v1alpha1.Service{}

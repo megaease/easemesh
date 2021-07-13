@@ -41,7 +41,7 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	service.Spec.Selector = meshIngressLabel()
 	service.Spec.Type = v1.ServiceTypeNodePort
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployService(service, kubeClient, installFlags.MeshNameSpace)
+		err := installbase.DeployService(service, kubeClient, installFlags.MeshNamespace)
 		return err
 	}
 }

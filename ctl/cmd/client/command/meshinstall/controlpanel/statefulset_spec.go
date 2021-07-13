@@ -43,7 +43,7 @@ func statefulsetSpec(installFlags *flags.Install) installbase.InstallFunc {
 				initialStatefulSetSpec(nil))))(installFlags)
 
 	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployStatefulset(statefulSet, client, installFlags.MeshNameSpace)
+		err := installbase.DeployStatefulset(statefulSet, client, installFlags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "deploy statefulset %s failed", statefulSet.ObjectMeta.Name)
 		}
@@ -168,11 +168,11 @@ func (m *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
 		{
 			// Kubernetes leverage shell syntax to help refering another environment
 			Name:  "EG_CLUSTER_ADVERTISE_CLIENT_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNameSpace, m.installFlags.EgClientPort),
+			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNamespace, m.installFlags.EgClientPort),
 		},
 		{
 			Name:  "EG_CLUSTER_INITIAL_ADVERTISE_PEER_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNameSpace, m.installFlags.EgPeerPort),
+			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNamespace, m.installFlags.EgPeerPort),
 		},
 	}, nil
 }

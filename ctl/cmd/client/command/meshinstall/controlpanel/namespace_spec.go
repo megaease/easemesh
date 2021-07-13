@@ -30,11 +30,11 @@ import (
 
 func namespaceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	ns := &v1.Namespace{ObjectMeta: metav1.ObjectMeta{
-		Name:   installFlags.MeshNameSpace,
+		Name:   installFlags.MeshNamespace,
 		Labels: map[string]string{},
 	}}
 	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.CreateNameSpace(ns, client)
+		err := installbase.CreateNamespace(ns, client)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}

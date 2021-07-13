@@ -92,9 +92,9 @@ func Clear(context *installbase.StageContext) error {
 		{"clusterrolebindings", meshOperatorProxyClusterRoleBinding},
 		{"clusterroles", meshOperatorProxyClusterRole},
 	}
-	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNameSpace, installbase.DeleteAppsV1Resource)
-	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNameSpace, installbase.DeleteCoreV1Resource)
-	installbase.DeleteResources(context.Client, rbacV1Resources, context.Flags.MeshNameSpace, installbase.DeleteRbacV1Resources)
+	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNamespace, installbase.DeleteAppsV1Resource)
+	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
+	installbase.DeleteResources(context.Client, rbacV1Resources, context.Flags.MeshNamespace, installbase.DeleteRbacV1Resources)
 
 	return nil
 }
@@ -104,10 +104,10 @@ func Clear(context *installbase.StageContext) error {
 func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
-		return fmt.Sprintf("Begin to install mesh operator in the namespace: %s", context.Flags.MeshNameSpace)
+		return fmt.Sprintf("Begin to install mesh operator in the namespace: %s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
 		return fmt.Sprintf("\nMesh operator deployed successfully, deployment: %s\n%s", installbase.DefaultMeshOperatorName,
-			installbase.FormatPodStatus(context.Client, context.Flags.MeshNameSpace,
+			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(meshOperatorLabels())))
 	}
 	return ""
@@ -121,7 +121,7 @@ func checkOperatorStatus(client *kubernetes.Clientset, installFlags *flags.Insta
 		if i > 600 {
 			return errors.Errorf("easemesh operator deploy failed, mesh operator (EG deployment) not ready")
 		}
-		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNameSpace,
+		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
 			installbase.DefaultMeshOperatorName,
 			installbase.DeploymentReadyPredict)
 		if ready {
