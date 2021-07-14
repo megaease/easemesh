@@ -29,7 +29,7 @@ The dependencies of the EaseMesh are the Easegress, EaseAgent, and EaseMesh Oper
 - EaseAgent
 - EaseMesh Operator
 
-The EaseMesh severely depended on the K8s, all dependencies must be packaged as images, so you need to prepare all three docker images.
+The EaseMesh severely depends on the K8s, all dependencies must be packaged as images, so you need to prepare all three docker images.
 
 #### Easegress
 
