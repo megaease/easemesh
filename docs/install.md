@@ -110,7 +110,7 @@ By default, The control plane of the EaseMesh exposes its service via K8s' [Node
 
 We deploy the control plane of the EaseMesh in a K8s cluster, as the control plane needs to persistent configuration, the persistent volume resource needs to be introduced.
 
-The default replicas of the control plane is three, so three PVs is required. The capacity of each PV must greater than 3Gi by default. We provide a template spec of PV here for your referring:
+The default replicas of the control plane are three, so three PVs are required. The capacity of each PV must greater than 3Gi by default. We provide a template spec of PV here for your referring:
 
 ```yaml
 apiVersion: v1
@@ -244,4 +244,4 @@ emctl reset
 
 ## Trouble Shooting
 
-There is a known issue, during the EaseMesh installation, the embed `etcd` of the Easegress can't be set up correctly. If you encounter this situation, just delete all persistent contents in nodes
+There are a known issue, during the EaseMesh installation, the embed `etcd` of the Easegress can't be setup correctly. If you encounter this situation, just delete all persistent contents in nodes
