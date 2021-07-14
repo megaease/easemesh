@@ -59,7 +59,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
 		if err != nil {
-			return errors.Wrap(err, "ConfigMap build error")
+			return errors.Wrap(err, "ConfigMap build")
 		}
 		err = installbase.DeployConfigMap(configMap, client, installFlags.MeshNamespace)
 		if err != nil {

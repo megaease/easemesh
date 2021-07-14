@@ -47,17 +47,17 @@ func Deploy(context *installbase.StageContext) error {
 
 	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags, installFuncs)
 	if err != nil {
-		return errors.Wrap(err, "deploy mesh control panel resource error")
+		return errors.Wrap(err, "deploy mesh control panel resource")
 	}
 
 	err = checkEasegressControlPlaneStatus(context.Cmd, context.Client, context.Flags)
 	if err != nil {
-		return errors.Wrap(err, "check mesh control panel status error")
+		return errors.Wrap(err, "check mesh control panel status")
 	}
 
 	err = provisionEaseMeshControlPanel(context.Cmd, context.Client, context.Flags)
 	if err != nil {
-		return errors.Wrap(err, "provision mesh control panel error")
+		return errors.Wrap(err, "provision mesh control panel")
 	}
 	return nil
 }

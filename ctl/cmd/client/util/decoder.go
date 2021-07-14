@@ -18,13 +18,11 @@
 package util
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 
-	yamljsontool "github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 )
 
 type Decoder interface {
@@ -36,13 +34,8 @@ type decoder struct {
 }
 
 func (d *decoder) Decode(jsonBuff []byte) (resource.MeshObject, *resource.VersionKind, error) {
-	yamlBuff, err := yamljsontool.JSONToYAML(jsonBuff)
-	if err != nil {
-		return nil, nil, fmt.Errorf("transform json %s to yaml failed: %v", jsonBuff, err)
-	}
-
 	vk := &resource.VersionKind{}
-	err = yaml.Unmarshal(yamlBuff, vk)
+	err := json.Unmarshal(jsonBuff, vk)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "unmarshal data to resource.VersionKind failed")
 	}
@@ -52,9 +45,9 @@ func (d *decoder) Decode(jsonBuff []byte) (resource.MeshObject, *resource.Versio
 		return nil, vk, err
 	}
 
-	err = yaml.Unmarshal(yamlBuff, meshObject)
+	err = json.Unmarshal(jsonBuff, meshObject)
 	if err != nil {
-		return nil, vk, errors.Wrap(err, "unmarshal data to MeshObject error")
+		return nil, vk, errors.Wrap(err, "unmarshal data to MeshObject")
 	}
 	return meshObject, vk, nil
 }

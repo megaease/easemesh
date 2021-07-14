@@ -1,5 +1,6 @@
 
 # EaseMesh
+
 A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
 
 - [EaseMesh](#easemesh)
@@ -20,20 +21,20 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
   - [9. License](#9-license)
 
 ## 1. Purposes
+
 Why do we reinvent another wheel?
 
-* **Service mesh compatible with Spring Cloud ecosystem:** The micro-services developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
+- **Service mesh compatible with Spring Cloud ecosystem:** The micro-services developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
 
-* **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
+- **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
 
-> Shortly, **the EaseMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java application have service governance and integrated observability without change a line of source code**.
+> Shortly, **the EaseMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java applications have service governance and integrated observability without change a line of source code**.
 
 ## 2. Principles
 
-* **Spring Cloud Compatibility:** Spring Cloud domain service management and resilient design.
-* **No Code Changes:** Using sidecar & Java-agent for completed service governance and integrated observability.
-* **Service Insight:** Service running metrics/tracing/logs monitoring.
-
+- **Spring Cloud Compatibility:** Spring Cloud domain service management and resilient design.
+- **No Code Changes:** Using sidecar & Java-agent for completed service governance and integrated observability.
+- **Service Insight:** Service running metrics/tracing/logs monitoring.
 
 ## 3. Architecture
 
@@ -41,28 +42,30 @@ Why do we reinvent another wheel?
 
 ## 4. Features
 
-* **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
-* **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos).
-* **Traffic Orchestration**: Coloring & Scheduling east-west and north-south traffic to configured services.
-* **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
-* **Canary Deployment**: Routing requests based on colored traffic and different versions of the service.
-* **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
-* **Observability**: Including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened, and immediately take corresponding actions.
+- **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
+- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos).
+- **Traffic Orchestration**: Coloring & Scheduling east-west and north-south traffic to configured services.
+- **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
+- **Canary Deployment**: Routing requests based on colored traffic and different versions of the service.
+- **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
+- **Observability**: Including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened, and immediately take corresponding actions.
 
 ## 5. Dependent Projects
+
 1. [MegaEase EaseAgent](https://github.com/megaease/easeagent)
 2. [MegaEase Easegress](https://github.com/megaease/easegress)
 
 ## 6. Quick Start
-### 6.1 Environment Requirement
-* Linux kernel version 4.15+
-* Kubernetes version 1.18+
-* Mysql version 14.14+
 
+### 6.1 Environment Requirement
+
+- Linux kernel version 4.15+
+- Kubernetes version 1.18+
+- Mysql version 14.14+
 
 ### 6.2 Sanity Checking
-* Running `kubectl get nodes` to check your Kubernetes cluster's healthy.
 
+- Running `kubectl get nodes` to check your Kubernetes cluster's healthy.
 
 ### 6.3 Installation
 
@@ -70,27 +73,37 @@ Please check out [install.md](./docs/install.md) to install EaseMesh.
 
 ## 7. Demonstration
 
-*  [Spring Cloud PetClinic](https://github.com/spring-petclinic/spring-petclinic-cloud) microservice example.
-* It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Spring Cloud Netflix technology stack.
+- [Spring Cloud PetClinic](https://github.com/spring-petclinic/spring-petclinic-cloud) microservice example.
 
-  ![The topology migration diagram](imgs/topology-migration.png)
+- It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Spring Cloud Netflix technology stack.
 
+![The topology migration diagram](imgs/topology-migration.png)
+
+Prepare the `emctl`
+
+```bash
+$ cd ctl && make
+$ export PATH=$(pwd)/bin:${PATH}
+```
 
 ### 7.1 Start PetClinic in EaseMesh
 
-1. Running  `./example/mesh-app-petclinic/deploy.sh`.
+1. Pull demo files: `git clone git@github.com:megaease/easemesh-spring-petclinic.git`
+2. Apply mesh configuration files: `emctl apply -f easemesh-spring-petclinic/mesh-conf`
+3. Create namespace: `kubectl create namespace spring-petclinic`
+4. Apply petclinic stack: `kubectl apply -f easemesh-spring-petclinic/mesh-deployments`
+5. Using the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
+6. Running `kubectl get svc mesh-ingress` , then configure the NodPort IP address and port number into your traffic gateway's routing address,e.g., add config to NGINX with
 
-2. Using the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
+```plain
+location /pet/ {
+        proxy_pass http://$NodePortIP:$NodePortNum/;
+            ...
+}
 
-3. Running `kubectl get svc mesh-ingress` , then configure the NodPort IP address and port number into your traffic gateway's routing address,e.g., add config to NGINX with
-    ```
-    location /pet/ {
-            proxy_pass http://$NodePortIP:$NodePortNum/;
-                ...
-    }
+```
 
-    ```
-4. Visiting PetClinic website with `$your_domain/pet/#!/welcome`
+7. Visiting PetClinic website with `$your_domain/pet/#!/welcome`
 
 ### 7.2 Canary Deployment
 
@@ -98,40 +111,43 @@ Please check out [install.md](./docs/install.md) to install EaseMesh.
 
 1. Coloring traffic with HTTP header `X-Canary: lv1` by using Chrome browser's **ModHeader** plugin. Then EaseMesh will route this colored traffic into the Customer service's canary version instance.
 
+2. Apply mesh configuration file: `emctl apply -f easemesh-spring-petclinic/canary/customer-canary.yaml`
 
-2. Developing a canary version of Customer service to add an extra suffix to the city field for each record.
+3. Developing a canary version of Customer service to add an extra suffix to the city field for each record.
 
+```diff
+diff --git a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
+index 360e765..cc2df3d 100644
+--- a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
++++ b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
+@@ -99,7 +99,7 @@ public class Owner {
+    }
 
-    ```diff
-    diff --git a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
-    index 360e765..cc2df3d 100644
-    --- a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
-    +++ b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
-    @@ -99,7 +99,7 @@ public class Owner {
-        }
+    public String getAddress() {
+-        return this.address;
++        return this.address + " - US";
+    }
 
-        public String getAddress() {
-    -        return this.address;
-    +        return this.address + " - US";
-        }
+    public void setAddress(String address) {k
+```
 
-        public void setAddress(String address) {k
-    ```
+4. Building the canary Customer service's image, and update image address in `easemesh-spring-petclinic/canary/customers-service-deployment-canary.yaml`. Or just use our default canary image which already was in it.
 
-3. Building the canary Customer service's image, and update it into `./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml` file's line [#L22](https://github.com/megaease/easemesh/blob/main/example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml#L22).
+5. Apply canary deployment: `kubectl apply -f easemesh-spring-petclinic/canary/customers-service-deployment-canary.yaml`
 
-4. Running `kubectl apply -f  ./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml`
-
-5. Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
+6. Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
 
 ![plugin](./imgs/chrome_plugin.png)
 
 ### 7.3 Clean
-* Running `./example/mesh-app-petclinic/undeploy.sh`.
+
+- Running `kubectl delete namespace spring-petclinic`.
+- Running `emctl delete -f easemesh-spring-petclinic/mesh-conf`
 
 ## 8. Roadmap
 
 See [EaseMesh Roadmap](./docs/Roadmap.md) for details.
 
 ## 9. License
+
 EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.

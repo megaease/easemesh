@@ -71,7 +71,7 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 		}
 	}
 
-	return errors.Wrapf(err, "call EaseMesh control panel %v error", entrypoints)
+	return errors.Wrapf(err, "call EaseMesh control panel %v", entrypoints)
 }
 
 func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {

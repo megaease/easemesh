@@ -46,18 +46,18 @@ const (
 
 type (
 	VersionKind struct {
-		APIVersion string `yaml:"apiVersion" jsonschema:"required"`
-		Kind       string `yaml:"kind" jsonschema:"required"`
+		APIVersion string `json:"apiVersion" jsonschema:"required"`
+		Kind       string `json:"kind" jsonschema:"required"`
 	}
 
 	MetaData struct {
-		Name   string            `yaml:"name" jsonschema:"required"`
-		Labels map[string]string `yaml:"labels" jsonschema:"omitempty"`
+		Name   string            `json:"name" jsonschema:"required"`
+		Labels map[string]string `json:"labels" jsonschema:"omitempty"`
 	}
 
 	MeshResource struct {
-		VersionKind `yaml:",inline"`
-		MetaData    MetaData `yaml:"metadata" jsonschema:"required"`
+		VersionKind `json:",inline"`
+		MetaData    MetaData `json:"metadata" jsonschema:"required"`
 	}
 
 	MeshObject interface {
@@ -70,62 +70,66 @@ type (
 
 type (
 	Tenant struct {
-		MeshResource `yaml:",inline"`
-		Services     []string `yaml:"services" jsonschema:"omitempty"`
-		Description  string   `yaml:"description" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *TenantSpec `json:"spec" jsonschema:"omitempty"`
 	}
 
-	ServiceSpec struct {
-		RegisterTenant string `yaml:"registerTenant" jsonschema:"required"`
-
-		Sidecar       *v1alpha1.Sidecar       `yaml:"sidecar" jsonschema:"required"`
-		Resilience    *v1alpha1.Resilience    `yaml:"resilience" jsonschema:"omitempty"`
-		Canary        *v1alpha1.Canary        `yaml:"canary" jsonschema:"omitempty"`
-		LoadBalance   *v1alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
-		Observability *v1alpha1.Observability `yaml:"observability" jsonschema:"omitempty"`
+	TenantSpec struct {
+		Services    []string `json:"services" jsonschema:"omitempty"`
+		Description string   `json:"description" jsonschema:"omitempty"`
 	}
 
 	Service struct {
-		MeshResource `yaml:",inline"`
-		Spec         *ServiceSpec `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *ServiceSpec `json:"spec" jsonschema:"omitempty"`
+	}
+
+	ServiceSpec struct {
+		RegisterTenant string `json:"registerTenant" jsonschema:"required"`
+
+		Sidecar       *v1alpha1.Sidecar       `json:"sidecar" jsonschema:"required"`
+		Resilience    *v1alpha1.Resilience    `json:"resilience" jsonschema:"omitempty"`
+		Canary        *v1alpha1.Canary        `json:"canary" jsonschema:"omitempty"`
+		LoadBalance   *v1alpha1.LoadBalance   `json:"loadBalance" jsonschema:"omitempty"`
+		Observability *v1alpha1.Observability `json:"observability" jsonschema:"omitempty"`
 	}
 
 	Canary struct {
-		MeshResource `yaml:",inline"`
-		Spec         *v1alpha1.Canary `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *v1alpha1.Canary `json:"spec" jsonschema:"omitempty"`
 	}
 
 	ObservabilityTracings struct {
-		MeshResource `yaml:",inline"`
-		Spec         *v1alpha1.ObservabilityTracings `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *v1alpha1.ObservabilityTracings `json:"spec" jsonschema:"omitempty"`
 	}
 
 	ObservabilityOutputServer struct {
-		MeshResource `yaml:",inline"`
-		Spec         *v1alpha1.ObservabilityOutputServer `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *v1alpha1.ObservabilityOutputServer `json:"spec" jsonschema:"omitempty"`
 	}
 
 	ObservabilityMetrics struct {
-		MeshResource `yaml:",inline"`
-		Spec         *v1alpha1.ObservabilityMetrics `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *v1alpha1.ObservabilityMetrics `json:"spec" jsonschema:"omitempty"`
 	}
 	LoadBalance struct {
-		MeshResource `yaml:",inline"`
-		Spec         *v1alpha1.LoadBalance `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *v1alpha1.LoadBalance `json:"spec" jsonschema:"omitempty"`
 	}
 
 	Resilience struct {
-		MeshResource `yaml:",inline"`
-		Spec         *v1alpha1.Resilience `yaml:"spec" jsonschema:"omitempty"`
-	}
-
-	IngressSpec struct {
-		Rules []*v1alpha1.IngressRule `yaml:"rules" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *v1alpha1.Resilience `json:"spec" jsonschema:"omitempty"`
 	}
 
 	Ingress struct {
-		MeshResource `yaml:",inline"`
-		Spec         *IngressSpec `yaml:"spec" jsonschema:"omitempty"`
+		MeshResource `json:",inline"`
+		Spec         *IngressSpec `json:"spec" jsonschema:"omitempty"`
+	}
+
+	IngressSpec struct {
+		Rules []*v1alpha1.IngressRule `json:"rules" jsonschema:"omitempty"`
 	}
 )
 
@@ -207,8 +211,10 @@ func (s *Service) ToV1Alpha1() *v1alpha1.Service {
 func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
 	result := &v1alpha1.Tenant{}
 	result.Name = t.Name()
-	result.Services = t.Services
-	result.Description = t.Description
+	if t.Spec != nil {
+		result.Services = t.Spec.Services
+		result.Description = t.Spec.Description
+	}
 	return result
 }
 
@@ -305,10 +311,12 @@ func ToLoadbalance(name string, loadBalance *v1alpha1.LoadBalance) *LoadBalance 
 }
 
 func ToTenant(tenant *v1alpha1.Tenant) *Tenant {
-	result := &Tenant{}
+	result := &Tenant{
+		Spec: &TenantSpec{},
+	}
 	result.MeshResource = NewTenantResource(DefaultAPIVersion, tenant.Name)
-	result.Services = tenant.Services
-	result.Description = tenant.Description
+	result.Spec.Services = tenant.Services
+	result.Spec.Description = tenant.Description
 	return result
 }
 

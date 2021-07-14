@@ -55,7 +55,7 @@ func (o *observabilityTracingInterface) Get(ctx context.Context, serviceID strin
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get observabilityTracings %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "get observabilityTracings %s", serviceID)
 			}
 
 			if statusCode >= 300 {
@@ -64,7 +64,7 @@ func (o *observabilityTracingInterface) Get(ctx context.Context, serviceID strin
 			tracing := &v1alpha1.ObservabilityTracings{}
 			err := json.Unmarshal(b, tracing)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.ObservabilityTracings error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.ObservabilityTracings")
 			}
 			return resource.ToObservabilityTracings(serviceID, tracing), nil
 		})
@@ -83,7 +83,7 @@ func (o *observabilityTracingInterface) Patch(ctx context.Context, tracings *res
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch observabilityTracings %s error", tracings.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch observabilityTracings %s", tracings.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -101,7 +101,7 @@ func (o *observabilityTracingInterface) Create(ctx context.Context, tracings *re
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create observabilityTracings %s error", tracings.Name())
+				return nil, errors.Wrapf(ConflictError, "create observabilityTracings %s", tracings.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -118,7 +118,7 @@ func (o *observabilityTracingInterface) Delete(ctx context.Context, serviceID st
 		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete observabilityTracings %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "delete observabilityTracings %s", serviceID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -135,7 +135,7 @@ func (o *observabilityTracingInterface) List(ctx context.Context) ([]*resource.O
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list service error")
+				return nil, errors.Wrap(NotFoundError, "list service")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -145,7 +145,7 @@ func (o *observabilityTracingInterface) List(ctx context.Context) ([]*resource.O
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.ObservabilityTracings{}
 			for _, ss := range services {
@@ -170,7 +170,7 @@ func (o *observabilityMetricInterface) Get(ctx context.Context, serviceID string
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get observabilityMetrics %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "get observabilityMetrics %s", serviceID)
 			}
 
 			if statusCode >= 300 {
@@ -179,7 +179,7 @@ func (o *observabilityMetricInterface) Get(ctx context.Context, serviceID string
 			metrics := &v1alpha1.ObservabilityMetrics{}
 			err := json.Unmarshal(b, metrics)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Service error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Service")
 			}
 			return resource.ToObservabilityMetrics(serviceID, metrics), nil
 		})
@@ -198,7 +198,7 @@ func (o *observabilityMetricInterface) Patch(ctx context.Context, metrics *resou
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch observabilityMetrics %s error", metrics.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch observabilityMetrics %s", metrics.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -212,12 +212,11 @@ func (o *observabilityMetricInterface) Patch(ctx context.Context, metrics *resou
 func (o *observabilityMetricInterface) Create(ctx context.Context, metrics *resource.ObservabilityMetrics) error {
 	url := fmt.Sprintf("http://"+o.client.server+MeshServiceMetricsURL, metrics.Name())
 	created := metrics.ToV1Alpha1()
-	fmt.Printf("%T: %+v\n", created, created)
 	_, err := client.NewHTTPJSON().
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create observabilityMetrics %s error", metrics.Name())
+				return nil, errors.Wrapf(ConflictError, "create observabilityMetrics %s", metrics.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -231,10 +230,10 @@ func (o *observabilityMetricInterface) Create(ctx context.Context, metrics *reso
 func (o *observabilityMetricInterface) Delete(ctx context.Context, serviceID string) error {
 	url := fmt.Sprintf("http://"+o.client.server+MeshServiceMetricsURL, serviceID)
 	_, err := client.NewHTTPJSON().
-		PostByContext(url, nil, ctx, nil).
+		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete observabilityMetrics %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "delete observabilityMetrics %s", serviceID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -251,7 +250,7 @@ func (o *observabilityMetricInterface) List(ctx context.Context) ([]*resource.Ob
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list service error")
+				return nil, errors.Wrap(NotFoundError, "list service")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -261,7 +260,7 @@ func (o *observabilityMetricInterface) List(ctx context.Context) ([]*resource.Ob
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.ObservabilityMetrics{}
 			for _, ss := range services {
@@ -286,7 +285,7 @@ func (o *observabilityOutputServerInterface) Get(ctx context.Context, serviceID 
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get observabilityOutputServer %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "get observabilityOutputServer %s", serviceID)
 			}
 
 			if statusCode >= 300 {
@@ -295,7 +294,7 @@ func (o *observabilityOutputServerInterface) Get(ctx context.Context, serviceID 
 			output := &v1alpha1.ObservabilityOutputServer{}
 			err := json.Unmarshal(b, output)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.ObservabilityOutputServer error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.ObservabilityOutputServer")
 			}
 			return resource.ToObservabilityOutputServer(serviceID, output), nil
 		})
@@ -314,7 +313,7 @@ func (o *observabilityOutputServerInterface) Patch(ctx context.Context, output *
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch observabilityOutputServer %s error", output.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch observabilityOutputServer %s", output.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -332,7 +331,7 @@ func (o *observabilityOutputServerInterface) Create(ctx context.Context, output 
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create observabilityOutputServer %s error", output.Name())
+				return nil, errors.Wrapf(ConflictError, "create observabilityOutputServer %s", output.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -346,10 +345,10 @@ func (o *observabilityOutputServerInterface) Create(ctx context.Context, output 
 func (o *observabilityOutputServerInterface) Delete(ctx context.Context, serviceID string) error {
 	url := fmt.Sprintf("http://"+o.client.server+MeshServiceOutputServerURL, serviceID)
 	_, err := client.NewHTTPJSON().
-		PostByContext(url, nil, ctx, nil).
+		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete observabilityOutputServer %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "delete observabilityOutputServer %s", serviceID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -366,7 +365,7 @@ func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]*resou
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list service error")
+				return nil, errors.Wrap(NotFoundError, "list service")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -376,7 +375,7 @@ func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]*resou
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.ObservabilityOutputServer{}
 			for _, ss := range services {

@@ -49,7 +49,7 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
 		err := installbase.DeployService(service, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
-			return errors.Wrapf(err, "Create operator service %s error", installFlags.MeshNamespace)
+			return errors.Wrapf(err, "Create operator service %s", installFlags.MeshNamespace)
 		}
 		return err
 	}

@@ -59,7 +59,7 @@ func (s *serviceInterface) Get(ctx context.Context, serviceID string) (*resource
 			service := &v1alpha1.Service{}
 			err := json.Unmarshal(b, service)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Service error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Service")
 			}
 			return resource.ToService(service), nil
 		})
@@ -96,7 +96,7 @@ func (s *serviceInterface) Create(ctx context.Context, service *resource.Service
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create service %s error", service.Name())
+				return nil, errors.Wrapf(ConflictError, "create service %s", service.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -139,7 +139,7 @@ func (s *serviceInterface) List(ctx context.Context) ([]*resource.Service, error
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.Service{}
 			for _, ss := range services {

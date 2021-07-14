@@ -1,6 +1,0 @@
-name: ingress1
-rules:
-- host: km.megaease.cn
-  paths:
-  - path: /
-    backend: api-gateway 

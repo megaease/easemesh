@@ -49,7 +49,7 @@ func (i *ingressInterface) Get(ctx context.Context, ingressID string) (*resource
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get ingress %s error", ingressID)
+				return nil, errors.Wrapf(NotFoundError, "get ingress %s", ingressID)
 			}
 
 			if statusCode >= 300 {
@@ -58,7 +58,7 @@ func (i *ingressInterface) Get(ctx context.Context, ingressID string) (*resource
 			ingress := &v1alpha1.Ingress{}
 			err := json.Unmarshal(b, ingress)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tanent error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tanent")
 			}
 			return resource.ToIngress(ingress), nil
 		})
@@ -77,7 +77,7 @@ func (i *ingressInterface) Patch(ctx context.Context, ingress *resource.Ingress)
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch ingress %s error", ingress.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch ingress %s", ingress.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -97,7 +97,7 @@ func (t *ingressInterface) Create(ctx context.Context, ingress *resource.Ingress
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create ingress %s error", ingress.Name())
+				return nil, errors.Wrapf(ConflictError, "create ingress %s", ingress.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -114,7 +114,7 @@ func (i *ingressInterface) Delete(ctx context.Context, ingressID string) error {
 		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete ingress %s error", ingressID)
+				return nil, errors.Wrapf(NotFoundError, "delete ingress %s", ingressID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -131,7 +131,7 @@ func (i *ingressInterface) List(ctx context.Context) ([]*resource.Ingress, error
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list tanent error")
+				return nil, errors.Wrap(NotFoundError, "list tanent")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -141,7 +141,7 @@ func (i *ingressInterface) List(ctx context.Context) ([]*resource.Ingress, error
 			ingresses := []v1alpha1.Ingress{}
 			err := json.Unmarshal(b, &ingresses)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal ingress result error")
+				return nil, errors.Wrapf(err, "unmarshal ingress result")
 			}
 
 			results := []*resource.Ingress{}

@@ -48,7 +48,7 @@ func (r *resilienceInterface) Get(ctx context.Context, serviceID string) (*resou
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get resilience %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "get resilience %s", serviceID)
 			}
 
 			if statusCode >= 300 {
@@ -57,7 +57,7 @@ func (r *resilienceInterface) Get(ctx context.Context, serviceID string) (*resou
 			resilience := &v1alpha1.Resilience{}
 			err := json.Unmarshal(b, resilience)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Resilience error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Resilience")
 			}
 			return resource.ToResilience(serviceID, resilience), nil
 		})
@@ -76,7 +76,7 @@ func (r *resilienceInterface) Patch(ctx context.Context, resilience *resource.Re
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch resilience %s error", resilience.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch resilience %s", resilience.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -94,7 +94,7 @@ func (r *resilienceInterface) Create(ctx context.Context, resilience *resource.R
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create resilience %s error", resilience.Name())
+				return nil, errors.Wrapf(ConflictError, "create resilience %s", resilience.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -111,7 +111,7 @@ func (r *resilienceInterface) Delete(ctx context.Context, serviceID string) erro
 		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete resilience %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "delete resilience %s", serviceID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -128,7 +128,7 @@ func (r *resilienceInterface) List(ctx context.Context) ([]*resource.Resilience,
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list service error")
+				return nil, errors.Wrap(NotFoundError, "list service")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -138,7 +138,7 @@ func (r *resilienceInterface) List(ctx context.Context) ([]*resource.Resilience,
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.Resilience{}
 			for _, ss := range services {

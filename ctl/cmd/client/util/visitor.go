@@ -19,6 +19,7 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -28,6 +29,7 @@ import (
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
@@ -165,12 +167,13 @@ func NewStreamVisitor(r io.Reader, decoder Decoder, source string) *StreamVisito
 
 // Visit implements Visitor over a stream. StreamVisitor is able to distinct multiple resources in one stream.
 func (v *StreamVisitor) Visit(fn VisitorFunc) error {
+	var errs []error
 	d := yaml.NewYAMLOrJSONDecoder(v.Reader, 4096)
 	for {
 		ext := RawExtension{}
 		if err := d.Decode(&ext); err != nil {
 			if err == io.EOF {
-				return nil
+				break
 			}
 			return errors.Errorf("error parsing %s: %v", v.Source, err)
 		}
@@ -184,16 +187,28 @@ func (v *StreamVisitor) Visit(fn VisitorFunc) error {
 			continue
 		}
 		info, err := v.decodeMeshObject(jsonBuff, v.Source)
-		if err != nil {
-			if fnErr := fn(info, err); fnErr != nil {
-				return fnErr
-			}
-			continue
-		}
-		if err := fn(info, nil); err != nil {
-			return err
+
+		err1 := fn(info, err)
+		if err1 != nil {
+			common.OutputError(err1)
+			errs = append(errs, err1)
 		}
 	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	var finalErr error
+	for _, err := range errs {
+		if finalErr == nil {
+			finalErr = fmt.Errorf("%v", err)
+		} else {
+			finalErr = fmt.Errorf("%v\n%v", finalErr, err)
+		}
+	}
+
+	return finalErr
 }
 
 func (v *StreamVisitor) decodeMeshObject(data []byte, source string) (resource.MeshObject, error) {
