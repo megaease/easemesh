@@ -102,7 +102,7 @@ cd easemesh/ctl && make
 
 EaseMesh severely depends on the K8s, in order to install the EaseMesh, you must confirm you have a healthy K8s cluster and sufficient resources (at least three work nodes by default).
 
-The installation of the EaseMesh need admin privilege of K8s cluster, the  `emctl` looks for a file named config in the $HOME/.kube directory. The emctl use it to communicated with K8s API server of a cluster.
+The installation of the EaseMesh needs admin privilege of K8s cluster, the  `emctl` looks for a file named config in the $HOME/.kube directory. The emctl use it to communicate with K8s API server of a cluster.
 
 By default, The control plane of the EaseMesh exposes its service via K8s' [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport), so you should ensure that the node running `emctl` can access nodes of the K8s cluster 
 
