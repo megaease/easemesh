@@ -108,7 +108,7 @@ By default, The control plane of the EaseMesh exposes its service via K8s' [Node
 
 #### Persistent Volume
 
-We deploy the control plane of the EaseMesh in a K8s cluster, as the control plane need to persistent configuration, the persistent volume resource need to be introduced.
+We deploy the control plane of the EaseMesh in a K8s cluster, as the control plane needs to persistent configuration, the persistent volume resource needs to be introduced.
 
 The default replicas of the control plane is three, so three PVs is required. The capacity of each PV must greater than 3Gi by default. We provide a template spec of PV here for your referring:
 
