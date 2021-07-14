@@ -60,7 +60,7 @@ docker pull megaease/easeagent-initializer
 #### EaseMesh Operator
 
 EaseMesh Operator is the CRD Operator whose responsibility is when a MeshDeployment (custom resource) is deployed, it renders a deployment spec from the custom resource and injects JavaAgent to service application and a sidecar container to take over all traffics. EaseMesh Operator follow the [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
-EaseMesh Operator implement a control loop which repeatedly compare the desired state (deployment resources which are injected with a sidecar container) of the cluster to its actual state.
+EaseMesh Operator implements a control loop that repeatedly compares the desired state (deployment resources which are injected with a sidecar container) of the cluster to its actual state.
 
 For convenience, we provide the EaseMesh Operator docker image in docker hub. you can download image via `docker pull`.
 
