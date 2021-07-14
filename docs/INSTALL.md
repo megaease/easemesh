@@ -36,7 +36,7 @@ The EaseMesh severely depends on the K8s, all dependencies must be packaged as i
 The Easegress plays multiple roles in the EaseMesh, including:
 
 - Control plane manages services' registry, configurations for the Mesh.
-- Sidecar takes over all traffics in and out of the application container. 
+- Sidecar takes over all traffic in and out of the application container. 
 - Ingress takes over all traffics entered the cluster of the K8s.
 
 You can found Easegress from [here](https://github.com/megaease/easegress/releases). The latest image has been uploaded by us. You can download it by `docker pull`.
