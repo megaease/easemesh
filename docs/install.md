@@ -244,4 +244,4 @@ emctl reset
 
 ## Trouble Shooting
 
-There are a known issue, during the EaseMesh installation, the embed `etcd` of the Easegress can't be setup correctly. If you encounter this situation, just delete all persistent contents in nodes
+There is a known issue, during the EaseMesh installation, the embed `etcd` of the Easegress can't be set up correctly. If you encounter this situation, just delete all persistent contents in nodes
