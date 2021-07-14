@@ -192,7 +192,7 @@ volumeBindingMode: WaitForFirstConsumer
 
 ```
 
-Changing contents according to your environment, provisioning it to your K8s cluster. You must ensuring all PVs created normally.
+Changing contents according to your environment, provisioning it to your K8s cluster. You must ensure all PVs are created normally.
 
 
 > We leverage [local volume](https://kubernetes.io/docs/concepts/storage/volumes/#local) to persistent control plane data.
