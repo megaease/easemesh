@@ -1,6 +1,14 @@
 
 # EaseMesh Command-Line
 
+- [EaseMesh Command-Line](#easemesh-command-line)
+  - [emctl install](#emctl-install)
+  - [emctl reset](#emctl-reset)
+  - [emctl apply](#emctl-apply)
+  - [emctl get](#emctl-get)
+  - [emctl delete](#emctl-delete)
+  - [Cheatsheet](#cheatsheet)
+
 `emctl` is the dedicated command to handle resources of EaseMesh, which runs in [Easegress](https://github.com/megaease/easegress) MeshController who has different roles in different instances. `MeshController` will register its own admin API in `Easegress`, so the server flag in `emctl` keeps the same as Easegress's.
 
 Running `emctl --help`  or `emctl help <subcommand>` can get details about every subcommand.
