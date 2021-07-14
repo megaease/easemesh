@@ -45,7 +45,7 @@ You can found Easegress from [here](https://github.com/megaease/easegress/releas
 docker pull megaease/easegress
 ```
 
-> If you want build easegress from scratch, you cant refer to [here](https://github.com/megaease/easegress/blob/main/README.md#setting-up-easegress)
+> If you want to build Easegress from scratch, you cant refer to [here](https://github.com/megaease/easegress/blob/main/README.md#setting-up-easegress)
 
 #### EaseAgent
 
