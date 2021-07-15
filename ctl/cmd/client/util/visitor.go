@@ -172,10 +172,10 @@ func (v *StreamVisitor) Visit(fn VisitorFunc) error {
 	for {
 		ext := RawExtension{}
 		if err := d.Decode(&ext); err != nil {
-			if err == io.EOF {
-				break
+			if err != io.EOF {
+				errs = append(errs, errors.Errorf("error parsing %s: %v", v.Source, err))
 			}
-			return errors.Errorf("error parsing %s: %v", v.Source, err)
+			break
 		}
 		jsonBuff, err := ext.MarshalJSON()
 		if err != nil {
@@ -226,7 +226,7 @@ type URLVisitor struct {
 }
 
 func (v *URLVisitor) Visit(fn VisitorFunc) error {
-	body, err := readHttpWithRetries(resty.New(), time.Second, v.URL.String(), v.HttpAttemptCount)
+	body, err := readHttpWithRetries(resty.New(), 5*time.Second, v.URL.String(), v.HttpAttemptCount)
 	if err != nil {
 		return err
 	}
@@ -237,10 +237,7 @@ func (v *URLVisitor) Visit(fn VisitorFunc) error {
 
 // readHttpWithRetries tries to http.Get the v.URL retries times before giving up.
 func readHttpWithRetries(client *resty.Client, duration time.Duration, u string, attempts int) (io.ReadCloser, error) {
-
 	r, err := client.
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Accept", "application/json").
 		SetTimeout(duration).
 		SetRetryCount(attempts).
 		SetRetryWaitTime(duration).
@@ -256,7 +253,9 @@ func readHttpWithRetries(client *resty.Client, duration time.Duration, u string,
 			return false
 		}).
 		R().
+		SetDoNotParseResponse(true).
 		Get(u)
+
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +264,7 @@ func readHttpWithRetries(client *resty.Client, duration time.Duration, u string,
 		defer r.RawBody().Close()
 		return nil, errors.Errorf("unable to read URL %q, status code=%d", u, r.StatusCode())
 	}
+
 	return r.RawBody(), nil
 }
 
