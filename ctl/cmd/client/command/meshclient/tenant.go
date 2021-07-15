@@ -48,7 +48,7 @@ func (t *tenantInterface) Get(ctx context.Context, tenantID string) (*resource.T
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get tenant %s error", tenantID)
+				return nil, errors.Wrapf(NotFoundError, "get tenant %s", tenantID)
 			}
 
 			if statusCode >= 300 {
@@ -57,7 +57,7 @@ func (t *tenantInterface) Get(ctx context.Context, tenantID string) (*resource.T
 			tenant := &v1alpha1.Tenant{}
 			err := json.Unmarshal(b, tenant)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tenant error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tenant")
 			}
 			return resource.ToTenant(tenant), nil
 		})
@@ -76,7 +76,7 @@ func (t *tenantInterface) Patch(ctx context.Context, tenant *resource.Tenant) er
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch tenant %s error", tenant.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch tenant %s", tenant.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -96,7 +96,7 @@ func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) e
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create tenant %s error", tenant.Name())
+				return nil, errors.Wrapf(ConflictError, "create tenant %s", tenant.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -113,7 +113,7 @@ func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
 		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete tenant %s error", tenantID)
+				return nil, errors.Wrapf(NotFoundError, "delete tenant %s", tenantID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -130,7 +130,7 @@ func (t *tenantInterface) List(ctx context.Context) ([]*resource.Tenant, error) 
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list tenant error")
+				return nil, errors.Wrap(NotFoundError, "list tenant")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -140,7 +140,7 @@ func (t *tenantInterface) List(ctx context.Context) ([]*resource.Tenant, error) 
 			tenants := []v1alpha1.Tenant{}
 			err := json.Unmarshal(b, &tenants)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal tenant result error")
+				return nil, errors.Wrapf(err, "unmarshal tenant result")
 			}
 
 			results := []*resource.Tenant{}

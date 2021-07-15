@@ -26,7 +26,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/common"
 	"github.com/olekukonko/tablewriter"
-	"gopkg.in/yaml.v2"
 )
 
 type (
@@ -82,36 +81,25 @@ func (p *Printer) printTable(objects []resource.MeshObject) {
 	table.Render()
 }
 
-func (p *Printer) printJSON(objects []resource.MeshObject) {
-	yamlBuff, err := yaml.Marshal(objects)
+func (p *Printer) printYAML(objects []resource.MeshObject) {
+	jsonBuff, err := json.Marshal(objects)
 	if err != nil {
-		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
+		common.ExitWithErrorf("marshal %#v to json failed: %v", objects, err)
 	}
 
-	jsonBuff, err := yamljsontool.YAMLToJSON(yamlBuff)
+	yamlBuff, err := yamljsontool.JSONToYAML(jsonBuff)
 	if err != nil {
 		common.ExitWithErrorf("transform yaml %s to json failed: %v", yamlBuff, err)
 	}
 
-	var v interface{}
-	err = json.Unmarshal(jsonBuff, &v)
-	if err != nil {
-		common.ExitWithErrorf("unmarshal %s to json failed: %v", jsonBuff, err)
-	}
+	fmt.Printf("%s", yamlBuff)
+}
 
-	prettyJSONBuff, err := json.MarshalIndent(v, "", "  ")
+func (p *Printer) printJSON(objects []resource.MeshObject) {
+	prettyJSONBuff, err := json.MarshalIndent(objects, "", "  ")
 	if err != nil {
-		common.ExitWithErrorf("unmarshal %#v to json failed: %v", v, err)
+		common.ExitWithErrorf("unmarshal %#v to json failed: %v", objects, err)
 	}
 
 	fmt.Printf("%s\n", prettyJSONBuff)
-}
-
-func (p *Printer) printYAML(objects []resource.MeshObject) {
-	yamlBuff, err := yaml.Marshal(objects)
-	if err != nil {
-		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
-	}
-
-	fmt.Printf("%s", yamlBuff)
 }

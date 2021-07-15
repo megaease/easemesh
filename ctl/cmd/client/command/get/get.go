@@ -86,7 +86,6 @@ func Run(cmd *cobra.Command, flags *flags.Get) {
 		})
 
 		if err != nil {
-			common.OutputError(err)
 			errs = append(errs, err)
 		}
 	}

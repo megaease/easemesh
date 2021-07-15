@@ -96,7 +96,7 @@ func (b *baseInstallStage) Do(context *installbase.StageContext, install Install
 	err := b.installFunc(context)
 	context.ClearFuncs = append(context.ClearFuncs, b.clearFunc)
 	if err != nil {
-		return errors.Wrap(err, "invoke install func error")
+		return errors.Wrap(err, "invoke install func")
 	}
 
 	fmt.Printf("Install successfully end, following resource are deployed successfully: %s\n", b.description(context, installbase.EndPhase))

@@ -1,5 +1,5 @@
-
 # EaseMesh
+
 A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
 
 - [EaseMesh](#easemesh)
@@ -14,26 +14,39 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
     - [6.3 Installation](#63-installation)
   - [7. Demonstration](#7-demonstration)
     - [7.1 Start PetClinic in EaseMesh](#71-start-petclinic-in-easemesh)
+      - [7.1.1 Step 1: Apply mesh configuration](#711-step-1-apply-mesh-configuration)
+      - [7.1.2 Step 2: Create namespace](#712-step-2-create-namespace)
+      - [7.1.3 Step 4: Setup Database](#713-step-4-setup-database)
+      - [7.1.4 Step 3: Apply petclinic stack](#714-step-3-apply-petclinic-stack)
+      - [7.1.5 Step 5: Configure reverse proxy](#715-step-5-configure-reverse-proxy)
+        - [7.1.5.1 Get expose port of `EaseMesh ingress` service , run](#7151-get-expose-port-of-easemesh-ingress-service--run)
+        - [7.1.5.2 Config reverse proxy](#7152-config-reverse-proxy)
     - [7.2 Canary Deployment](#72-canary-deployment)
+      - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
+      - [7.2.2 Step 2: Apply canary configuration of the EaseMesh](#722-step-2-apply-canary-configuration-of-the-easemesh)
+      - [7.2.3 Step 3:  Prepare a canary version of the application](#723-step-3--prepare-a-canary-version-of-the-application)
+      - [7.2.4 Step 4: Build canary image](#724-step-4-build-canary-image)
+      - [7.2.5 Step 5. Deploy canary version](#725-step-5-deploy-canary-version)
+      - [7.2.6 Step 6: Sending coloring traffic](#726-step-6-sending-coloring-traffic)
     - [7.3 Clean](#73-clean)
   - [8. Roadmap](#8-roadmap)
   - [9. License](#9-license)
 
 ## 1. Purposes
+
 Why do we reinvent another wheel?
 
-* **Service mesh compatible with Spring Cloud ecosystem:** The micro-services developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
+- **Service mesh compatible with Spring Cloud ecosystem:** The micro-services developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
 
-* **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
+- **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
 
-> Shortly, **the EaseMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java application have service governance and integrated observability without change a line of source code**.
+> Shortly, **the EaseMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java applications have service governance and integrated observability without change a line of source code**.
 
 ## 2. Principles
 
-* **Spring Cloud Compatibility:** Spring Cloud domain service management and resilient design.
-* **No Code Changes:** Using sidecar & Java-agent for completed service governance and integrated observability.
-* **Service Insight:** Service running metrics/tracing/logs monitoring.
-
+- **Spring Cloud Compatibility:** Spring Cloud domain service management and resilient design.
+- **No Code Changes:** Using sidecar & Java-agent for completed service governance and integrated observability.
+- **Service Insight:** Service running metrics/tracing/logs monitoring.
 
 ## 3. Architecture
 
@@ -41,28 +54,30 @@ Why do we reinvent another wheel?
 
 ## 4. Features
 
-* **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
-* **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos).
-* **Traffic Orchestration**: Coloring & Scheduling east-west and north-south traffic to configured services.
-* **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
-* **Canary Deployment**: Routing requests based on colored traffic and different versions of the service.
-* **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
-* **Observability**: Including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened, and immediately take corresponding actions.
+- **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
+- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos).
+- **Traffic Orchestration**: Coloring & Scheduling east-west and north-south traffic to configured services.
+- **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
+- **Canary Deployment**: Routing requests based on colored traffic and different versions of the service.
+- **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
+- **Observability**: Including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened, and immediately take corresponding actions.
 
 ## 5. Dependent Projects
+
 1. [MegaEase EaseAgent](https://github.com/megaease/easeagent)
 2. [MegaEase Easegress](https://github.com/megaease/easegress)
 
 ## 6. Quick Start
-### 6.1 Environment Requirement
-* Linux kernel version 4.15+
-* Kubernetes version 1.18+
-* Mysql version 14.14+
 
+### 6.1 Environment Requirement
+
+- Linux kernel version 4.15+
+- Kubernetes version 1.18+
+- Mysql version 14.14+
 
 ### 6.2 Sanity Checking
-* Running `kubectl get nodes` to check your Kubernetes cluster's healthy.
 
+- Running `kubectl get nodes` to check your Kubernetes cluster's healthy.
 
 ### 6.3 Installation
 
@@ -70,68 +85,241 @@ Please check out [install.md](./docs/install.md) to install EaseMesh.
 
 ## 7. Demonstration
 
-*  [Spring Cloud PetClinic](https://github.com/spring-petclinic/spring-petclinic-cloud) microservice example.
-* It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Spring Cloud Netflix technology stack.
+- [Spring Cloud PetClinic](https://github.com/spring-petclinic/spring-petclinic-cloud) microservice example.
 
-  ![The topology migration diagram](imgs/topology-migration.png)
+- It uses Spring Cloud Gateway, Spring Cloud Circuit Breaker, Spring Cloud Config, Spring Cloud Sleuth, Resilience4j, Micrometer and Eureka Service Discovery from Spring Cloud Netflix technology stack.
 
+![The topology migration diagram](imgs/topology-migration.png)
+
+Prepare the `emctl`
+
+```bash
+cd ctl && make
+export PATH=$(pwd)/bin:${PATH}
+```
 
 ### 7.1 Start PetClinic in EaseMesh
 
-1. Running  `./example/mesh-app-petclinic/deploy.sh`.
+#### 7.1.1 Step 1: Apply mesh configuration
 
-2. Using the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
+Apply mesh configuration files
 
-3. Running `kubectl get svc mesh-ingress` , then configure the NodPort IP address and port number into your traffic gateway's routing address,e.g., add config to NGINX with
-    ```
-    location /pet/ {
-            proxy_pass http://$NodePortIP:$NodePortNum/;
-                ...
-    }
+```bash
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/a-pet-tenant.yaml
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/api-gateway.yaml
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/customers.yaml
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/ingress.yaml
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/vets.yaml
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/visits.yaml
+```
 
-    ```
-4. Visiting PetClinic website with `$your_domain/pet/#!/welcome`
+#### 7.1.2 Step 2: Create namespace
+
+leverage kubectl to create `spring-petclinic` namespace
+
+```bash
+kubectl create namespace spring-petclinic
+```
+
+#### 7.1.3 Step 4: Setup Database
+
+Petclinic needs to access database, the default is memory database. But in quick start, you need to prepare a Mysql database for the demo.
+
+Use the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
+
+#### 7.1.4 Step 3: Apply petclinic stack
+
+Deploy petclinic resources to k8s cluster, we have developed an [operator](./operator/README.md) to manage the custom resource (MeshDeployment) of the EaseMesh. `Meshdeployment` contains a K8s' complete deployment spec and a piece of extra information about the service.
+
+> The Operator of the EaseMesh will automatically inject a sidecar to pod and a JavaAgent into the application container
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/api-gateway-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/customers-service-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/vets-service-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/visits-service-deployment.yaml
+```
+
+> ATTENTION: There is a ConfigMap spec in echo yaml spec, it describes how to connected the database for applications. You need to change its contents for your environment.
+
+#### 7.1.5 Step 5: Configure reverse proxy
+
+> **ATTENTION**: The step is optional, it can be omitted, if you have no requirements about reverse proxy.
+
+##### 7.1.5.1 Get expose port of `EaseMesh ingress` service , run
+
+```bash
+kubectl get service -n easemesh easemesh-ingress-service
+```
+
+##### 7.1.5.2 Config reverse proxy
+
+- Easegress as reverse proxy service
+
+If you leverage the [Easegress](https://github.com/megaease/easegress) as a reverse proxy service, the following configuration can be applied.
+
+HTTP Server spec (file name: http-server.yaml):
+
+```yaml
+kind: HTTPServer
+name: spring-petclinic-example
+port: 443
+https: true
+keepAlive: true
+keepAliveTimeout: 75s
+maxConnection: 10240
+cacheSize: 0
+certs:
+  key: {add your certs information to here}
+rules:
+  - paths:
+    - pathPrefix: /
+      backend: http-petclinic-pipeline
+```
+
+HTTP Pipeline spec (file name: http-petclinic-pipeline.yaml):
+
+```yaml
+name: http-petclinic-pipeline
+kind: HTTPPipeline
+flow:
+  - filter: requestAdaptor
+  - filter: proxy
+filters:
+  - name: requestAdaptor
+    kind: RequestAdaptor
+    method: ""
+    path: null
+    header:
+      del: []
+      set:
+        Host: "{you host name, can be omitted}"
+        X-Forwarded-Proto: "https"
+        Connection: "upgrade"
+      add:
+        Host: "{you host name, can be omitted}"
+  - name: proxy
+    kind: Proxy
+    mainPool:
+      servers:
+      - url: http://{node1_of_k8s_cluster}:{ingress_port}
+      - url: http://{node2_of_k8s_cluster}:{ingress_port}
+      loadBalance:
+        policy: roundRobin
+```
+
+Change contents in `{}` as per your environment, and apply it via Easegress client command tool `egctl`:
+
+```bash
+egctl apply -f http-server.yaml
+egctl apply -f http-petclinic-pipeline.yaml
+```
+
+Visiting PetClinic website with `$your_domain/#!/welcome`
+
+- Nginx as reverse proxy service
+
+if you leverage the Nginx as a reverse proxy service, the following configuration should be added.
+
+Then configure the NodPort IP address and port number into your traffic gateway's routing address, e.g, add config to NGINX:
+
+```plain
+location /pet/ {
+    proxy_pass http://$NodePortIP:$NodePortNum/;
+}
+```
+
+> **ATTENTION:**  that the PetClinic website should be routed by the  `/`  subpath, or it should use  `NGINX`'s replacing response content feature for correcting resource URL:
+
+```plain
+location /pet/ {
+    proxy_pass http://$NodePortIP:$NodePortNum/;
+    sub_filter 'href="/' 'href="/pet/';
+    sub_filter 'src="/' 'src="/pet/';
+    sub_filter_once  off;
+}
+```
+
+Visiting PetClinic website with `$your_domain/pet/#!/welcome`
 
 ### 7.2 Canary Deployment
 
 ![EaseMesh Canary topology](./imgs/canary-deployment.png)
 
-1. Coloring traffic with HTTP header `X-Canary: lv1` by using Chrome browser's **ModHeader** plugin. Then EaseMesh will route this colored traffic into the Customer service's canary version instance.
+#### 7.2.1  Step 1: Coloring traffic
 
+Coloring traffic with HTTP header `X-Canary: lv1` by using Chrome browser's **[ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en)** plugin. Then EaseMesh will route this colored traffic into the Customer service's canary version instance.
 
-2. Developing a canary version of Customer service to add an extra suffix to the city field for each record.
+#### 7.2.2 Step 2: Apply canary configuration of the EaseMesh
 
+Apply mesh configuration file:
 
-    ```diff
-    diff --git a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
-    index 360e765..cc2df3d 100644
-    --- a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
-    +++ b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
-    @@ -99,7 +99,7 @@ public class Owner {
-        }
+```bash
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customer-canary.yaml`
+```
 
-        public String getAddress() {
-    -        return this.address;
-    +        return this.address + " - US";
-        }
+#### 7.2.3 Step 3:  Prepare a canary version of the application
 
-        public void setAddress(String address) {k
-    ```
+> **ATTENTION**  You can skip the step, we have provides the canary image to docker hub `megaease/spring-petclinic-customers-service:canary` you can found it in the docker hub.
 
-3. Building the canary Customer service's image, and update it into `./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml` file's line [#L22](https://github.com/megaease/easemesh/blob/main/example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml#L22).
+Developing a canary version of Customer service to add an extra suffix to the city field for each record.
 
-4. Running `kubectl apply -f  ./example/mesh-app-petclinic/canary/customers-service-deployment-canary.yaml`
+```diff
+diff --git a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
+index 360e765..cc2df3d 100644
+--- a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
++++ b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
+@@ -99,7 +99,7 @@ public class Owner {
+    }
 
-5. Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
+    public String getAddress() {
+-        return this.address;
++        return this.address + " - US";
+    }
+
+    public void setAddress(String address) {k
+```
+
+#### 7.2.4 Step 4: Build canary image
+
+> **ATTENTION**  You can skip the step, we have provides the canary image to docker hub `megaease/spring-petclinic-customers-service:canary` you can found it in the docker hub.
+
+Building the canary Customer service's image, and update image version in `https://github.com/megaease/easemesh-spring-petclinic/blob/main/canary/customers-service-deployment-canary.yaml`. Or just use our default canary image which already was in it.
+
+#### 7.2.5 Step 5. Deploy canary version
+
+Being similar to [7.1.4](#714-step-3-apply-petclinic-stack),  we leverage kubectl to deploy the canary version of `MeshDeployment`
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customers-service-deployment-canary.yaml`
+```
+
+> **ATTENTION**: There is a ConfigMap spec in echo yaml spec, it describes how to connect the database for applications. You need to change its contents for your environment.
+
+#### 7.2.6 Step 6: Sending coloring traffic
+
+Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
 
 ![plugin](./imgs/chrome_plugin.png)
 
 ### 7.3 Clean
-* Running `./example/mesh-app-petclinic/undeploy.sh`.
+
+- Run `kubectl delete namespace spring-petclinic`.
+- Run
+
+```bash
+emctl delete ingress pet-ingress
+emctl delete service api-gateway
+emctl delete service customers-service
+emctl delete service vets-service
+emctl delete service visits-service
+emctl delete tenant pet
+```
 
 ## 8. Roadmap
 
 See [EaseMesh Roadmap](./docs/Roadmap.md) for details.
 
 ## 9. License
+
 EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.

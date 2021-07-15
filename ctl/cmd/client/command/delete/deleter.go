@@ -89,7 +89,7 @@ func (c *canaryDeleter) Delete() error {
 
 	err := c.client.V1Alpha1().Canary().Delete(ctx, c.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete canary %s error", c.object.Name())
+		return errors.Wrapf(err, "delete canary %s", c.object.Name())
 	}
 
 	return err
@@ -106,7 +106,7 @@ func (o *observabilityTracingsDeleter) Delete() error {
 
 	err := o.client.V1Alpha1().ObservabilityTracings().Delete(ctx, o.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete observabilityTracings %s error", o.object.Name())
+		return errors.Wrapf(err, "delete observabilityTracings %s", o.object.Name())
 	}
 
 	return err
@@ -123,7 +123,7 @@ func (o *observabilityMetricsDeleter) Delete() error {
 
 	err := o.client.V1Alpha1().ObservabilityMetrics().Delete(ctx, o.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete observabilityMetrics %s error", o.object.Name())
+		return errors.Wrapf(err, "delete observabilityMetrics %s", o.object.Name())
 	}
 
 	return err
@@ -140,7 +140,7 @@ func (o *observabilityOutputServerDeleter) Delete() error {
 
 	err := o.client.V1Alpha1().ObservabilityOutputServer().Delete(ctx, o.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete observabilityOutputServer %s error", o.object.Name())
+		return errors.Wrapf(err, "delete observabilityOutputServer %s", o.object.Name())
 	}
 
 	return err
@@ -157,7 +157,7 @@ func (l *loadBalanceDeleter) Delete() error {
 
 	err := l.client.V1Alpha1().LoadBalance().Delete(ctx, l.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete loadBalance %s error", l.object.Name())
+		return errors.Wrapf(err, "delete loadBalance %s", l.object.Name())
 	}
 
 	return err
@@ -174,7 +174,7 @@ func (t *tenantDeleter) Delete() error {
 
 	err := t.client.V1Alpha1().Tenant().Delete(ctx, t.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete tenant %s error", t.object.Name())
+		return errors.Wrapf(err, "delete tenant %s", t.object.Name())
 	}
 
 	return err
@@ -191,7 +191,7 @@ func (r *resilienceDeleter) Delete() error {
 
 	err := r.client.V1Alpha1().Resilience().Delete(ctx, r.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete resilience %s error", r.object.Name())
+		return errors.Wrapf(err, "delete resilience %s", r.object.Name())
 	}
 
 	return err
@@ -208,7 +208,7 @@ func (i *ingressDeleter) Delete() error {
 
 	err := i.client.V1Alpha1().Ingress().Delete(ctx, i.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete ingress %s error", i.object.Name())
+		return errors.Wrapf(err, "delete ingress %s", i.object.Name())
 	}
 
 	return err

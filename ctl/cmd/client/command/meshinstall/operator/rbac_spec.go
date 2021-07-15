@@ -136,7 +136,7 @@ func clusterRoleSpec(installFlags *flags.Install) installbase.InstallFunc {
 		for _, clusterRole := range []*rbacv1.ClusterRole{operatorManagerClusterRole, metricsReaderClusterRole, operatorProxyClusterRole} {
 			err := installbase.DeployClusterRole(clusterRole, kubeClient)
 			if err != nil {
-				return errors.Wrapf(err, "createClusterRole role %s error", clusterRole.Name)
+				return errors.Wrapf(err, "createClusterRole role %s", clusterRole.Name)
 			}
 
 		}
@@ -239,7 +239,7 @@ func clusterRoleBindingSpec(installFlags *flags.Install) installbase.InstallFunc
 		for _, clusterRoleBinding := range clusterRoleBindings {
 			err := installbase.DeployClusterRoleBinding(clusterRoleBinding, kubeClient)
 			if err != nil {
-				return errors.Wrapf(err, "Create roleBinding %s error", clusterRoleBinding.Name)
+				return errors.Wrapf(err, "Create roleBinding %s", clusterRoleBinding.Name)
 			}
 		}
 		return nil

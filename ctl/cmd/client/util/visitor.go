@@ -19,6 +19,7 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -28,6 +29,7 @@ import (
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
@@ -165,14 +167,15 @@ func NewStreamVisitor(r io.Reader, decoder Decoder, source string) *StreamVisito
 
 // Visit implements Visitor over a stream. StreamVisitor is able to distinct multiple resources in one stream.
 func (v *StreamVisitor) Visit(fn VisitorFunc) error {
+	var errs []error
 	d := yaml.NewYAMLOrJSONDecoder(v.Reader, 4096)
 	for {
 		ext := RawExtension{}
 		if err := d.Decode(&ext); err != nil {
-			if err == io.EOF {
-				return nil
+			if err != io.EOF {
+				errs = append(errs, errors.Errorf("error parsing %s: %v", v.Source, err))
 			}
-			return errors.Errorf("error parsing %s: %v", v.Source, err)
+			break
 		}
 		jsonBuff, err := ext.MarshalJSON()
 		if err != nil {
@@ -184,16 +187,28 @@ func (v *StreamVisitor) Visit(fn VisitorFunc) error {
 			continue
 		}
 		info, err := v.decodeMeshObject(jsonBuff, v.Source)
-		if err != nil {
-			if fnErr := fn(info, err); fnErr != nil {
-				return fnErr
-			}
-			continue
-		}
-		if err := fn(info, nil); err != nil {
-			return err
+
+		err1 := fn(info, err)
+		if err1 != nil {
+			common.OutputError(err1)
+			errs = append(errs, err1)
 		}
 	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	var finalErr error
+	for _, err := range errs {
+		if finalErr == nil {
+			finalErr = fmt.Errorf("%v", err)
+		} else {
+			finalErr = fmt.Errorf("%v\n%v", finalErr, err)
+		}
+	}
+
+	return finalErr
 }
 
 func (v *StreamVisitor) decodeMeshObject(data []byte, source string) (resource.MeshObject, error) {
@@ -211,7 +226,7 @@ type URLVisitor struct {
 }
 
 func (v *URLVisitor) Visit(fn VisitorFunc) error {
-	body, err := readHttpWithRetries(resty.New(), time.Second, v.URL.String(), v.HttpAttemptCount)
+	body, err := readHttpWithRetries(resty.New(), 5*time.Second, v.URL.String(), v.HttpAttemptCount)
 	if err != nil {
 		return err
 	}
@@ -222,10 +237,7 @@ func (v *URLVisitor) Visit(fn VisitorFunc) error {
 
 // readHttpWithRetries tries to http.Get the v.URL retries times before giving up.
 func readHttpWithRetries(client *resty.Client, duration time.Duration, u string, attempts int) (io.ReadCloser, error) {
-
 	r, err := client.
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Accept", "application/json").
 		SetTimeout(duration).
 		SetRetryCount(attempts).
 		SetRetryWaitTime(duration).
@@ -241,7 +253,9 @@ func readHttpWithRetries(client *resty.Client, duration time.Duration, u string,
 			return false
 		}).
 		R().
+		SetDoNotParseResponse(true).
 		Get(u)
+
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +264,7 @@ func readHttpWithRetries(client *resty.Client, duration time.Duration, u string,
 		defer r.RawBody().Close()
 		return nil, errors.Errorf("unable to read URL %q, status code=%d", u, r.StatusCode())
 	}
+
 	return r.RawBody(), nil
 }
 

@@ -49,7 +49,7 @@ func (s *loadbalanceInterface) Get(ctx context.Context, serviceID string) (*reso
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get loadbalance %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "get loadbalance %s", serviceID)
 			}
 			if statusCode >= 300 {
 				return nil, errors.Errorf("call %s failed, return status code: %d text:%s", url, statusCode, string(b))
@@ -57,7 +57,7 @@ func (s *loadbalanceInterface) Get(ctx context.Context, serviceID string) (*reso
 			loadbalance := &v1alpha1.LoadBalance{}
 			err := json.Unmarshal(b, loadbalance)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.LoadBalance error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.LoadBalance")
 			}
 			return resource.ToLoadbalance(serviceID, loadbalance), nil
 		})
@@ -76,7 +76,7 @@ func (s *loadbalanceInterface) Patch(ctx context.Context, loadbalance *resource.
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch loadbalance %s error", loadbalance.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch loadbalance %s", loadbalance.Name())
 			}
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
@@ -93,7 +93,7 @@ func (s *loadbalanceInterface) Create(ctx context.Context, loadbalance *resource
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create loadbalance %s error", loadbalance.Name())
+				return nil, errors.Wrapf(ConflictError, "create loadbalance %s", loadbalance.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -110,7 +110,7 @@ func (s *loadbalanceInterface) Delete(ctx context.Context, serviceID string) err
 		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete loadbalance %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "delete loadbalance %s", serviceID)
 			}
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
@@ -126,7 +126,7 @@ func (s *loadbalanceInterface) List(ctx context.Context) ([]*resource.LoadBalanc
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list service error")
+				return nil, errors.Wrap(NotFoundError, "list service")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -136,7 +136,7 @@ func (s *loadbalanceInterface) List(ctx context.Context) ([]*resource.LoadBalanc
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.LoadBalance{}
 			for _, ss := range services {

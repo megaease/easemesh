@@ -58,11 +58,11 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
 		if err != nil {
-			return errors.Wrapf(err, "Create MeshIngress %s configmap spec error", configMap.Name)
+			return errors.Wrapf(err, "Create MeshIngress %s configmap spec", configMap.Name)
 		}
 		err = installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNamespace)
 		if err != nil {
-			return errors.Wrapf(err, "Deploy configmap %s error", configMap.Name)
+			return errors.Wrapf(err, "Deploy configmap %s", configMap.Name)
 		}
 		return nil
 	}

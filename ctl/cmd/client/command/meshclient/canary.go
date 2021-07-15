@@ -51,7 +51,7 @@ func (c *canaryInterface) Get(ctx context.Context, serviceID string) (*resource.
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get canary %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "get canary %s", serviceID)
 			}
 
 			if statusCode >= 300 {
@@ -60,7 +60,7 @@ func (c *canaryInterface) Get(ctx context.Context, serviceID string) (*resource.
 			canary := &v1alpha1.Canary{}
 			err := json.Unmarshal(b, canary)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Canary error")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Canary")
 			}
 			return resource.ToCanary(serviceID, canary), nil
 		})
@@ -79,7 +79,7 @@ func (c *canaryInterface) Patch(ctx context.Context, canary *resource.Canary) er
 		PutByContext(url, update, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch canary %s error", canary.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch canary %s", canary.Name())
 			}
 			if statusCode < 300 && statusCode >= 200 {
 				return nil, nil
@@ -96,7 +96,7 @@ func (c *canaryInterface) Create(ctx context.Context, canary *resource.Canary) e
 		PostByContext(url, created, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create canary %s error", canary.Name())
+				return nil, errors.Wrapf(ConflictError, "create canary %s", canary.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -113,7 +113,7 @@ func (c *canaryInterface) Delete(ctx context.Context, serviceID string) error {
 		DeleteByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete canary %s error", serviceID)
+				return nil, errors.Wrapf(NotFoundError, "delete canary %s", serviceID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -130,7 +130,7 @@ func (c *canaryInterface) List(ctx context.Context) ([]*resource.Canary, error) 
 		GetByContext(url, nil, ctx, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list service error")
+				return nil, errors.Wrap(NotFoundError, "list service")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
@@ -140,7 +140,7 @@ func (c *canaryInterface) List(ctx context.Context) ([]*resource.Canary, error) 
 			services := []v1alpha1.Service{}
 			err := json.Unmarshal(b, &services)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal services result error")
+				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.Canary{}
 			for _, ss := range services {
