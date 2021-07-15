@@ -36,9 +36,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
+// Here, we massively refer the implementation of kubernetes client-runtime
+// https://github.com/kubernetes/cli-runtime/blob/master/pkg/resource/visitor.go.
+
 const (
-	constSTDINstr       = "STDIN"
-	stopValidateMessage = "if you choose to ignore these errors, turn validation off with --validate=false"
+	constSTDINstr = "STDIN"
 )
 
 type Visitor interface {
@@ -48,7 +50,6 @@ type Visitor interface {
 type VisitorFunc func(resource.MeshObject, error) error
 
 type RawExtension struct {
-	// TODO: Determine how to detect ContentType and ContentEncoding of 'Raw' data.
 	Raw []byte `json:"-" protobuf:"bytes,1,opt,name=raw"`
 }
 
@@ -62,8 +63,6 @@ func (re *RawExtension) UnmarshalJSON(in []byte) error {
 	return nil
 }
 
-// MarshalJSON may get called on pointers or values, so implement MarshalJSON on value.
-// http://stackoverflow.com/questions/21390979/custom-marshaljson-never-gets-called-in-go
 func (re RawExtension) MarshalJSON() ([]byte, error) {
 	return re.Raw, nil
 }
@@ -89,9 +88,6 @@ func FileVisitorForSTDIN(decoder Decoder) Visitor {
 	}
 }
 
-// ExpandPathsToFileVisitors will return a slice of FileVisitors that will handle files from the provided path.
-// After FileVisitors open the files, they will pass an io.Reader to a StreamVisitor to do the reading. (stdin
-// is also taken care of). Paths argument also accepts a single file, and will return a single visitor
 func ExpandPathsToFileVisitors(decoder Decoder, paths string, recursive bool, extensions []string) ([]Visitor, error) {
 	var visitors []Visitor
 	err := filepath.Walk(paths, func(path string, fi os.FileInfo, err error) error {
@@ -145,18 +141,12 @@ func (v *FileVisitor) Visit(fn VisitorFunc) error {
 		defer f.Close()
 	}
 
-	// TODO: Consider adding a flag to force to UTF16, apparently some
-	// Windows tools don't write the BOM
 	utf16bom := unicode.BOMOverride(unicode.UTF8.NewDecoder())
 	v.StreamVisitor.Reader = transform.NewReader(f, utf16bom)
 
 	return v.StreamVisitor.Visit(fn)
 }
 
-// StreamVisitor reads objects from an io.Reader and walks them. A stream visitor can only be
-// visited once.
-// TODO: depends on objects being in JSON format before being passed to decode - need to implement
-// a stream decoder method on runtime.Codec to properly handle this.
 type StreamVisitor struct {
 	io.Reader
 
@@ -184,7 +174,6 @@ func (v *StreamVisitor) Visit(fn VisitorFunc) error {
 			}
 			return errors.Errorf("error parsing %s: %v", v.Source, err)
 		}
-		// TODO: This needs to be able to handle object in other encodings and schemas.
 		jsonBuff, err := ext.MarshalJSON()
 		if err != nil {
 			return err
