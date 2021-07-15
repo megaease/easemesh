@@ -29,8 +29,10 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
       - [7.2.5 Step 5. Deploy canary version](#725-step-5-deploy-canary-version)
       - [7.2.6 Step 6: Sending coloring traffic](#726-step-6-sending-coloring-traffic)
     - [7.3 Clean](#73-clean)
-  - [8. Roadmap](#8-roadmap)
-  - [9. License](#9-license)
+  - [8 Convention over Configuration](#8-convention-over-configuration)
+  - [9. Roadmap](#9-roadmap)
+  - [10. Contributing](#10-contributing)
+  - [11. License](#11-license)
 
 ## 1. Purposes
 
@@ -316,10 +318,20 @@ emctl delete service visits-service
 emctl delete tenant pet
 ```
 
-## 8. Roadmap
+## 8 Convention over Configuration
+
+We are following the [CoC](https://en.wikipedia.org/wiki/Convention_over_configuration) paradigm. For examples:
+
+- We recognize the teanat naming with `global` as a system global tenant, the services under it has the global scope.
+
+## 9. Roadmap
 
 See [EaseMesh Roadmap](./docs/Roadmap.md) for details.
 
-## 9. License
+## 10. Contributing
+
+See [MegaEase Community](https://github.com/megaease/community) to follow our contributing details.
+
+## 11. License
 
 EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
