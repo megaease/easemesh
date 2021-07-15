@@ -30,7 +30,8 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
       - [7.2.6 Step 6: Sending coloring traffic](#726-step-6-sending-coloring-traffic)
     - [7.3 Clean](#73-clean)
   - [8. Roadmap](#8-roadmap)
-  - [9. License](#9-license)
+  - [9. Contributing](#9-contributing)
+  - [10. License](#10-license)
 
 ## 1. Purposes
 
@@ -320,6 +321,10 @@ emctl delete tenant pet
 
 See [EaseMesh Roadmap](./docs/Roadmap.md) for details.
 
-## 9. License
+## 9. Contributing
+
+See [MegaEase Community](https://github.com/megaease/community) to follow our contributing details.
+
+## 10. License
 
 EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
