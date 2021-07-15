@@ -20,7 +20,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
       - [7.1.3 Step 4: Setup Database](#713-step-4-setup-database)
       - [7.1.4 Step 3: Apply petclinic stack](#714-step-3-apply-petclinic-stack)
       - [7.1.5 Step 5: Configure reverse proxy](#715-step-5-configure-reverse-proxy)
-        - [7.1.5.1  Get expose port of `EaseMesh ingress` service , run:](#7151--get-expose-port-of-easemesh-ingress-service--run)
+        - [7.1.5.1 Get expose port of `EaseMesh ingress` service , run:](#7151-get-expose-port-of-easemesh-ingress-service--run)
         - [7.1.5.2 Config reverse proxy](#7152-config-reverse-proxy)
     - [7.2 Canary Deployment](#72-canary-deployment)
       - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
@@ -116,7 +116,7 @@ emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petcli
 
 #### 7.1.2 Step 2: Create namespace
 
-leverage kubectl to create spring-petclinic namespace
+leverage kubectl to create `spring-petclinic` namespace
 
 ```bash
 kubectl create namespace spring-petclinic
@@ -147,7 +147,7 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 
 > **ATTENTION**: The step is optional, it can be omitted, if you have no requirements about reverse proxy.
 
-##### 7.1.5.1  Get expose port of `EaseMesh ingress` service , run:
+##### 7.1.5.1 Get expose port of `EaseMesh ingress` service , run:
 
 ```bash
 kubectl get service -n easemesh easemesh-ingress-service 
@@ -205,7 +205,7 @@ filters:
       loadBalance:
         policy: roundRobin
 ```
-Change contents in `{}` as per your environment. apply it via Easegress client command tool eg to apply
+Change contents in `{}` as per your environment. apply it via Easegress client command tool `egctl` to apply
 
 ```bash
 egctl apply -f http-server.yaml
