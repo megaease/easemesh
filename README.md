@@ -1,4 +1,3 @@
-
 # EaseMesh
 
 A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
@@ -20,12 +19,12 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
       - [7.1.3 Step 4: Setup Database](#713-step-4-setup-database)
       - [7.1.4 Step 3: Apply petclinic stack](#714-step-3-apply-petclinic-stack)
       - [7.1.5 Step 5: Configure reverse proxy](#715-step-5-configure-reverse-proxy)
-        - [7.1.5.1 Get expose port of `EaseMesh ingress` service , run:](#7151-get-expose-port-of-easemesh-ingress-service--run)
+        - [7.1.5.1 Get expose port of `EaseMesh ingress` service , run](#7151-get-expose-port-of-easemesh-ingress-service--run)
         - [7.1.5.2 Config reverse proxy](#7152-config-reverse-proxy)
     - [7.2 Canary Deployment](#72-canary-deployment)
       - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
       - [7.2.2 Step 2: Apply canary configuration of the EaseMesh](#722-step-2-apply-canary-configuration-of-the-easemesh)
-      - [7.2.3 Step 3:  Prepare canary version of the application](#723-step-3--prepare-canary-version-of-the-application)
+      - [7.2.3 Step 3:  Prepare a canary version of the application](#723-step-3--prepare-a-canary-version-of-the-application)
       - [7.2.4 Step 4: Build canary image](#724-step-4-build-canary-image)
       - [7.2.5 Step 5. Deploy canary version](#725-step-5-deploy-canary-version)
       - [7.2.6 Step 6: Sending coloring traffic](#726-step-6-sending-coloring-traffic)
@@ -122,15 +121,15 @@ leverage kubectl to create `spring-petclinic` namespace
 kubectl create namespace spring-petclinic
 ```
 
-#### 7.1.3 Step 4: Setup Database 
+#### 7.1.3 Step 4: Setup Database
 
-Petclinic need to access database, default is memory database. But in the quick started, you need prepare a mysql database for demo.
+Petclinic needs to access database, the default is memory database. But in quick start, you need to prepare a Mysql database for the demo.
 
 Use the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
 
 #### 7.1.4 Step 3: Apply petclinic stack
 
-Deploy petclinic resources to k8s cluster, we have developed an [operator](./operator/README.md) to manage the custom resource (MeshDeployment) of the EaseMesh. `Meshdeployment` contains a K8s' complete deployment spec and an extra information about the service
+Deploy petclinic resources to k8s cluster, we have developed an [operator](./operator/README.md) to manage the custom resource (MeshDeployment) of the EaseMesh. `Meshdeployment` contains a K8s' complete deployment spec and a piece of extra information about the service.
 
 > The Operator of the EaseMesh will automatically inject a sidecar to pod and a JavaAgent into the application container
 
@@ -141,24 +140,26 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/visits-service-deployment.yaml
 ```
 
-> ATTENTION: There is a configMap spec in echo yaml spec, it describes how to connected database for applications. You need to change it contents for your own environment.
+> ATTENTION: There is a ConfigMap spec in echo yaml spec, it describes how to connected the database for applications. You need to change its contents for your environment.
 
 #### 7.1.5 Step 5: Configure reverse proxy
 
 > **ATTENTION**: The step is optional, it can be omitted, if you have no requirements about reverse proxy.
 
-##### 7.1.5.1 Get expose port of `EaseMesh ingress` service , run:
+##### 7.1.5.1 Get expose port of `EaseMesh ingress` service , run
 
 ```bash
-kubectl get service -n easemesh easemesh-ingress-service 
+kubectl get service -n easemesh easemesh-ingress-service
 ```
+
 ##### 7.1.5.2 Config reverse proxy
 
 - Easegress as reverse proxy service
 
-If you leverage the [Easegress](https://github.com/megaease/easegress) as reverse proxy service, the following configuration can be applied.
+If you leverage the [Easegress](https://github.com/megaease/easegress) as a reverse proxy service, the following configuration can be applied.
 
-Http Server spec (file name: http-server.yaml):
+HTTP Server spec (file name: http-server.yaml):
+
 ```yaml
 kind: HTTPServer
 name: spring-petclinic-example
@@ -176,7 +177,8 @@ rules:
       backend: http-petclinic-pipeline
 ```
 
-Pipeline spec, (file name: http-petclinic-pipeline.yaml):
+HTTP Pipeline spec (file name: http-petclinic-pipeline.yaml):
+
 ```yaml
 name: http-petclinic-pipeline
 kind: HTTPPipeline
@@ -205,17 +207,19 @@ filters:
       loadBalance:
         policy: roundRobin
 ```
-Change contents in `{}` as per your environment. apply it via Easegress client command tool `egctl` to apply
+
+Change contents in `{}` as per your environment, and apply it via Easegress client command tool `egctl`:
 
 ```bash
 egctl apply -f http-server.yaml
 egctl apply -f http-petclinic-pipeline.yaml
 ```
+
 Visiting PetClinic website with `$your_domain/#!/welcome`
 
 - Nginx as reverse proxy service
 
-if you leverage the nginx as reverse proxy service, the following configuration should be added.
+if you leverage the Nginx as a reverse proxy service, the following configuration should be added.
 
 Then configure the NodPort IP address and port number into your traffic gateway's routing address, e.g, add config to NGINX:
 
@@ -231,8 +235,8 @@ location /pet/ {
 location /pet/ {
     proxy_pass http://$NodePortIP:$NodePortNum/;
     sub_filter 'href="/' 'href="/pet/';
-	sub_filter 'src="/' 'src="/pet/';
-	sub_filter_once  off;
+    sub_filter 'src="/' 'src="/pet/';
+    sub_filter_once  off;
 }
 ```
 
@@ -249,11 +253,12 @@ Coloring traffic with HTTP header `X-Canary: lv1` by using Chrome browser's **[M
 #### 7.2.2 Step 2: Apply canary configuration of the EaseMesh
 
 Apply mesh configuration file:
+
 ```bash
 emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customer-canary.yaml`
 ```
 
-#### 7.2.3 Step 3:  Prepare canary version of the application
+#### 7.2.3 Step 3:  Prepare a canary version of the application
 
 > **ATTENTION**  You can skip the step, we have provides the canary image to docker hub `megaease/spring-petclinic-customers-service:canary` you can found it in the docker hub.
 
@@ -281,15 +286,15 @@ index 360e765..cc2df3d 100644
 
 Building the canary Customer service's image, and update image version in `https://github.com/megaease/easemesh-spring-petclinic/blob/main/canary/customers-service-deployment-canary.yaml`. Or just use our default canary image which already was in it.
 
-#### 7.2.5 Step 5. Deploy canary version 
+#### 7.2.5 Step 5. Deploy canary version
 
-Being similar to [7.1.4](#714-step-3-apply-petclinic-stack),  we leverage kubectl to deploy canary version of `MeshDeployment` 
+Being similar to [7.1.4](#714-step-3-apply-petclinic-stack),  we leverage kubectl to deploy the canary version of `MeshDeployment`
 
-```
+```bash
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customers-service-deployment-canary.yaml`
 ```
 
-> **ATTENTION**: There is a configMap spec in echo yaml spec, it describes how to connected database for applications. You need to change it contents for your own environment.
+> **ATTENTION**: There is a ConfigMap spec in echo yaml spec, it describes how to connect the database for applications. You need to change its contents for your environment.
 
 #### 7.2.6 Step 6: Sending coloring traffic
 
