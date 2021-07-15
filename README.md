@@ -15,7 +15,20 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
     - [6.3 Installation](#63-installation)
   - [7. Demonstration](#7-demonstration)
     - [7.1 Start PetClinic in EaseMesh](#71-start-petclinic-in-easemesh)
+      - [7.1.1 Step 1: Apply mesh configuration](#711-step-1-apply-mesh-configuration)
+      - [7.1.2 Step 2: Create namespace](#712-step-2-create-namespace)
+      - [7.1.3 Step 4: Setup Database](#713-step-4-setup-database)
+      - [7.1.4 Step 3: Apply petclinic stack](#714-step-3-apply-petclinic-stack)
+      - [7.1.5 Step 5: Configure reverse proxy](#715-step-5-configure-reverse-proxy)
+        - [7.1.5.1  Get expose port of `EaseMesh ingress` service , run:](#7151--get-expose-port-of-easemesh-ingress-service--run)
+        - [7.1.5.2 Config reverse proxy](#7152-config-reverse-proxy)
     - [7.2 Canary Deployment](#72-canary-deployment)
+      - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
+      - [7.2.2 Step 2: Apply canary configuration of the EaseMesh](#722-step-2-apply-canary-configuration-of-the-easemesh)
+      - [7.2.3. Step 3:  Prepare canary version of the application](#723-step-3--prepare-canary-version-of-the-application)
+      - [7.2.4 Step 4: Build canary image](#724-step-4-build-canary-image)
+      - [7.2.5 Step 5. Deploy canary version](#725-step-5-deploy-canary-version)
+      - [7.2.6 Step 6: Sending coloring traffic](#726-step-6-sending-coloring-traffic)
     - [7.3 Clean](#73-clean)
   - [8. Roadmap](#8-roadmap)
   - [9. License](#9-license)
@@ -88,7 +101,9 @@ export PATH=$(pwd)/bin:${PATH}
 
 ### 7.1 Start PetClinic in EaseMesh
 
-1. Apply mesh configuration files
+#### 7.1.1 Step 1: Apply mesh configuration
+
+Apply mesh configuration files
 
 ```bash
 emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/a-pet-tenant.yaml
@@ -99,8 +114,25 @@ emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petcli
 emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/visits.yaml
 ```
 
-2. Create namespace: `kubectl create namespace spring-petclinic`
-3. Apply petclinic stack
+#### 7.1.2 Step 2: Create namespace
+
+leverage kubectl to create spring-petclinic namespace
+
+```bash
+kubectl create namespace spring-petclinic
+```
+
+#### 7.1.3 Step 4: Setup Database 
+
+Petclinic need to access database, default is memory database. But in the quick started, you need prepare a mysql database for demo.
+
+Use the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
+
+#### 7.1.4 Step 3: Apply petclinic stack
+
+Deploy petclinic resources to k8s cluster, we have developed an [operator](./operator/README.md) to manage the custom resource (MeshDeployment) of the EaseMesh. `Meshdeployment` contains a K8s' complete deployment spec and an extra information about the service
+
+> The Operator of the EaseMesh will automatically inject a sidecar to pod and a JavaAgent into the application container
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/api-gateway-deployment.yaml
@@ -109,8 +141,83 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/visits-service-deployment.yaml
 ```
 
-4. Use the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
-5. Run `kubectl get service -n easemesh easemesh-ingress-service` , then configure the NodPort IP address and port number into your traffic gateway's routing address, e.g, add config to NGINX:
+> ATTENTION: There is a configMap spec in echo yaml spec, it describes how to connected database for applications. You need to change it contents for your own environment.
+
+#### 7.1.5 Step 5: Configure reverse proxy
+
+> *ATTENTION: The step is optional, it can be omitted, if you have no requirements about reverse proxy.*
+
+##### 7.1.5.1  Get expose port of `EaseMesh ingress` service , run:
+
+```bash
+kubectl get service -n easemesh easemesh-ingress-service 
+```
+##### 7.1.5.2 Config reverse proxy
+
+- Easegress as reverse proxy service
+
+If you leverage the [Easegress](https://github.com/megaease/easegress) as reverse proxy service, the following configuration can be applied.
+
+Http Server spec (file name: http-server.yaml):
+```yaml
+kind: HTTPServer
+name: spring-petclinic-example
+port: 443
+https: true
+keepAlive: true
+keepAliveTimeout: 75s
+maxConnection: 10240
+cacheSize: 0
+certs:
+  key: {add your certs information to here}
+rules:
+  - paths:
+    - pathPrefix: /
+      backend: http-petclinic-pipeline
+```
+
+Pipeline spec, (file name: http-petclinic-pipeline.yaml):
+```yaml
+name: http-petclinic-pipeline
+kind: HTTPPipeline
+flow:
+  - filter: requestAdaptor
+  - filter: proxy
+filters:
+  - name: requestAdaptor
+    kind: RequestAdaptor
+    method: ""
+    path: null
+    header:
+      del: []
+      set:
+        Host: "{you host name, can be omitted}"
+        X-Forwarded-Proto: "https"
+        Connection: "upgrade"
+      add:
+        Host: "{you host name, can be omitted}"
+  - name: proxy
+    kind: Proxy
+    mainPool:
+      servers:
+      - url: http://{node1_of_k8s_cluster}:{ingress_port}
+      - url: http://{node2_of_k8s_cluster}:{ingress_port}
+      loadBalance:
+        policy: roundRobin
+```
+Change contents in `{}` as per your environment. apply it via Easegress client command tool eg to apply
+
+```bash
+egctl apply -f http-server.yaml
+egctl apply -f http-petclinic-pipeline.yaml
+```
+Visiting PetClinic website with `$your_domain/#!/welcome`
+
+- Nginx as reverse proxy service
+
+if you leverage the nginx as reverse proxy service, the following configuration should be added.
+
+Then configure the NodPort IP address and port number into your traffic gateway's routing address, e.g, add config to NGINX:
 
 ```plain
 location /pet/ {
@@ -129,17 +236,28 @@ location /pet/ {
 }
 ```
 
-6. Visiting PetClinic website with `$your_domain/pet/#!/welcome`
+Visiting PetClinic website with `$your_domain/pet/#!/welcome`
 
 ### 7.2 Canary Deployment
 
 ![EaseMesh Canary topology](./imgs/canary-deployment.png)
 
-1. Coloring traffic with HTTP header `X-Canary: lv1` by using Chrome browser's **ModHeader** plugin. Then EaseMesh will route this colored traffic into the Customer service's canary version instance.
+#### 7.2.1  Step 1: Coloring traffic
 
-2. Apply mesh configuration file: `emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customer-canary.yaml`
+Coloring traffic with HTTP header `X-Canary: lv1` by using Chrome browser's **[ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en)** plugin. Then EaseMesh will route this colored traffic into the Customer service's canary version instance.
 
-3. Developing a canary version of Customer service to add an extra suffix to the city field for each record.
+#### 7.2.2 Step 2: Apply canary configuration of the EaseMesh
+
+Apply mesh configuration file:
+```bash
+emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customer-canary.yaml`
+```
+
+#### 7.2.3. Step 3:  Prepare canary version of the application
+
+> **ATTENTION**  You can skip the step, we have provides the canary image to docker hub `megaease/spring-petclinic-customers-service:canary` you can found it in the docker hub.
+
+Developing a canary version of Customer service to add an extra suffix to the city field for each record.
 
 ```diff
 diff --git a/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java b/spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java
@@ -157,11 +275,25 @@ index 360e765..cc2df3d 100644
     public void setAddress(String address) {k
 ```
 
-4. Building the canary Customer service's image, and update image address in `https://github.com/megaease/easemesh-spring-petclinic/blob/main/canary/customers-service-deployment-canary.yaml`. Or just use our default canary image which already was in it.
+#### 7.2.4 Step 4: Build canary image
 
-5. Apply canary deployment: `kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customers-service-deployment-canary.yaml`
+> **ATTENTION**  You can skip the step, we have provides the canary image to docker hub `megaease/spring-petclinic-customers-service:canary` you can found it in the docker hub.
 
-6. Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
+Building the canary Customer service's image, and update image version in `https://github.com/megaease/easemesh-spring-petclinic/blob/main/canary/customers-service-deployment-canary.yaml`. Or just use our default canary image which already was in it.
+
+#### 7.2.5 Step 5. Deploy canary version 
+
+Being similar to [7.1.4](#714-step-3-apply-petclinic-stack),  we leverage kubectl to deploy canary version of `MeshDeployment` 
+
+```
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customers-service-deployment-canary.yaml`
+```
+
+> **ATTENTION**: There is a configMap spec in echo yaml spec, it describes how to connected database for applications. You need to change it contents for your own environment.
+
+#### 7.2.6 Step 6: Sending coloring traffic
+
+Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
 
 ![plugin](./imgs/chrome_plugin.png)
 
