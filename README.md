@@ -25,7 +25,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
     - [7.2 Canary Deployment](#72-canary-deployment)
       - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
       - [7.2.2 Step 2: Apply canary configuration of the EaseMesh](#722-step-2-apply-canary-configuration-of-the-easemesh)
-      - [7.2.3. Step 3:  Prepare canary version of the application](#723-step-3--prepare-canary-version-of-the-application)
+      - [7.2.3 Step 3:  Prepare canary version of the application](#723-step-3--prepare-canary-version-of-the-application)
       - [7.2.4 Step 4: Build canary image](#724-step-4-build-canary-image)
       - [7.2.5 Step 5. Deploy canary version](#725-step-5-deploy-canary-version)
       - [7.2.6 Step 6: Sending coloring traffic](#726-step-6-sending-coloring-traffic)
@@ -145,7 +145,7 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 
 #### 7.1.5 Step 5: Configure reverse proxy
 
-> *ATTENTION: The step is optional, it can be omitted, if you have no requirements about reverse proxy.*
+> **ATTENTION**: The step is optional, it can be omitted, if you have no requirements about reverse proxy.
 
 ##### 7.1.5.1  Get expose port of `EaseMesh ingress` service , run:
 
@@ -225,7 +225,7 @@ location /pet/ {
 }
 ```
 
-**Note:**  that the PetClinic website should be routed by the  `/`  subpath, or it should use  `NGINX`'s replacing response content feature for correcting resource URL:
+> **ATTENTION:**  that the PetClinic website should be routed by the  `/`  subpath, or it should use  `NGINX`'s replacing response content feature for correcting resource URL:
 
 ```plain
 location /pet/ {
@@ -253,7 +253,7 @@ Apply mesh configuration file:
 emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customer-canary.yaml`
 ```
 
-#### 7.2.3. Step 3:  Prepare canary version of the application
+#### 7.2.3 Step 3:  Prepare canary version of the application
 
 > **ATTENTION**  You can skip the step, we have provides the canary image to docker hub `megaease/spring-petclinic-customers-service:canary` you can found it in the docker hub.
 
