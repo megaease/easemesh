@@ -222,11 +222,11 @@ func (v *StreamVisitor) decodeMeshObject(data []byte, source string) (resource.M
 type URLVisitor struct {
 	URL *url.URL
 	*StreamVisitor
-	HttpAttemptCount int
+	HTTPAttemptCount int
 }
 
 func (v *URLVisitor) Visit(fn VisitorFunc) error {
-	body, err := readHttpWithRetries(resty.New(), 5*time.Second, v.URL.String(), v.HttpAttemptCount)
+	body, err := readHTTPWithRetries(resty.New(), 5*time.Second, v.URL.String(), v.HTTPAttemptCount)
 	if err != nil {
 		return err
 	}
@@ -235,8 +235,8 @@ func (v *URLVisitor) Visit(fn VisitorFunc) error {
 	return v.StreamVisitor.Visit(fn)
 }
 
-// readHttpWithRetries tries to http.Get the v.URL retries times before giving up.
-func readHttpWithRetries(client *resty.Client, duration time.Duration, u string, attempts int) (io.ReadCloser, error) {
+// readHTTPWithRetries tries to http.Get the v.URL retries times before giving up.
+func readHTTPWithRetries(client *resty.Client, duration time.Duration, u string, attempts int) (io.ReadCloser, error) {
 	r, err := client.
 		SetTimeout(duration).
 		SetRetryCount(attempts).

@@ -70,7 +70,7 @@ const (
 	sidecarEurekaPortName          = "sidecar-eureka"
 	sidecarEurekaPortContainerPort = 13009
 
-	defaultAgentHttpServerProbe = "http://localhost:9900/health"
+	defaultAgentHTTPServerProbe = "http://localhost:9900/health"
 
 	clusterRoleReader           = "reader"
 	defaultClusterRole          = clusterRoleReader
@@ -279,7 +279,7 @@ func (d *deploySyncer) initSideCarParams() (*sideCarParams, error) {
 
 	labels := make(map[string]string)
 	labels[sideCarMeshServicenameLabel] = d.meshDeployment.Spec.Service.Name
-	labels[sideCarAliveProbeLabel] = defaultAgentHttpServerProbe
+	labels[sideCarAliveProbeLabel] = defaultAgentHTTPServerProbe
 	labels[sideCarApplicationPortLabel] = ""
 	labels[meshServiceLabelsLabel] = meshServiceLabels
 

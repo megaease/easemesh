@@ -50,7 +50,7 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	return kubeClient, nil
 }
 
-func NewKubernetesApiExtensionsClient() (*apiextensions.Clientset, error) {
+func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
 	if err != nil {
 		return nil, err

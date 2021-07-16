@@ -36,7 +36,7 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}
 
-	apiExtensionClient, err := installbase.NewKubernetesApiExtensionsClient()
+	apiExtensionClient, err := installbase.NewKubernetesAPIExtensionsClient()
 	if err != nil {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}

@@ -48,7 +48,7 @@ func (s *serviceInterface) Get(ctx context.Context, serviceID string) (*resource
 	jsonClient := client.NewHTTPJSON()
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceURL, serviceID)
 	r, err := jsonClient.
-		GetByContext(url, nil, ctx, nil).
+		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "get service %s not found", serviceID)
@@ -75,7 +75,7 @@ func (s *serviceInterface) Patch(ctx context.Context, service *resource.Service)
 	update := service.ToV1Alpha1()
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceURL, service.Name())
 	_, err := jsonClient.
-		PutByContext(url, update, ctx, nil).
+		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, NotFoundError
@@ -93,7 +93,7 @@ func (s *serviceInterface) Create(ctx context.Context, service *resource.Service
 	created := service.ToV1Alpha1()
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceURL, service.Name())
 	_, err := client.NewHTTPJSON().
-		PostByContext(url, created, ctx, nil).
+		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create service %s", service.Name())
@@ -110,7 +110,7 @@ func (s *serviceInterface) Create(ctx context.Context, service *resource.Service
 func (s *serviceInterface) Delete(ctx context.Context, serviceID string) error {
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceURL, serviceID)
 	_, err := client.NewHTTPJSON().
-		DeleteByContext(url, nil, ctx, nil).
+		DeleteByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, NotFoundError
@@ -126,7 +126,7 @@ func (s *serviceInterface) Delete(ctx context.Context, serviceID string) error {
 func (s *serviceInterface) List(ctx context.Context) ([]*resource.Service, error) {
 	url := fmt.Sprintf("http://" + s.client.server + MeshServicesURL)
 	result, err := client.NewHTTPJSON().
-		GetByContext(url, nil, ctx, nil).
+		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, NotFoundError

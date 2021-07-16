@@ -39,10 +39,10 @@ type EasegressConfig struct {
 	ClusterListenClientUrls []string `yaml:"cluster-listen-client-urls" jsonschema:"required"`
 	ClusterListenPeerUrls   []string `yaml:"cluster-listen-peer-urls" jsonschema:"required"`
 	ClusterJoinUrls         []string `yaml:"cluster-join-urls" jsonschema:"required"`
-	ApiAddr                 string   `yaml:"api-addr" jsonschema:"required"`
+	APIAddr                 string   `yaml:"api-addr" jsonschema:"required"`
 	DataDir                 string   `yaml:"data-dir" jsonschema:"required"`
 	WalDir                  string   `yaml:"wal-dir" wal-dir:"required"`
-	CpuProfileFile          string   `yaml:"cpu-profile-file" jsonschema:"required"`
+	CPUProfileFile          string   `yaml:"cpu-profile-file" jsonschema:"required"`
 	MemoryProfileFile       string   `yaml:"memory-profile-file" jsonschema:"required"`
 	LogDir                  string   `yaml:"log-dir" jsonschema:"required"`
 	MemberDir               string   `yaml:"member-dir" jsonschema:"required"`

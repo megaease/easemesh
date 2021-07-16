@@ -32,15 +32,15 @@ type HTTPJSONResponseHandler interface {
 
 type HTTPJSONClient interface {
 	Post(string, interface{}, time.Duration, map[string]string) HTTPJSONResponseHandler
-	PostByContext(string, interface{}, context.Context, map[string]string) HTTPJSONResponseHandler
+	PostByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
 	Delete(string, interface{}, time.Duration, map[string]string) HTTPJSONResponseHandler
-	DeleteByContext(string, interface{}, context.Context, map[string]string) HTTPJSONResponseHandler
+	DeleteByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
 	Patch(string, interface{}, time.Duration, map[string]string) HTTPJSONResponseHandler
-	PatchByContext(string, interface{}, context.Context, map[string]string) HTTPJSONResponseHandler
+	PatchByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
 	Put(string, interface{}, time.Duration, map[string]string) HTTPJSONResponseHandler
-	PutByContext(string, interface{}, context.Context, map[string]string) HTTPJSONResponseHandler
+	PutByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
 	Get(string, interface{}, time.Duration, map[string]string) HTTPJSONResponseHandler
-	GetByContext(string, interface{}, context.Context, map[string]string) HTTPJSONResponseHandler
+	GetByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
 }
 
 type Option func(*resty.Client)
@@ -115,7 +115,7 @@ func (h *httpJSONClient) Post(url string, reqBody interface{}, timeout time.Dura
 		return fn(r.Body(), r.StatusCode())
 	})
 }
-func (h *httpJSONClient) PostByContext(url string, reqBody interface{}, ctx context.Context, extraHeaders map[string]string) HTTPJSONResponseHandler {
+func (h *httpJSONClient) PostByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).SetBody(reqBody).Post(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
@@ -141,7 +141,7 @@ func (h *httpJSONClient) Delete(url string, reqBody interface{}, timeout time.Du
 	})
 }
 
-func (h *httpJSONClient) DeleteByContext(url string, reqBody interface{}, ctx context.Context, extraHeaders map[string]string) HTTPJSONResponseHandler {
+func (h *httpJSONClient) DeleteByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).SetBody(reqBody).Delete(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
@@ -167,7 +167,7 @@ func (h *httpJSONClient) Patch(url string, reqBody interface{}, timeout time.Dur
 	})
 }
 
-func (h *httpJSONClient) PatchByContext(url string, reqBody interface{}, ctx context.Context, extraHeaders map[string]string) HTTPJSONResponseHandler {
+func (h *httpJSONClient) PatchByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).SetBody(reqBody).Patch(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
@@ -193,7 +193,7 @@ func (h *httpJSONClient) Put(url string, reqBody interface{}, timeout time.Durat
 	})
 }
 
-func (h *httpJSONClient) PutByContext(url string, reqBody interface{}, ctx context.Context, extraHeaders map[string]string) HTTPJSONResponseHandler {
+func (h *httpJSONClient) PutByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).SetBody(reqBody).Put(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
@@ -219,7 +219,7 @@ func (h *httpJSONClient) Get(url string, reqBody interface{}, timeout time.Durat
 	})
 }
 
-func (h *httpJSONClient) GetByContext(url string, reqBody interface{}, ctx context.Context, extraHeaders map[string]string) HTTPJSONResponseHandler {
+func (h *httpJSONClient) GetByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).Get(url)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
