@@ -43,10 +43,10 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		ClusterListenClientUrls: []string{"http://" + "0.0.0.0:" + strconv.Itoa(installFlags.EgClientPort)},
 		ClusterListenPeerUrls:   []string{"http://" + "0.0.0.0:" + strconv.Itoa(installFlags.EgPeerPort)},
 		ClusterJoinUrls:         []string{},
-		ApiAddr:                 host + ":" + strconv.Itoa(installFlags.EgAdminPort),
+		APIAddr:                 host + ":" + strconv.Itoa(installFlags.EgAdminPort),
 		DataDir:                 "/opt/eg-data/data",
 		WalDir:                  "",
-		CpuProfileFile:          "",
+		CPUProfileFile:          "",
 		MemoryProfileFile:       "",
 		LogDir:                  "/opt/eg-data/log",
 		MemberDir:               "/opt/eg-data/member",
@@ -68,10 +68,10 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	configData["eg-master.yaml"] = string(configBytes)
 
 	buff, _ := yaml.Marshal(configData)
-	configJson, _ := yamljsontool.YAMLToJSON(buff)
+	configJSON, _ := yamljsontool.YAMLToJSON(buff)
 
 	var params map[string]string
-	_ = json.Unmarshal(configJson, &params)
+	_ = json.Unmarshal(configJSON, &params)
 
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{

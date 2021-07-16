@@ -74,7 +74,7 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}
 
-	apiExtensionClient, err := installbase.NewKubernetesApiExtensionsClient()
+	apiExtensionClient, err := installbase.NewKubernetesAPIExtensionsClient()
 	if err != nil {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}

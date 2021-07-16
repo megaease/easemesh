@@ -45,7 +45,7 @@ type tenantInterface struct {
 func (t *tenantInterface) Get(ctx context.Context, tenantID string) (*resource.Tenant, error) {
 	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID)
 	re, err := client.NewHTTPJSON().
-		GetByContext(url, nil, ctx, nil).
+		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "get tenant %s", tenantID)
@@ -73,7 +73,7 @@ func (t *tenantInterface) Patch(ctx context.Context, tenant *resource.Tenant) er
 	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name())
 	update := tenant.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(url, update, ctx, nil).
+		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch tenant %s", tenant.Name())
@@ -93,7 +93,7 @@ func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) e
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
 		// Current URL form should be corrected in the feature
-		PostByContext(url, created, ctx, nil).
+		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create tenant %s", tenant.Name())
@@ -110,7 +110,7 @@ func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) e
 func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
 	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenantID)
 	_, err := client.NewHTTPJSON().
-		DeleteByContext(url, nil, ctx, nil).
+		DeleteByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete tenant %s", tenantID)
@@ -127,7 +127,7 @@ func (t *tenantInterface) Delete(ctx context.Context, tenantID string) error {
 func (t *tenantInterface) List(ctx context.Context) ([]*resource.Tenant, error) {
 	url := fmt.Sprintf("http://" + t.client.server + MeshTenantsURL)
 	result, err := client.NewHTTPJSON().
-		GetByContext(url, nil, ctx, nil).
+		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrap(NotFoundError, "list tenant")

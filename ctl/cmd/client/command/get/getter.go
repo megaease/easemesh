@@ -89,19 +89,19 @@ func (s *serviceGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{service}, nil
-	} else {
-		services, err := s.client.V1Alpha1().Service().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(services))
-		for i := range services {
-			objects[i] = services[i]
-		}
-
-		return objects, nil
 	}
+
+	services, err := s.client.V1Alpha1().Service().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(services))
+	for i := range services {
+		objects[i] = services[i]
+	}
+
+	return objects, nil
 }
 
 type canaryGetter struct {
@@ -120,19 +120,19 @@ func (c *canaryGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{canary}, nil
-	} else {
-		canaries, err := c.client.V1Alpha1().Canary().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(canaries))
-		for i := range canaries {
-			objects[i] = canaries[i]
-		}
-
-		return objects, nil
 	}
+
+	canaries, err := c.client.V1Alpha1().Canary().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(canaries))
+	for i := range canaries {
+		objects[i] = canaries[i]
+	}
+
+	return objects, nil
 }
 
 type observabilityTracingsGetter struct {
@@ -151,19 +151,19 @@ func (o *observabilityTracingsGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{tracings}, nil
-	} else {
-		tracings, err := o.client.V1Alpha1().ObservabilityTracings().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(tracings))
-		for i := range tracings {
-			objects[i] = tracings[i]
-		}
-
-		return objects, nil
 	}
+
+	tracings, err := o.client.V1Alpha1().ObservabilityTracings().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(tracings))
+	for i := range tracings {
+		objects[i] = tracings[i]
+	}
+
+	return objects, nil
 }
 
 type observabilityMetricsGetter struct {
@@ -182,19 +182,19 @@ func (o *observabilityMetricsGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{metrics}, nil
-	} else {
-		metrics, err := o.client.V1Alpha1().ObservabilityMetrics().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(metrics))
-		for i := range metrics {
-			objects[i] = metrics[i]
-		}
-
-		return objects, nil
 	}
+
+	metrics, err := o.client.V1Alpha1().ObservabilityMetrics().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(metrics))
+	for i := range metrics {
+		objects[i] = metrics[i]
+	}
+
+	return objects, nil
 }
 
 type observabilityOutputServerGetter struct {
@@ -213,19 +213,19 @@ func (o *observabilityOutputServerGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{server}, nil
-	} else {
-		servers, err := o.client.V1Alpha1().ObservabilityOutputServer().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(servers))
-		for i := range servers {
-			objects[i] = servers[i]
-		}
-
-		return objects, nil
 	}
+
+	servers, err := o.client.V1Alpha1().ObservabilityOutputServer().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(servers))
+	for i := range servers {
+		objects[i] = servers[i]
+	}
+
+	return objects, nil
 }
 
 type loadBalanceGetter struct {
@@ -244,19 +244,19 @@ func (l *loadBalanceGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{lb}, nil
-	} else {
-		lbs, err := l.client.V1Alpha1().LoadBalance().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(lbs))
-		for i := range lbs {
-			objects[i] = lbs[i]
-		}
-
-		return objects, nil
 	}
+
+	lbs, err := l.client.V1Alpha1().LoadBalance().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(lbs))
+	for i := range lbs {
+		objects[i] = lbs[i]
+	}
+
+	return objects, nil
 }
 
 type tenantGetter struct {
@@ -275,19 +275,19 @@ func (t *tenantGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{tenant}, nil
-	} else {
-		tenants, err := t.client.V1Alpha1().Tenant().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(tenants))
-		for i := range tenants {
-			objects[i] = tenants[i]
-		}
-
-		return objects, nil
 	}
+
+	tenants, err := t.client.V1Alpha1().Tenant().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(tenants))
+	for i := range tenants {
+		objects[i] = tenants[i]
+	}
+
+	return objects, nil
 }
 
 type resilienceGetter struct {
@@ -306,19 +306,19 @@ func (r *resilienceGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{resilience}, nil
-	} else {
-		resiliences, err := r.client.V1Alpha1().Resilience().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(resiliences))
-		for i := range resiliences {
-			objects[i] = resiliences[i]
-		}
-
-		return objects, nil
 	}
+
+	resiliences, err := r.client.V1Alpha1().Resilience().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(resiliences))
+	for i := range resiliences {
+		objects[i] = resiliences[i]
+	}
+
+	return objects, nil
 }
 
 type ingressGetter struct {
@@ -337,17 +337,17 @@ func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
 		}
 
 		return []resource.MeshObject{ingress}, nil
-	} else {
-		ingresses, err := i.client.V1Alpha1().Ingress().List(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		objects := make([]resource.MeshObject, len(ingresses))
-		for i := range ingresses {
-			objects[i] = ingresses[i]
-		}
-
-		return objects, nil
 	}
+
+	ingresses, err := i.client.V1Alpha1().Ingress().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(ingresses))
+	for i := range ingresses {
+		objects[i] = ingresses[i]
+	}
+
+	return objects, nil
 }

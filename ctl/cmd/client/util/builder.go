@@ -57,7 +57,7 @@ func NewVisitorBuilder() *VisitorBuilder {
 	return &VisitorBuilder{httpGetAttempts: 3, decoder: newDefaultDecoder()}
 }
 
-func (b *VisitorBuilder) HttpAttemptCount(httpGetAttempts int) *VisitorBuilder {
+func (b *VisitorBuilder) HTTPAttemptCount(httpGetAttempts int) *VisitorBuilder {
 	b.httpGetAttempts = httpGetAttempts
 	return b
 }
@@ -130,7 +130,7 @@ func (b *VisitorBuilder) URL(httpAttemptCount int, urls ...*url.URL) *VisitorBui
 		b.visitors = append(b.visitors, &URLVisitor{
 			URL:              u,
 			StreamVisitor:    NewStreamVisitor(nil, b.decoder, u.String()),
-			HttpAttemptCount: httpAttemptCount,
+			HTTPAttemptCount: httpAttemptCount,
 		})
 	}
 	return b

@@ -46,7 +46,7 @@ func (s *loadbalanceInterface) Get(ctx context.Context, serviceID string) (*reso
 	jsonClient := client.NewHTTPJSON()
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, serviceID)
 	r, err := jsonClient.
-		GetByContext(url, nil, ctx, nil).
+		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "get loadbalance %s", serviceID)
@@ -73,7 +73,7 @@ func (s *loadbalanceInterface) Patch(ctx context.Context, loadbalance *resource.
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name())
 	update := loadbalance.ToV1Alpha1()
 	_, err := jsonClient.
-		PutByContext(url, update, ctx, nil).
+		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "patch loadbalance %s", loadbalance.Name())
@@ -90,7 +90,7 @@ func (s *loadbalanceInterface) Create(ctx context.Context, loadbalance *resource
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, loadbalance.Name())
 	created := loadbalance.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
-		PostByContext(url, created, ctx, nil).
+		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
 				return nil, errors.Wrapf(ConflictError, "create loadbalance %s", loadbalance.Name())
@@ -107,7 +107,7 @@ func (s *loadbalanceInterface) Create(ctx context.Context, loadbalance *resource
 func (s *loadbalanceInterface) Delete(ctx context.Context, serviceID string) error {
 	url := fmt.Sprintf("http://"+s.client.server+MeshServiceLoadBalanceURL, serviceID)
 	_, err := client.NewHTTPJSON().
-		DeleteByContext(url, nil, ctx, nil).
+		DeleteByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrapf(NotFoundError, "delete loadbalance %s", serviceID)
@@ -123,7 +123,7 @@ func (s *loadbalanceInterface) Delete(ctx context.Context, serviceID string) err
 func (s *loadbalanceInterface) List(ctx context.Context) ([]*resource.LoadBalance, error) {
 	url := "http://" + s.client.server + MeshServicesURL
 	result, err := client.NewHTTPJSON().
-		GetByContext(url, nil, ctx, nil).
+		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
 				return nil, errors.Wrap(NotFoundError, "list service")

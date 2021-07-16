@@ -84,7 +84,7 @@ func PreCheck(context *installbase.StageContext) error {
 			pv.Spec.StorageClassName == context.Flags.MeshControlPlaneStorageClassName &&
 			pv.Spec.Capacity.Storage().Cmp(quantity) >= 0 &&
 			checkPVAccessModes(v1.ReadWriteOnce, &pv) {
-			availablePVCount += 1
+			availablePVCount++
 		} else if pv.Status.Phase == v1.VolumeBound {
 			// If PV already bound to PVC of EaseMesh controlpanel
 			// we regarded it as availablePVCount
