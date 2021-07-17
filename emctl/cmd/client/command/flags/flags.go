@@ -165,36 +165,36 @@ type (
 		SpecFile string
 	}
 
-	//Reset holds the option for the EaseMesh resest sub command
+	// Reset holds the option for the EaseMesh resest sub command
 	Reset struct {
 		*OperationGlobal
 	}
 
-	//AdminGlobal holds the option for all the EaseMesh admin command
+	// AdminGlobal holds the option for all the EaseMesh admin command
 	AdminGlobal struct {
 		Server  string
 		Timeout time.Duration
 	}
 
-	//AdminFileInput holds the option for all the EaseMesh admin command
+	// AdminFileInput holds the option for all the EaseMesh admin command
 	AdminFileInput struct {
 		YamlFile  string
 		Recursive bool
 	}
 
-	//Apply holds the option for the apply sub command
+	// Apply holds the option for the apply sub command
 	Apply struct {
 		*AdminGlobal
 		*AdminFileInput
 	}
 
-	//Delete holds the option for the emctl delete sub command
+	// Delete holds the option for the emctl delete sub command
 	Delete struct {
 		*AdminGlobal
 		*AdminFileInput
 	}
 
-	//Get holds the option for the emctl get sub command
+	// Get holds the option for the emctl get sub command
 	Get struct {
 		*AdminGlobal
 		OutputFormat string

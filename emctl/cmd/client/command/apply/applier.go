@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//Applier apply configuration to control plane service of the EaseMesh
+// Applier applies configuration to control plane service of the EaseMesh
 type Applier interface {
 	Apply() error
 }

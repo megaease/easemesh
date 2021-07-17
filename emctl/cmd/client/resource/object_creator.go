@@ -31,7 +31,7 @@ type (
 	objectCreator struct{}
 )
 
-// NewObjectCreator create a ObjectCreator
+// NewObjectCreator creates an ObjectCreator
 func NewObjectCreator() ObjectCreator {
 	return &objectCreator{}
 }

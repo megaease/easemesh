@@ -29,7 +29,7 @@ import (
 )
 
 type (
-	// Printer print information about the EaseMesh objects
+	// Printer prints information about the EaseMesh objects
 	Printer interface {
 		PrintObjects(objects []resource.MeshObject)
 	}
@@ -38,7 +38,7 @@ type (
 	}
 )
 
-// New create a Printer
+// New creates a Printer
 func New(outputFormat string) Printer {
 	return &printer{outputFormat: outputFormat}
 }

@@ -44,7 +44,7 @@ type installation struct {
 	step   int
 }
 
-// New create a new Installation
+// New creates a new Installation
 func New(stages ...InstallStage) Installation {
 	return &installation{stages: stages, step: 0}
 }
@@ -67,22 +67,22 @@ func (i *installation) ClearResource(context *installbase.StageContext) {
 	}
 }
 
-// InstallFunc is an install function
+// InstallFunc is the type of install function
 type InstallFunc func(*installbase.StageContext) error
 
-// HookFunc is a hook function
+// HookFunc is the type of hook function
 type HookFunc InstallFunc
 
-// ClearFunc clear installed resources when install failed
+// CleanFunc is the type of clean function which cleans installed resources when installation failed
 type ClearFunc HookFunc
 
-// PreCheckFunc previously checking condition whether is satisfied with installation
+// PreCheckFunc is the type of function previously checking condition whether is satisfied with the installation
 type PreCheckFunc HookFunc
 
-// DescribeFunc describe what's situation of the installation
+// DescribeFunc is the type of function describing what's the situation of the installation
 type DescribeFunc func(*installbase.StageContext, installbase.InstallPhase) string
 
-// Wrap create new InstallStage via wraping functions
+// Wrap creates new InstallStage via wraping functions
 func Wrap(preCheckFunc HookFunc, installFunc InstallFunc, clearFunc HookFunc, description DescribeFunc) InstallStage {
 	return &baseInstallStage{preCheck: PreCheckFunc(preCheckFunc), installFunc: installFunc, clearFunc: ClearFunc(clearFunc), description: description}
 }

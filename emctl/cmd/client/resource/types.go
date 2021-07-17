@@ -225,7 +225,7 @@ func (m *MeshResource) APIVersion() string {
 	return m.VersionKind.APIVersion
 }
 
-// Labels return labels of the EaseMesh resource
+// Labels returns labels of the EaseMesh resource
 func (m *MeshResource) Labels() map[string]string {
 	return m.MetaData.Labels
 }
