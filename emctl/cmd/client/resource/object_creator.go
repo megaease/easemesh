@@ -92,52 +92,52 @@ func (oc *objectCreator) new(kind VersionKind, metaData MetaData) (MeshObject, e
 	}
 }
 
-// NewIngressResource return a MeshResource with the ingress kind
+// NewIngressResource returns a MeshResource with the ingress kind
 func NewIngressResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindIngress, name)
 }
 
-// NewServiceResource return a MeshResource with the service kind
+// NewServiceResource returns a MeshResource with the service kind
 func NewServiceResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindService, name)
 }
 
-// NewCanaryResource return a MeshResource with the canary kind
+// NewCanaryResource returns a MeshResource with the canary kind
 func NewCanaryResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindCanary, name)
 }
 
-// NewLoadBalanceResource return a MeshResource with the loadbalance kind
+// NewLoadBalanceResource returns a MeshResource with the loadbalance kind
 func NewLoadBalanceResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindLoadBalance, name)
 }
 
-// NewResilienceResource return a MeshResource with the resilience kind
+// NewResilienceResource returns a MeshResource with the resilience kind
 func NewResilienceResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindResilience, name)
 }
 
-// NewObservabilityTracingsResource return a MeshResource with the observability tracings kind
+// NewObservabilityTracingsResource returns a MeshResource with the observability tracings kind
 func NewObservabilityTracingsResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindObservabilityTracings, name)
 }
 
-// NewObservabilityMetricsResource return a MeshResource with the observability metrics kind
+// NewObservabilityMetricsResource returns a MeshResource with the observability metrics kind
 func NewObservabilityMetricsResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindObservabilityMetrics, name)
 }
 
-// NewObservabilityOutputServerResource return a MeshResource with the observability output service kind
+// NewObservabilityOutputServerResource returns a MeshResource with the observability output service kind
 func NewObservabilityOutputServerResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindObservabilityOutputServer, name)
 }
 
-// NewTenantResource return a MeshResource with the tenant kind
+// NewTenantResource returns a MeshResource with the tenant kind
 func NewTenantResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindTenant, name)
 }
 
-// NewMeshResource return a generic MeshResource
+// NewMeshResource returns a generic MeshResource
 func NewMeshResource(api, kind, name string) MeshResource {
 	return MeshResource{
 		VersionKind: VersionKind{

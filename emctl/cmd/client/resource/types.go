@@ -96,25 +96,25 @@ type (
 
 type (
 
-	// Tenant describe tenant resource of the EaseMesh
+	// Tenant describes tenant resource of the EaseMesh
 	Tenant struct {
 		MeshResource `json:",inline"`
 		Spec         *TenantSpec `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// TenantSpec describe whats service resided in
+	// TenantSpec describes whats service resided in
 	TenantSpec struct {
 		Services    []string `json:"services" jsonschema:"omitempty"`
 		Description string   `json:"description" jsonschema:"omitempty"`
 	}
 
-	// Service describe service resource of the EaseMesh
+	// Service describes service resource of the EaseMesh
 	Service struct {
 		MeshResource `json:",inline"`
 		Spec         *ServiceSpec `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// ServiceSpec describe details of the service resource
+	// ServiceSpec describes details of the service resource
 	ServiceSpec struct {
 		RegisterTenant string `json:"registerTenant" jsonschema:"required"`
 
@@ -125,43 +125,43 @@ type (
 		Observability *v1alpha1.Observability `json:"observability" jsonschema:"omitempty"`
 	}
 
-	// Canary describe canary resource of the EaseMesh
+	// Canary describes canary resource of the EaseMesh
 	Canary struct {
 		MeshResource `json:",inline"`
 		Spec         *v1alpha1.Canary `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// ObservabilityTracings describe observability tracings resource of the EaseMesh
+	// ObservabilityTracings describes observability tracings resource of the EaseMesh
 	ObservabilityTracings struct {
 		MeshResource `json:",inline"`
 		Spec         *v1alpha1.ObservabilityTracings `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// ObservabilityOutputServer describe observability output server resource of the EaseMesh
+	// ObservabilityOutputServer describes observability output server resource of the EaseMesh
 	ObservabilityOutputServer struct {
 		MeshResource `json:",inline"`
 		Spec         *v1alpha1.ObservabilityOutputServer `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// ObservabilityMetrics describe observability metrics resource of the EaseMesh
+	// ObservabilityMetrics describes observability metrics resource of the EaseMesh
 	ObservabilityMetrics struct {
 		MeshResource `json:",inline"`
 		Spec         *v1alpha1.ObservabilityMetrics `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// LoadBalance describe loadbalance resource of the EaseMesh
+	// LoadBalance describes loadbalance resource of the EaseMesh
 	LoadBalance struct {
 		MeshResource `json:",inline"`
 		Spec         *v1alpha1.LoadBalance `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// Resilience describe resilience resource of the EaseMesh
+	// Resilience describes resilience resource of the EaseMesh
 	Resilience struct {
 		MeshResource `json:",inline"`
 		Spec         *v1alpha1.Resilience `json:"spec" jsonschema:"omitempty"`
 	}
 
-	// Ingress describe ingress resource of the EaseMesh
+	// Ingress describes ingress resource of the EaseMesh
 	Ingress struct {
 		MeshResource `json:",inline"`
 		Spec         *IngressSpec `json:"spec" jsonschema:"omitempty"`
@@ -230,7 +230,7 @@ func (m *MeshResource) Labels() map[string]string {
 	return m.MetaData.Labels
 }
 
-// ToV1Alpha1 convert a Ingress resource to v1alpha1.Ingress
+// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (ing *Ingress) ToV1Alpha1() *v1alpha1.Ingress {
 	result := &v1alpha1.Ingress{}
 	result.Name = ing.Name()
@@ -240,7 +240,7 @@ func (ing *Ingress) ToV1Alpha1() *v1alpha1.Ingress {
 	return result
 }
 
-// ToV1Alpha1 convert a Ingress resource to v1alpha1.Ingress
+// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (s *Service) ToV1Alpha1() *v1alpha1.Service {
 	result := &v1alpha1.Service{}
 	result.Name = s.Name()
@@ -255,7 +255,7 @@ func (s *Service) ToV1Alpha1() *v1alpha1.Service {
 	return result
 }
 
-// ToV1Alpha1 convert a Ingress resource to v1alpha1.Ingress
+// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
 	result := &v1alpha1.Tenant{}
 	result.Name = t.Name()
@@ -266,37 +266,37 @@ func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
 	return result
 }
 
-// ToV1Alpha1 convert a loadbalance resource to v1alpha1.LoadBalance
+// ToV1Alpha1 converts a loadbalance resource to v1alpha1.LoadBalance
 func (l *LoadBalance) ToV1Alpha1() *v1alpha1.LoadBalance {
 	return l.Spec
 }
 
-// ToV1Alpha1 convert a Canary resource to v1alpha1.Canary
+// ToV1Alpha1 converts a Canary resource to v1alpha1.Canary
 func (c *Canary) ToV1Alpha1() *v1alpha1.Canary {
 	return c.Spec
 }
 
-// ToV1Alpha1 convert a Resilience resource to v1alpha1.Resilience
+// ToV1Alpha1 converts a Resilience resource to v1alpha1.Resilience
 func (r *Resilience) ToV1Alpha1() *v1alpha1.Resilience {
 	return r.Spec
 }
 
-// ToV1Alpha1 convert a ObservabilityTracings resource to v1alpha1.ObservabilityTracings
+// ToV1Alpha1 converts a ObservabilityTracings resource to v1alpha1.ObservabilityTracings
 func (r *ObservabilityTracings) ToV1Alpha1() (result *v1alpha1.ObservabilityTracings) {
 	return r.Spec
 }
 
-// ToV1Alpha1 convert a ObservabilityOutputServer resource to v1alpha1.ObservabilityOutputServer
+// ToV1Alpha1 converts a ObservabilityOutputServer resource to v1alpha1.ObservabilityOutputServer
 func (r *ObservabilityOutputServer) ToV1Alpha1() (result *v1alpha1.ObservabilityOutputServer) {
 	return r.Spec
 }
 
-// ToV1Alpha1 convert a ObservabilityMetrics resource to v1alpha1.ObservabilityMetrics
+// ToV1Alpha1 converts a ObservabilityMetrics resource to v1alpha1.ObservabilityMetrics
 func (r *ObservabilityMetrics) ToV1Alpha1() (result *v1alpha1.ObservabilityMetrics) {
 	return r.Spec
 }
 
-// ToIngress convert a v1alpha1.Ingress resource to an Ingress resource
+// ToIngress converts a v1alpha1.Ingress resource to an Ingress resource
 func ToIngress(ingress *v1alpha1.Ingress) *Ingress {
 	result := &Ingress{
 		Spec: &IngressSpec{},
@@ -306,7 +306,7 @@ func ToIngress(ingress *v1alpha1.Ingress) *Ingress {
 	return result
 }
 
-// ToService convert a v1alpha1.Service resource to a Service resource
+// ToService converts a v1alpha1.Service resource to a Service resource
 func ToService(service *v1alpha1.Service) *Service {
 	result := &Service{
 		Spec: &ServiceSpec{},
@@ -321,7 +321,7 @@ func ToService(service *v1alpha1.Service) *Service {
 	return result
 }
 
-// ToCanary convert a v1alpha1.Canary resource to a Canary resource
+// ToCanary converts a v1alpha1.Canary resource to a Canary resource
 func ToCanary(name string, canary *v1alpha1.Canary) *Canary {
 	result := &Canary{
 		Spec: &v1alpha1.Canary{},
@@ -331,7 +331,7 @@ func ToCanary(name string, canary *v1alpha1.Canary) *Canary {
 	return result
 }
 
-// ToObservabilityTracings convert a v1alpha1.ObservabilityTracings resource to a ObservabilityTracings resource
+// ToObservabilityTracings converts a v1alpha1.ObservabilityTracings resource to a ObservabilityTracings resource
 func ToObservabilityTracings(serviceID string, tracing *v1alpha1.ObservabilityTracings) *ObservabilityTracings {
 	result := &ObservabilityTracings{
 		Spec: &v1alpha1.ObservabilityTracings{},
@@ -341,7 +341,7 @@ func ToObservabilityTracings(serviceID string, tracing *v1alpha1.ObservabilityTr
 	return result
 }
 
-// ToObservabilityMetrics convert a v1alpha1.ObservabilityMetrics resource to a ObservabilityMetrics resource
+// ToObservabilityMetrics converts a v1alpha1.ObservabilityMetrics resource to a ObservabilityMetrics resource
 func ToObservabilityMetrics(serviceID string, metrics *v1alpha1.ObservabilityMetrics) *ObservabilityMetrics {
 	result := &ObservabilityMetrics{
 		Spec: &v1alpha1.ObservabilityMetrics{},
@@ -351,7 +351,7 @@ func ToObservabilityMetrics(serviceID string, metrics *v1alpha1.ObservabilityMet
 	return result
 }
 
-// ToObservabilityOutputServer convert a v1alpha1.ObservabilityOutputServer resource to a ObservabilityOutputServer resource
+// ToObservabilityOutputServer converts a v1alpha1.ObservabilityOutputServer resource to a ObservabilityOutputServer resource
 func ToObservabilityOutputServer(serviceID string, output *v1alpha1.ObservabilityOutputServer) *ObservabilityOutputServer {
 	result := &ObservabilityOutputServer{
 		Spec: &v1alpha1.ObservabilityOutputServer{},
@@ -361,7 +361,7 @@ func ToObservabilityOutputServer(serviceID string, output *v1alpha1.Observabilit
 	return result
 }
 
-// ToLoadBalance convert a v1alpha1.LoadBalance resource to a LoadBalance resource
+// ToLoadBalance converts a v1alpha1.LoadBalance resource to a LoadBalance resource
 func ToLoadBalance(name string, loadBalance *v1alpha1.LoadBalance) *LoadBalance {
 	result := &LoadBalance{
 		Spec: &v1alpha1.LoadBalance{},
@@ -371,7 +371,7 @@ func ToLoadBalance(name string, loadBalance *v1alpha1.LoadBalance) *LoadBalance 
 	return result
 }
 
-// ToTenant convert a v1alpha1.Tenant resource to a Tenant resource
+// ToTenant converts a v1alpha1.Tenant resource to a Tenant resource
 func ToTenant(tenant *v1alpha1.Tenant) *Tenant {
 	result := &Tenant{
 		Spec: &TenantSpec{},
@@ -382,7 +382,7 @@ func ToTenant(tenant *v1alpha1.Tenant) *Tenant {
 	return result
 }
 
-// ToResilience convert a v1alpha1.Resilience resource to a Resilience resource
+// ToResilience converts a v1alpha1.Resilience resource to a Resilience resource
 func ToResilience(name string, resilience *v1alpha1.Resilience) *Resilience {
 	result := &Resilience{
 		Spec: &v1alpha1.Resilience{},
