@@ -59,7 +59,7 @@ func (s *loadbalanceInterface) Get(ctx context.Context, serviceID string) (*reso
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.LoadBalance")
 			}
-			return resource.ToLoadbalance(serviceID, loadbalance), nil
+			return resource.ToLoadBalance(serviceID, loadbalance), nil
 		})
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (s *loadbalanceInterface) List(ctx context.Context) ([]*resource.LoadBalanc
 			results := []*resource.LoadBalance{}
 			for _, ss := range services {
 				if ss.LoadBalance != nil {
-					results = append(results, resource.ToLoadbalance(ss.Name, ss.LoadBalance))
+					results = append(results, resource.ToLoadBalance(ss.Name, ss.LoadBalance))
 				}
 			}
 			return results, nil
