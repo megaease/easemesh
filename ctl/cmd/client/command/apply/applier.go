@@ -28,6 +28,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+//Applier apply configuration to control plane service of the EaseMesh
 type Applier interface {
 	Apply() error
 }
@@ -44,6 +45,7 @@ type serviceApplier struct {
 	object *resource.Service
 }
 
+// WrapApplierByMeshObject returns a Applier from a MeshObject
 func WrapApplierByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Applier {
 	switch object.Kind() {

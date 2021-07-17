@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Run is the entrypoint of the emctl apply subcommand
 func Run(cmd *cobra.Command, flags *flags.Apply) {
 	if flags.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")

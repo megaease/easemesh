@@ -24,12 +24,15 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// UnmarshalFunc is a function to unmarshal bytes into object
 type UnmarshalFunc func([]byte, int) (interface{}, error)
 
+// HTTPJSONResponseHandler is a handler to handle http response body
 type HTTPJSONResponseHandler interface {
 	HandleResponse(UnmarshalFunc) (interface{}, error)
 }
 
+// HTTPJSONClient wraps http json client
 type HTTPJSONClient interface {
 	Post(string, interface{}, time.Duration, map[string]string) HTTPJSONResponseHandler
 	PostByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
@@ -43,6 +46,7 @@ type HTTPJSONClient interface {
 	GetByContext(context.Context, string, interface{}, map[string]string) HTTPJSONResponseHandler
 }
 
+// Option is option function
 type Option func(*resty.Client)
 type httpJSONClient struct {
 	options []Option
@@ -54,10 +58,12 @@ func (h httpJSONResponseFunc) HandleResponse(fn UnmarshalFunc) (interface{}, err
 	return h(fn)
 }
 
+// NewHTTPJSON creates a HTTPJSONClient
 func NewHTTPJSON(o ...Option) HTTPJSONClient {
 	return &httpJSONClient{options: o}
 }
 
+// WrapRetryOptions wraps option to retryer
 func WrapRetryOptions(retryCount int, retryWaitTime time.Duration, conditionFunc func(b []byte, err error) bool) []Option {
 	return []Option{
 		func(client *resty.Client) {

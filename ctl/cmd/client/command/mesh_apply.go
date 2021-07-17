@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ApplyCmd invokes apply sub command entrypoint
 func ApplyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "apply",

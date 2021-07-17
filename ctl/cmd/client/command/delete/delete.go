@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Run is the entrypoint of the emctl delete sub command
 func Run(cmd *cobra.Command, flags *flags.Delete) {
 	visitorBulder := util.NewVisitorBuilder()
 

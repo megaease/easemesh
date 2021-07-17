@@ -29,16 +29,21 @@ import (
 )
 
 type (
-	Printer struct {
+	// Printer print information about the EaseMesh objects
+	Printer interface {
+		PrintObjects(objects []resource.MeshObject)
+	}
+	printer struct {
 		outputFormat string
 	}
 )
 
-func New(outputFormat string) *Printer {
-	return &Printer{outputFormat: outputFormat}
+// New create a Printer
+func New(outputFormat string) Printer {
+	return &printer{outputFormat: outputFormat}
 }
 
-func (p *Printer) PrintObjects(objects []resource.MeshObject) {
+func (p *printer) PrintObjects(objects []resource.MeshObject) {
 	if len(objects) == 0 {
 		fmt.Println("No resource")
 		return
@@ -55,7 +60,7 @@ func (p *Printer) PrintObjects(objects []resource.MeshObject) {
 	}
 }
 
-func (p *Printer) printTable(objects []resource.MeshObject) {
+func (p *printer) printTable(objects []resource.MeshObject) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Kind", "Name", "Labels"})
 
@@ -81,7 +86,7 @@ func (p *Printer) printTable(objects []resource.MeshObject) {
 	table.Render()
 }
 
-func (p *Printer) printYAML(objects []resource.MeshObject) {
+func (p *printer) printYAML(objects []resource.MeshObject) {
 	jsonBuff, err := json.Marshal(objects)
 	if err != nil {
 		common.ExitWithErrorf("marshal %#v to json failed: %v", objects, err)
@@ -95,7 +100,7 @@ func (p *Printer) printYAML(objects []resource.MeshObject) {
 	fmt.Printf("%s", yamlBuff)
 }
 
-func (p *Printer) printJSON(objects []resource.MeshObject) {
+func (p *printer) printJSON(objects []resource.MeshObject) {
 	prettyJSONBuff, err := json.MarshalIndent(objects, "", "  ")
 	if err != nil {
 		common.ExitWithErrorf("unmarshal %#v to json failed: %v", objects, err)

@@ -20,10 +20,13 @@ package meshclient
 import "github.com/pkg/errors"
 
 var (
+	// ConflictError indicate that the resource already exists
 	ConflictError = errors.Errorf("resource already exists")
+	// NotFoundError indicate that the resource does not existed
 	NotFoundError = errors.Errorf("resource not found")
 )
 
+// IsConflictError judge err is a ConflictError
 func IsConflictError(err error) (result bool) {
 	if errors.Cause(err) == ConflictError {
 		result = true
@@ -31,6 +34,7 @@ func IsConflictError(err error) (result bool) {
 	return
 }
 
+// IsNotFoundError judge err is a NotFoundError
 func IsNotFoundError(err error) (result bool) {
 	if errors.Cause(err) == NotFoundError {
 		result = true

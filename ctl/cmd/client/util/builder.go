@@ -26,10 +26,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+// FileExtensions describe that what's the extended file name of the EaseMesh configuration file should have
 var FileExtensions = []string{".json", ".yaml", ".yml"}
 
 type (
-	VisitorBuilder struct {
+	// VisitorBuilder is a builder that build a visitor to visit func
+	VisitorBuilder interface {
+		HTTPAttemptCount(httpGetAttempts int) VisitorBuilder
+		FilenameParam(filenameOptions *FilenameOptions) VisitorBuilder
+		CommandParam(commandOptions *CommandOptions) VisitorBuilder
+		Command() VisitorBuilder
+		Do() ([]Visitor, error)
+		File() VisitorBuilder
+		URL(httpAttemptCount int, urls ...*url.URL) VisitorBuilder
+		Stdin() VisitorBuilder
+	}
+	visitorBuilder struct {
 		visitors          []Visitor
 		decoder           Decoder
 		httpGetAttempts   int
@@ -40,6 +52,7 @@ type (
 		stdinInUse        bool
 	}
 
+	// CommandOptions holds command option
 	CommandOptions struct {
 		// Kind is required.
 		Kind string
@@ -47,37 +60,39 @@ type (
 		Name string
 	}
 
+	// FilenameOptions holds filename option
 	FilenameOptions struct {
 		Filenames []string
 		Recursive bool
 	}
 )
 
-func NewVisitorBuilder() *VisitorBuilder {
-	return &VisitorBuilder{httpGetAttempts: 3, decoder: newDefaultDecoder()}
+// NewVisitorBuilder return a VisitorBuilder
+func NewVisitorBuilder() VisitorBuilder {
+	return &visitorBuilder{httpGetAttempts: 3, decoder: newDefaultDecoder()}
 }
 
-func (b *VisitorBuilder) HTTPAttemptCount(httpGetAttempts int) *VisitorBuilder {
+func (b *visitorBuilder) HTTPAttemptCount(httpGetAttempts int) VisitorBuilder {
 	b.httpGetAttempts = httpGetAttempts
 	return b
 }
 
-func (b *VisitorBuilder) FilenameParam(filenameOptions *FilenameOptions) *VisitorBuilder {
+func (b *visitorBuilder) FilenameParam(filenameOptions *FilenameOptions) VisitorBuilder {
 	b.filenameOptions = filenameOptions
 	return b
 }
 
-func (b *VisitorBuilder) CommandParam(commandOptions *CommandOptions) *VisitorBuilder {
+func (b *visitorBuilder) CommandParam(commandOptions *CommandOptions) VisitorBuilder {
 	b.commandOptions = commandOptions
 	return b
 }
 
-func (b *VisitorBuilder) Command() *VisitorBuilder {
+func (b *visitorBuilder) Command() VisitorBuilder {
 	if b.commandOptions == nil {
 		return b
 	}
 
-	b.visitors = append(b.visitors, NewCommandVisitor(
+	b.visitors = append(b.visitors, newCommandVisitor(
 		b.commandOptions.Kind,
 		b.commandOptions.Name,
 	))
@@ -85,7 +100,7 @@ func (b *VisitorBuilder) Command() *VisitorBuilder {
 	return b
 }
 
-func (b *VisitorBuilder) Do() ([]Visitor, error) {
+func (b *visitorBuilder) Do() ([]Visitor, error) {
 	b.Command()
 	b.File()
 
@@ -96,7 +111,7 @@ func (b *VisitorBuilder) Do() ([]Visitor, error) {
 	return b.visitors, nil
 }
 
-func (b *VisitorBuilder) File() *VisitorBuilder {
+func (b *visitorBuilder) File() VisitorBuilder {
 	if b.filenameOptions == nil {
 		return b
 	}
@@ -118,25 +133,25 @@ func (b *VisitorBuilder) File() *VisitorBuilder {
 			if !recursive {
 				b.singleItemImplied = true
 			}
-			b.Path(recursive, s)
+			b.path(recursive, s)
 		}
 	}
 
 	return b
 }
 
-func (b *VisitorBuilder) URL(httpAttemptCount int, urls ...*url.URL) *VisitorBuilder {
+func (b *visitorBuilder) URL(httpAttemptCount int, urls ...*url.URL) VisitorBuilder {
 	for _, u := range urls {
-		b.visitors = append(b.visitors, &URLVisitor{
+		b.visitors = append(b.visitors, &urlVisitor{
 			URL:              u,
-			StreamVisitor:    NewStreamVisitor(nil, b.decoder, u.String()),
+			streamVisitor:    newStreamVisitor(nil, b.decoder, u.String()),
 			HTTPAttemptCount: httpAttemptCount,
 		})
 	}
 	return b
 }
 
-func (b *VisitorBuilder) Stdin() *VisitorBuilder {
+func (b *visitorBuilder) Stdin() VisitorBuilder {
 	if b.stdinInUse {
 		b.errs = append(b.errs, errors.Errorf("Stdin already in used"))
 	}
@@ -145,7 +160,7 @@ func (b *VisitorBuilder) Stdin() *VisitorBuilder {
 	return b
 }
 
-func (b *VisitorBuilder) Path(recursive bool, paths ...string) *VisitorBuilder {
+func (b *visitorBuilder) path(recursive bool, paths ...string) VisitorBuilder {
 	for _, p := range paths {
 		_, err := os.Stat(p)
 		if os.IsNotExist(err) {
@@ -157,7 +172,7 @@ func (b *VisitorBuilder) Path(recursive bool, paths ...string) *VisitorBuilder {
 			continue
 		}
 
-		visitors, err := ExpandPathsToFileVisitors(b.decoder, p, recursive, FileExtensions)
+		visitors, err := expandPathsToFileVisitors(b.decoder, p, recursive, FileExtensions)
 		if err != nil {
 			b.errs = append(b.errs, fmt.Errorf("error reading %q: %v", p, err))
 		}

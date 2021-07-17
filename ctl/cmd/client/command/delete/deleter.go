@@ -28,6 +28,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Deleter deletes configuration from the control plane service of the EaseMesh
 type Deleter interface {
 	Delete() error
 }
@@ -44,6 +45,7 @@ type serviceDeleter struct {
 	object *resource.Service
 }
 
+// WrapDeleterByMeshObject returns a new Deleter from a MeshObject
 func WrapDeleterByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Deleter {
 	switch object.Kind() {

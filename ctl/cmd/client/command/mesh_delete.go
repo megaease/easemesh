@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// DeleteCmd invokes delete sub command entrypoint
 func DeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete",

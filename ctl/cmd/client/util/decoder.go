@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Decoder decodes bytes stream to a MeshObject
 type Decoder interface {
 	Decode(data []byte) (resource.MeshObject, *resource.VersionKind, error)
 }

@@ -38,6 +38,7 @@ type v1alpha1Interface struct {
 
 var _ V1Alpha1Interface = &v1alpha1Interface{}
 
+// New initials a new MeshClient
 func New(server string) MeshClient {
 	client := &meshClient{server: server}
 	alpha1 := v1alpha1Interface{

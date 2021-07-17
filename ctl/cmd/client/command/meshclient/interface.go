@@ -23,9 +23,12 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 )
 
+// MeshClient is a client for accessing the EaseMesh control plane service
 type MeshClient interface {
 	V1Alpha1() V1Alpha1Interface
 }
+
+// V1Alpha1Interface is an interface that aggregates all resources accessor for the EaseMesh
 type V1Alpha1Interface interface {
 	TenantGetter
 	ServiceGetter
@@ -35,33 +38,45 @@ type V1Alpha1Interface interface {
 	ResilienceGetter
 	IngressGetter
 }
+
+// TenantGetter represents a Tenant resource accessor
 type TenantGetter interface {
 	Tenant() TenantInterface
 }
 
+// ServiceGetter represents a Service resource accessor
 type ServiceGetter interface {
 	Service() ServiceInterface
 }
+
+// LoadbalanceGetter represents a Loadbalance resource accessor
 type LoadbalanceGetter interface {
 	LoadBalance() LoadBalanceInterface
 }
+
+// CanaryGetter represents a Canary resource accessor
 type CanaryGetter interface {
 	Canary() CanaryInterface
 }
+
+// ObservabilityGetter represents an Observability resource accessor
 type ObservabilityGetter interface {
 	ObservabilityTracings() ObservabilityTracingInterface
 	ObservabilityMetrics() ObservabilityMetricInterface
 	ObservabilityOutputServer() ObservabilityOutputServerInterface
 }
 
+// ResilienceGetter represents a Resilience resource accessor
 type ResilienceGetter interface {
 	Resilience() ResilienceInterface
 }
 
+// IngressGetter represents an Ingress resource accessor
 type IngressGetter interface {
 	Ingress() IngressInterface
 }
 
+// TenantInterface captures the set of operations for interacting with the EaseMesh REST apis of the tenant resource.
 type TenantInterface interface {
 	Get(context.Context, string) (*resource.Tenant, error)
 	Patch(context.Context, *resource.Tenant) error
@@ -70,6 +85,7 @@ type TenantInterface interface {
 	List(context.Context) ([]*resource.Tenant, error)
 }
 
+// ServiceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service resource.
 type ServiceInterface interface {
 	Get(context.Context, string) (*resource.Service, error)
 	Patch(context.Context, *resource.Service) error
@@ -77,6 +93,8 @@ type ServiceInterface interface {
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.Service, error)
 }
+
+// LoadBalanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the loadbalance resource.
 type LoadBalanceInterface interface {
 	Get(context.Context, string) (*resource.LoadBalance, error)
 	Patch(context.Context, *resource.LoadBalance) error
@@ -84,6 +102,8 @@ type LoadBalanceInterface interface {
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.LoadBalance, error)
 }
+
+// CanaryInterface captures the set of operations for interacting with the EaseMesh REST apis of the canaray resource.
 type CanaryInterface interface {
 	Get(context.Context, string) (*resource.Canary, error)
 	Patch(context.Context, *resource.Canary) error
@@ -91,6 +111,8 @@ type CanaryInterface interface {
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.Canary, error)
 }
+
+// ObservabilityOutputServerInterface captures the set of operations for interacting with the EaseMesh REST apis of the observability output server resource.
 type ObservabilityOutputServerInterface interface {
 	Get(context.Context, string) (*resource.ObservabilityOutputServer, error)
 	Patch(context.Context, *resource.ObservabilityOutputServer) error
@@ -99,6 +121,7 @@ type ObservabilityOutputServerInterface interface {
 	List(context.Context) ([]*resource.ObservabilityOutputServer, error)
 }
 
+// ObservabilityMetricInterface captures the set of operations for interacting with the EaseMesh REST apis of the observability metric resource.
 type ObservabilityMetricInterface interface {
 	Get(context.Context, string) (*resource.ObservabilityMetrics, error)
 	Patch(context.Context, *resource.ObservabilityMetrics) error
@@ -107,6 +130,7 @@ type ObservabilityMetricInterface interface {
 	List(context.Context) ([]*resource.ObservabilityMetrics, error)
 }
 
+// ObservabilityTracingInterface captures the set of operations for interacting with the EaseMesh REST apis of the observability tracing resource.
 type ObservabilityTracingInterface interface {
 	Get(context.Context, string) (*resource.ObservabilityTracings, error)
 	Patch(context.Context, *resource.ObservabilityTracings) error
@@ -115,6 +139,7 @@ type ObservabilityTracingInterface interface {
 	List(context.Context) ([]*resource.ObservabilityTracings, error)
 }
 
+// ResilienceInterface captures the set of operations for interacting with the EaseMesh REST apis of the resilience resource.
 type ResilienceInterface interface {
 	Get(context.Context, string) (*resource.Resilience, error)
 	Patch(context.Context, *resource.Resilience) error
@@ -123,6 +148,7 @@ type ResilienceInterface interface {
 	List(context.Context) ([]*resource.Resilience, error)
 }
 
+// IngressInterface captures the set of operations for interacting with the EaseMesh REST apis of the ingress resource.
 type IngressInterface interface {
 	Get(context.Context, string) (*resource.Ingress, error)
 	Patch(context.Context, *resource.Ingress) error

@@ -29,13 +29,13 @@ import (
 )
 
 const (
-	RoleVerbGet    = "get"
-	RoleVerbList   = "list"
-	RoleVerbWatch  = "watch"
-	RoleVerbCreate = "create"
-	RoleVerbUpdate = "update"
-	RoleVerbPatch  = "patch"
-	RoleVerbDelete = "delete"
+	roleVerbGet    = "get"
+	roleVerbList   = "list"
+	roleVerbWatch  = "watch"
+	roleVerbCreate = "create"
+	roleVerbUpdate = "update"
+	roleVerbPatch  = "patch"
+	roleVerbDelete = "delete"
 )
 
 func roleSpec(installFlags *flags.Install) installbase.InstallFunc {
@@ -49,12 +49,12 @@ func roleSpec(installFlags *flags.Install) installbase.InstallFunc {
 			{
 				APIGroups: []string{""},
 				Resources: []string{"configmaps", "leases"},
-				Verbs:     []string{RoleVerbGet, RoleVerbList, RoleVerbWatch, RoleVerbCreate, RoleVerbUpdate, RoleVerbPatch, RoleVerbDelete},
+				Verbs:     []string{roleVerbGet, roleVerbList, roleVerbWatch, roleVerbCreate, roleVerbUpdate, roleVerbPatch, roleVerbDelete},
 			},
 			{
 				APIGroups: []string{"", "coordination.k8s.io"},
 				Resources: []string{"events"},
-				Verbs:     []string{RoleVerbCreate, RoleVerbPatch},
+				Verbs:     []string{roleVerbCreate, roleVerbPatch},
 			},
 		},
 	}
@@ -77,27 +77,27 @@ func clusterRoleSpec(installFlags *flags.Install) installbase.InstallFunc {
 			{
 				APIGroups: []string{"apps"},
 				Resources: []string{"deployments"},
-				Verbs:     []string{RoleVerbGet, RoleVerbList, RoleVerbWatch, RoleVerbCreate, RoleVerbUpdate, RoleVerbPatch, RoleVerbDelete},
+				Verbs:     []string{roleVerbGet, roleVerbList, roleVerbWatch, roleVerbCreate, roleVerbUpdate, roleVerbPatch, roleVerbDelete},
 			},
 			{
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
-				Verbs:     []string{RoleVerbGet, RoleVerbList},
+				Verbs:     []string{roleVerbGet, roleVerbList},
 			},
 			{
 				APIGroups: []string{"mesh.megaease.com"},
 				Resources: []string{"meshdeployments"},
-				Verbs:     []string{RoleVerbGet, RoleVerbList, RoleVerbWatch, RoleVerbCreate, RoleVerbUpdate, RoleVerbPatch, RoleVerbDelete},
+				Verbs:     []string{roleVerbGet, roleVerbList, roleVerbWatch, roleVerbCreate, roleVerbUpdate, roleVerbPatch, roleVerbDelete},
 			},
 			{
 				APIGroups: []string{"mesh.megaease.com"},
 				Resources: []string{"meshdeployments/finalizers"},
-				Verbs:     []string{RoleVerbUpdate},
+				Verbs:     []string{roleVerbUpdate},
 			},
 			{
 				APIGroups: []string{"mesh.megaease.com"},
 				Resources: []string{"meshdeployments/status"},
-				Verbs:     []string{RoleVerbGet, RoleVerbPatch, RoleVerbUpdate},
+				Verbs:     []string{roleVerbGet, roleVerbPatch, roleVerbUpdate},
 			},
 		},
 	}
@@ -109,7 +109,7 @@ func clusterRoleSpec(installFlags *flags.Install) installbase.InstallFunc {
 		Rules: []rbacv1.PolicyRule{
 			{
 				NonResourceURLs: []string{"/metrics"},
-				Verbs:           []string{RoleVerbGet},
+				Verbs:           []string{roleVerbGet},
 			},
 		},
 	}
@@ -122,12 +122,12 @@ func clusterRoleSpec(installFlags *flags.Install) installbase.InstallFunc {
 			{
 				APIGroups: []string{"authentication.k8s.io"},
 				Resources: []string{"tokenreviews"},
-				Verbs:     []string{RoleVerbCreate},
+				Verbs:     []string{roleVerbCreate},
 			},
 			{
 				APIGroups: []string{"authentication.k8s.io"},
 				Resources: []string{"subjectaccessreviews"},
-				Verbs:     []string{RoleVerbCreate},
+				Verbs:     []string{roleVerbCreate},
 			},
 		},
 	}

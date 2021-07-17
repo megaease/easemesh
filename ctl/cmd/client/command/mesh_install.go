@@ -37,6 +37,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// InstallCmd is the entrypoint of the emctl installation
 func InstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "install",

@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Run is the entrypoint of the get sub command
 func Run(cmd *cobra.Command, flags *flags.Get) {
 	switch flags.OutputFormat {
 	case "table", "yaml", "json":

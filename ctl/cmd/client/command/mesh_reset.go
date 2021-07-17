@@ -65,6 +65,7 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 
 }
 
+// ResetCmd invoke reset sub command entrypoint
 func ResetCmd() *cobra.Command {
 	flags := &flags.Reset{}
 

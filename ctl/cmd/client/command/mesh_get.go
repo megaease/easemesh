@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// GetCmd invokes get sub command entrypoint
 func GetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get",

@@ -39,11 +39,13 @@ func ExitWithErrorf(format string, a ...interface{}) {
 	ExitWithError(fmt.Errorf(format, a...))
 }
 
+// OutputErrorf outputs an error information
 func OutputErrorf(format string, a ...interface{}) {
 	color.New(color.FgRed).Fprintf(os.Stderr, "Error: ")
 	fmt.Fprintf(os.Stderr, format+"\n", a...)
 }
 
+// OutputError outputs an error information
 func OutputError(err error) {
 	if err != nil {
 		color.New(color.FgRed).Fprint(os.Stderr, "Error: ")

@@ -45,16 +45,20 @@ const (
 	constSTDINstr = "STDIN"
 )
 
+// Visitor is visitor to visit all MeshObjects via VisitorFunc
 type Visitor interface {
 	Visit(VisitorFunc) error
 }
 
+// VisitorFunc executes visition logic
 type VisitorFunc func(resource.MeshObject, error) error
 
+// RawExtension is a raw struct that holds raw information of the spec
 type RawExtension struct {
 	Raw []byte `json:"-" protobuf:"bytes,1,opt,name=raw"`
 }
 
+// UnmarshalJSON unmarshal byte to RawExtension
 func (re *RawExtension) UnmarshalJSON(in []byte) error {
 	if re == nil {
 		return errors.New("runtime.RawExtension: UnmarshalJSON on nil pointer")
@@ -65,6 +69,7 @@ func (re *RawExtension) UnmarshalJSON(in []byte) error {
 	return nil
 }
 
+// MarshalJSON marshal RawExtension to bytes
 func (re RawExtension) MarshalJSON() ([]byte, error) {
 	return re.Raw, nil
 }
@@ -84,13 +89,13 @@ func ignoreFile(path string, extensions []string) bool {
 
 // FileVisitorForSTDIN return a special FileVisitor just for STDIN
 func FileVisitorForSTDIN(decoder Decoder) Visitor {
-	return &FileVisitor{
+	return &fileVisitor{
 		Path:          constSTDINstr,
-		StreamVisitor: NewStreamVisitor(nil, decoder, constSTDINstr),
+		streamVisitor: newStreamVisitor(nil, decoder, constSTDINstr),
 	}
 }
 
-func ExpandPathsToFileVisitors(decoder Decoder, paths string, recursive bool, extensions []string) ([]Visitor, error) {
+func expandPathsToFileVisitors(decoder Decoder, paths string, recursive bool, extensions []string) ([]Visitor, error) {
 	var visitors []Visitor
 	err := filepath.Walk(paths, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -108,9 +113,9 @@ func ExpandPathsToFileVisitors(decoder Decoder, paths string, recursive bool, ex
 			return nil
 		}
 
-		visitor := &FileVisitor{
+		visitor := &fileVisitor{
 			Path:          path,
-			StreamVisitor: NewStreamVisitor(nil, decoder, path),
+			streamVisitor: newStreamVisitor(nil, decoder, path),
 		}
 
 		visitors = append(visitors, visitor)
@@ -123,14 +128,16 @@ func ExpandPathsToFileVisitors(decoder Decoder, paths string, recursive bool, ex
 	return visitors, nil
 }
 
-// FileVisitor is wrapping around a StreamVisitor, to handle open/close files
-type FileVisitor struct {
+// fileVisitor is wrapping around a StreamVisitor, to handle open/close files
+type fileVisitor struct {
 	Path string
-	*StreamVisitor
+	*streamVisitor
 }
 
+var _ Visitor = &fileVisitor{}
+
 // Visit in a FileVisitor is just taking care of opening/closing files
-func (v *FileVisitor) Visit(fn VisitorFunc) error {
+func (v *fileVisitor) Visit(fn VisitorFunc) error {
 	var f *os.File
 	if v.Path == constSTDINstr {
 		f = os.Stdin
@@ -144,21 +151,23 @@ func (v *FileVisitor) Visit(fn VisitorFunc) error {
 	}
 
 	utf16bom := unicode.BOMOverride(unicode.UTF8.NewDecoder())
-	v.StreamVisitor.Reader = transform.NewReader(f, utf16bom)
+	v.streamVisitor.Reader = transform.NewReader(f, utf16bom)
 
-	return v.StreamVisitor.Visit(fn)
+	return v.streamVisitor.Visit(fn)
 }
 
-type StreamVisitor struct {
+type streamVisitor struct {
 	io.Reader
 
 	Decoder Decoder
 	Source  string
 }
 
-// NewStreamVisitor is a helper function that is useful when we want to change the fields of the struct but keep calls the same.
-func NewStreamVisitor(r io.Reader, decoder Decoder, source string) *StreamVisitor {
-	return &StreamVisitor{
+var _ Visitor = &streamVisitor{}
+
+// newStreamVisitor is a helper function that is useful when we want to change the fields of the struct but keep calls the same.
+func newStreamVisitor(r io.Reader, decoder Decoder, source string) *streamVisitor {
+	return &streamVisitor{
 		Reader:  r,
 		Decoder: decoder,
 		Source:  source,
@@ -166,7 +175,7 @@ func NewStreamVisitor(r io.Reader, decoder Decoder, source string) *StreamVisito
 }
 
 // Visit implements Visitor over a stream. StreamVisitor is able to distinct multiple resources in one stream.
-func (v *StreamVisitor) Visit(fn VisitorFunc) error {
+func (v *streamVisitor) Visit(fn VisitorFunc) error {
 	var errs []error
 	d := yaml.NewYAMLOrJSONDecoder(v.Reader, 4096)
 	for {
@@ -211,7 +220,7 @@ func (v *StreamVisitor) Visit(fn VisitorFunc) error {
 	return finalErr
 }
 
-func (v *StreamVisitor) decodeMeshObject(data []byte, source string) (resource.MeshObject, error) {
+func (v *streamVisitor) decodeMeshObject(data []byte, source string) (resource.MeshObject, error) {
 	meshObject, _, err := v.Decoder.Decode(data)
 	if err != nil {
 		return nil, err
@@ -219,20 +228,20 @@ func (v *StreamVisitor) decodeMeshObject(data []byte, source string) (resource.M
 	return meshObject, nil
 }
 
-type URLVisitor struct {
+type urlVisitor struct {
 	URL *url.URL
-	*StreamVisitor
+	*streamVisitor
 	HTTPAttemptCount int
 }
 
-func (v *URLVisitor) Visit(fn VisitorFunc) error {
+func (v *urlVisitor) Visit(fn VisitorFunc) error {
 	body, err := readHTTPWithRetries(resty.New(), 5*time.Second, v.URL.String(), v.HTTPAttemptCount)
 	if err != nil {
 		return err
 	}
 	defer body.Close()
-	v.StreamVisitor.Reader = body
-	return v.StreamVisitor.Visit(fn)
+	v.streamVisitor.Reader = body
+	return v.streamVisitor.Visit(fn)
 }
 
 // readHTTPWithRetries tries to http.Get the v.URL retries times before giving up.
@@ -268,15 +277,17 @@ func readHTTPWithRetries(client *resty.Client, duration time.Duration, u string,
 	return r.RawBody(), nil
 }
 
-type CommandVisitor struct {
+type commandVisitor struct {
 	Kind string
 	Name string
 
 	oc resource.ObjectCreator
 }
 
-func NewCommandVisitor(kind, name string) *CommandVisitor {
-	return &CommandVisitor{
+var _ Visitor = &commandVisitor{}
+
+func newCommandVisitor(kind, name string) *commandVisitor {
+	return &commandVisitor{
 		Kind: adaptCommandKind(kind),
 		Name: name,
 		oc:   resource.NewObjectCreator(),
@@ -309,7 +320,7 @@ func adaptCommandKind(kind string) string {
 	}
 }
 
-func (v *CommandVisitor) Visit(fn VisitorFunc) error {
+func (v *commandVisitor) Visit(fn VisitorFunc) error {
 	vk := resource.VersionKind{
 		APIVersion: resource.DefaultAPIVersion,
 		Kind:       v.Kind,

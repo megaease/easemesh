@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// InstallStage holds operations in installation of a stage
 type InstallStage interface {
 	Do(*installbase.StageContext, Installation) error
 	Clear(*installbase.StageContext) error
@@ -43,6 +44,7 @@ type installation struct {
 	step   int
 }
 
+// New create a new Installation
 func New(stages ...InstallStage) Installation {
 	return &installation{stages: stages, step: 0}
 }
@@ -65,14 +67,22 @@ func (i *installation) ClearResource(context *installbase.StageContext) {
 	}
 }
 
+// InstallFunc is an install function
 type InstallFunc func(*installbase.StageContext) error
 
+// HookFunc is a hook function
 type HookFunc InstallFunc
+
+// ClearFunc clear installed resources when install failed
 type ClearFunc HookFunc
+
+// PreCheckFunc previously checking condition whether is satisfied with installation
 type PreCheckFunc HookFunc
 
+// DescribeFunc describe what's situation of the installation
 type DescribeFunc func(*installbase.StageContext, installbase.InstallPhase) string
 
+// Wrap create new InstallStage via wraping functions
 func Wrap(preCheckFunc HookFunc, installFunc InstallFunc, clearFunc HookFunc, description DescribeFunc) InstallStage {
 	return &baseInstallStage{preCheck: PreCheckFunc(preCheckFunc), installFunc: installFunc, clearFunc: ClearFunc(clearFunc), description: description}
 }
