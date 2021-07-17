@@ -2,6 +2,11 @@
 
 A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
 
+<a href="https://megaease.com/easemesh">
+    <img src="./imgs/easemesh.svg"
+        alt="Easegress logo" title="Easegress" height="100" width="100" align="right"/>
+</a>
+
 - [EaseMesh](#easemesh)
   - [1. Purposes](#1-purposes)
   - [2. Principles](#2-principles)
@@ -18,9 +23,10 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
       - [7.1.2 Step 2: Create namespace](#712-step-2-create-namespace)
       - [7.1.3 Step 4: Setup Database](#713-step-4-setup-database)
       - [7.1.4 Step 3: Apply petclinic stack](#714-step-3-apply-petclinic-stack)
-      - [7.1.5 Step 5: Configure reverse proxy](#715-step-5-configure-reverse-proxy)
-        - [7.1.5.1 Get expose port of `EaseMesh ingress` service , run](#7151-get-expose-port-of-easemesh-ingress-service--run)
-        - [7.1.5.2 Config reverse proxy](#7152-config-reverse-proxy)
+        - [7.1.5 Get exposed port of `EaseMesh ingress` service , run](#715-get-exposed-port-of-easemesh-ingress-service--run)
+      - [7.1.6 Step 5: Configure reverse proxy](#716-step-5-configure-reverse-proxy)
+        - [7.1.6.1 Config reverse proxy via Easegress](#7161-config-reverse-proxy-via-easegress)
+        - [7.1.6.2 Config reverse proxy via Easegress](#7162-config-reverse-proxy-via-easegress)
     - [7.2 Canary Deployment](#72-canary-deployment)
       - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
       - [7.2.2 Step 2: Apply canary configuration of the EaseMesh](#722-step-2-apply-canary-configuration-of-the-easemesh)
@@ -95,7 +101,8 @@ Please check out [install.md](./docs/install.md) to install EaseMesh.
 Prepare the `emctl`
 
 ```bash
-cd ctl && make
+git clone https://github.com/megaease/easemesh
+cd emctl && make
 export PATH=$(pwd)/bin:${PATH}
 ```
 
@@ -103,7 +110,7 @@ export PATH=$(pwd)/bin:${PATH}
 
 #### 7.1.1 Step 1: Apply mesh configuration
 
-Apply mesh configuration files
+Apply the EaseMesh configuration files
 
 ```bash
 emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-conf/a-pet-tenant.yaml
@@ -124,7 +131,7 @@ kubectl create namespace spring-petclinic
 
 #### 7.1.3 Step 4: Setup Database
 
-Petclinic needs to access database, the default is memory database. But in quick start, you need to prepare a Mysql database for the demo.
+Petclinic needs to access database, the default is memory database. But in the EaseMesh quick start, you need to prepare a Mysql database for the demo.
 
 Use the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
 
@@ -132,7 +139,7 @@ Use the DB table schemes and records from [PetClinic example](https://github.com
 
 Deploy petclinic resources to k8s cluster, we have developed an [operator](./operator/README.md) to manage the custom resource (MeshDeployment) of the EaseMesh. `Meshdeployment` contains a K8s' complete deployment spec and a piece of extra information about the service.
 
-> The Operator of the EaseMesh will automatically inject a sidecar to pod and a JavaAgent into the application container
+> The Operator of the EaseMesh will automatically inject a sidecar to pod and a JavaAgent into the application's JVM
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/api-gateway-deployment.yaml
@@ -141,21 +148,22 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/visits-service-deployment.yaml
 ```
 
-> ATTENTION: There is a ConfigMap spec in echo yaml spec, it describes how to connected the database for applications. You need to change its contents for your environment.
+> ATTENTION: There is a ConfigMap spec in yaml file, it describes how to connected the database for applications. You need to change as per your real environment
 
-#### 7.1.5 Step 5: Configure reverse proxy
-
-> **ATTENTION**: The step is optional, it can be omitted, if you have no requirements about reverse proxy.
-
-##### 7.1.5.1 Get expose port of `EaseMesh ingress` service , run
+##### 7.1.5 Get exposed port of `EaseMesh ingress` service , run
 
 ```bash
 kubectl get service -n easemesh easemesh-ingress-service
 ```
+> **ATTENTION**: From the output, you may notice exposed port of the Ingress service. If you needn't use reverse proxy service, you can directly access pet-clinic application via http://{your_host}:{exposed_port}/ 
 
-##### 7.1.5.2 Config reverse proxy
+#### 7.1.6 Step 5: Configure reverse proxy
 
-- Easegress as reverse proxy service
+> **ATTENTION**: The step is optional. It can be omitted when you have no requirements about reverse proxy.
+
+##### 7.1.6.1 Config reverse proxy via Easegress
+
+> **ATTENTION**: Only for scenarios that the Easegress acts as the role of reverse proxy service 
 
 If you leverage the [Easegress](https://github.com/megaease/easegress) as a reverse proxy service, the following configuration can be applied.
 
@@ -203,8 +211,8 @@ filters:
     kind: Proxy
     mainPool:
       servers:
-      - url: http://{node1_of_k8s_cluster}:{ingress_port}
-      - url: http://{node2_of_k8s_cluster}:{ingress_port}
+      - url: http://{node1_of_k8s_cluster}:{port_exposed_by_ingress_service}
+      - url: http://{node2_of_k8s_cluster}:{port_exposed_by_ingress_service}
       loadBalance:
         policy: roundRobin
 ```
@@ -216,9 +224,13 @@ egctl apply -f http-server.yaml
 egctl apply -f http-petclinic-pipeline.yaml
 ```
 
+> **egctl** is the client command line of the Easegress
+
 Visiting PetClinic website with `$your_domain/#!/welcome`
 
-- Nginx as reverse proxy service
+##### 7.1.6.2 Config reverse proxy via Easegress 
+
+> **ATTENTION**: Only for scenarios that the Nginx acts as the role of reverse proxy service 
 
 if you leverage the Nginx as a reverse proxy service, the following configuration should be added.
 
@@ -226,7 +238,7 @@ Then configure the NodPort IP address and port number into your traffic gateway'
 
 ```plain
 location /pet/ {
-    proxy_pass http://$NodePortIP:$NodePortNum/;
+    proxy_pass http://{node1_of_k8s_cluster}:{port_exposed_by_ingress_service}/;
 }
 ```
 
@@ -234,18 +246,24 @@ location /pet/ {
 
 ```plain
 location /pet/ {
-    proxy_pass http://$NodePortIP:$NodePortNum/;
+    proxy_pass http://{node1_of_k8s_cluster}:{port_exposed_by_ingress_service/;
     sub_filter 'href="/' 'href="/pet/';
     sub_filter 'src="/' 'src="/pet/';
     sub_filter_once  off;
 }
 ```
 
-Visiting PetClinic website with `$your_domain/pet/#!/welcome`
+Visiting PetClinic website with `$your_domain/pet/#!/welcome`.
 
 ### 7.2 Canary Deployment
 
+Canary deployment demonstrates how to route coloring traffic (request) to a canary version of the specific service.
+
 ![EaseMesh Canary topology](./imgs/canary-deployment.png)
+
+- `Customer Service (v2)` is the canary version service.
+- The line of red color in the diagram represents coloring traffic (request).
+- The coloring traffic is correctly routed into canary version service after it has passed through the first service (API Gateway).
 
 #### 7.2.1  Step 1: Coloring traffic
 
