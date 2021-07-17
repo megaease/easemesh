@@ -4,7 +4,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
 
 <a href="https://megaease.com/easemesh">
     <img src="./imgs/easemesh.svg"
-        alt="Easegress logo" title="Easegress" height="100" width="100" align="right"/>
+        alt="Easegress logo" title="Easegress" height="200" width="200" align="right"/>
 </a>
 
 - [EaseMesh](#easemesh)
