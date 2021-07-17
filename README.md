@@ -47,6 +47,8 @@ Why do we reinvent another wheel?
 
 - **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
 
+- **sophisticated capability of traffic split:**  The EaseMesh has sophisticated capability of traffic split, it can split traffic of a request chain into not only first service but also last. The capability could be applied in the canary deployment, online production testing scenarios.
+
 > Shortly, **the EaseMesh leverages the Kubernetes sidecar and Java Agent techniques to make Java applications have service governance and integrated observability without change a line of source code**.
 
 ## 2. Principles
