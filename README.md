@@ -23,7 +23,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
       - [7.1.2 Step 2: Create namespace](#712-step-2-create-namespace)
       - [7.1.3 Step 4: Setup Database](#713-step-4-setup-database)
       - [7.1.4 Step 3: Apply petclinic stack](#714-step-3-apply-petclinic-stack)
-      - [7.1.5 Get exposed port of `EaseMesh ingress` service , run](#715-get-exposed-port-of-easemesh-ingress-service--run)
+      - [7.1.5 Get exposed port of `EaseMesh ingress` service](#715-get-exposed-port-of-easemesh-ingress-service)
       - [7.1.6 Step 5: Configure reverse proxy](#716-step-5-configure-reverse-proxy)
         - [7.1.6.1 Config reverse proxy via Easegress](#7161-config-reverse-proxy-via-easegress)
         - [7.1.6.2 Config reverse proxy via Easegress](#7162-config-reverse-proxy-via-easegress)
@@ -152,7 +152,7 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 
 > ATTENTION: There is a ConfigMap spec in yaml file, it describes how to connected the database for applications. You need to change as per your real environment
 
-#### 7.1.5 Get exposed port of `EaseMesh ingress` service , run
+#### 7.1.5 Get exposed port of `EaseMesh ingress` service
 
 ```bash
 kubectl get service -n easemesh easemesh-ingress-service
