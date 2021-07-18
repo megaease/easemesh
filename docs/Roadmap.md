@@ -29,7 +29,7 @@ As we said in [Purpose](../README.md#1-purposes) and [Principles](../README.md#2
 
 | Description                             | Priority | Related Issues |
 | --------------------------------------- | -------- | -------------- |
-| Support Spring Cloud 3.X or higher support| **High**     |                |
+| Support Spring Cloud 3.X or higher version| **High**     |                |
 | Support Service discovery based on DNS mechanism | **High**     |                |
 | Support Eclipse Vert.x                  | Middle   |                |
 
