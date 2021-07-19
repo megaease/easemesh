@@ -38,6 +38,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
   - [8. Roadmap](#8-roadmap)
   - [9. Contributing](#9-contributing)
   - [10. License](#10-license)
+  - [11. User Manual](#11-user-manual)
 
 ## 1. Purposes
 
@@ -348,3 +349,7 @@ See [MegaEase Community](https://github.com/megaease/community) to follow our co
 ## 10. License
 
 EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
+
+## 11. User Manual
+
+See [EaseMesh User Manual](./docs/user_manual.md) for details
