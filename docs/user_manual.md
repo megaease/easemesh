@@ -37,6 +37,7 @@
 ## Installation
 
 Please check out [install.md](./install.md) to install the EaseMesh.
+
 ## Client command tool
 
 The client command tool of the EaseMesh is `emctl`, please checkout [emctl.md](./emctl.md) for usages.
@@ -738,4 +739,3 @@ metrics:
     topic: application-log
     ....
 ```
-
