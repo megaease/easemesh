@@ -1,6 +1,9 @@
 # EaseMesh Manual
 
 - [EaseMesh Manual](#easemesh-manual)
+  - [Introduction](#introduction)
+  - [Installation](#installation)
+  - [Client command tool](#client-command-tool)
   - [Mesh service](#mesh-service)
   - [MeshDeployment](#meshdeployment)
   - [Sidecar Traffic](#sidecar-traffic)
@@ -24,10 +27,19 @@
       - [Turn-off Log](#turn-off-log)
 
 
+## Introduction
+
  EaseMesh divides the main components into two parts, one is **Control plane**, the other is **Data plane**. In the control plane, EaseMesh uses the Easegress cluster to form a reliable decision delivery and persistence unit. The data plane is composed of each mesh service with the user's business logic and EaseMesh's enhancement units, including EaseAgent and Easegress-sidecar. And there is also a Mesh Ingress unit for routing and handling South-North way traffic.
 
 ![Architecture](../imgs/architecture.png)
 
+
+## Installation
+
+Please check out [install.md](./install.md) to install the EaseMesh.
+## Client command tool
+
+The client command tool of the EaseMesh is `emctl`, please checkout [emctl.md](./emctl.md) for usages.
 ## Mesh service
 
 Services are the first-class citizens of the EaseMesh. Developers need to breakdown their business logic into small units and implement it as services.
@@ -725,3 +737,4 @@ metrics:
     topic: application-log
     ....
 ```
+
