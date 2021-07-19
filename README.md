@@ -4,7 +4,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
 
 <a href="https://megaease.com/easemesh">
     <img src="./imgs/easemesh.svg"
-        alt="Easegress logo" title="Easegress" height="175" width="175" align="right"/>
+        alt="EaseMesh logo" title="EaseMesh" height="175" width="175" align="right"/>
 </a>
 
 - [EaseMesh](#easemesh)
@@ -157,7 +157,7 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 ```bash
 kubectl get service -n easemesh easemesh-ingress-service
 ```
-> **ATTENTION**: From the output, you may notice exposed port of the Ingress service. If you needn't use reverse proxy service, you can directly access pet-clinic application via http://{your_host}:{exposed_port}/ 
+> **ATTENTION**: From the output, you may notice exposed port of the Ingress service. If you needn't use reverse proxy service, you can directly access pet-clinic application via http://{your_host}:{exposed_port}/
 
 #### 7.1.6 Step 5: Configure reverse proxy
 
@@ -165,7 +165,7 @@ kubectl get service -n easemesh easemesh-ingress-service
 
 ##### 7.1.6.1 Config reverse proxy via Easegress
 
-> **ATTENTION**: Only for scenarios that the Easegress acts as the role of reverse proxy service 
+> **ATTENTION**: Only for scenarios that the Easegress acts as the role of reverse proxy service
 
 If you leverage the [Easegress](https://github.com/megaease/easegress) as a reverse proxy service, the following configuration can be applied.
 
@@ -230,9 +230,9 @@ egctl apply -f http-petclinic-pipeline.yaml
 
 Visiting PetClinic website with `$your_domain/#!/welcome`
 
-##### 7.1.6.2 Config reverse proxy via Easegress 
+##### 7.1.6.2 Config reverse proxy via Easegress
 
-> **ATTENTION**: Only for scenarios that the Nginx acts as the role of reverse proxy service 
+> **ATTENTION**: Only for scenarios that the Nginx acts as the role of reverse proxy service
 
 if you leverage the Nginx as a reverse proxy service, the following configuration should be added.
 
