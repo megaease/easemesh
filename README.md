@@ -1,6 +1,6 @@
 # EaseMesh
 
-A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](https://github.com/megaease/easegress) as a sidecar for service management & [EaseAgent](https://github.com/megaease/easeagent) as a monitor for service observability.
+EaseMesh is a service mesh that is compatible with the Spring Cloud ecosystem. It is based on [Easegress](https://github.com/megaease/easegress) for the sidecar of service management and [EaseAgent](https://github.com/megaease/easeagent) for the monitor of service observing.
 
 <a href="https://megaease.com/easemesh">
     <img src="./imgs/easemesh.svg"
@@ -44,7 +44,7 @@ A service mesh compatible with the Spring Cloud ecosystem. Using [Easegress](htt
 
 Why do we reinvent another wheel?
 
-- **Service mesh compatible with Spring Cloud ecosystem:** The micro-services developed in Spring Cloud ecosystem have their own service registry/discovery system, this is quite different with Kubernetes ecosystem which uses the DNS as the service discovery. Currently, the major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. So, this is painful and conflicted with Java Spring Cloud domain. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
+**Service mesh compatible with Spring Cloud ecosystem:** Micro-service in Spring Cloud ecosystem has its own service registry/discovery components. It is quite different from Kubernetes ecosystem using DNS for service discovery. The major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. It is painful and conflicted with Java Spring Cloud ecosystem. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
 
 - **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
 
@@ -352,4 +352,5 @@ EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for 
 
 ## 11. User Manual
 
-See [EaseMesh User Manual](./docs/user_manual.md) for details
+See [EaseMesh User Manual](./docs/user_manual.md) for details.
+
