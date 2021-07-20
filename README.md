@@ -1,6 +1,6 @@
 # EaseMesh
 
-EaseMesh is a service mesh that compatible with the Spring Cloud ecosystem. It is based on [Easegress](https://github.com/megaease/easegress) for the sidecar of service management and [EaseAgent](https://github.com/megaease/easeagent) for the monitor of service observing.
+EaseMesh is a service mesh that is compatible with the Spring Cloud ecosystem. It is based on [Easegress](https://github.com/megaease/easegress) for the sidecar of service management and [EaseAgent](https://github.com/megaease/easeagent) for the monitor of service observing.
 
 <a href="https://megaease.com/easemesh">
     <img src="./imgs/easemesh.svg"
