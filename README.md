@@ -74,8 +74,8 @@ Why do we reinvent another wheel?
 
 ## 5. Dependent Projects
 
-1. [MegaEase EaseAgent](https://github.com/megaease/easeagent)
-2. [MegaEase Easegress](https://github.com/megaease/easegress)
+1. [EaseAgent](https://github.com/megaease/easeagent)
+2. [Easegress](https://github.com/megaease/easegress)
 
 ## 6. Quick Start
 
