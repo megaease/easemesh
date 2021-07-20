@@ -120,6 +120,7 @@ type deploySyncer struct {
 	clusterJoinURL   string
 	clusterName      string
 	client           client.Client
+	log              logr.Logger
 }
 
 // NewDeploymentSyncer return a syncer of the deployment, our operator will
@@ -133,6 +134,7 @@ func NewDeploymentSyncer(c client.Client, meshDeploy *v1beta1.MeshDeployment,
 		client:           c,
 		clusterJoinURL:   clusterJoinURL,
 		clusterName:      clusterName,
+		log:              log,
 	}
 
 	obj := &v1.Deployment{
@@ -354,15 +356,19 @@ func (d *deploySyncer) sidecarInitContainer(deploy *v1.Deployment) (corev1.Conta
 	if err != nil {
 		return initContainer, err
 	}
-
 	appContainer, err := d.getAppContainer(deploy)
 	if err != nil {
 		return initContainer, err
 	}
 
-	if len(appContainer.Ports) != 0 {
+	applicationPort, ok := d.meshDeployment.Spec.Service.Labels[sideCarApplicationPortLabel]
+	if ok {
+		params.Labels[sideCarApplicationPortLabel] = applicationPort
+	} else if len(appContainer.Ports) != 0 {
 		port := appContainer.Ports[0].ContainerPort
 		params.Labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
+		d.log.V(0).Info("No application-port label is set, so we use the first Port of "+
+			"the application container as the application-port to forward traffic.", "MeshDeploymentName", d.meshDeployment.Name)
 	}
 
 	livenessProbe := appContainer.LivenessProbe
