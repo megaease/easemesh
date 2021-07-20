@@ -74,8 +74,8 @@ Why do we reinvent another wheel?
 
 ## 5. Dependent Projects
 
-1. [MegaEase EaseAgent](https://github.com/megaease/easeagent)
-2. [MegaEase Easegress](https://github.com/megaease/easegress)
+1. [EaseAgent](https://github.com/megaease/easeagent)
+2. [Easegress](https://github.com/megaease/easegress)
 
 ## 6. Quick Start
 
@@ -353,3 +353,4 @@ EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for 
 ## 11. User Manual
 
 See [EaseMesh User Manual](./docs/user_manual.md) for details.
+
