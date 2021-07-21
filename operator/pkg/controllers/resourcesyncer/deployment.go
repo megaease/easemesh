@@ -364,11 +364,14 @@ func (d *deploySyncer) sidecarInitContainer(deploy *v1.Deployment) (corev1.Conta
 	applicationPort, ok := d.meshDeployment.Spec.Service.Labels[sideCarApplicationPortLabel]
 	if ok {
 		params.Labels[sideCarApplicationPortLabel] = applicationPort
+		d.log.V(0).Info("Using application-port", "MeshDeploymentName", d.meshDeployment.Name,
+			"application-port", applicationPort)
 	} else if len(appContainer.Ports) != 0 {
 		port := appContainer.Ports[0].ContainerPort
 		params.Labels[sideCarApplicationPortLabel] = strconv.Itoa(int(port))
 		d.log.V(0).Info("No application-port label is set, so we use the first Port of "+
-			"the application container as the application-port to forward traffic.", "MeshDeploymentName", d.meshDeployment.Name)
+			"the application container as the application-port to forward traffic.", "MeshDeploymentName", d.meshDeployment.Name,
+			"application-port", port)
 	}
 
 	livenessProbe := appContainer.LivenessProbe
