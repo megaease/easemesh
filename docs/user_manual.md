@@ -203,7 +203,7 @@ spec:
   service:
     name: ${your-service-name}
     labels:
-    - version: canary       # These map is used to label these canary instances
+      version: canary       # These map is used to label these canary instances
   deploy:                   # K8s native deployment spec contents
     replicas: 2
     selector:
