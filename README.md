@@ -44,7 +44,7 @@ EaseMesh is a service mesh that is compatible with the Spring Cloud ecosystem. I
 
 Why do we reinvent another wheel?
 
-**Service mesh compatible with Spring Cloud ecosystem:** Micro-service in Spring Cloud ecosystem has its own service registry/discovery components. It is quite different from Kubernetes ecosystem using DNS for service discovery. The major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. It is painful and conflicted with Java Spring Cloud ecosystem. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
+- **Service mesh compatible with Spring Cloud ecosystem:** Micro-service in Spring Cloud ecosystem has its own service registry/discovery components. It is quite different from Kubernetes ecosystem using DNS for service discovery. The major Service Mesh solution (e.g. Istio) using the Kubernetes domain technology. It is painful and conflicted with Java Spring Cloud ecosystem. EaseMesh aims to make Service Mesh compatible with Java Spring Cloud completely.
 
 - **Integrated Observability:** Currently Kubernetes-based service mesh only can see the ingress/egress traffic, and it has no idea what's happened in service/application. So, combining with Java Agent technology, we can have the full capability to observe everything inside and outside of service/application.
 
