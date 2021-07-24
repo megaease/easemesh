@@ -22,7 +22,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/spf13/pflag"
+
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/megaease/easemesh/mesh-operator/pkg/controllers"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -41,7 +44,11 @@ import (
 )
 
 const (
+	// DefaultImageRegistryURL is the default image registry URL.
 	DefaultImageRegistryURL = "docker.io"
+
+	// DefaultSidecarImageName is the default sidecar image name.
+	DefaultSidecarImageName = "megaease/easegress:server-sidecar"
 )
 
 var (
@@ -56,10 +63,13 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+// ConfigSpec is the config specification.
 type ConfigSpec struct {
-	ImageRegistryURL     string `yaml:"image-registry-url" jsonschema:"required"`
-	ClusterName          string `yaml:"cluster-name" jsonschema:"required"`
-	ClusterJoinURL       string `yaml:"cluster-join-urls" jsonschema:"required"`
+	ImageRegistryURL string `yaml:"image-registry-url" jsonschema:"required"`
+	ClusterName      string `yaml:"cluster-name" jsonschema:"required"`
+	// TODO: Make it to []string along with install configmap,
+	// so it only supports one url for now.
+	ClusterJoinURLs      string `yaml:"cluster-join-urls" jsonschema:"required"`
 	MetricsAddr          string `yaml:"metrics-bind-address" jsonschema:"required"`
 	EnableLeaderElection bool   `yaml:"leader-elect" jsonschema:"required"`
 	ProbeAddr            string `yaml:"health-probe-bind-address" jsonschema:"required"`
@@ -67,28 +77,34 @@ type ConfigSpec struct {
 
 func main() {
 	var imageRegistryURL string
+	var sidecarImageName string
 	var clusterName string
-	var clusterJoinURL string
+	var clusterJoinURLs string
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
 	var configFile string
 
-	flag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The Registry URL of the Image.")
-	flag.StringVar(&clusterName, "cluster-name", "", "The cluster-name of the eg master.")
-	flag.StringVar(&clusterJoinURL, "cluster-join-urls", "", "The address the eg master binds to.")
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
+	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
+	pflag.StringVar(&sidecarImageName, "sidecar-image-name", DefaultSidecarImageName, "The sidecar image name.")
+	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
+	pflag.StringVar(&clusterJoinURLs, "cluster-join-urls", "", "The addresses to join the Easegress.")
+	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	pflag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&configFile, "config", " ", "A yaml file config the operator. ")
+	pflag.StringVar(&configFile, "config", " ", "A yaml file config the operator. ")
+
+	pflag.Parse()
+
 	opts := zap.Options{
 		Development: true,
 	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
-	if configFile != " " {
+	opts.BindFlags(flag.CommandLine)
+	pflag.Parse()
+
+	if configFile != "" {
 		config, err := ioutil.ReadFile(configFile)
 		if err != nil {
 			setupLog.Error(err, "Read configFile error, %v", err)
@@ -103,11 +119,10 @@ func main() {
 
 		imageRegistryURL = spec.ImageRegistryURL
 		clusterName = spec.ClusterName
-		clusterJoinURL = spec.ClusterJoinURL
+		clusterJoinURLs = spec.ClusterJoinURLs
 		metricsAddr = spec.MetricsAddr
 		probeAddr = spec.ProbeAddr
 		enableLeaderElection = spec.EnableLeaderElection
-
 	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
@@ -125,18 +140,37 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.MeshDeploymentReconciler{
+	baseRuntime := base.Runtime{
 		Client:           mgr.GetClient(),
-		Log:              ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
 		Scheme:           mgr.GetScheme(),
-		ClusterJoinURL:   clusterJoinURL,
-		ClusterName:      clusterName,
-		ImageRegistryURL: imageRegistryURL,
 		Recorder:         mgr.GetEventRecorderFor("controller.MeshDeployment"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MeshDeployment")
+		ImageRegistryURL: imageRegistryURL,
+		SidecarImageName: sidecarImageName,
+
+		ClusterJoinURLs: []string{clusterJoinURLs},
+		ClusterName:     clusterName,
+	}
+
+	meshDeploymentRuntime := baseRuntime
+	meshDeploymentRuntime.Name = "MeshDeployment"
+	meshDeploymentRuntime.Log = ctrl.Log.WithName("controllers").WithName("MeshDeployment")
+	meshDeploymentReconciler := &controllers.MeshDeploymentReconciler{Runtime: &meshDeploymentRuntime}
+	meshDeploymentReconciler.SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "create controller of MeshDeployment failed")
 		os.Exit(1)
 	}
+
+	deploymentRuntime := baseRuntime
+	deploymentRuntime.Name = "Deployment"
+	deploymentRuntime.Log = ctrl.Log.WithName("controllers").WithName("Deployment")
+	deploymentReconciler := &controllers.DeploymentReconciler{Runtime: &meshDeploymentRuntime}
+	deploymentReconciler.SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "create controller of Deployment failed")
+		os.Exit(1)
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {

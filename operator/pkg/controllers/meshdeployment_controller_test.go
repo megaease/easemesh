@@ -20,18 +20,16 @@ package controllers
 import (
 	"context"
 
-	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
-	"github.com/megaease/easemesh/mesh-operator/pkg/controllers/resourcesyncer"
-	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
-
 	"github.com/go-logr/logr"
+	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/base"
+
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -53,6 +51,13 @@ var _ = Describe("meshdeployment controller", func() {
 	var log logr.Logger
 	BeforeEach(func() {
 		log = ctrl.Log.WithName("controllers").WithName("MeshDeployment")
+		baseRuntime := &base.Runtime{
+			Name:     "mesh-controller-test",
+			Client:   k8sClient,
+			Scheme:   scheme.Scheme,
+			Recorder: &mockRecorder{},
+			Log:      log,
+		}
 		meshDeployment = v1beta1.MeshDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      meshDeploymentName,
@@ -79,6 +84,12 @@ var _ = Describe("meshdeployment controller", func() {
 									{
 										Name:  "test-server",
 										Image: "megaease/non-existent:1.0-alpine",
+										Ports: []corev1.ContainerPort{
+											{
+												Name:          "test-port",
+												ContainerPort: 8080,
+											},
+										},
 									},
 								},
 							},
@@ -88,15 +99,21 @@ var _ = Describe("meshdeployment controller", func() {
 			},
 		}
 		Expect(k8sClient.Create(context.TODO(), &meshDeployment)).To(Succeed())
-		deploySyncer := resourcesyncer.NewDeploymentSyncer(k8sClient, &meshDeployment, scheme.Scheme, "", "", log, "")
-		Expect(syncer.Sync(context.TODO(), deploySyncer, &mockRecorder{})).To(Succeed())
 
+		meshDeploymentReconciler := &MeshDeploymentReconciler{
+			Runtime: baseRuntime,
+		}
+		req := ctrl.Request{NamespacedName: key}
+
+		_, err := meshDeploymentReconciler.Reconcile(context.TODO(), req)
+		Expect(err).To(BeNil())
 	})
 
 	AfterEach(func() {
 		// remove created cluster
 		k8sClient.Delete(context.TODO(), &meshDeployment)
 	})
+
 	Context("normal deploy meshdeployment", func() {
 		deploy := v1.Deployment{}
 		It("should has a deployment", func() {
@@ -108,7 +125,7 @@ var _ = Describe("meshdeployment controller", func() {
 		deploy := v1.Deployment{}
 		It("should has a injected container named with easemesh-sidecar", func() {
 			Expect(k8sClient.Get(context.TODO(), key, &deploy)).To(Succeed())
-			Expect(deploy.Spec.Template.Spec.Containers[1].Name).To(Equal("easemesh-sidecar"))
+			Expect(len(deploy.Spec.Template.Spec.Containers)).To(Equal(2))
 		})
 	})
 
