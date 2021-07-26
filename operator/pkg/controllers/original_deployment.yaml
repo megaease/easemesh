@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vets-service
+  namespace: spring-petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vets-service
+  template:
+    metadata:
+      labels:
+        app: vets-service
+    spec:
+      containers:
+        - image: megaease/spring-petclinic-vets-service:latest
+          name: vets-service
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          command: ["/bin/sh"]
+          args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom  org.springframework.boot.loader.JarLauncher"]
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+          volumeMounts:
+            - mountPath: /application/application-sit.yml
+              name: configmap-volume-0
+              subPath: application-sit.yml
+          ports:
+            - containerPort: 8080
+      volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+              - key: application-sit-yml
+                path: application-sit.yml
+            name: vets-service
+          name: configmap-volume-0
+      restartPolicy: Always

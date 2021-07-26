@@ -21,9 +21,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/megaease/easemesh/mesh-operator/pkg/base"
+
 	"github.com/go-logr/logr"
 	"github.com/go-test/deep"
-	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"

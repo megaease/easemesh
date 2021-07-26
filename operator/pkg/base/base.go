@@ -16,6 +16,7 @@ type (
 		Recorder         record.EventRecorder
 		Log              logr.Logger
 		ImageRegistryURL string
+		ImagePullPolicy  string
 		SidecarImageName string
 
 		ClusterJoinURLs []string

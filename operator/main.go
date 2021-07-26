@@ -49,6 +49,9 @@ const (
 
 	// DefaultSidecarImageName is the default sidecar image name.
 	DefaultSidecarImageName = "megaease/easegress:server-sidecar"
+
+	// DefaultImagePullPolicy is the default image pull policy.
+	DefaultImagePullPolicy = "IfNotPresent"
 )
 
 var (
@@ -78,6 +81,7 @@ type ConfigSpec struct {
 func main() {
 	var imageRegistryURL string
 	var sidecarImageName string
+	var imagePullPolicy string
 	var clusterName string
 	var clusterJoinURLs string
 	var metricsAddr string
@@ -87,6 +91,7 @@ func main() {
 
 	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
 	pflag.StringVar(&sidecarImageName, "sidecar-image-name", DefaultSidecarImageName, "The sidecar image name.")
+	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
 	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
 	pflag.StringVar(&clusterJoinURLs, "cluster-join-urls", "", "The addresses to join the Easegress.")
 	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -145,6 +150,7 @@ func main() {
 		Scheme:           mgr.GetScheme(),
 		Recorder:         mgr.GetEventRecorderFor("controller.MeshDeployment"),
 		ImageRegistryURL: imageRegistryURL,
+		ImagePullPolicy:  imagePullPolicy,
 		SidecarImageName: sidecarImageName,
 
 		ClusterJoinURLs: []string{clusterJoinURLs},

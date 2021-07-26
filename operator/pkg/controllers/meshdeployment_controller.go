@@ -20,12 +20,12 @@ package controllers
 import (
 	"context"
 
-	"github.com/imdario/mergo"
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
-	"github.com/pkg/errors"
 
+	"github.com/imdario/mergo"
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +49,7 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	r.Log.WithValues("MeshDeploymentID", req.NamespacedName)
 
 	meshDeploy := &meshv1beta1.MeshDeployment{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, meshDeploy)
+	err := r.Client.Get(ctx, req.NamespacedName, meshDeploy)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.Log.Info("MeshDeployment not found", "id", req.NamespacedName)

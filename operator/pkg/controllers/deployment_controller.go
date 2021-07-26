@@ -53,7 +53,7 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	r.Log.WithValues("DeploymentID", req.NamespacedName)
 
 	deploy := &v1.Deployment{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, deploy)
+	err := r.Client.Get(ctx, req.NamespacedName, deploy)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			r.Log.Info("Deployment not found", "id", req.NamespacedName)

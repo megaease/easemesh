@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
-	"github.com/pkg/errors"
 
+	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -277,10 +277,11 @@ func (m *deploymentModifier) injectVolumes(volumes ...corev1.Volume) {
 
 func (m *deploymentModifier) injectInitContainer() {
 	initContainer := corev1.Container{
-		Name:         initContainerName,
-		Image:        m.completeImageURL(initContainerImageName),
-		Command:      initContainerCommand(m.meshService),
-		VolumeMounts: initContainerVolumeMounts,
+		Name:            initContainerName,
+		Image:           m.completeImageURL(initContainerImageName),
+		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
+		Command:         initContainerCommand(m.meshService),
+		VolumeMounts:    initContainerVolumeMounts,
 	}
 
 	m.deploy.Spec.Template.Spec.InitContainers = injectContainers(m.deploy.Spec.Template.Spec.InitContainers, initContainer)
@@ -308,12 +309,13 @@ func (m *deploymentModifier) adaptAppContainerSpec() error {
 
 func (m *deploymentModifier) injectSidecarContainer() {
 	sidecarContainer := corev1.Container{
-		Name:         sidecarContainerName,
-		Image:        m.completeImageURL(sidecarContainerImageName(m.Runtime)),
-		Command:      sidecarContainerCmd,
-		VolumeMounts: sidecarContainerVolumeMounts,
-		Env:          siecarContainerEnvs,
-		Ports:        sidecarContainerPorts,
+		Name:            sidecarContainerName,
+		Image:           m.completeImageURL(sidecarContainerImageName(m.Runtime)),
+		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
+		Command:         sidecarContainerCmd,
+		VolumeMounts:    sidecarContainerVolumeMounts,
+		Env:             siecarContainerEnvs,
+		Ports:           sidecarContainerPorts,
 	}
 
 	m.deploy.Spec.Template.Spec.Containers = injectContainers(m.deploy.Spec.Template.Spec.Containers, sidecarContainer)
