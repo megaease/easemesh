@@ -322,7 +322,7 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 
 Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
 
-![plugin](./imgs/chrome_plugin.png)
+    ![plugin](./imgs/chrome_plugin.png)
 
 ### 7.3 Clean
 
