@@ -34,6 +34,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -112,27 +113,50 @@ func postInstall(context *installbase.StageContext) {
 	name := installbase.DefaultMeshControlPlanePlubicServiceName
 	service, err := context.Client.CoreV1().Services(namespace).Get(stdcontext.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		common.ExitWithErrorf("get service %s/%s failed: %v", namespace, name, err)
+		common.OutputErrorf("ignored: get service %s/%s failed: %v", namespace, name, err)
+		return
 	}
 
 	rc, err := rcfile.New()
 	if err != nil {
-		common.ExitWithErrorf("new rcfile failed: %v", err)
+		common.OutputErrorf("ignored: new rcfile failed: %v", err)
+		return
+	}
+
+	nodes, err := context.Client.CoreV1().Nodes().List(stdcontext.TODO(), metav1.ListOptions{})
+	if err != nil {
+		common.OutputErrorf("ignored: get nodes information failed: %v", err)
+		return
+	}
+	firstNodeIP := ""
+	for _, n := range nodes.Items {
+		for _, address := range n.Status.Addresses {
+			if address.Type == v1.NodeInternalIP {
+				firstNodeIP = address.Address
+			}
+		}
+	}
+
+	if firstNodeIP == "" {
+		common.OutputErrorf("ignored: no candidate node ip can be selected")
+		return
 	}
 
 	for _, port := range service.Spec.Ports {
 		if port.Name == installbase.DefaultMeshAdminPortName {
-			rc.Server = fmt.Sprintf("%s:%d", service.Spec.ClusterIP, port.Port)
+			rc.Server = fmt.Sprintf("%s:%d", firstNodeIP, port.NodePort)
+			break
 		}
 	}
 
 	if rc.Server == "" {
-		common.ExitWithErrorf("%s of service %s/%s not found", installbase.DefaultMeshAdminPortName, namespace, name)
+		common.OutputErrorf("ignored: %s of service %s/%s not found", installbase.DefaultMeshAdminPortName, namespace, name)
+		return
 	}
 
 	err = rc.Marshal()
 	if err != nil {
-		common.ExitWithError(err)
+		common.OutputError(err)
 	} else {
 		fmt.Printf("run commands file: %s\n", rc.Path())
 	}
