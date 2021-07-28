@@ -30,12 +30,15 @@ import (
 )
 
 // Run is the entrypoint of the get sub command
-func Run(cmd *cobra.Command, flags *flags.Get) {
-	switch flags.OutputFormat {
+func Run(cmd *cobra.Command, flag *flags.Get) {
+	if flag.Server == "" {
+		flag.Server = flags.GetServerAddress()
+	}
+	switch flag.OutputFormat {
 	case "table", "yaml", "json":
 	default:
 		common.ExitWithErrorf("unsupported output format %s (support table, yaml, json)",
-			flags.OutputFormat)
+			flag.OutputFormat)
 	}
 
 	visitorBulder := util.NewVisitorBuilder()
@@ -63,7 +66,7 @@ func Run(cmd *cobra.Command, flags *flags.Get) {
 		common.ExitWithErrorf("build visitor failed: %s", err)
 	}
 
-	printer := printer.New(flags.OutputFormat)
+	printer := printer.New(flag.OutputFormat)
 	var errs []error
 	for _, vs := range vss {
 		err := vs.Visit(func(mo resource.MeshObject, e error) error {
@@ -76,7 +79,7 @@ func Run(cmd *cobra.Command, flags *flags.Get) {
 				resourceID += "/" + mo.Name()
 			}
 
-			objects, err := WrapGetterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Get()
+			objects, err := WrapGetterByMeshObject(mo, meshclient.New(flag.Server), flag.Timeout).Get()
 			if err != nil {
 				return errors.Wrapf(err, "%s get failed", resourceID)
 			}

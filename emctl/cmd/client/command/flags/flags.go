@@ -201,24 +201,19 @@ type (
 	}
 )
 
-var (
-	globalRCFile *rcfile.RCFile
-)
-
-func init() {
+// GetServerAddress return global server address configuration
+func GetServerAddress() string {
 	rc, err := rcfile.New()
 	if err != nil {
-		globalRCFile = &rcfile.RCFile{}
-		common.OutputErrorf("new rcfile failed: %v", err)
-		return
+		return ""
 	}
 
 	err = rc.Unmarshal()
 	if err != nil {
 		common.OutputErrorf("unmarshal rcfile failed: %v", err)
+		return ""
 	}
-
-	globalRCFile = rc
+	return rc.Server
 }
 
 // AttachCmd attaches options for installation sub command
@@ -270,12 +265,7 @@ func (o *OperationGlobal) AttachCmd(cmd *cobra.Command) {
 
 // AttachCmd attaches options for base administrator command
 func (a *AdminGlobal) AttachCmd(cmd *cobra.Command) {
-	server := "127.0.0.1:2381"
-	if globalRCFile.Server != "" {
-		server = globalRCFile.Server
-	}
-
-	cmd.Flags().StringVarP(&a.Server, "server", "s", server, "An address to access the EaseMesh control plane")
+	cmd.Flags().StringVarP(&a.Server, "server", "s", "", "An address to access the EaseMesh control plane")
 	cmd.Flags().DurationVarP(&a.Timeout, "timeout", "t", 30*time.Second, "A duration that limit max time out for requesting the EaseMesh control plane")
 }
 
