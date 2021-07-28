@@ -61,7 +61,8 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 		_, err = client.NewHTTPJSON().
 			Post(url, configBody, time.Second*5, nil).
 			HandleResponse(func(body []byte, statusCode int) (interface{}, error) {
-				if statusCode >= 400 {
+				if statusCode >= 400 && statusCode != 409 {
+					// 409 represents mesh_controller already enabled ?
 					return nil, errors.Errorf("setup EaseMesh controller panel error, controller panel return statusCode %d, body: %s", statusCode, string(body))
 				}
 				return nil, nil

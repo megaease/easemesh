@@ -31,15 +31,19 @@ import (
 )
 
 // Run is the entrypoint of the emctl apply subcommand
-func Run(cmd *cobra.Command, flags *flags.Apply) {
-	if flags.YamlFile == "" {
+func Run(cmd *cobra.Command, flag *flags.Apply) {
+	if flag.Server == "" {
+		flag.Server = flags.GetServerAddress()
+	}
+
+	if flag.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")
 	}
 
 	vss, err := util.NewVisitorBuilder().
 		FilenameParam(&util.FilenameOptions{
-			Recursive: flags.Recursive,
-			Filenames: []string{flags.YamlFile},
+			Recursive: flag.Recursive,
+			Filenames: []string{flag.YamlFile},
 		}).
 		Do()
 
@@ -54,7 +58,7 @@ func Run(cmd *cobra.Command, flags *flags.Apply) {
 				return errors.Wrap(e, "visit failed")
 			}
 
-			err := WrapApplierByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Apply()
+			err := WrapApplierByMeshObject(mo, meshclient.New(flag.Server), flag.Timeout).Apply()
 			if err != nil {
 				return fmt.Errorf("%s/%s applied failed: %s", mo.Kind(), mo.Name(), err)
 			}

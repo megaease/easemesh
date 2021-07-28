@@ -31,17 +31,22 @@ import (
 )
 
 // Run is the entrypoint of the emctl delete sub command
-func Run(cmd *cobra.Command, flags *flags.Delete) {
+func Run(cmd *cobra.Command, flag *flags.Delete) {
+
+	if flag.Server == "" {
+		flag.Server = flags.GetServerAddress()
+	}
+
 	visitorBulder := util.NewVisitorBuilder()
 
 	cmdArgs := cmd.Flags().Args()
 
-	if len(cmdArgs) == 0 && flags.YamlFile == "" {
+	if len(cmdArgs) == 0 && flag.YamlFile == "" {
 		common.ExitWithErrorf("no resource specified")
 	}
 
 	if len(cmdArgs) != 0 {
-		if flags.YamlFile != "" {
+		if flag.YamlFile != "" {
 			common.ExitWithErrorf("file and command args are both specified")
 		}
 		if len(cmdArgs) != 2 {
@@ -53,10 +58,10 @@ func Run(cmd *cobra.Command, flags *flags.Delete) {
 		})
 	}
 
-	if flags.YamlFile != "" {
+	if flag.YamlFile != "" {
 		visitorBulder.FilenameParam(&util.FilenameOptions{
-			Recursive: flags.Recursive,
-			Filenames: []string{flags.YamlFile},
+			Recursive: flag.Recursive,
+			Filenames: []string{flag.YamlFile},
 		})
 	}
 
@@ -72,7 +77,7 @@ func Run(cmd *cobra.Command, flags *flags.Delete) {
 				return errors.Wrap(e, "visit failed")
 			}
 
-			err := WrapDeleterByMeshObject(mo, meshclient.New(flags.Server), flags.Timeout).Delete()
+			err := WrapDeleterByMeshObject(mo, meshclient.New(flag.Server), flag.Timeout).Delete()
 			if err != nil {
 				return errors.Wrapf(err, "%s/%s deleted failed", mo.Kind(), mo.Name())
 			}
