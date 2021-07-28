@@ -125,9 +125,10 @@ func postInstall(context *installbase.StageContext) {
 
 	nodes, err := context.Client.CoreV1().Nodes().List(stdcontext.TODO(), metav1.ListOptions{})
 	if err != nil {
-		common.OutputErrorf("ignored: get nodes information failed: %v", err)
+		common.OutputErrorf("ignored: get nodes' information failed: %v", err)
 		return
 	}
+
 	firstNodeIP := ""
 	for _, n := range nodes.Items {
 		for _, address := range n.Status.Addresses {
