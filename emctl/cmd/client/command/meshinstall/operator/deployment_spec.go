@@ -34,7 +34,6 @@ import (
 type deploymentSpecFunc func(installFlags *flags.Install) *appsV1.Deployment
 
 func operatorDeploymentSpec(installFlags *flags.Install) installbase.InstallFunc {
-
 	deployment := deploymentConfigVolumeSpec(
 		deploymentManagerContainerSpec(
 			deploymentRBACContainerSpec(
@@ -93,7 +92,7 @@ func deploymentRBACContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		rbacContainer.Ports = []v1.ContainerPort{
 			{
 				Name:          "https",
-				ContainerPort: int32(8443),
+				ContainerPort: 8443,
 			},
 		}
 		rbacContainer.Args = []string{
@@ -122,6 +121,14 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 					},
 				},
 			},
+			{
+				Name: "cert-volume",
+				VolumeSource: v1.VolumeSource{
+					Secret: &v1.SecretVolumeSource{
+						SecretName: "easemesh-sidecar-injector-webhook-certs",
+					},
+				},
+			},
 		}
 		return spec
 	}
@@ -129,10 +136,9 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentManagerContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 		spec := fn(installFlags)
-		container, _ := installbase.AcceptContainerVisistor("operator-manager",
+		container, _ := installbase.AcceptContainerVisitor("operator-manager",
 			installFlags.ImageRegistryURL+"/"+installFlags.EaseMeshOperatorImage,
 			v1.PullAlways,
 			newVisitor(installFlags))
@@ -157,7 +163,12 @@ func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []str
 }
 
 func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
-	return nil, nil
+	return []v1.ContainerPort{
+		{
+			Name:          "mutate-webhook",
+			ContainerPort: 9090,
+		},
+	}, nil
 }
 
 func (v *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
@@ -200,12 +211,15 @@ func (v *containerVisitor) VisitorResourceRequirements(c *v1.Container) (*v1.Res
 }
 
 func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
-
 	return []v1.VolumeMount{
 		{
 			Name:      "config-volume",
 			MountPath: "/opt/mesh/operator-config.yaml",
 			SubPath:   "operator-config.yaml",
+		},
+		{
+			Name:      "cert-volume",
+			MountPath: "/cert-volume",
 		},
 	}, nil
 }

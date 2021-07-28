@@ -78,7 +78,7 @@ func Clear(context *installbase.StageContext) error {
 	}
 
 	coreV1Resources := [][]string{
-		{"services", installbase.DefaultMeshOperatorControllerManagerServiceName},
+		{"services", installbase.DefaultMeshOperatorServiceName},
 		{"configmap", meshOperatorConfigMap},
 	}
 

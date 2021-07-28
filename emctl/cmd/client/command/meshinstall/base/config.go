@@ -58,12 +58,15 @@ type MeshControllerConfig struct {
 }
 
 type MeshOperatorConfig struct {
-	ImageRegistryURL     string `yaml:"image-registry-url" jsonschema:"required"`
-	ClusterName          string `yaml:"cluster-name" jsonschema:"required"`
-	ClusterJoinURLs      string `yaml:"cluster-join-urls" jsonschema:"required"`
-	MetricsAddr          string `yaml:"metrics-bind-address" jsonschema:"required"`
-	EnableLeaderElection bool   `yaml:"leader-elect" jsonschema:"required"`
-	ProbeAddr            string `yaml:"health-probe-bind-address" jsonschema:"required"`
+	ImageRegistryURL     string   `yaml:"image-registry-url" jsonschema:"required"`
+	ClusterName          string   `yaml:"cluster-name" jsonschema:"required"`
+	ClusterJoinURLs      []string `yaml:"cluster-join-urls" jsonschema:"required"`
+	MetricsAddr          string   `yaml:"metrics-bind-address" jsonschema:"required"`
+	EnableLeaderElection bool     `yaml:"leader-elect" jsonschema:"required"`
+	ProbeAddr            string   `yaml:"health-probe-bind-address" jsonschema:"required"`
+	TLSCertFile          string   `yaml:"tls-cert-file" jsonschema:"required"`
+	TLSKeyFile           string   `yaml:"tls-key-file" jsonschema:"required"`
+	WebhookPort          uint16   `yaml:"webhook-port" jsonschema:"required"`
 }
 
 type EasegressReaderParams struct {

@@ -1,4 +1,21 @@
-package controllers
+/*
+ * Copyright (c) 2017, MegaEase
+ * All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package deploymentmodifier
 
 import (
 	"fmt"
@@ -138,7 +155,7 @@ func marshalLabels(labels map[string]string) string {
 	return strings.Join(labelsSlice, "&")
 }
 
-func initContainerCommand(service *meshService) []string {
+func initContainerCommand(service *MeshService) []string {
 	// TODO: Adjust for label names:
 	// alive-probe -> mesh-alive-probe-url
 	// application-port -> mesh-application-port
@@ -176,13 +193,13 @@ labels:
 }
 
 type (
-	deploymentModifier struct {
+	DeploymentModifier struct {
 		*base.Runtime
-		meshService *meshService
+		meshService *MeshService
 		deploy      *v1.Deployment
 	}
 
-	meshService struct {
+	MeshService struct {
 		// Name is required.
 		Name string
 
@@ -202,17 +219,19 @@ type (
 	}
 )
 
-func newDeploymentModifier(baseRuntime *base.Runtime, meshService *meshService,
-	deploy *v1.Deployment) *deploymentModifier {
+// New creates a DeployModifier.
+func New(baseRuntime *base.Runtime, meshService *MeshService,
+	deploy *v1.Deployment) *DeploymentModifier {
 
-	return &deploymentModifier{
+	return &DeploymentModifier{
 		Runtime:     baseRuntime,
 		meshService: meshService,
 		deploy:      deploy,
 	}
 }
 
-func (m *deploymentModifier) modify() error {
+// Modify modifies the Deployment.
+func (m *DeploymentModifier) Modify() error {
 	err := m.setupMeshService()
 	if err != nil {
 		return errors.Wrap(err, "set up mesh service")
@@ -230,7 +249,7 @@ func (m *deploymentModifier) modify() error {
 	return nil
 }
 
-func (m *deploymentModifier) setupMeshService() error {
+func (m *DeploymentModifier) setupMeshService() error {
 	if len(m.deploy.Spec.Template.Spec.Containers) == 0 {
 		return fmt.Errorf("empty containers")
 	}
@@ -257,7 +276,7 @@ func (m *deploymentModifier) setupMeshService() error {
 	return nil
 }
 
-func (m *deploymentModifier) injectVolumes(volumes ...corev1.Volume) {
+func (m *DeploymentModifier) injectVolumes(volumes ...corev1.Volume) {
 	for _, volume := range volumes {
 		replaced := false
 		for i, existedVolume := range m.deploy.Spec.Template.Spec.Volumes {
@@ -275,7 +294,7 @@ func (m *deploymentModifier) injectVolumes(volumes ...corev1.Volume) {
 
 }
 
-func (m *deploymentModifier) injectInitContainer() {
+func (m *DeploymentModifier) injectInitContainer() {
 	initContainer := corev1.Container{
 		Name:            initContainerName,
 		Image:           m.completeImageURL(initContainerImageName),
@@ -287,7 +306,7 @@ func (m *deploymentModifier) injectInitContainer() {
 	m.deploy.Spec.Template.Spec.InitContainers = injectContainers(m.deploy.Spec.Template.Spec.InitContainers, initContainer)
 }
 
-func (m *deploymentModifier) adaptAppContainerSpec() error {
+func (m *DeploymentModifier) adaptAppContainerSpec() error {
 	containers := m.deploy.Spec.Template.Spec.Containers
 	if len(containers) == 0 {
 		return errors.Errorf("zero containers")
@@ -307,7 +326,7 @@ func (m *deploymentModifier) adaptAppContainerSpec() error {
 	return nil
 }
 
-func (m *deploymentModifier) injectSidecarContainer() {
+func (m *DeploymentModifier) injectSidecarContainer() {
 	sidecarContainer := corev1.Container{
 		Name:            sidecarContainerName,
 		Image:           m.completeImageURL(sidecarContainerImageName(m.Runtime)),
@@ -321,7 +340,7 @@ func (m *deploymentModifier) injectSidecarContainer() {
 	m.deploy.Spec.Template.Spec.Containers = injectContainers(m.deploy.Spec.Template.Spec.Containers, sidecarContainer)
 }
 
-func (m *deploymentModifier) completeImageURL(imageName string) string {
+func (m *DeploymentModifier) completeImageURL(imageName string) string {
 	return filepath.Join(m.ImageRegistryURL, imageName)
 }
 

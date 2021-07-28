@@ -33,14 +33,16 @@ import (
 )
 
 func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
-
 	cfg := installbase.MeshOperatorConfig{
 		ImageRegistryURL:     installFlags.ImageRegistryURL,
 		ClusterName:          installbase.DefaultMeshControlPlaneName,
-		ClusterJoinURLs:      "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + installFlags.MeshNamespace + ":" + strconv.Itoa(installFlags.EgPeerPort),
+		ClusterJoinURLs:      []string{"http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + installFlags.MeshNamespace + ":" + strconv.Itoa(installFlags.EgPeerPort)},
 		MetricsAddr:          "127.0.0.1:8080",
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
+		TLSCertFile:          "/cert-volume/cert.pem",
+		TLSKeyFile:           "/cert-volume/key.pem",
+		WebhookPort:          9090,
 	}
 
 	configMap := &v1.ConfigMap{

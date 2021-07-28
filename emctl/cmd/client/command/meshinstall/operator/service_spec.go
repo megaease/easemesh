@@ -34,15 +34,20 @@ func serviceSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshOperatorControllerManagerServiceName,
+			Name:      installbase.DefaultMeshOperatorServiceName,
 			Namespace: installFlags.MeshNamespace,
 		},
 	}
 	service.Spec.Ports = []v1.ServicePort{
 		{
 			Name:       "https",
-			Port:       int32(8443),
+			Port:       8443,
 			TargetPort: intstr.IntOrString{StrVal: "https"},
+		},
+		{
+			Name:       "mutate-webhook",
+			Port:       9090,
+			TargetPort: intstr.IntOrString{StrVal: "mutate-webhook"},
 		},
 	}
 	service.Spec.Selector = labels

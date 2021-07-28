@@ -18,7 +18,6 @@
 package main
 
 import (
-	"flag"
 	"io/ioutil"
 	"os"
 
@@ -27,6 +26,7 @@ import (
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/megaease/easemesh/mesh-operator/pkg/controllers"
+	"github.com/megaease/easemesh/mesh-operator/pkg/hook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -38,6 +38,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// +kubebuilder:scaffold:imports
 	"gopkg.in/yaml.v2"
@@ -68,46 +69,55 @@ func init() {
 
 // ConfigSpec is the config specification.
 type ConfigSpec struct {
-	ImageRegistryURL string `yaml:"image-registry-url" jsonschema:"required"`
-	ClusterName      string `yaml:"cluster-name" jsonschema:"required"`
-	// TODO: Make it to []string along with install configmap,
-	// so it only supports one url for now.
-	ClusterJoinURLs      string `yaml:"cluster-join-urls" jsonschema:"required"`
-	MetricsAddr          string `yaml:"metrics-bind-address" jsonschema:"required"`
-	EnableLeaderElection bool   `yaml:"leader-elect" jsonschema:"required"`
-	ProbeAddr            string `yaml:"health-probe-bind-address" jsonschema:"required"`
+	ImageRegistryURL     string   `yaml:"image-registry-url" jsonschema:"required"`
+	ClusterName          string   `yaml:"cluster-name" jsonschema:"required"`
+	ClusterJoinURLs      []string `yaml:"cluster-join-urls" jsonschema:"required"`
+	MetricsAddr          string   `yaml:"metrics-bind-address" jsonschema:"required"`
+	EnableLeaderElection bool     `yaml:"leader-elect" jsonschema:"required"`
+	ProbeAddr            string   `yaml:"health-probe-bind-address" jsonschema:"required"`
+	WebhookPort          uint16   `yaml:"webhook-port" jsonschema:"required"`
+	CertDir              string   `yaml:"cert-dir"`
+	CertName             string   `yaml:"cert-name" jsonschema:"required"`
+	KeyName              string   `yaml:"key-name" jsonschema:"required"`
 }
 
 func main() {
-	var imageRegistryURL string
-	var sidecarImageName string
-	var imagePullPolicy string
-	var clusterName string
-	var clusterJoinURLs string
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	var configFile string
+	// TODO: Make flags/specfile parsing more maintainable.
+
+	var (
+		imageRegistryURL     string
+		sidecarImageName     string
+		imagePullPolicy      string
+		clusterName          string
+		clusterJoinURLs      []string
+		metricsAddr          string
+		enableLeaderElection bool
+		probeAddr            string
+		configFile           string
+		certDir              string
+		certName             string
+		keyName              string
+		webhookPort          uint16
+	)
 
 	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
 	pflag.StringVar(&sidecarImageName, "sidecar-image-name", DefaultSidecarImageName, "The sidecar image name.")
 	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
 	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
-	pflag.StringVar(&clusterJoinURLs, "cluster-join-urls", "", "The addresses to join the Easegress.")
+	pflag.StringSliceVar(&clusterJoinURLs, "cluster-join-urls", []string{"http://easemesh-controlplane-svc.easemesh:2380"}, "The addresses to join the Easegress.")
 	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	pflag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
 	pflag.StringVar(&configFile, "config", " ", "A yaml file config the operator. ")
+	pflag.StringVar(&certDir, "cert-dir", "/cert-volume", "The TLS cert directory.")
+	pflag.StringVar(&certName, "cert-file", "cert.pem", "The TLS cert file name.")
+	pflag.StringVar(&keyName, "key-file", "key.pem", "The TLS key file name.")
+	pflag.Uint16Var(&webhookPort, "webhook-port", 9090, "Webhook port listening on.")
 
 	pflag.Parse()
 
-	opts := zap.Options{
-		Development: true,
-	}
-
-	opts.BindFlags(flag.CommandLine)
-	pflag.Parse()
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	if configFile != "" {
 		config, err := ioutil.ReadFile(configFile)
@@ -128,9 +138,11 @@ func main() {
 		metricsAddr = spec.MetricsAddr
 		probeAddr = spec.ProbeAddr
 		enableLeaderElection = spec.EnableLeaderElection
+		certDir = spec.CertDir
+		certName = spec.CertName
+		keyName = spec.KeyName
+		webhookPort = spec.WebhookPort
 	}
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -153,10 +165,11 @@ func main() {
 		ImagePullPolicy:  imagePullPolicy,
 		SidecarImageName: sidecarImageName,
 
-		ClusterJoinURLs: []string{clusterJoinURLs},
+		ClusterJoinURLs: clusterJoinURLs,
 		ClusterName:     clusterName,
 	}
 
+	// Create MeshDeploymentReconciler.
 	meshDeploymentRuntime := baseRuntime
 	meshDeploymentRuntime.Name = "MeshDeployment"
 	meshDeploymentRuntime.Log = ctrl.Log.WithName("controllers").WithName("MeshDeployment")
@@ -167,13 +180,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	deploymentRuntime := baseRuntime
-	deploymentRuntime.Name = "Deployment"
-	deploymentRuntime.Log = ctrl.Log.WithName("controllers").WithName("Deployment")
-	deploymentReconciler := &controllers.DeploymentReconciler{Runtime: &meshDeploymentRuntime}
-	deploymentReconciler.SetupWithManager(mgr)
-	if err != nil {
-		setupLog.Error(err, "create controller of Deployment failed")
+	// Create a webhook server.
+	webhookRuntime := baseRuntime
+	webhookRuntime.Name = "Webhook"
+	webhookRuntime.Log = ctrl.Log.WithName("webhook").WithName("mutate")
+	webhookMutate := hook.NewMutateHook(&webhookRuntime)
+	webhookServer := &webhook.Server{
+		Port:     int(webhookPort),
+		CertDir:  certDir,
+		CertName: certName,
+		KeyName:  keyName,
+	}
+
+	webhookServer.Register("/mutate", webhookMutate.Admission)
+
+	if err := mgr.Add(webhookServer); err != nil {
+		setupLog.Error(err, "unable to set up webhook server")
 		os.Exit(1)
 	}
 

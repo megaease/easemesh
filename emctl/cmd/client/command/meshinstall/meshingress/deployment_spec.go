@@ -79,7 +79,7 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 
 		spec := fn(installFlags)
-		container, _ := installbase.AcceptContainerVisistor("easegress-ingress",
+		container, _ := installbase.AcceptContainerVisitor("easegress-ingress",
 			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
 			v1.PullAlways,
 			newVisitor(installFlags))
@@ -163,8 +163,8 @@ func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMoun
 		},
 	}, nil
 }
-func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDevice, error) {
 
+func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDevice, error) {
 	return nil, nil
 }
 
