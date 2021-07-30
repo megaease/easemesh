@@ -56,8 +56,7 @@ const (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
 )
 
 func init() {
@@ -76,7 +75,7 @@ type ConfigSpec struct {
 	EnableLeaderElection bool     `yaml:"leader-elect" jsonschema:"required"`
 	ProbeAddr            string   `yaml:"health-probe-bind-address" jsonschema:"required"`
 	WebhookPort          uint16   `yaml:"webhook-port" jsonschema:"required"`
-	CertDir              string   `yaml:"cert-dir"`
+	CertDir              string   `yaml:"cert-dir" jsonschema:"required"`
 	CertName             string   `yaml:"cert-name" jsonschema:"required"`
 	KeyName              string   `yaml:"key-name" jsonschema:"required"`
 }
@@ -92,12 +91,12 @@ func main() {
 		clusterJoinURLs      []string
 		metricsAddr          string
 		enableLeaderElection bool
-		probeAddr            string
 		configFile           string
+		probeAddr            string
+		webhookPort          uint16
 		certDir              string
 		certName             string
 		keyName              string
-		webhookPort          uint16
 	)
 
 	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
@@ -117,7 +116,8 @@ func main() {
 
 	pflag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
+	setupLog := ctrl.Log.WithName("setup")
 
 	if configFile != "" {
 		config, err := ioutil.ReadFile(configFile)
@@ -136,12 +136,12 @@ func main() {
 		clusterName = spec.ClusterName
 		clusterJoinURLs = spec.ClusterJoinURLs
 		metricsAddr = spec.MetricsAddr
-		probeAddr = spec.ProbeAddr
 		enableLeaderElection = spec.EnableLeaderElection
+		probeAddr = spec.ProbeAddr
+		webhookPort = spec.WebhookPort
 		certDir = spec.CertDir
 		certName = spec.CertName
 		keyName = spec.KeyName
-		webhookPort = spec.WebhookPort
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

@@ -40,9 +40,10 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		MetricsAddr:          "127.0.0.1:8080",
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
-		TLSCertFile:          "/cert-volume/cert.pem",
-		TLSKeyFile:           "/cert-volume/key.pem",
 		WebhookPort:          9090,
+		CertDir:              "/cert-volume",
+		CertName:             "cert.pem",
+		KeyName:              "key.pem",
 	}
 
 	configMap := &v1.ConfigMap{

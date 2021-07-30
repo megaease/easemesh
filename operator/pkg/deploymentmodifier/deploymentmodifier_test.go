@@ -63,7 +63,7 @@ var _ = Describe("DeploymentModifier", func() {
 	}
 
 	modifier := New(baseRuntime, service, originalDeploy)
-	Expect(modifier.modify()).To(Succeed())
+	Expect(modifier.Modify()).To(Succeed())
 
 	gotDeployStr, err := yaml.Marshal(originalDeploy)
 	Expect(err).ShouldNot(HaveOccurred())

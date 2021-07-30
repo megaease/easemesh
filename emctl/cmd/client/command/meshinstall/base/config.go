@@ -64,9 +64,10 @@ type MeshOperatorConfig struct {
 	MetricsAddr          string   `yaml:"metrics-bind-address" jsonschema:"required"`
 	EnableLeaderElection bool     `yaml:"leader-elect" jsonschema:"required"`
 	ProbeAddr            string   `yaml:"health-probe-bind-address" jsonschema:"required"`
-	TLSCertFile          string   `yaml:"tls-cert-file" jsonschema:"required"`
-	TLSKeyFile           string   `yaml:"tls-key-file" jsonschema:"required"`
 	WebhookPort          uint16   `yaml:"webhook-port" jsonschema:"required"`
+	CertDir              string   `yaml:"cert-dir" jsonschema:"required"`
+	CertName             string   `yaml:"cert-name" jsonschema:"required"`
+	KeyName              string   `yaml:"key-name" jsonschema:"required"`
 }
 
 type EasegressReaderParams struct {

@@ -41,6 +41,7 @@ func NewMutateHook(baseRuntime *base.Runtime) *MutateHook {
 	h.Admission = &webhook.Admission{
 		Handler: admission.HandlerFunc(h.mutateHandler),
 	}
+	h.Admission.InjectLogger(h.Log)
 
 	return h
 }
@@ -55,7 +56,7 @@ func (h *MutateHook) mutateHandler(cxt context.Context, req admission.Request) a
 		return ignoreResp(req)
 	}
 
-	deploy := req.Object.Object.(*v1.Deployment)
+	deploy := &v1.Deployment{}
 	err := json.Unmarshal(req.Object.Raw, &deploy)
 	if err != nil {
 		err := errors.Wrapf(err, "unmarshal json to Deployment: %s", req.String())

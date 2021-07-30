@@ -105,9 +105,9 @@ func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 func statefulsetContainerSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	return func(installFlags *flags.Install) *appsV1.StatefulSet {
 		spec := fn(installFlags)
-		container, err := installbase.AcceptContainerVisistor("easegress",
+		container, err := installbase.AcceptContainerVisitor("easegress",
 			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
-			v1.PullAlways,
+			v1.PullIfNotPresent,
 			newContainerVisistor(installFlags))
 		if err != nil {
 			common.ExitWithErrorf("generate mesh controlpanel container spec failed: %s", err)

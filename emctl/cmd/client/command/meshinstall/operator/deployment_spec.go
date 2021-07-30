@@ -140,7 +140,7 @@ func deploymentManagerContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisitor("operator-manager",
 			installFlags.ImageRegistryURL+"/"+installFlags.EaseMeshOperatorImage,
-			v1.PullAlways,
+			v1.PullIfNotPresent,
 			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers =

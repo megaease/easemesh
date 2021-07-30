@@ -81,7 +81,7 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisitor("easegress-ingress",
 			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
-			v1.PullAlways,
+			v1.PullIfNotPresent,
 			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
