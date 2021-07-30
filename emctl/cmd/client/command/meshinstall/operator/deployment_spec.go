@@ -125,7 +125,7 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 				Name: "cert-volume",
 				VolumeSource: v1.VolumeSource{
 					Secret: &v1.SecretVolumeSource{
-						SecretName: "easemesh-sidecar-injector-webhook-certs",
+						SecretName: installbase.DefaultMeshOperatorSecretName,
 					},
 				},
 			},
@@ -219,7 +219,7 @@ func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMoun
 		},
 		{
 			Name:      "cert-volume",
-			MountPath: "/cert-volume",
+			MountPath: installbase.DefaultMeshOperatorCertDir,
 		},
 	}, nil
 }

@@ -19,7 +19,6 @@ package deploymentmodifier
 
 import (
 	_ "embed"
-	"fmt"
 
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	v1 "k8s.io/api/apps/v1"
@@ -38,36 +37,35 @@ var (
 )
 
 var _ = Describe("DeploymentModifier", func() {
-	defer GinkgoRecover()
+	It("modify deployment", func() {
+		originalDeploy := &v1.Deployment{}
+		wantDeploy := &v1.Deployment{}
 
-	originalDeploy := &v1.Deployment{}
-	wantDeploy := &v1.Deployment{}
+		Expect(yaml.Unmarshal([]byte(originalDeployStr), originalDeploy)).To(Succeed())
+		Expect(yaml.Unmarshal([]byte(wantDeployStr), wantDeploy)).To(Succeed())
 
-	Expect(yaml.Unmarshal([]byte(originalDeployStr), originalDeploy)).To(Succeed())
-	Expect(yaml.Unmarshal([]byte(wantDeployStr), wantDeploy)).To(Succeed())
+		baseRuntime := &base.Runtime{
+			Name:            "test-runtime-name",
+			ImagePullPolicy: "IfNotPresent",
+		}
 
-	baseRuntime := &base.Runtime{
-		Name:            "test-runtime-name",
-		ImagePullPolicy: "IfNotPresent",
-	}
+		service := &MeshService{
+			Name: "vets-service",
+			Labels: map[string]string{
+				"app":     "vets-service",
+				"version": "beta",
+			},
+			AppContainerName: "vets-service",
+			ApplicationPort:  9000,
+			AliveProbeURL:    "http://localhost:9000/health",
+		}
 
-	service := &MeshService{
-		Name: "vets-service",
-		Labels: map[string]string{
-			"app":     "vets-service",
-			"version": "beta",
-		},
-		AppContainerName: "vets-service",
-		ApplicationPort:  9000,
-		AliveProbeURL:    "http://localhost:9000/health",
-	}
+		// gotDeployStr, err := yaml.Marshal(originalDeploy)
+		// Expect(err).ShouldNot(HaveOccurred())
+		// fmt.Printf("%s\n", gotDeployStr)
 
-	modifier := New(baseRuntime, service, originalDeploy)
-	Expect(modifier.Modify()).To(Succeed())
-
-	gotDeployStr, err := yaml.Marshal(originalDeploy)
-	Expect(err).ShouldNot(HaveOccurred())
-	fmt.Printf("%s\n", gotDeployStr)
-
-	Expect(originalDeploy).To(Equal(wantDeploy))
+		modifier := New(baseRuntime, service, originalDeploy)
+		Expect(modifier.Modify()).To(Succeed())
+		Expect(originalDeploy).To(Equal(wantDeploy))
+	})
 })

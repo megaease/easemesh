@@ -114,7 +114,6 @@ func (b *baseInstallStage) Do(context *installbase.StageContext, install Install
 }
 
 func (b *baseInstallStage) Clear(context *installbase.StageContext) error {
-	// Do nothing
 	if b.clearFunc != nil {
 		return b.clearFunc(context)
 	}

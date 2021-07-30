@@ -26,6 +26,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/spf13/cobra"
+	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -83,52 +84,76 @@ func applyResource(createFunc func() error, updateFunc func() error) error {
 	return err
 }
 
-func DeployDeployment(deployment *appsV1.Deployment, clientSet *kubernetes.Clientset, namespaces string) error {
+func DeployDeployment(deployment *appsV1.Deployment, clientSet *kubernetes.Clientset, namespace string) error {
 	return applyResource(
 		func() error {
-			_, err := clientSet.AppsV1().Deployments(namespaces).Create(context.TODO(), deployment, metav1.CreateOptions{})
+			_, err := clientSet.AppsV1().Deployments(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
 			return err
 		},
 		func() error {
-			_, err := clientSet.AppsV1().Deployments(namespaces).Update(context.TODO(), deployment, metav1.UpdateOptions{})
+			_, err := clientSet.AppsV1().Deployments(namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
 			return err
 		})
 }
 
-func DeployStatefulset(statefulSet *appsV1.StatefulSet, clientSet *kubernetes.Clientset, namespaces string) error {
+func DeployStatefulset(statefulSet *appsV1.StatefulSet, clientSet *kubernetes.Clientset, namespace string) error {
 	return applyResource(
 		func() error {
-			_, err := clientSet.AppsV1().StatefulSets(namespaces).Create(context.TODO(), statefulSet, metav1.CreateOptions{})
+			_, err := clientSet.AppsV1().StatefulSets(namespace).Create(context.TODO(), statefulSet, metav1.CreateOptions{})
 			return err
 		},
 		func() error {
-			_, err := clientSet.AppsV1().StatefulSets(namespaces).Update(context.TODO(), statefulSet, metav1.UpdateOptions{})
+			_, err := clientSet.AppsV1().StatefulSets(namespace).Update(context.TODO(), statefulSet, metav1.UpdateOptions{})
 			return err
 		},
 	)
 }
 
-func DeployService(service *v1.Service, clientSet *kubernetes.Clientset, namespaces string) error {
+func DeployService(service *v1.Service, clientSet *kubernetes.Clientset, namespace string) error {
 	return applyResource(
 		func() error {
-			_, err := clientSet.CoreV1().Services(namespaces).Create(context.TODO(), service, metav1.CreateOptions{})
+			_, err := clientSet.CoreV1().Services(namespace).Create(context.TODO(), service, metav1.CreateOptions{})
 			return err
 		},
 		func() error {
-			_, err := clientSet.CoreV1().Services(namespaces).Update(context.TODO(), service, metav1.UpdateOptions{})
+			_, err := clientSet.CoreV1().Services(namespace).Update(context.TODO(), service, metav1.UpdateOptions{})
 			return err
 		},
 	)
 }
 
-func DeployConfigMap(configMap *v1.ConfigMap, clientSet *kubernetes.Clientset, namespaces string) error {
+func DeployConfigMap(configMap *v1.ConfigMap, clientSet *kubernetes.Clientset, namespace string) error {
 	return applyResource(
 		func() error {
-			_, err := clientSet.CoreV1().ConfigMaps(namespaces).Create(context.TODO(), configMap, metav1.CreateOptions{})
+			_, err := clientSet.CoreV1().ConfigMaps(namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
 			return err
 		},
 		func() error {
-			_, err := clientSet.CoreV1().ConfigMaps(namespaces).Update(context.TODO(), configMap, metav1.UpdateOptions{})
+			_, err := clientSet.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
+			return err
+		})
+}
+
+func DeploySecret(secret *v1.Secret, clientSet *kubernetes.Clientset, namespace string) error {
+	return applyResource(
+		func() error {
+			_, err := clientSet.CoreV1().Secrets(namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
+			return err
+		},
+		func() error {
+			_, err := clientSet.CoreV1().Secrets(namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
+			return err
+		})
+}
+
+func DeployMutatingWebhookConfig(mutatingWebhookConfig *admissionregv1.MutatingWebhookConfiguration, clientSet *kubernetes.Clientset, namespace string) error {
+	return applyResource(
+		func() error {
+			_, err := clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().Create(context.TODO(), mutatingWebhookConfig, metav1.CreateOptions{})
+			return err
+		},
+		func() error {
+			_, err := clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().Update(context.TODO(), mutatingWebhookConfig, metav1.UpdateOptions{})
 			return err
 		})
 }
@@ -137,24 +162,24 @@ func ListPersistentVolume(clientSet *kubernetes.Clientset) (*v1.PersistentVolume
 	return clientSet.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 }
 
-func DeployRole(role *rbacv1.Role, clientSet *kubernetes.Clientset, namespaces string) error {
+func DeployRole(role *rbacv1.Role, clientSet *kubernetes.Clientset, namespace string) error {
 	return applyResource(
 		func() error {
-			_, err := clientSet.RbacV1().Roles(namespaces).Create(context.TODO(), role, metav1.CreateOptions{})
+			_, err := clientSet.RbacV1().Roles(namespace).Create(context.TODO(), role, metav1.CreateOptions{})
 			return err
 		},
 		func() error {
-			_, err := clientSet.RbacV1().Roles(namespaces).Update(context.TODO(), role, metav1.UpdateOptions{})
+			_, err := clientSet.RbacV1().Roles(namespace).Update(context.TODO(), role, metav1.UpdateOptions{})
 			return err
 		})
 }
 
-func DeployRoleBinding(roleBinding *rbacv1.RoleBinding, clientSet *kubernetes.Clientset, namespaces string) error {
-	_, err := clientSet.RbacV1().RoleBindings(namespaces).Get(context.TODO(), roleBinding.Name, metav1.GetOptions{})
+func DeployRoleBinding(roleBinding *rbacv1.RoleBinding, clientSet *kubernetes.Clientset, namespace string) error {
+	_, err := clientSet.RbacV1().RoleBindings(namespace).Get(context.TODO(), roleBinding.Name, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
-		_, err = clientSet.RbacV1().RoleBindings(namespaces).Create(context.TODO(), roleBinding, metav1.CreateOptions{})
+		_, err = clientSet.RbacV1().RoleBindings(namespace).Create(context.TODO(), roleBinding, metav1.CreateOptions{})
 	} else {
-		_, err = clientSet.RbacV1().RoleBindings(namespaces).Update(context.TODO(), roleBinding, metav1.UpdateOptions{})
+		_, err = clientSet.RbacV1().RoleBindings(namespace).Update(context.TODO(), roleBinding, metav1.UpdateOptions{})
 	}
 	return err
 }

@@ -48,15 +48,21 @@ const (
 
 // Deploy deploy resources of operator
 func Deploy(context *installbase.StageContext) error {
-	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags, []installbase.InstallFunc{
-		configMapSpec(context.Flags),
-		serviceSpec(context.Flags),
-		roleSpec(context.Flags),
-		clusterRoleSpec(context.Flags),
-		roleBindingSpec(context.Flags),
-		clusterRoleBindingSpec(context.Flags),
-		operatorDeploymentSpec(context.Flags),
-	})
+	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags,
+		[]installbase.InstallFunc{
+			configMapSpec(context.Flags),
+			secretSpec(context.Flags),
+			roleSpec(context.Flags),
+			clusterRoleSpec(context.Flags),
+			roleBindingSpec(context.Flags),
+			clusterRoleBindingSpec(context.Flags),
+
+			operatorDeploymentSpec(context.Flags),
+
+			serviceSpec(context.Flags),
+			mutatingWebhookSpec(context.Flags),
+		})
+
 	if err != nil {
 		return err
 	}
@@ -72,7 +78,6 @@ func PreCheck(context *installbase.StageContext) error {
 
 // Clear clears all k8s resources about operator
 func Clear(context *installbase.StageContext) error {
-
 	appsV1Resources := [][]string{
 		{"deployments", installbase.DefaultMeshOperatorName},
 	}
@@ -99,9 +104,9 @@ func Clear(context *installbase.StageContext) error {
 	return nil
 }
 
-// Describe leverage human-readable text to describe different phase
+// DescribePhase leverage human-readable text to describe different phase
 // in the process of the mesh operator
-func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
+func DescribePhase(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
 		return fmt.Sprintf("Begin to install mesh operator in the namespace: %s", context.Flags.MeshNamespace)

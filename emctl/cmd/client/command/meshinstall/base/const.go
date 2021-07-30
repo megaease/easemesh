@@ -44,8 +44,16 @@ const (
 
 	DefaultMeshControllerName = "easemesh-controller"
 
-	DefaultMeshOperatorName        = "easemesh-operator"
-	DefaultMeshOperatorServiceName = "easemesh-operator-service"
+	DefaultMeshOperatorName                = "easemesh-operator"
+	DefaultMeshOperatorServiceName         = "easemesh-operator-service"
+	DefaultMeshOperatorSecretName          = "easemesh-operator-secret"
+	DefaultMeshOperatorCSRName             = "easemesh-operator-csr"
+	DefaultMeshOperatorMutatingWebhookName = "easemesh-operator-mutating-webhook"
+	DefaultMeshOperatorMutatingWebhookPath = "/mutate"
+	DefaultMeshOperatorMutatingWebhookPort = 9090
+	DefaultMeshOperatorCertDir             = "/cert-volume"
+	DefaultMeshOperatorCertFileName        = "cert.pem"
+	DefaultMeshOperatorKeyFileName         = "key.pem"
 
 	DefaultMeshIngressConfig         = "easemesh-ingress-config"
 	DefaultMeshIngressService        = "easemesh-ingress-service"

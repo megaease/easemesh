@@ -60,9 +60,9 @@ func Clear(context *installbase.StageContext) error {
 	return installbase.DeleteCRDResource(context.APIExtensionsClient, crd.Name)
 }
 
-// Describe leverage human-readable text to describe different phase
+// DescribePhase leverage human-readable text to describe different phase
 // in the process of the CRD installation
-func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
+func DescribePhase(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
 		return "Begin to deploy CRD meshdeployment\n"

@@ -89,10 +89,10 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 	}
 
 	install := installation.New(
-		installation.Wrap(crd.PreCheck, crd.Deploy, crd.Clear, crd.Describe),
-		installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.Describe),
-		installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.Describe),
-		installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.Describe),
+		installation.Wrap(crd.PreCheck, crd.Deploy, crd.Clear, crd.DescribePhase),
+		installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
+		installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
+		installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
 	)
 
 	err = install.DoInstallStage(context)

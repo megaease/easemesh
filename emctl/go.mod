@@ -13,6 +13,8 @@ require (
 	github.com/megaease/easemesh-api v1.0.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/gomega v1.14.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
@@ -20,7 +22,7 @@ require (
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
-	gopkg.in/yaml.v2 v2.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.20.1
 	k8s.io/apiextensions-apiserver v0.19.2
 	k8s.io/apimachinery v0.20.1

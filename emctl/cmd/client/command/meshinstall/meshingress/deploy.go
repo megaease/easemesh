@@ -62,9 +62,9 @@ func Clear(context *installbase.StageContext) error {
 	return nil
 }
 
-// Describe leverage human-readable text to describe different phase
+// DescribePhase leverage human-readable text to describe different phase
 // in the process of the mesh ingress controller
-func Describe(context *installbase.StageContext, phase installbase.InstallPhase) string {
+func DescribePhase(context *installbase.StageContext, phase installbase.InstallPhase) string {
 	switch phase {
 	case installbase.BeginPhase:
 		return fmt.Sprintf("Begin to install mesh ingress controller in the namespace:%s", context.Flags.MeshNamespace)
