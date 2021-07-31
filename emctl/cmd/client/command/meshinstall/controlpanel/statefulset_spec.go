@@ -25,25 +25,22 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common"
 	"github.com/pkg/errors"
 
-	"github.com/spf13/cobra"
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-type statefulsetSpecFunc func(installFlags *flags.Install) *appsV1.StatefulSet
+type statefulsetSpecFunc func(ctx *installbase.StageContext) *appsV1.StatefulSet
 
-func statefulsetSpec(installFlags *flags.Install) installbase.InstallFunc {
-
+func statefulsetSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	statefulSet := statefulsetPVCSpec(
 		statefulsetContainerSpec(
 			baseStatefulSetSpec(
-				initialStatefulSetSpec(nil))))(installFlags)
+				initialStatefulSetSpec(nil))))(ctx)
 
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployStatefulset(statefulSet, client, installFlags.MeshNamespace)
+	return func(ctx *installbase.StageContext) error {
+		err := installbase.DeployStatefulset(statefulSet, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "deploy statefulset %s failed", statefulSet.ObjectMeta.Name)
 		}
@@ -52,14 +49,14 @@ func statefulsetSpec(installFlags *flags.Install) installbase.InstallFunc {
 }
 
 func initialStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.StatefulSet {
+	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
 		return &appsV1.StatefulSet{}
 	}
 }
 
 func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.StatefulSet {
-		spec := fn(installFlags)
+	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
+		spec := fn(ctx)
 		labels := meshControlPanelLabel()
 		spec.Name = installbase.DefaultMeshControlPlaneName
 		spec.Spec.ServiceName = installbase.DefaultMeshControlPlaneHeadlessServiceName
@@ -68,7 +65,7 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 			MatchLabels: labels,
 		}
 
-		var replicas = int32(installFlags.EasegressControlPlaneReplicas)
+		var replicas = int32(ctx.Flags.EasegressControlPlaneReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = labels
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
@@ -87,15 +84,15 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	}
 }
 func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.StatefulSet {
-		spec := fn(installFlags)
+	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
+		spec := fn(ctx)
 		pvc := v1.PersistentVolumeClaim{}
 		pvc.Name = installbase.DefaultMeshControlPlanePVName
 		pvc.Spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
-		pvc.Spec.StorageClassName = &installFlags.MeshControlPlaneStorageClassName
+		pvc.Spec.StorageClassName = &ctx.Flags.MeshControlPlaneStorageClassName
 
 		pvc.Spec.Resources.Requests = v1.ResourceList{
-			v1.ResourceStorage: resource.MustParse(installFlags.MeshControlPlanePersistVolumeCapacity),
+			v1.ResourceStorage: resource.MustParse(ctx.Flags.MeshControlPlanePersistVolumeCapacity),
 		}
 		spec.Spec.VolumeClaimTemplates = []v1.PersistentVolumeClaim{pvc}
 		return spec
@@ -103,12 +100,12 @@ func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 }
 
 func statefulsetContainerSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.StatefulSet {
-		spec := fn(installFlags)
+	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
+		spec := fn(ctx)
 		container, err := installbase.AcceptContainerVisitor("easegress",
-			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
-			v1.PullIfNotPresent,
-			newContainerVisistor(installFlags))
+			ctx.Flags.ImageRegistryURL+"/"+ctx.Flags.EasegressImage,
+			v1.PullAlways,
+			newContainerVisistor(ctx))
 		if err != nil {
 			common.ExitWithErrorf("generate mesh controlpanel container spec failed: %s", err)
 			return nil
@@ -120,13 +117,12 @@ func statefulsetContainerSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 }
 
 type containerVisitor struct {
-	installFlags *flags.Install
+	ctx *installbase.StageContext
 }
 
 var _ installbase.ContainerVisitor = &containerVisitor{}
 
-func (m *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
-
+func (m *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
 	return []string{"/bin/sh"},
 		[]string{
 			"-c",
@@ -168,11 +164,11 @@ func (m *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
 		{
 			// Kubernetes leverage shell syntax to help refering another environment
 			Name:  "EG_CLUSTER_ADVERTISE_CLIENT_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNamespace, m.installFlags.EgClientPort),
+			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgClientPort),
 		},
 		{
 			Name:  "EG_CLUSTER_INITIAL_ADVERTISE_PEER_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.installFlags.MeshNamespace, m.installFlags.EgPeerPort),
+			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgPeerPort),
 		},
 	}, nil
 }
@@ -249,7 +245,7 @@ func (m *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, er
 	// 	Handler: v1.Handler{
 	// 		HTTPGet: &v1.HTTPGetAction{
 	// 			Host: "127.0.0.1",
-	// 			Port: intstr.FromInt(m.installFlags.EgAdminPort),
+	// 			Port: intstr.FromInt(m.ctx.Flags.EgAdminPort),
 	// 			Path: "/apis/v1/healthz",
 	// 		},
 	// 	},
@@ -268,6 +264,6 @@ func (m *containerVisitor) VisitorSecurityContext(c *v1.Container) (*v1.Security
 	return nil, nil
 }
 
-func newContainerVisistor(installFlags *flags.Install) installbase.ContainerVisitor {
-	return &containerVisitor{installFlags: installFlags}
+func newContainerVisistor(ctx *installbase.StageContext) installbase.ContainerVisitor {
+	return &containerVisitor{ctx: ctx}
 }

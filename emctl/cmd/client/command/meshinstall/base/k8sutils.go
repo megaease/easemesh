@@ -22,10 +22,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/common"
 
-	"github.com/spf13/cobra"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -288,9 +286,9 @@ func GetMeshControlPanelEntryPoints(client *kubernetes.Clientset, namespace, res
 	return entrypoints, nil
 }
 
-func BatchDeployResources(cmd *cobra.Command, client *kubernetes.Clientset, flags *flags.Install, installFuncs []InstallFunc) error {
-	for _, installer := range installFuncs {
-		err := installer.Deploy(cmd, client, flags)
+func BatchDeployResources(ctx *StageContext, installFuncs []InstallFunc) error {
+	for _, fn := range installFuncs {
+		err := fn.Deploy(ctx)
 		if err != nil {
 			return err
 		}
@@ -324,6 +322,24 @@ func DeleteCoreV1Resource(client *kubernetes.Clientset, resource, namespace, nam
 
 func DeleteRbacV1Resources(client *kubernetes.Clientset, resources, namespace, name string) error {
 	err := client.RbacV1().RESTClient().Delete().Resource(resources).Namespace(namespace).Name(name).Do(context.Background()).Error()
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
+func DeleteAdmissionregV1Resources(client *kubernetes.Clientset, resources, namespace, name string) error {
+	// NOTE: RESTClinet can't find mutatingwebhookconfigurations resource.
+	err := client.AdmissionregistrationV1().MutatingWebhookConfigurations().Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
+func DeleteCertificateV1Beta1Resources(client *kubernetes.Clientset, resources, namespace, name string) error {
+	// NOTE: RESTClinet can't find csr resource.
+	err := client.CertificatesV1beta1().CertificateSigningRequests().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}

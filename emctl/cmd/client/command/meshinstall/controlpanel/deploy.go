@@ -29,33 +29,31 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/client-go/kubernetes"
 )
 
 // Deploy will deploy resource of control panel
-func Deploy(context *installbase.StageContext) error {
+func Deploy(ctx *installbase.StageContext) error {
 
 	installFuncs := []installbase.InstallFunc{
-		namespaceSpec(context.Flags),
-		configMapSpec(context.Flags),
-		serviceSpec(context.Flags),
-		statefulsetSpec(context.Flags),
+		namespaceSpec(ctx),
+		configMapSpec(ctx),
+		serviceSpec(ctx),
+		statefulsetSpec(ctx),
 	}
 
-	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags, installFuncs)
+	err := installbase.BatchDeployResources(ctx, installFuncs)
 	if err != nil {
 		return errors.Wrap(err, "deploy mesh control panel resource")
 	}
 
-	err = checkEasegressControlPlaneStatus(context.Cmd, context.Client, context.Flags)
+	err = checkEasegressControlPlaneStatus(ctx)
 	if err != nil {
 		return errors.Wrap(err, "check mesh control panel status")
 	}
 
-	err = provisionEaseMeshControlPanel(context.Cmd, context.Client, context.Flags)
+	err = provisionEaseMeshControlPanel(ctx)
 	if err != nil {
 		return errors.Wrap(err, "provision mesh control panel")
 	}
@@ -123,6 +121,7 @@ func Clear(context *installbase.StageContext) error {
 
 	installbase.DeleteResources(context.Client, statefulsetResource, context.Flags.MeshNamespace, installbase.DeleteStatefulsetResource)
 	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
+
 	return nil
 }
 
@@ -149,19 +148,19 @@ func checkPVAccessModes(accessModel v1.PersistentVolumeAccessMode, volume *v1.Pe
 	return false
 }
 
-func checkEasegressControlPlaneStatus(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 
 	// Wait a fix time for the Easegress cluster to start
 	time.Sleep(time.Second * 10)
 
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNamespace,
+	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
 		return errors.Wrap(err, "get mesh control plane entrypoint failed")
 	}
 
-	timeOutPerTry := installFlags.MeshControlPlaneCheckHealthzMaxTime / len(entrypoints)
+	timeOutPerTry := ctx.Flags.MeshControlPlaneCheckHealthzMaxTime / len(entrypoints)
 
 	for i := 0; i < len(entrypoints); i++ {
 		_, err := client.NewHTTPJSON(
@@ -176,7 +175,7 @@ func checkEasegressControlPlaneStatus(cmd *cobra.Command, kubeClient *kubernetes
 					return true
 				}
 
-				return len(members) < (installFlags.EaseMeshOperatorReplicas/2 + 1)
+				return len(members) < (ctx.Flags.EaseMeshOperatorReplicas/2 + 1)
 			})...).
 			Get(entrypoints[i]+installbase.MemberList, nil, time.Second*time.Duration(timeOutPerTry), nil).
 			HandleResponse(func(body []byte, statusCode int) (interface{}, error) {
@@ -189,8 +188,9 @@ func checkEasegressControlPlaneStatus(cmd *cobra.Command, kubeClient *kubernetes
 					return nil, err
 				}
 
-				if len(members) < (installFlags.EasegressControlPlaneReplicas/2 + 1) {
-					return nil, errors.Errorf("easemesh control plane is not ready, expect %d of replicas, but %d", installFlags.EasegressControlPlaneReplicas, len(members))
+				if len(members) < (ctx.Flags.EasegressControlPlaneReplicas/2 + 1) {
+					return nil, errors.Errorf("easemesh control plane is not ready, expect %d of replicas, but %d",
+						ctx.Flags.EasegressControlPlaneReplicas, len(members))
 				}
 				return nil, nil
 			})

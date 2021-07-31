@@ -47,27 +47,28 @@ const (
 )
 
 // Deploy deploy resources of operator
-func Deploy(context *installbase.StageContext) error {
-	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags,
+func Deploy(ctx *installbase.StageContext) error {
+	err := installbase.BatchDeployResources(ctx,
 		[]installbase.InstallFunc{
-			configMapSpec(context.Flags),
-			secretSpec(context.Flags),
-			roleSpec(context.Flags),
-			clusterRoleSpec(context.Flags),
-			roleBindingSpec(context.Flags),
-			clusterRoleBindingSpec(context.Flags),
+			csrSpec(ctx),
+			secretSpec(ctx),
+			configMapSpec(ctx),
+			roleSpec(ctx),
+			clusterRoleSpec(ctx),
+			roleBindingSpec(ctx),
+			clusterRoleBindingSpec(ctx),
 
-			operatorDeploymentSpec(context.Flags),
+			operatorDeploymentSpec(ctx),
 
-			serviceSpec(context.Flags),
-			mutatingWebhookSpec(context.Flags),
+			serviceSpec(ctx),
+			mutatingWebhookSpec(ctx),
 		})
 
 	if err != nil {
 		return err
 	}
 
-	return checkOperatorStatus(context.Client, context.Flags)
+	return checkOperatorStatus(ctx.Client, ctx.Flags)
 }
 
 // PreCheck check prerequisite for installing mesh operator
@@ -78,13 +79,18 @@ func PreCheck(context *installbase.StageContext) error {
 
 // Clear clears all k8s resources about operator
 func Clear(context *installbase.StageContext) error {
+	certificateV1BetaResources := [][]string{
+		{"certificatesigningrequests", installbase.DefaultMeshOperatorCSRName},
+	}
+
 	appsV1Resources := [][]string{
 		{"deployments", installbase.DefaultMeshOperatorName},
 	}
 
 	coreV1Resources := [][]string{
 		{"services", installbase.DefaultMeshOperatorServiceName},
-		{"configmap", meshOperatorConfigMap},
+		{"configmaps", meshOperatorConfigMap},
+		{"secrets", installbase.DefaultMeshOperatorSecretName},
 	}
 
 	rbacV1Resources := [][]string{
@@ -97,9 +103,21 @@ func Clear(context *installbase.StageContext) error {
 		{"clusterrolebindings", meshOperatorProxyClusterRoleBinding},
 		{"clusterroles", meshOperatorProxyClusterRole},
 	}
-	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNamespace, installbase.DeleteAppsV1Resource)
-	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
-	installbase.DeleteResources(context.Client, rbacV1Resources, context.Flags.MeshNamespace, installbase.DeleteRbacV1Resources)
+
+	admissionregV1Resources := [][]string{
+		{"mutatingwebhookconfigurations", installbase.DefaultMeshOperatorMutatingWebhookName},
+	}
+
+	installbase.DeleteResources(context.Client, certificateV1BetaResources,
+		context.Flags.MeshNamespace, installbase.DeleteCertificateV1Beta1Resources)
+	installbase.DeleteResources(context.Client, appsV1Resources,
+		context.Flags.MeshNamespace, installbase.DeleteAppsV1Resource)
+	installbase.DeleteResources(context.Client, coreV1Resources,
+		context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
+	installbase.DeleteResources(context.Client, rbacV1Resources,
+		context.Flags.MeshNamespace, installbase.DeleteRbacV1Resources)
+	installbase.DeleteResources(context.Client, admissionregV1Resources,
+		context.Flags.MeshNamespace, installbase.DeleteAdmissionregV1Resources)
 
 	return nil
 }

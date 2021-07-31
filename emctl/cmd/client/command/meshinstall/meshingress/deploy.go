@@ -29,17 +29,17 @@ import (
 )
 
 // Deploy deploy resources of mesh ingress controller
-func Deploy(context *installbase.StageContext) error {
-	err := installbase.BatchDeployResources(context.Cmd, context.Client, context.Flags, []installbase.InstallFunc{
-		configMapSpec(context.Flags),
-		serviceSpec(context.Flags),
-		deploymentSpec(context.Flags),
+func Deploy(ctx *installbase.StageContext) error {
+	err := installbase.BatchDeployResources(ctx, []installbase.InstallFunc{
+		configMapSpec(ctx),
+		serviceSpec(ctx),
+		deploymentSpec(ctx),
 	})
 	if err != nil {
 		return err
 	}
 
-	return checkMeshIngressStatus(context.Client, context.Flags)
+	return checkMeshIngressStatus(ctx.Client, ctx.Flags)
 }
 
 // PreCheck check prerequisite for installing mesh ingress controller

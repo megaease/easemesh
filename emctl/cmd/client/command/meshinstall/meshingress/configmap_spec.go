@@ -24,18 +24,16 @@ import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
+func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	params := &installbase.EasegressReaderParams{}
 	params.ClusterRole = installbase.ReaderClusterRole
 	params.ClusterRequestTimeout = "10s"
-	params.ClusterJoinUrls = "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + ":" + strconv.Itoa(installFlags.EgPeerPort)
+	params.ClusterJoinUrls = "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + ":" + strconv.Itoa(ctx.Flags.EgPeerPort)
 	params.ClusterName = installbase.DefaultMeshControlPlaneName
 	params.Name = "mesh-ingress"
 
@@ -48,7 +46,7 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshIngressConfig,
-			Namespace: installFlags.MeshNamespace,
+			Namespace: ctx.Flags.MeshNamespace,
 		},
 	}
 	if err == nil {
@@ -56,11 +54,11 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		configMap.Data = data
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
+	return func(ctx *installbase.StageContext) error {
 		if err != nil {
 			return errors.Wrapf(err, "Create MeshIngress %s configmap spec", configMap.Name)
 		}
-		err = installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNamespace)
+		err = installbase.DeployConfigMap(configMap, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "Deploy configmap %s", configMap.Name)
 		}

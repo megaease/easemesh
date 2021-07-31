@@ -24,10 +24,8 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
-	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/controlpanel"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/crd"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
-	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
 	"github.com/megaease/easemeshctl/cmd/client/command/rcfile"
 	"github.com/megaease/easemeshctl/cmd/common"
@@ -90,9 +88,9 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 
 	install := installation.New(
 		installation.Wrap(crd.PreCheck, crd.Deploy, crd.Clear, crd.DescribePhase),
-		installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
+		// installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
 		installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
-		installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
+		// installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
 	)
 
 	err = install.DoInstallStage(context)

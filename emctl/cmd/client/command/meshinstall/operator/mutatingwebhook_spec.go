@@ -21,16 +21,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
-	"github.com/spf13/cobra"
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-func mutatingWebhookSpec(installFlags *flags.Install) installbase.InstallFunc {
+func mutatingWebhookSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	mutatingPath := installbase.DefaultMeshOperatorMutatingWebhookPath
 	mutatingPort := int32(installbase.DefaultMeshOperatorMutatingWebhookPort)
 	mutatingScope := admissionregv1.NamespacedScope
@@ -40,7 +37,7 @@ func mutatingWebhookSpec(installFlags *flags.Install) installbase.InstallFunc {
 		return &admissionregv1.MutatingWebhookConfiguration{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      installbase.DefaultMeshOperatorMutatingWebhookName,
-				Namespace: installFlags.MeshNamespace,
+				Namespace: ctx.Flags.MeshNamespace,
 			},
 			Webhooks: []admissionregv1.MutatingWebhook{
 				{
@@ -51,7 +48,7 @@ func mutatingWebhookSpec(installFlags *flags.Install) installbase.InstallFunc {
 								Key:      "kubernetes.io/metadata.name",
 								Operator: metav1.LabelSelectorOpNotIn,
 								Values: []string{
-									installFlags.MeshNamespace,
+									ctx.Flags.MeshNamespace,
 									"kube-system",
 									"kube-public",
 								},
@@ -65,7 +62,7 @@ func mutatingWebhookSpec(installFlags *flags.Install) installbase.InstallFunc {
 					ClientConfig: admissionregv1.WebhookClientConfig{
 						Service: &admissionregv1.ServiceReference{
 							Name:      installbase.DefaultMeshOperatorServiceName,
-							Namespace: installFlags.MeshNamespace,
+							Namespace: ctx.Flags.MeshNamespace,
 							Path:      &mutatingPath,
 							Port:      &mutatingPort,
 						},
@@ -92,8 +89,8 @@ func mutatingWebhookSpec(installFlags *flags.Install) installbase.InstallFunc {
 		}
 	}
 
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
-		secret, err := client.CoreV1().Secrets(installFlags.MeshNamespace).Get(context.TODO(), installbase.DefaultMeshOperatorSecretName, metav1.GetOptions{})
+	return func(ctx *installbase.StageContext) error {
+		secret, err := ctx.Client.CoreV1().Secrets(ctx.Flags.MeshNamespace).Get(context.TODO(), installbase.DefaultMeshOperatorSecretName, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -107,7 +104,7 @@ func mutatingWebhookSpec(installFlags *flags.Install) installbase.InstallFunc {
 
 		config := mutatingWebhookConfig(certBase64)
 
-		err = installbase.DeployMutatingWebhookConfig(config, client, installFlags.MeshNamespace)
+		err = installbase.DeployMutatingWebhookConfig(config, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return fmt.Errorf("create configMap failed: %v ", err)
 		}
