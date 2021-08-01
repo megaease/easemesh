@@ -38,8 +38,8 @@ func secretSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	return func(ctx *installbase.StageContext) error {
 		// NOTE: []byte will be automatically encoded as a base64-encoded string.
 		// Reference: https://golang.org/pkg/encoding/json/#Marshal
-		secret.Data[installbase.DefaultMeshOperatorCertFileName] = ctx.CertPem
-		secret.Data[installbase.DefaultMeshOperatorKeyFileName] = ctx.KeyPem
+		secret.Data[installbase.DefaultMeshOperatorCertFileName] = ctx.OperatorCertPem
+		secret.Data[installbase.DefaultMeshOperatorKeyFileName] = ctx.OperatorKeyPem
 
 		err := installbase.DeploySecret(secret, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {

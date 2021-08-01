@@ -42,7 +42,7 @@ func csrSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 			return err
 		}
 
-		ctx.CsrPem, ctx.KeyPem = csrPem, keyPem
+		ctx.OperatorCsrPem, ctx.OperatorKeyPem = csrPem, keyPem
 
 		csr := &certv1beta1.CertificateSigningRequest{
 			TypeMeta: metav1.TypeMeta{
@@ -80,7 +80,7 @@ func csrSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 			}
 
 			if len(csr.Status.Certificate) != 0 {
-				ctx.CertPem = csr.Status.Certificate
+				ctx.OperatorCertPem = csr.Status.Certificate
 				return nil
 			}
 
@@ -93,7 +93,7 @@ func csrSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 				csr, metav1.UpdateOptions{})
 			if errors.IsConflict(err) && i < 10 {
 				if csr != nil && len(csr.Status.Certificate) != 0 {
-					ctx.CertPem = csr.Status.Certificate
+					ctx.OperatorCertPem = csr.Status.Certificate
 					return nil
 				}
 				continue

@@ -89,9 +89,9 @@ type (
 		ClearFuncs          []func(*StageContext) error
 
 		// Business Level.
-		CsrPem  []byte
-		KeyPem  []byte
-		CertPem []byte
+		OperatorCsrPem  []byte
+		OperatorKeyPem  []byte
+		OperatorCertPem []byte
 	}
 
 	InstallFunc func(ctx *StageContext) error
