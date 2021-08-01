@@ -18,7 +18,6 @@ import (
 
 const (
 	annotationPrefix              = "mesh.megaease.com/"
-	annotationEnableKey           = annotationPrefix + "enable"
 	annotationServiceNameKey      = annotationPrefix + "service-name"
 	annotationAppContainerNameKey = annotationPrefix + "app-container-name"
 	annotationApplicationPortKey  = annotationPrefix + "application-port"
@@ -62,10 +61,6 @@ func (h *MutateHook) mutateHandler(cxt context.Context, req admission.Request) a
 		err := errors.Wrapf(err, "unmarshal json to Deployment: %s", req.String())
 		h.Log.Error(err, "")
 		return errorResp(err)
-	}
-
-	if deploy.Annotations[annotationEnableKey] != "true" {
-		return ignoreResp(req)
 	}
 
 	h.Log.Info("mutate Deployment", "id", fmt.Sprintf("%s/%s", req.Namespace, req.Name))
