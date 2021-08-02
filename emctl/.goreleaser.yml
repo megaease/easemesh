@@ -1,0 +1,41 @@
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+
+snapshot:
+  name_template: '{{ .Tag }}'
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  skip: true
+
+builds:
+  - id: emctl
+    main: cmd/client/main.go
+    binary: bin/egctl
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    ldflags:
+      - -s -w
+      - -X github.com/megaease/easemesh/emctl/pkg/version.RELEASE=v1.0.0
+      - -X github.com/megaease/easemesh/emctl/pkg/version.COMMIT={{.Commit}}
+      - -X github.com/megaease/easemesh/emctl/pkg/version.REPO=megaease/easemesh
+
+archives:
+  - id: emctl
+    format: tar.gz
+    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    files:
+      - none*
+
+release:
+  github:
+    owner: megaease
+    name: easemesh
+  name_template: "{{ .ProjectName }}-v{{ .Version }}"
