@@ -24,16 +24,16 @@ TARGET=${MKFILE_DIR}bin/emctl
 all: build
 
 test:
-	@go list ./{cmd}/... | grep -v -E 'vendor' | xargs -n1 go test
+	@go list ${MKFILE_DIR}/cmd/... | grep -v -E 'vendor' | xargs -n1 go test
 
 clean:
 	rm -rf ${TARGET}
 
 fmt:
-	cd ${MKFILE_DIR} && go fmt ./{cmd}/...
+	cd ${MKFILE_DIR} && go fmt ./cmd/...
 
 vet:
-	cd ${MKFILE_DIR} && go vet ./{cmd}/...
+	cd ${MKFILE_DIR} && go vet ./cmd/...
 
 vendor_from_mod:
 	cd ${MKFILE_DIR} && go mod vendor

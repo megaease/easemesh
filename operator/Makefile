@@ -5,6 +5,13 @@
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
 VERSION ?= 0.0.1
 
+
+SHELL:=/bin/bash
+
+# Path Related
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MKFILE_DIR := $(dir $(MKFILE_PATH))
+
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "preview,fast,stable")
 # To re-generate a bundle for other specific channels without changing the standard setup, you can:
@@ -33,25 +40,32 @@ IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
+K8S_VER=1.19.x
+
+TARGET = ${MKFILE_DIR}bin/manager
+ALL_SOURCE_FILES = $(shell find ${MKFILE_DIR} -type f -name "*.go")
+
 
 all: manager
-
+#export KUBEBUILDER_ASSETS=/Users/chenhao/GitHub/easemesh/operator/testbin/bin;
 # Run tests
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: generate fmt vet manifests
+ENVTEST_ASSETS_DIR=${MKFILE_DIR}/testbin
+test1: generate fmt vet manifests setup_envtest
+	${SETUP_ENVTEST} use -i -p env ${K8S_VER} > ${MKFILE_DIR}_env.sh
+	source ${MKFILE_DIR}_env.sh; rm -f ${MKFILE_DIR}_env.sh; go test ./... -coverprofile cover.out
+
+test: generate fmt vet manifests setup_envtest
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
 # Build manager binary
-manager: generate fmt vet
-	go build -o bin/manager main.go
+manager: generate fmt vet build 
+
+build: ${TARGET} 
+
+${TARGET} : ${ALL_SOURCE_FILES}
+	go build -o ${TARGET} main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
@@ -86,6 +100,10 @@ fmt:
 vet:
 	go vet ./...
 
+# clean the binaries
+clean:
+	@rm -rf ${MKFILE_DIR}bin ${MKFILE_DIR}testbin ${MKFILE_DIR}cover.out
+
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
@@ -99,17 +117,23 @@ docker-push:
 	docker push ${IMG}
 
 # Download controller-gen locally if necessary
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+CONTROLLER_GEN = ${MKFILE_DIR}/bin/controller-gen
 controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
 # Download kustomize locally if necessary
-KUSTOMIZE = $(shell pwd)/bin/kustomize
+KUSTOMIZE = ${MKFILE_DIR}/bin/kustomize
 kustomize:
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
+# Download setup-envtest 
+SETUP_ENVTEST = ${MKFILE_DIR}/bin/setup-envtest
+setup_envtest:
+	$(call go-get-tool,$(SETUP_ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+	$(SETUP_ENVTEST) use -p path ${K8S_VER}
+	echo ""
+
 # go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-get-tool
 @[ -f $(1) ] || { \
 set -e ;\
@@ -117,7 +141,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(MKFILE_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
