@@ -1,0 +1,54 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yml"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/test.yml"
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Set up Go 1.x.y
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.16.5
+
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Test emctl
+        shell: bash
+        run: |
+          cd emctl && make test TEST_FLAGS="-race -coverprofile=coverage.emctl.txt -covermode=atomic"
+      - name: Upload coverage to Codecov 
+        uses: codecov/codecov-action@v2.0.2
+        with:
+          file: ./coverage.emctl.txt
+
+      - name: Test Operator
+        shell: bash
+        run: |
+          cd operator && make test TEST_FLAGS="-race -coverprofile=coverage.operator.txt -covermode=atomic"
+      - name: Upload coverage to Codecov 
+        uses: codecov/codecov-action@v2.0.2
+        with:
+          file: ./coverage.operator.txt
