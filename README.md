@@ -65,13 +65,13 @@ Why do we reinvent another wheel?
 ## 4. Features
 
 - **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
-- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service registry/discovery
-  - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolate services from different tenants
+- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service registry/discovery.
+  - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolate services from different tenants.
   - **Share (global) tenant** Support share tenants, all services have visibility to the service registered in the global tenant.
   - **Compatible** 
-    - Be compatible with the eureka registry.
-    - Be compatible with the consul registry.
-    - Be compatible with the nacos registry.
+    - Be compatible with the Eureka registry.
+    - Be compatible with the Consul registry.
+    - Be compatible with the Nacos registry.
   - **Extensibility** Support registering services with metadata.
 - **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
 - **Traffic Orchestration** 
@@ -89,26 +89,26 @@ Why do we reinvent another wheel?
     - **Delay injection** *Working in progress.*
 - **Observability**: 
   - **Logs**
-    - **Access Logs** Generate HTTP access log for all request per service
+    - **Access Logs** Generate HTTP access log for all request per service.
     - **Application log** Automatically inject the tracing context into log data.
   - **Tracing**
-    - **JDBC** tracing for invocation of the JDBC.
-    - **HTTP Request** tracing for HTTP RPC.
-    - **Kafka** tracing for messages delivered by the Kafka.
-    - **Redis** tracing for redis cache accessing.
-    - **RabbitMQ** tracing for messages delivered by the RabbitMQ.
+    - **JDBC** Tracing for invocation of the JDBC.
+    - **HTTP Request** Tracing for HTTP RPC.
+    - **Kafka** Tracing for messages delivered by the Kafka.
+    - **Redis** Tracing for redis cache accessing.
+    - **RabbitMQ** Tracing for messages delivered by the RabbitMQ.
     - **Sampling**
-      - Supporting probabilistic sampling
-      - Support QPS sampling
+      - Support probabilistic sampling.
+      - Support QPS sampling.
   - **Metrics**
-    - **HTTP Request** Reporting throughput latency per URLs
-    - **JDBC**  Reporting throughput and latency per SQLs
-    - **Kafka** Reporting throughput and latency per consumers, producers and topics
-    - **Redis** Reporting throughput and latency per methods
-    - **RabbitMQ** Reporting throughput and latency per topics
+    - **HTTP Request** Reporting throughput latency per URLs.
+    - **JDBC**  Reporting throughput and latency per SQLs.
+    - **Kafka** Reporting throughput and latency per consumers, producers and topics.
+    - **Redis** Reporting throughput and latency per methods.
+    - **RabbitMQ** Reporting throughput and latency per topics.
 - **Security**
   - **mTLS** *Working in progress.*
-  - **mTLS Enforcement** *Working in progress*
+  - **mTLS Enforcement** *Working in progress.*
   - **External CA certificate** *Working in progress.*
   - **Service-to-Service Authorization Rules** *Working in progress.*
 
