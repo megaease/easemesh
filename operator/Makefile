@@ -47,7 +47,7 @@ ALL_SOURCE_FILES = $(shell find ${MKFILE_DIR} -type f -name "*.go")
 
 
 all: manager
-#export KUBEBUILDER_ASSETS=/Users/chenhao/GitHub/easemesh/operator/testbin/bin;
+
 # Run tests
 ENVTEST_ASSETS_DIR=${MKFILE_DIR}/testbin
 test1: generate fmt vet manifests setup_envtest

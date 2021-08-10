@@ -42,7 +42,7 @@ jobs:
       - name: Upload coverage to Codecov 
         uses: codecov/codecov-action@v2.0.2
         with:
-          file: ./coverage.emctl.txt
+          file: ./emctl/coverage.emctl.txt
 
       - name: Test Operator
         shell: bash
@@ -51,4 +51,4 @@ jobs:
       - name: Upload coverage to Codecov 
         uses: codecov/codecov-action@v2.0.2
         with:
-          file: ./coverage.operator.txt
+          file: ./operator/coverage.operator.txt
