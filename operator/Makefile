@@ -50,7 +50,7 @@ all: manager
 
 # Run tests
 ENVTEST_ASSETS_DIR=${MKFILE_DIR}/testbin
-test1: generate fmt vet manifests setup_envtest
+new_test: generate fmt vet manifests setup_envtest
 	${SETUP_ENVTEST} use -i -p env ${K8S_VER} > ${MKFILE_DIR}_env.sh
 	source ${MKFILE_DIR}_env.sh; rm -f ${MKFILE_DIR}_env.sh; go test ./... ${TEST_FLAGS}
 
