@@ -113,7 +113,7 @@ Why do we reinvent another wheel?
   - **Service-to-Service Authorization Rules** *Working in progress.*
 
 > The throughput is represented by m1, m5, m15
-> The latencies is represented by P99, P98, P95, P90, P80, P75, P50, etcd...
+> The latency is represented by P99, P98, P95, P90, P80, P75, P50, etcd...
 ## 5. Dependent Projects
 
 1. [EaseAgent](https://github.com/megaease/easeagent)
