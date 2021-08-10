@@ -66,7 +66,7 @@ Why do we reinvent another wheel?
 
 - **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
 - **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service registry/discovery
-  - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolation between deferent tenants
+  - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolate services from different tenants
   - **Share (global) tenant** Support share tenants, all services have visibility to the service registered in the global tenant.
   - **Compatible** 
     - Be compatible with the eureka registry.
@@ -74,10 +74,10 @@ Why do we reinvent another wheel?
     - Be compatible with the nacos registry.
   - **Extensibility** Support registering services with metadata.
 - **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
-- **Traffic orchestration** 
-	- **Rich Routing Rules:** exact path, path prefix, regular expression of the path, method, headers.
+- **Traffic Orchestration** 
+	- **Rich Routing Rules:** Exact path, path prefix, regular expression of the path, method, headers.
   - **Traffic Splitting** Coloring & Scheduling east-west and north-south traffic to configured services.
-  - **LoadBalance** Support Round Robin, Weight Round Robin, Hash by Client IP Address, Hash by HTTP Headers.
+  - **LoadBalance** Support Round Robin, Weight Round Robin, Random, Hash by Client IP Address, Hash by HTTP Headers.
 - **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
 	- **Resilience&Fault Tolerance**
 		- **Circuit breaker:** Temporarily blocks possible failures.
@@ -113,7 +113,8 @@ Why do we reinvent another wheel?
   - **Service-to-Service Authorization Rules** *Working in progress.*
 
 > The throughput is represented by m1, m5, m15
-> The latency is represented by P99, P98, P95, P90, P80, P75, P50, etcd...
+> The latency is represented by P99, P98, P95, P90, P80, P75, P50, etc...
+
 ## 5. Dependent Projects
 
 1. [EaseAgent](https://github.com/megaease/easeagent)
@@ -395,4 +396,3 @@ EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for 
 ## 11. User Manual
 
 See [EaseMesh User Manual](./docs/user_manual.md) for details.
-
