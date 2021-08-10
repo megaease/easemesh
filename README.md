@@ -65,7 +65,7 @@ Why do we reinvent another wheel?
 ## 4. Features
 
 - **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
-- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery
+- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service registry/discovery
   - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolation between deferent tenants
   - **Share (global) tenant** Support share tenants, all services have visibility to the service registered in the global tenant.
   - **Compatible** 
