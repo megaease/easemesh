@@ -78,7 +78,7 @@ var _ = Describe("meshdeployment controller", func() {
 								Containers: []corev1.Container{
 									{
 										Name:  "test-server",
-										Image: "zhaokundev/easestack-test-server:1.0-alpine",
+										Image: "megaease/non-existent:1.0-alpine",
 									},
 								},
 							},
