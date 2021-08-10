@@ -65,12 +65,55 @@ Why do we reinvent another wheel?
 ## 4. Features
 
 - **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
-- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos).
-- **Traffic Orchestration**: Coloring & Scheduling east-west and north-south traffic to configured services.
+- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service registry/discovery.
+  - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolate services from different tenants.
+  - **Share (global) tenant** Support share tenants, all services have visibility to the service registered in the global tenant.
+  - **Compatible** 
+    - Be compatible with the Eureka registry.
+    - Be compatible with the Consul registry.
+    - Be compatible with the Nacos registry.
+  - **Extensibility** Support registering services with metadata.
 - **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
-- **Canary Deployment**: Routing requests based on colored traffic and different versions of the service.
+- **Traffic Orchestration** 
+	- **Rich Routing Rules:** Exact path, path prefix, regular expression of the path, method, headers.
+  - **Traffic Splitting** Coloring & Scheduling east-west and north-south traffic to configured services.
+  - **LoadBalance** Support Round Robin, Weight Round Robin, Random, Hash by Client IP Address, Hash by HTTP Headers.
 - **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
-- **Observability**: Including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened, and immediately take corresponding actions.
+	- **Resilience&Fault Tolerance**
+		- **Circuit breaker:** Temporarily blocks possible failures.
+		- **Rate limiter:** Limits the rate of incoming requests.
+		- **Retryer:** Repeats failed executions.
+		- **Time limiter:** Limits the duration of execution.
+  - **Chaos engineering**
+    - **Fault injection** *Working in progress.*
+    - **Delay injection** *Working in progress.*
+- **Observability**: 
+  - **Logs**
+    - **Access Logs** Generate HTTP access log for all requests per service.
+    - **Application log** Automatically inject the tracing context into log data.
+  - **Tracing**
+    - **JDBC** Tracing for invocation of the JDBC.
+    - **HTTP Request** Tracing for HTTP RPC.
+    - **Kafka** Tracing for messages delivered by Kafka.
+    - **Redis** Tracing for Redis cache accessing.
+    - **RabbitMQ** Tracing for messages delivered by the RabbitMQ.
+    - **Sampling**
+      - Support probabilistic sampling.
+      - Support QPS sampling.
+  - **Metrics**
+    - **HTTP Request** Reporting throughput latency per URL.
+    - **JDBC**  Reporting throughput and latency per SQL.
+    - **Kafka** Reporting throughput and latency per consumer, producer, and topic.
+    - **Redis** Reporting throughput and latency per method.
+    - **RabbitMQ** Reporting throughput and latency per topic.
+- **Security**
+  - **mTLS** *Working in progress.*
+  - **mTLS Enforcement** *Working in progress.*
+  - **External CA certificate** *Working in progress.*
+  - **Service-to-Service Authorization Rules** *Working in progress.*
+
+> The throughput is represented by m1, m5, m15
+> The latency is represented by P99, P98, P95, P90, P80, P75, P50, etc...
 
 ## 5. Dependent Projects
 
@@ -353,4 +396,3 @@ EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for 
 ## 11. User Manual
 
 See [EaseMesh User Manual](./docs/user_manual.md) for details.
-
