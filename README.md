@@ -89,23 +89,23 @@ Why do we reinvent another wheel?
     - **Delay injection** *Working in progress.*
 - **Observability**: 
   - **Logs**
-    - **Access Logs** Generate HTTP access log for all request per service.
+    - **Access Logs** Generate HTTP access log for all requests per service.
     - **Application log** Automatically inject the tracing context into log data.
   - **Tracing**
     - **JDBC** Tracing for invocation of the JDBC.
     - **HTTP Request** Tracing for HTTP RPC.
-    - **Kafka** Tracing for messages delivered by the Kafka.
-    - **Redis** Tracing for redis cache accessing.
+    - **Kafka** Tracing for messages delivered by Kafka.
+    - **Redis** Tracing for Redis cache accessing.
     - **RabbitMQ** Tracing for messages delivered by the RabbitMQ.
     - **Sampling**
       - Support probabilistic sampling.
       - Support QPS sampling.
   - **Metrics**
-    - **HTTP Request** Reporting throughput latency per URLs.
-    - **JDBC**  Reporting throughput and latency per SQLs.
-    - **Kafka** Reporting throughput and latency per consumers, producers and topics.
-    - **Redis** Reporting throughput and latency per methods.
-    - **RabbitMQ** Reporting throughput and latency per topics.
+    - **HTTP Request** Reporting throughput latency per URL.
+    - **JDBC**  Reporting throughput and latency per SQL.
+    - **Kafka** Reporting throughput and latency per consumer, producer, and topic.
+    - **Redis** Reporting throughput and latency per method.
+    - **RabbitMQ** Reporting throughput and latency per topic.
 - **Security**
   - **mTLS** *Working in progress.*
   - **mTLS Enforcement** *Working in progress.*
