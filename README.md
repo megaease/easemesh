@@ -65,13 +65,55 @@ Why do we reinvent another wheel?
 ## 4. Features
 
 - **Non-intrusive Design**: Zero code modification for Java Spring Cloud application migration, only small configuration update needed.
-- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery（Eureka/Consul/Nacos).
-- **Traffic Orchestration**: Coloring & Scheduling east-west and north-south traffic to configured services.
+- **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service register/discovery
+  - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolation between deferent tenants
+  - **Share (global) tenant** Support share tenants, all services have visibility to the service registered in the global tenant.
+  - **Compatible** 
+    - Be compatible with the eureka registry.
+    - Be compatible with the consul registry.
+    - Be compatible with the nacos registry.
+  - **Extensibility** Support registering services with metadata.
 - **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
-- **Canary Deployment**: Routing requests based on colored traffic and different versions of the service.
+- **Traffic orchestration** 
+	- **Rich Routing Rules:** exact path, path prefix, regular expression of the path, method, headers.
+  - **Traffic Splitting** Coloring & Scheduling east-west and north-south traffic to configured services.
+  - **LoadBalance** Support Round Robin, Weight Round Robin, Hash by Client IP Address, Hash by HTTP Headers.
 - **Resilience**: Including Timeout/CircuitBreaker/Retryer/Limiter, completely follow sophisticated resilience design.
-- **Observability**: Including Metrics/Tracing/Log,e.g. HTTP Response code distribution, JVM GC counts, JDBC fully SQL sentences, Kafka/RabbitMQ/Redis metrics, open tracing records, access logs, and so on. With such abundant and services-oriented data, developers/operators can diagnosis where the true problems happened, and immediately take corresponding actions.
+	- **Resilience&Fault Tolerance**
+		- **Circuit breaker:** Temporarily blocks possible failures.
+		- **Rate limiter:** Limits the rate of incoming requests.
+		- **Retryer:** Repeats failed executions.
+		- **Time limiter:** Limits the duration of execution.
+  - **Chaos engineering**
+    - **Fault injection** *Working in progress.*
+    - **Delay injection** *Working in progress.*
+- **Observability**: 
+  - **Logs**
+    - **Access Logs** Generate HTTP access log for all request per service
+    - **Application log** Automatically inject the tracing context into log data.
+  - **Tracing**
+    - **JDBC** tracing for invocation of the JDBC.
+    - **HTTP Request** tracing for HTTP RPC.
+    - **Kafka** tracing for messages delivered by the Kafka.
+    - **Redis** tracing for redis cache accessing.
+    - **RabbitMQ** tracing for messages delivered by the RabbitMQ.
+    - **Sampling**
+      - Supporting probabilistic sampling
+      - Support QPS sampling
+  - **Metrics**
+    - **HTTP Request** Reporting throughput latency per URLs
+    - **JDBC**  Reporting throughput and latency per SQLs
+    - **Kafka** Reporting throughput and latency per consumers, producers and topics
+    - **Redis** Reporting throughput and latency per methods
+    - **RabbitMQ** Reporting throughput and latency per topics
+- **Security**
+  - **mTLS** *Working in progress.*
+  - **mTLS Enforcement** *Working in progress*
+  - **External CA certificate** *Working in progress.*
+  - **Service-to-Service Authorization Rules** *Working in progress.*
 
+> The throughput is represented by m1, m5, m15
+> The latencies is represented by P99, P98, P95, P90, P80, P75, P50, etcd...
 ## 5. Dependent Projects
 
 1. [EaseAgent](https://github.com/megaease/easeagent)
