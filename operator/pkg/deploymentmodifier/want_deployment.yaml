@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: vets-service
+  namespace: spring-petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vets-service
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: vets-service
+    spec:
+      containers:
+      - args:
+        - -c
+        - java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom  org.springframework.boot.loader.JarLauncher
+        command:
+        - /bin/sh
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: ' -javaagent:/agent-volume/easeagent.jar -Deaseagent.log.conf=/agent-volume/log4j2.xml '
+        image: megaease/spring-petclinic-vets-service:latest
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - sh
+              - -c
+              - sleep 10
+        name: vets-service
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /application/application-sit.yml
+          name: configmap-volume-0
+          subPath: application-sit.yml
+        - mountPath: /agent-volume
+          name: agent-volume
+      - command:
+        - /bin/sh
+        - -c
+        - /opt/easegress/bin/easegress-server -f /sidecar-volume/sidecar-config.yaml
+        env:
+        - name: APPLICATION_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: megaease/easegress:server-sidecar
+        imagePullPolicy: IfNotPresent
+        name: easemesh-sidecar
+        ports:
+        - containerPort: 13001
+          name: sidecar-ingress
+        - containerPort: 13002
+          name: sidecar-egress
+        - containerPort: 13009
+          name: sidecar-eureka
+        resources: {}
+        volumeMounts:
+        - mountPath: /sidecar-volume
+          name: sidecar-volume
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |-
+          set -e
+          cp -r /easeagent-volume/* /agent-volume
+
+          echo 'name: vets-service
+          cluster-join-urls: http://easemesh-controlplane-svc.easemesh:2380
+          cluster-request-timeout: 10s
+          cluster-role: reader
+          cluster-name: easemesh-control-plane
+          labels:
+            alive-probe: http://localhost:9000/health
+            application-port: 9000
+            mesh-service-labels: app=vets-service&version=beta
+            mesh-servicename: vets-service
+          ' > /sidecar-volume/sidecar-config.yaml
+        image: megaease/easeagent-initializer:latest
+        imagePullPolicy: IfNotPresent
+        name: initializer
+        resources: {}
+        volumeMounts:
+        - mountPath: /agent-volume
+          name: agent-volume
+        - mountPath: /sidecar-volume
+          name: sidecar-volume
+      restartPolicy: Always
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: application-sit-yml
+            path: application-sit.yml
+          name: vets-service
+        name: configmap-volume-0
+      - emptyDir: {}
+        name: agent-volume
+      - emptyDir: {}
+        name: sidecar-volume

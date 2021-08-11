@@ -22,19 +22,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ServiceSpec describes mesh service properties
 type ServiceSpec struct {
-	//Name is mesh service name of the deployment
+	// Name is mesh service name of the deployment.
 	Name string `json:"name"`
+	// AppContainerName is the container name of application.
+	//
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=""
 	AppContainerName string `json:"appContainerName"`
-	//Labels is dedicated to labeling instance of deployment for traffic control
+
+	// Labels is dedicated to label instance of deployment for traffic control.
 	// +kubebuilder:validation:Optional
 	Labels map[string]string `json:"labels"`
+
+	// AliveProbeURL is alive probe url.
+	// +kubebuilder:validation:Optional
+	AliveProbeURL string `json:"aliveProbeURL"`
+
+	// ApplicationPort is the listening port of applicaiton.
+	// +kubebuilder:validation:Optional
+	ApplicationPort uint16 `json:"applicationPort"`
 }
 
 // DeploySpec is the specification of the desired behavior of the Deployment.
@@ -51,7 +59,7 @@ type MeshDeploymentSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Service ServiceSpec `json:"service"`
-	// Deploy describe a service desired state of the K8s deployment
+	// Deploy describes a service desired state of the K8s deployment.
 	Deploy DeploySpec `json:"deploy,omitempty"`
 }
 

@@ -37,7 +37,7 @@ spec:
             description: MeshDeploymentSpec defines the desired state of MeshDeployment
             properties:
               deploy:
-                description: Deploy describe a service desired state of the K8s deployment
+                description: Deploy describes a service desired state of the K8s deployment.
                 properties:
                   minReadySeconds:
                     description: Minimum number of seconds for which a newly created
@@ -6731,17 +6731,24 @@ spec:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file'
                 properties:
+                  aliveProbeURL:
+                    description: AliveProbeURL is alive probe url.
+                    type: string
                   appContainerName:
                     default: ""
+                    description: AppContainerName is the container name of application.
                     type: string
+                  applicationPort:
+                    description: ApplicationPort is the listening port of applicaiton.
+                    type: integer
                   labels:
                     additionalProperties:
                       type: string
-                    description: Labels is dedicated to labeling instance of deployment
-                      for traffic control
+                    description: Labels is dedicated to label instance of deployment
+                      for traffic control.
                     type: object
                   name:
-                    description: Name is mesh service name of the deployment
+                    description: Name is mesh service name of the deployment.
                     type: string
                 required:
                 - name

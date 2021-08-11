@@ -18,8 +18,11 @@
 package installbase
 
 const (
+	// ObjectsURL is url of objects.
 	ObjectsURL = "/apis/v1/objects"
-	ObjectURL  = "/apis/v1/objects/%s"
+	// ObjectURL is url of object.
+	ObjectURL = "/apis/v1/objects/%s"
+	// MemberList is url of member list.
 	MemberList = "/apis/v1/status/members"
 )
 
@@ -41,8 +44,16 @@ const (
 
 	DefaultMeshControllerName = "easemesh-controller"
 
-	DefaultMeshOperatorName                         = "easemesh-operator"
-	DefaultMeshOperatorControllerManagerServiceName = "mesh-operator-controller-manager-metrics-service"
+	DefaultMeshOperatorName                = "easemesh-operator"
+	DefaultMeshOperatorServiceName         = "easemesh-operator-service"
+	DefaultMeshOperatorSecretName          = "easemesh-operator-secret"
+	DefaultMeshOperatorCSRName             = "easemesh-operator-csr"
+	DefaultMeshOperatorMutatingWebhookName = "easemesh-operator-mutating-webhook"
+	DefaultMeshOperatorMutatingWebhookPath = "/mutate"
+	DefaultMeshOperatorMutatingWebhookPort = 9090
+	DefaultMeshOperatorCertDir             = "/cert-volume"
+	DefaultMeshOperatorCertFileName        = "cert.pem"
+	DefaultMeshOperatorKeyFileName         = "key.pem"
 
 	DefaultMeshIngressConfig         = "easemesh-ingress-config"
 	DefaultMeshIngressService        = "easemesh-ingress-service"
@@ -51,16 +62,19 @@ const (
 	// DefaultKubeDir represents default kubernetes client configuration directory
 	DefaultKubeDir = ".kube"
 
-	//
 	DefaultKubernetesConfig = "config"
 	WriterClusterRole       = "writer"
 	ReaderClusterRole       = "reader"
 )
 
+// InstallPhase is the phrase of installation.
 type InstallPhase int
 
 const (
+	// BeginPhase is the phrase of beginning.
 	BeginPhase InstallPhase = iota
+	// EndPhase is the phrase of ending.
 	EndPhase
+	// ErrorPhase if the phrase of erroring handling.
 	ErrorPhase
 )

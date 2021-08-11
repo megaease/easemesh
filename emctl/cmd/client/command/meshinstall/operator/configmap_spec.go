@@ -25,28 +25,29 @@ import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
-
+func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	cfg := installbase.MeshOperatorConfig{
-		ImageRegistryURL:     installFlags.ImageRegistryURL,
+		ImageRegistryURL:     ctx.Flags.ImageRegistryURL,
 		ClusterName:          installbase.DefaultMeshControlPlaneName,
-		ClusterJoinURLs:      "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + installFlags.MeshNamespace + ":" + strconv.Itoa(installFlags.EgPeerPort),
+		ClusterJoinURLs:      []string{"http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + ctx.Flags.MeshNamespace + ":" + strconv.Itoa(ctx.Flags.EgPeerPort)},
 		MetricsAddr:          "127.0.0.1:8080",
 		EnableLeaderElection: false,
 		ProbeAddr:            ":8081",
+		WebhookPort:          installbase.DefaultMeshOperatorMutatingWebhookPort,
+		CertDir:              installbase.DefaultMeshOperatorCertDir,
+		CertName:             installbase.DefaultMeshOperatorCertFileName,
+		KeyName:              installbase.DefaultMeshOperatorKeyFileName,
 	}
 
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      meshOperatorConfigMap,
-			Namespace: installFlags.MeshNamespace,
+			Namespace: ctx.Flags.MeshNamespace,
 		},
 	}
 	operatorConfig, err := yaml.Marshal(cfg)
@@ -57,11 +58,11 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		configMap.Data = data
 	}
 
-	return func(cmd *cobra.Command, client *kubernetes.Clientset, installFlags *flags.Install) error {
+	return func(ctx *installbase.StageContext) error {
 		if err != nil {
 			return errors.Wrap(err, "ConfigMap build")
 		}
-		err = installbase.DeployConfigMap(configMap, client, installFlags.MeshNamespace)
+		err = installbase.DeployConfigMap(configMap, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return fmt.Errorf("create configMap failed: %v ", err)
 		}

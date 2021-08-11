@@ -37,7 +37,7 @@ type ContainerVisitor interface {
 	VisitorSecurityContext(c *v1.Container) (*v1.SecurityContext, error)
 }
 
-func AcceptContainerVisistor(name, image string, imagePullPolicy v1.PullPolicy, visitor ContainerVisitor) (*v1.Container, error) {
+func AcceptContainerVisitor(name, image string, imagePullPolicy v1.PullPolicy, visitor ContainerVisitor) (*v1.Container, error) {
 	container := &v1.Container{Name: name, Image: image, ImagePullPolicy: imagePullPolicy}
 	command, args := visitor.VisitorCommandAndArgs(container)
 	if command != nil {

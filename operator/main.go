@@ -18,12 +18,15 @@
 package main
 
 import (
-	"flag"
 	"io/ioutil"
 	"os"
 
+	"github.com/spf13/pflag"
+
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/megaease/easemesh/mesh-operator/pkg/controllers"
+	"github.com/megaease/easemesh/mesh-operator/pkg/hook"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -35,18 +38,25 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	// +kubebuilder:scaffold:imports
 	"gopkg.in/yaml.v2"
 )
 
 const (
+	// DefaultImageRegistryURL is the default image registry URL.
 	DefaultImageRegistryURL = "docker.io"
+
+	// DefaultSidecarImageName is the default sidecar image name.
+	DefaultSidecarImageName = "megaease/easegress:server-sidecar"
+
+	// DefaultImagePullPolicy is the default image pull policy.
+	DefaultImagePullPolicy = "IfNotPresent"
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
 )
 
 func init() {
@@ -56,39 +66,60 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+// ConfigSpec is the config specification.
 type ConfigSpec struct {
-	ImageRegistryURL     string `yaml:"image-registry-url" jsonschema:"required"`
-	ClusterName          string `yaml:"cluster-name" jsonschema:"required"`
-	ClusterJoinURL       string `yaml:"cluster-join-urls" jsonschema:"required"`
-	MetricsAddr          string `yaml:"metrics-bind-address" jsonschema:"required"`
-	EnableLeaderElection bool   `yaml:"leader-elect" jsonschema:"required"`
-	ProbeAddr            string `yaml:"health-probe-bind-address" jsonschema:"required"`
+	ImageRegistryURL     string   `yaml:"image-registry-url" jsonschema:"required"`
+	ClusterName          string   `yaml:"cluster-name" jsonschema:"required"`
+	ClusterJoinURLs      []string `yaml:"cluster-join-urls" jsonschema:"required"`
+	MetricsAddr          string   `yaml:"metrics-bind-address" jsonschema:"required"`
+	EnableLeaderElection bool     `yaml:"leader-elect" jsonschema:"required"`
+	ProbeAddr            string   `yaml:"health-probe-bind-address" jsonschema:"required"`
+	WebhookPort          uint16   `yaml:"webhook-port" jsonschema:"required"`
+	CertDir              string   `yaml:"cert-dir" jsonschema:"required"`
+	CertName             string   `yaml:"cert-name" jsonschema:"required"`
+	KeyName              string   `yaml:"key-name" jsonschema:"required"`
 }
 
 func main() {
-	var imageRegistryURL string
-	var clusterName string
-	var clusterJoinURL string
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	var configFile string
+	// TODO: Make flags/specfile parsing more maintainable.
 
-	flag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The Registry URL of the Image.")
-	flag.StringVar(&clusterName, "cluster-name", "", "The cluster-name of the eg master.")
-	flag.StringVar(&clusterJoinURL, "cluster-join-urls", "", "The address the eg master binds to.")
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
+	var (
+		imageRegistryURL     string
+		sidecarImageName     string
+		imagePullPolicy      string
+		clusterName          string
+		clusterJoinURLs      []string
+		metricsAddr          string
+		enableLeaderElection bool
+		configFile           string
+		probeAddr            string
+		webhookPort          uint16
+		certDir              string
+		certName             string
+		keyName              string
+	)
+
+	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
+	pflag.StringVar(&sidecarImageName, "sidecar-image-name", DefaultSidecarImageName, "The sidecar image name.")
+	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
+	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
+	pflag.StringSliceVar(&clusterJoinURLs, "cluster-join-urls", []string{"http://easemesh-controlplane-svc.easemesh:2380"}, "The addresses to join the Easegress.")
+	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	pflag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
 		"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&configFile, "config", " ", "A yaml file config the operator. ")
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+	pflag.StringVar(&configFile, "config", " ", "A yaml file config the operator. ")
+	pflag.StringVar(&certDir, "cert-dir", "/cert-volume", "The TLS cert directory.")
+	pflag.StringVar(&certName, "cert-file", "cert.pem", "The TLS cert file name.")
+	pflag.StringVar(&keyName, "key-file", "key.pem", "The TLS key file name.")
+	pflag.Uint16Var(&webhookPort, "webhook-port", 9090, "Webhook port listening on.")
 
-	if configFile != " " {
+	pflag.Parse()
+
+	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
+	setupLog := ctrl.Log.WithName("setup")
+
+	if configFile != "" {
 		config, err := ioutil.ReadFile(configFile)
 		if err != nil {
 			setupLog.Error(err, "Read configFile error, %v", err)
@@ -103,14 +134,15 @@ func main() {
 
 		imageRegistryURL = spec.ImageRegistryURL
 		clusterName = spec.ClusterName
-		clusterJoinURL = spec.ClusterJoinURL
+		clusterJoinURLs = spec.ClusterJoinURLs
 		metricsAddr = spec.MetricsAddr
-		probeAddr = spec.ProbeAddr
 		enableLeaderElection = spec.EnableLeaderElection
-
+		probeAddr = spec.ProbeAddr
+		webhookPort = spec.WebhookPort
+		certDir = spec.CertDir
+		certName = spec.CertName
+		keyName = spec.KeyName
 	}
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -125,18 +157,48 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.MeshDeploymentReconciler{
+	baseRuntime := base.Runtime{
 		Client:           mgr.GetClient(),
-		Log:              ctrl.Log.WithName("controllers").WithName("MeshDeployment"),
 		Scheme:           mgr.GetScheme(),
-		ClusterJoinURL:   clusterJoinURL,
-		ClusterName:      clusterName,
-		ImageRegistryURL: imageRegistryURL,
 		Recorder:         mgr.GetEventRecorderFor("controller.MeshDeployment"),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MeshDeployment")
+		ImageRegistryURL: imageRegistryURL,
+		ImagePullPolicy:  imagePullPolicy,
+		SidecarImageName: sidecarImageName,
+
+		ClusterJoinURLs: clusterJoinURLs,
+		ClusterName:     clusterName,
+	}
+
+	// Create MeshDeploymentReconciler.
+	meshDeploymentRuntime := baseRuntime
+	meshDeploymentRuntime.Name = "MeshDeployment"
+	meshDeploymentRuntime.Log = ctrl.Log.WithName("controllers").WithName("MeshDeployment")
+	meshDeploymentReconciler := &controllers.MeshDeploymentReconciler{Runtime: &meshDeploymentRuntime}
+	meshDeploymentReconciler.SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "create controller of MeshDeployment failed")
 		os.Exit(1)
 	}
+
+	// Create a webhook server.
+	webhookRuntime := baseRuntime
+	webhookRuntime.Name = "Webhook"
+	webhookRuntime.Log = ctrl.Log.WithName("webhook").WithName("mutate")
+	webhookMutate := hook.NewMutateHook(&webhookRuntime)
+	webhookServer := &webhook.Server{
+		Port:     int(webhookPort),
+		CertDir:  certDir,
+		CertName: certName,
+		KeyName:  keyName,
+	}
+
+	webhookServer.Register("/mutate", webhookMutate.Admission)
+
+	if err := mgr.Add(webhookServer); err != nil {
+		setupLog.Error(err, "unable to set up webhook server")
+		os.Exit(1)
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {

@@ -21,7 +21,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
+	"github.com/megaease/easemesh/mesh-operator/pkg/base"
+
 	"github.com/iancoleman/strcase"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,9 +33,41 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+type (
+	// Syncer represents a syncer. A syncer persists an object
+	// (known as subject), into a store (kubernetes apiserver or generic stores)
+	// and records kubernetes events.
+	Syncer interface {
+		// Object returns the object which is applies.
+		Object() client.Object
+
+		// ObjectOwner returns the owner who owns the object, nil means none.
+		ObjectOwner() client.Object
+
+		// Sync synchronizes the data.
+		Sync(context.Context) (SyncResult, error)
+	}
+
+	// SyncResult is a result of an Sync call
+	SyncResult struct {
+		Operation    controllerutil.OperationResult
+		EventType    string
+		EventReason  string
+		EventMessage string
+	}
+)
+
+// SetEventData sets event data on an SyncResult
+func (r *SyncResult) SetEventData(eventType, reason, message string) {
+	r.EventType = eventType
+	r.EventReason = reason
+	r.EventMessage = message
+}
+
 // Sync mutates the subject of the syncer interface via controller-runtime
 // CreateOrUpdate method.
-func Sync(ctx context.Context, syncer Interface, recorder record.EventRecorder) error {
+func Sync(ctx context.Context, syncer Syncer, recorder record.EventRecorder) error {
+	// NOTE: Export the result to caller if necessary in the future.
 	result, err := syncer.Sync(ctx)
 
 	owner := syncer.ObjectOwner()
@@ -47,20 +80,18 @@ func Sync(ctx context.Context, syncer Interface, recorder record.EventRecorder) 
 	return err
 }
 
-// New return a syncer.Sync object
-func New(name string, c client.Client, owner client.Object, obj client.Object, scheme *runtime.Scheme, log logr.Logger, fn controllerutil.MutateFn) Interface {
-	return &objectSyncer{
-		Name:   name,
-		Owner:  owner,
-		Self:   obj,
-		SyncFn: fn,
-		Client: c,
-		Scheme: scheme,
-		log:    log.WithName("syncer"),
+// New return a syncer.Interface object.
+func New(baseRuntime *base.Runtime, owner, ownee client.Object, fn controllerutil.MutateFn) Syncer {
+	return &k8sSyncer{
+		Runtime:      baseRuntime,
+		log:          baseRuntime.Log.WithName("syncer"),
+		owner:        owner,
+		ownee:        ownee,
+		userMutateFn: fn,
 	}
 }
 
-func getKey(obj client.Object) (types.NamespacedName, error) {
+func idOfObject(obj client.Object) (types.NamespacedName, error) {
 	key := types.NamespacedName{}
 	objMeta, ok := obj.(metav1.Object)
 	if !ok {
@@ -78,10 +109,10 @@ func basicEventReason(objKindName string, err error) string {
 		return fmt.Sprintf("%sSyncFailed", strcase.ToCamel(objKindName))
 	}
 
-	return fmt.Sprintf("%sSyncSuccessfull", strcase.ToCamel(objKindName))
+	return fmt.Sprintf("%sSyncSuccessfully", strcase.ToCamel(objKindName))
 }
 
-// stripSecrets returns a copy for the secret without secret data in it
+// stripSecrets returns a copy for the secret without secret data.
 func stripSecrets(obj runtime.Object) runtime.Object {
 	// if obj is secret, don't print secret data
 	s, ok := obj.(*corev1.Secret)

@@ -18,41 +18,34 @@
 package operator
 
 import (
+	"fmt"
+
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
-	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	labels := meshOperatorLabels()
-
-	service := &v1.Service{
+func secretSpec(ctx *installbase.StageContext) installbase.InstallFunc {
+	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshOperatorServiceName,
+			Name:      installbase.DefaultMeshOperatorSecretName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
+		Data: map[string][]byte{},
 	}
-	service.Spec.Ports = []v1.ServicePort{
-		{
-			Name:       "https",
-			Port:       8443,
-			TargetPort: intstr.IntOrString{StrVal: "https"},
-		},
-		{
-			Name:       "mutate-webhook",
-			Port:       9090,
-			TargetPort: intstr.IntOrString{StrVal: "mutate-webhook"},
-		},
-	}
-	service.Spec.Selector = labels
+
 	return func(ctx *installbase.StageContext) error {
-		err := installbase.DeployService(service, ctx.Client, ctx.Flags.MeshNamespace)
+		// NOTE: []byte will be automatically encoded as a base64-encoded string.
+		// Reference: https://golang.org/pkg/encoding/json/#Marshal
+		secret.Data[installbase.DefaultMeshOperatorCertFileName] = ctx.OperatorCertPem
+		secret.Data[installbase.DefaultMeshOperatorKeyFileName] = ctx.OperatorKeyPem
+
+		err := installbase.DeploySecret(secret, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
-			return errors.Wrapf(err, "Create operator service %s", ctx.Flags.MeshNamespace)
+			return fmt.Errorf("create secret failed: %v ", err)
 		}
-		return err
+
+		return nil
 	}
 }

@@ -22,11 +22,9 @@ import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 type deploymentSpecFunc func(*flags.Install) *appsV1.Deployment
@@ -37,14 +35,14 @@ func meshIngressLabel() map[string]string {
 	return selector
 }
 
-func deploymentSpec(installFlags *flags.Install) installbase.InstallFunc {
+func deploymentSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	deployment := deploymentConfigVolumeSpec(
 		deploymentContainerSpec(
 			deploymentBaseSpec(
-				deploymentInitialize(nil))))(installFlags)
+				deploymentInitialize(nil))))(ctx.Flags)
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployDeployment(deployment, kubeClient, installFlags.MeshNamespace)
+	return func(ctx *installbase.StageContext) error {
+		err := installbase.DeployDeployment(deployment, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "deployment operation %s failed", deployment.Name)
 		}
@@ -79,9 +77,9 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 
 		spec := fn(installFlags)
-		container, _ := installbase.AcceptContainerVisistor("easegress-ingress",
+		container, _ := installbase.AcceptContainerVisitor("easegress-ingress",
 			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
-			v1.PullAlways,
+			v1.PullIfNotPresent,
 			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
@@ -163,8 +161,8 @@ func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMoun
 		},
 	}, nil
 }
-func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDevice, error) {
 
+func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDevice, error) {
 	return nil, nil
 }
 

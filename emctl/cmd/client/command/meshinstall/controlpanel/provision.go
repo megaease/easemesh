@@ -31,12 +31,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 )
 
-func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNamespace,
+func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
+	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
@@ -46,9 +46,9 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 	meshControllerConfig := installbase.MeshControllerConfig{
 		Name:              installbase.DefaultMeshControllerName,
 		Kind:              flags.MeshControllerKind,
-		RegistryType:      installFlags.EaseMeshRegistryType,
-		HeartbeatInterval: strconv.Itoa(installFlags.HeartbeatInterval) + "s",
-		IngressPort:       installFlags.MeshIngressServicePort,
+		RegistryType:      ctx.Flags.EaseMeshRegistryType,
+		HeartbeatInterval: strconv.Itoa(ctx.Flags.HeartbeatInterval) + "s",
+		IngressPort:       ctx.Flags.MeshIngressServicePort,
 	}
 
 	configBody, err := json.Marshal(meshControllerConfig)
@@ -76,12 +76,13 @@ func provisionEaseMeshControlPanel(cmd *cobra.Command, kubeClient *kubernetes.Cl
 }
 
 func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
-
 	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
-		common.OutputErrorf("clear: get mesh control panel entrypoint failed %s", err)
+		if !apierrors.IsNotFound(err) {
+			common.OutputErrorf("clear: get mesh control panel entrypoint failed: %s", err)
+		}
 		return
 	}
 

@@ -22,28 +22,25 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	yamljsontool "github.com/ghodss/yaml"
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
-func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
+func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	var host = "0.0.0.0"
 
 	var config = installbase.EasegressConfig{
 		Name:                    installbase.DefaultMeshControlPlaneName,
 		ClusterName:             installbase.DefaultMeshControlPlaneName,
 		ClusterRole:             installbase.WriterClusterRole,
-		ClusterListenClientUrls: []string{"http://" + "0.0.0.0:" + strconv.Itoa(installFlags.EgClientPort)},
-		ClusterListenPeerUrls:   []string{"http://" + "0.0.0.0:" + strconv.Itoa(installFlags.EgPeerPort)},
+		ClusterListenClientUrls: []string{"http://" + "0.0.0.0:" + strconv.Itoa(ctx.Flags.EgClientPort)},
+		ClusterListenPeerUrls:   []string{"http://" + "0.0.0.0:" + strconv.Itoa(ctx.Flags.EgPeerPort)},
 		ClusterJoinUrls:         []string{},
-		APIAddr:                 host + ":" + strconv.Itoa(installFlags.EgAdminPort),
+		APIAddr:                 host + ":" + strconv.Itoa(ctx.Flags.EgAdminPort),
 		DataDir:                 "/opt/eg-data/data",
 		WalDir:                  "",
 		CPUProfileFile:          "",
@@ -53,14 +50,14 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 		StdLogLevel:             "INFO",
 	}
 
-	for i := 0; i < installFlags.EasegressControlPlaneReplicas; i++ {
+	for i := 0; i < ctx.Flags.EasegressControlPlaneReplicas; i++ {
 		config.ClusterJoinUrls = append(config.ClusterJoinUrls,
 			fmt.Sprintf("http://%s-%d.%s.%s:%d",
 				installbase.DefaultMeshControlPlaneName,
 				i,
 				installbase.DefaultMeshControlPlaneHeadlessServiceName,
-				installFlags.MeshNamespace,
-				installFlags.EgPeerPort))
+				ctx.Flags.MeshNamespace,
+				ctx.Flags.EgPeerPort))
 	}
 
 	configData := map[string]string{}
@@ -76,13 +73,13 @@ func configMapSpec(installFlags *flags.Install) installbase.InstallFunc {
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installbase.DefaultMeshControlPlaneConfig,
-			Namespace: installFlags.MeshNamespace,
+			Namespace: ctx.Flags.MeshNamespace,
 		},
 		Data: params,
 	}
 
-	return func(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) error {
-		err := installbase.DeployConfigMap(configMap, kubeClient, installFlags.MeshNamespace)
+	return func(ctx *installbase.StageContext) error {
+		err := installbase.DeployConfigMap(configMap, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return err
 		}
