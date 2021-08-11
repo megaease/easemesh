@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2017, MegaEase
  * All rights reserved.
