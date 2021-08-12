@@ -20,9 +20,9 @@ package deploymentmodifier
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
+	"github.com/megaease/easemesh/mesh-operator/pkg/util/labelstool"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/apps/v1"
@@ -147,14 +147,6 @@ var (
 	}
 )
 
-func marshalLabels(labels map[string]string) string {
-	labelsSlice := []string{}
-	for k, v := range labels {
-		labelsSlice = append(labelsSlice, k+"="+v)
-	}
-	return strings.Join(labelsSlice, "&")
-}
-
 func initContainerCommand(service *MeshService) []string {
 	// TODO: Adjust for label names:
 	// alive-probe -> mesh-alive-probe-url
@@ -184,7 +176,7 @@ labels:
 
 		service.AliveProbeURL,
 		service.ApplicationPort,
-		marshalLabels(service.Labels),
+		labelstool.Marshal(service.Labels),
 		service.Name,
 
 		initContainerSidecarConfigPath)
@@ -193,12 +185,14 @@ labels:
 }
 
 type (
+	// DeploymentModifier is the unified modifier for Deployment.
 	DeploymentModifier struct {
 		*base.Runtime
 		meshService *MeshService
 		deploy      *v1.Deployment
 	}
 
+	// MeshService descirbes the service for DeploymentModifier.
 	MeshService struct {
 		// Name is required.
 		Name string

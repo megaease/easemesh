@@ -8,6 +8,7 @@ import (
 
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/megaease/easemesh/mesh-operator/pkg/deploymentmodifier"
+	"github.com/megaease/easemesh/mesh-operator/pkg/util/labelstool"
 	"github.com/pkg/errors"
 
 	admissionv1 "k8s.io/api/admission/v1"
@@ -19,9 +20,12 @@ import (
 const (
 	annotationPrefix              = "mesh.megaease.com/"
 	annotationServiceNameKey      = annotationPrefix + "service-name"
+	annotationServiceLabels       = annotationPrefix + "service-labels"
 	annotationAppContainerNameKey = annotationPrefix + "app-container-name"
 	annotationApplicationPortKey  = annotationPrefix + "application-port"
 	annotationAliveProbeURLKey    = annotationPrefix + "alive-probe-url"
+
+	defaultAliveProbeURL = "http://localhost:9900/health"
 )
 
 type (
@@ -77,11 +81,22 @@ func (h *MutateHook) mutateHandler(cxt context.Context, req admission.Request) a
 		applicationPort = uint16(port)
 	}
 
+	labels, err := labelstool.Unmarshal(deploy.Annotations[annotationServiceLabels])
+	if err != nil {
+		h.Log.Error(err, "")
+		return errorResp(err)
+	}
+
+	aliveProbeURL := deploy.Annotations[annotationAliveProbeURLKey]
+	if aliveProbeURL == "" {
+		aliveProbeURL = defaultAliveProbeURL
+	}
+
 	service := &deploymentmodifier.MeshService{
 		Name:             deploy.Name,
-		Labels:           deploy.Labels,
+		Labels:           labels,
 		AppContainerName: deploy.Annotations[annotationAppContainerNameKey],
-		AliveProbeURL:    deploy.Annotations[annotationAliveProbeURLKey],
+		AliveProbeURL:    aliveProbeURL,
 		ApplicationPort:  applicationPort,
 	}
 	modifier := deploymentmodifier.New(h.Runtime, service, deploy)
