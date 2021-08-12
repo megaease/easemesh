@@ -37,6 +37,10 @@ func Marshal(labels map[string]string) string {
 // So `k1=v1,k2=v2,k1=v3` will be {"k1": "v3", "k2": "v2"}
 func Unmarshal(s string) (map[string]string, error) {
 	result := make(map[string]string)
+	if s == "" {
+		return result, nil
+	}
+
 	kvs := strings.Split(s, ",")
 	for _, kv := range kvs {
 		label := strings.Split(kv, "=")
