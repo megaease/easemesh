@@ -67,12 +67,12 @@ func (h *MutateHook) mutateHandler(cxt context.Context, req admission.Request) a
 		return errorResp(err)
 	}
 
-	h.Log.Info("mutate Deployment", "id", fmt.Sprintf("%s/%s", req.Namespace, req.Name))
-
 	name := deploy.Annotations[annotationServiceNameKey]
 	if name == "" {
-		name = deploy.Name
+		return ignoreResp(req)
 	}
+
+	h.Log.Info("mutate Deployment", "id", fmt.Sprintf("%s/%s", req.Namespace, req.Name))
 
 	applicationPortValue := deploy.Annotations[annotationApplicationPortKey]
 	var applicationPort uint16
