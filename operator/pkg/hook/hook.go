@@ -69,6 +69,11 @@ func (h *MutateHook) mutateHandler(cxt context.Context, req admission.Request) a
 
 	h.Log.Info("mutate Deployment", "id", fmt.Sprintf("%s/%s", req.Namespace, req.Name))
 
+	name := deploy.Annotations[annotationServiceNameKey]
+	if name == "" {
+		name = deploy.Name
+	}
+
 	applicationPortValue := deploy.Annotations[annotationApplicationPortKey]
 	var applicationPort uint16
 	if applicationPortValue != "" {
@@ -93,7 +98,7 @@ func (h *MutateHook) mutateHandler(cxt context.Context, req admission.Request) a
 	}
 
 	service := &deploymentmodifier.MeshService{
-		Name:             deploy.Name,
+		Name:             name,
 		Labels:           labels,
 		AppContainerName: deploy.Annotations[annotationAppContainerNameKey],
 		AliveProbeURL:    aliveProbeURL,
