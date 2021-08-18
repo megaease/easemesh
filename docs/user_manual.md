@@ -116,7 +116,7 @@ EaseMesh relies on Kubernetes for managing service instances and the resources t
 MeshDeployment wraps native K8s [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment) resources. The contents of `spec.deploy` section in the MeshDeployment spec is fully K8s deployments spec definition.
 
 ```yaml
-apiVersion: mesh.megaease.com/v-1beta1
+apiVersion: mesh.megaease.com/v1beta1
 kind: MeshDeployment
 metadata:
   namespace: ${your-ns-name}
@@ -127,7 +127,7 @@ spec:
     labels:
       version: canary       # These map is used to label these canary instances
   deploy:                   # K8s native deployment spec contents
-    replicas: 0
+    replicas: 2
     selector:
       matchLabels:
         app: ${your-service-name}   #Note! service name should remain the same with the origin mesh service
