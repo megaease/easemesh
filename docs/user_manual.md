@@ -53,9 +53,9 @@ The client command tool of the EaseMesh is `emctl`, please checkout [emctl.md](.
 
 Services are the first-class citizens of the EaseMesh. Developers need to breakdown their business logic into small units and implement it as services.
 
-Different from K8s service, the EaseMesh manage application by the service, a service has logic name which is related to one or multiple K8s deployments. The service has its [own specification ](#mesh-service)  the EaseMesh and must belonged to a [tenant](#tenant-spec).
+Different from K8s service, the EaseMesh manages application by the service, a service has a logic name that is related to one or multiple K8s deployments. The service has its [own specification ](#mesh-service) and must belong to a [tenant](#tenant-spec).
 
-A service could have co-exist multiple versions, a version of the service is a [MeshDeployment](#meshdeployment) or [native K8s deployment](#deploy-an-annotated-deployment) which binds to Kubernetes Deployment resource
+A service could have co-exist multiple versions, a version of the service is a [MeshDeployment](#meshdeployment) or [native K8s deployment](#deploy-an-annotated-deployment) which binds to Kubernetes Deployment resource.
 
 
 ### Tenant Spec
@@ -64,7 +64,7 @@ The `tenant` is used to group several services of the same business domain. Serv
 > ** Note: **
 > All specs in the EaseMesh are written in Yaml formation
 
-**Create a tenant for services** You can choose to deploy a new mesh service in an existing tenant, or creating a new one for it. Modify example YAML content below and apply it
+**Create a tenant for services** You can choose to deploy a new mesh service in an existing tenant, or creating a new one for it. Modify example YAML content below and apply it:
 
 
 ```yaml
@@ -126,7 +126,7 @@ spec:
     name: ${your-service-name}
     labels:
       version: canary       # These map is used to label these canary instances
-  deploy:                   # K6s native deployment spec contents
+  deploy:                   # K8s native deployment spec contents
     replicas: 0
     selector:
       matchLabels:
@@ -145,7 +145,7 @@ spec:
 
 Except for the custom resource `MeshDeployment`, we support the native K8s deployment resource to automatically inject the JavaAgent and sidecar.
 
-If you want the EaseMesh to govern applications, you need fulfilling the following prerequisites:
+If you want the EaseMesh to govern applications, you need to fulfill the following prerequisites:
 1. Create the namespace with the specified label.
 2. Deploy applications via the K8s Deployments.
 3. Annotated the deployment with specific annotations.
@@ -162,7 +162,7 @@ metadata:
   labels:
     mesh.megaease.com/mesh-service: "true"
 ```
-> No matter what's the value of the `mesh.megaease.com/mesh-service` is set, EaseMesh will regard the namespace as the interested namespace in which deployments create/updated will be instrumented
+> No matter what's the value of the `mesh.megaease.com/mesh-service` is set, EaseMesh will regard the namespace as the interested namespace in which deployments create/updated will be instrumented.
 
 ### Deploy an annotated deployment
 
@@ -174,7 +174,7 @@ The EaseMesh provides the following annotations to users which will help the Eas
 - `mesh.megaease.com/service-labels`: *Optional annotation*, if you need a canary version of applications, you could specify it via a "key=value" form. These labels will be attached to instances registered in the service registry.
 - `mesh.megaease.com/app-container-name`: *Optional annotation*, If your deployments contain multiple containers, you need to specify what's container is your app container. If it is omitted, the EaseMesh assumes the first container is the application container.
 - `mesh.megaease.com/application-port`: *Optional annotation*, If the application container listens on multiple ports, you must specify a port as an application port from which services are provided. If it is omitted, the first port is regarded as an application port.
-- `mesh.megaease.com/alive-probe-url`: *Optional annotation*, The sidecar needs to know whether the application container is alive or dead. If it is omitted, the default is:`http://localhost:9900/health`, The JavaAgent will open the port to listen
+- `mesh.megaease.com/alive-probe-url`: *Optional annotation*, The sidecar needs to know whether the application container is alive or dead. If it is omitted, the default is:`http://localhost:9900/health`, The JavaAgent will open the port to listen.
 
 
 For example:
