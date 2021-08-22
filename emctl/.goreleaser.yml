@@ -15,7 +15,7 @@ changelog:
 builds:
   - id: emctl
     main: cmd/client/main.go
-    binary: bin/egctl
+    binary: bin/emctl
     env:
       - CGO_ENABLED=0
     goos:
@@ -23,7 +23,7 @@ builds:
       - darwin
     ldflags:
       - -s -w
-      - -X github.com/megaease/easemesh/emctl/pkg/version.RELEASE=v1.0.0
+      - -X github.com/megaease/easemesh/emctl/pkg/version.RELEASE=v1.1.0
       - -X github.com/megaease/easemesh/emctl/pkg/version.COMMIT={{.Commit}}
       - -X github.com/megaease/easemesh/emctl/pkg/version.REPO=megaease/easemesh
 
