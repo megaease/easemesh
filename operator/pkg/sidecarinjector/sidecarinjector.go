@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package deploymentmodifier
+package sidecarinjector
 
 import (
 	"fmt"
@@ -25,7 +25,6 @@ import (
 	"github.com/megaease/easemesh/mesh-operator/pkg/util/labelstool"
 
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -185,14 +184,14 @@ labels:
 }
 
 type (
-	// DeploymentModifier is the unified modifier for Deployment.
-	DeploymentModifier struct {
+	// SidecarInjector is sidecar injector for pod.
+	SidecarInjector struct {
 		*base.Runtime
 		meshService *MeshService
-		deploy      *v1.Deployment
+		pod         *corev1.PodSpec
 	}
 
-	// MeshService descirbes the service for DeploymentModifier.
+	// MeshService descirbes the service for SidecarInjector.
 	MeshService struct {
 		// Name is required.
 		Name string
@@ -213,19 +212,17 @@ type (
 	}
 )
 
-// New creates a DeployModifier.
-func New(baseRuntime *base.Runtime, meshService *MeshService,
-	deploy *v1.Deployment) *DeploymentModifier {
-
-	return &DeploymentModifier{
+// New creates a SidecarInjector.
+func New(baseRuntime *base.Runtime, meshService *MeshService, pod *corev1.PodSpec) *SidecarInjector {
+	return &SidecarInjector{
 		Runtime:     baseRuntime,
 		meshService: meshService,
-		deploy:      deploy,
+		pod:         pod,
 	}
 }
 
-// Modify modifies the Deployment.
-func (m *DeploymentModifier) Modify() error {
+// Inject injects sidecar to the pod.
+func (m *SidecarInjector) Inject() error {
 	err := m.setupMeshService()
 	if err != nil {
 		return errors.Wrap(err, "set up mesh service")
@@ -243,18 +240,18 @@ func (m *DeploymentModifier) Modify() error {
 	return nil
 }
 
-func (m *DeploymentModifier) setupMeshService() error {
-	if len(m.deploy.Spec.Template.Spec.Containers) == 0 {
+func (m *SidecarInjector) setupMeshService() error {
+	if len(m.pod.Containers) == 0 {
 		return fmt.Errorf("empty containers")
 	}
 
 	var container *corev1.Container
 	if m.meshService.AppContainerName == "" {
-		container = &m.deploy.Spec.Template.Spec.Containers[0]
+		container = &m.pod.Containers[0]
 		m.meshService.AppContainerName = container.Name
 	} else {
 		var exists bool
-		container, exists = findContainer(m.deploy.Spec.Template.Spec.Containers, m.meshService.AppContainerName)
+		container, exists = findContainer(m.pod.Containers, m.meshService.AppContainerName)
 		if !exists {
 			return errors.Errorf("container %s not found", m.meshService.AppContainerName)
 		}
@@ -270,25 +267,25 @@ func (m *DeploymentModifier) setupMeshService() error {
 	return nil
 }
 
-func (m *DeploymentModifier) injectVolumes(volumes ...corev1.Volume) {
+func (m *SidecarInjector) injectVolumes(volumes ...corev1.Volume) {
 	for _, volume := range volumes {
 		replaced := false
-		for i, existedVolume := range m.deploy.Spec.Template.Spec.Volumes {
+		for i, existedVolume := range m.pod.Volumes {
 			if existedVolume.Name == volume.Name {
-				m.deploy.Spec.Template.Spec.Volumes[i] = volume
+				m.pod.Volumes[i] = volume
 				replaced = true
 				break
 			}
 		}
 
 		if !replaced {
-			m.deploy.Spec.Template.Spec.Volumes = append(m.deploy.Spec.Template.Spec.Volumes, volume)
+			m.pod.Volumes = append(m.pod.Volumes, volume)
 		}
 	}
 
 }
 
-func (m *DeploymentModifier) injectInitContainer() {
+func (m *SidecarInjector) injectInitContainer() {
 	initContainer := corev1.Container{
 		Name:            initContainerName,
 		Image:           m.completeImageURL(initContainerImageName),
@@ -297,17 +294,17 @@ func (m *DeploymentModifier) injectInitContainer() {
 		VolumeMounts:    initContainerVolumeMounts,
 	}
 
-	m.deploy.Spec.Template.Spec.InitContainers = injectContainers(m.deploy.Spec.Template.Spec.InitContainers, initContainer)
+	m.pod.InitContainers = injectContainers(m.pod.InitContainers, initContainer)
 }
 
-func (m *DeploymentModifier) adaptAppContainerSpec() error {
-	containers := m.deploy.Spec.Template.Spec.Containers
+func (m *SidecarInjector) adaptAppContainerSpec() error {
+	containers := m.pod.Containers
 	if len(containers) == 0 {
 		return errors.Errorf("zero containers")
 	}
 
 	// NOTE: m.meshService.AppContainerName must not be empty after setupMeshService.
-	appContainer, existed := findContainer(m.deploy.Spec.Template.Spec.Containers, m.meshService.AppContainerName)
+	appContainer, existed := findContainer(m.pod.Containers, m.meshService.AppContainerName)
 	if !existed {
 		return errors.Errorf("container %s not found", m.meshService.AppContainerName)
 	}
@@ -315,12 +312,12 @@ func (m *DeploymentModifier) adaptAppContainerSpec() error {
 	appContainer.VolumeMounts = injectVolumeMounts(appContainer.VolumeMounts, appContainerVolumeMounts...)
 	appContainer.Env = injectEnvVars(appContainer.Env, appContainerEnvs...)
 
-	m.deploy.Spec.Template.Spec.Containers = injectContainers(m.deploy.Spec.Template.Spec.Containers, *appContainer)
+	m.pod.Containers = injectContainers(m.pod.Containers, *appContainer)
 
 	return nil
 }
 
-func (m *DeploymentModifier) injectSidecarContainer() {
+func (m *SidecarInjector) injectSidecarContainer() {
 	sidecarContainer := corev1.Container{
 		Name:            sidecarContainerName,
 		Image:           m.completeImageURL(sidecarContainerImageName(m.Runtime)),
@@ -331,10 +328,10 @@ func (m *DeploymentModifier) injectSidecarContainer() {
 		Ports:           sidecarContainerPorts,
 	}
 
-	m.deploy.Spec.Template.Spec.Containers = injectContainers(m.deploy.Spec.Template.Spec.Containers, sidecarContainer)
+	m.pod.Containers = injectContainers(m.pod.Containers, sidecarContainer)
 }
 
-func (m *DeploymentModifier) completeImageURL(imageName string) string {
+func (m *SidecarInjector) completeImageURL(imageName string) string {
 	return filepath.Join(m.ImageRegistryURL, imageName)
 }
 
