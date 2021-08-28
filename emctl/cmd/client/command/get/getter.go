@@ -26,24 +26,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common"
 )
 
-type (
-	Getter interface {
-		Get() ([]resource.MeshObject, error)
-	}
-
-	baseGetter struct {
-		client  meshclient.MeshClient
-		timeout time.Duration
-	}
-)
-
-var _ Getter = &serviceGetter{}
-
-type serviceGetter struct {
-	baseGetter
-	object *resource.Service
-}
-
+// WrapGetterByMeshObject wraps getter for mesh object.
 func WrapGetterByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Getter {
 
@@ -53,6 +36,8 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 	}
 
 	switch object.Kind() {
+	case resource.KindMeshController:
+		return &meshControllerGetter{object: object.(*resource.MeshController), baseGetter: base}
 	case resource.KindService:
 		return &serviceGetter{object: object.(*resource.Service), baseGetter: base}
 	case resource.KindCanary:
@@ -76,6 +61,54 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 	}
 
 	return nil
+}
+
+type (
+	// Getter is the getter interface fo mesh object.
+	Getter interface {
+		Get() ([]resource.MeshObject, error)
+	}
+
+	baseGetter struct {
+		client  meshclient.MeshClient
+		timeout time.Duration
+	}
+)
+
+type meshControllerGetter struct {
+	baseGetter
+	object *resource.MeshController
+}
+
+func (s *meshControllerGetter) Get() ([]resource.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+
+	if s.object.Name() != "" {
+		meshController, err := s.client.V1Alpha1().MeshController().Get(ctx, s.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []resource.MeshObject{meshController}, nil
+	}
+
+	meshControllers, err := s.client.V1Alpha1().MeshController().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(meshControllers))
+	for i := range meshControllers {
+		objects[i] = meshControllers[i]
+	}
+
+	return objects, nil
+}
+
+type serviceGetter struct {
+	baseGetter
+	object *resource.Service
 }
 
 func (s *serviceGetter) Get() ([]resource.MeshObject, error) {

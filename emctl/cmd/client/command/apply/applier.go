@@ -40,15 +40,12 @@ type baseApplier struct {
 	timeout time.Duration
 }
 
-type serviceApplier struct {
-	baseApplier
-	object *resource.Service
-}
-
 // WrapApplierByMeshObject returns a Applier from a MeshObject
 func WrapApplierByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Applier {
 	switch object.Kind() {
+	case resource.KindMeshController:
+		return &meshControllerApplier{object: object.(*resource.MeshController), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCanary:
@@ -72,6 +69,41 @@ func WrapApplierByMeshObject(object resource.MeshObject,
 	}
 
 	return nil
+}
+
+type meshControllerApplier struct {
+	baseApplier
+	object *resource.MeshController
+}
+
+func (mc *meshControllerApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), mc.timeout)
+	defer cancelFunc()
+	err := mc.client.V1Alpha1().MeshController().Create(ctx, mc.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = mc.client.V1Alpha1().MeshController().Patch(ctx, mc.object)
+			if err != nil {
+				return errors.Wrapf(err, "update meshController %s", mc.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = mc.client.V1Alpha1().MeshController().Create(ctx, mc.object)
+			if err != nil {
+				return errors.Wrapf(err, "create meshController %s", mc.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply meshController %s", mc.object.Name())
+		}
+
+	}
+}
+
+type serviceApplier struct {
+	baseApplier
+	object *resource.Service
 }
 
 func (s *serviceApplier) Apply() error {
