@@ -22,7 +22,7 @@ import (
 
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
-	"github.com/megaease/easemesh/mesh-operator/pkg/deploymentmodifier"
+	"github.com/megaease/easemesh/mesh-operator/pkg/sidecarinjector"
 	"github.com/megaease/easemesh/mesh-operator/pkg/syncer"
 
 	"github.com/imdario/mergo"
@@ -85,16 +85,16 @@ func (r *MeshDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		//   https://github.com/kubernetes-sigs/controller-runtime/issues/1538
 		deploy.Spec.Template.ObjectMeta.Labels = sourceDeploySpec.Selector.MatchLabels
 
-		service := &deploymentmodifier.MeshService{
+		service := &sidecarinjector.MeshService{
 			Name:             meshDeploy.Name,
 			Labels:           meshDeploy.Spec.Service.Labels,
 			AppContainerName: meshDeploy.Spec.Service.AppContainerName,
 			AliveProbeURL:    meshDeploy.Spec.Service.AliveProbeURL,
 			ApplicationPort:  meshDeploy.Spec.Service.ApplicationPort,
 		}
-		modifier := deploymentmodifier.New(r.Runtime, service, deploy)
+		injector := sidecarinjector.New(r.Runtime, service, &deploy.Spec.Template.Spec)
 
-		return modifier.Modify()
+		return injector.Inject()
 	}
 
 	meshDeploymentSyncer := syncer.New(r.Runtime, meshDeploy, deploy, mutateFn)
