@@ -256,6 +256,7 @@ func (m *SidecarInjector) setupMeshService() error {
 			}
 
 			container = &m.pod.Containers[i]
+			m.meshService.AppContainerName = container.Name
 			break
 		}
 		if container == nil {
@@ -269,7 +270,6 @@ func (m *SidecarInjector) setupMeshService() error {
 		}
 	}
 
-	m.meshService.AppContainerName = container.Name
 	if m.meshService.AppContainerName == sidecarContainerName {
 		return errors.Errorf("app container name is conflict with sidecar: %s", sidecarContainerName)
 	}
