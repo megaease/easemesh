@@ -28,27 +28,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Deleter deletes configuration from the control plane service of the EaseMesh
-type Deleter interface {
-	Delete() error
-}
-
-var _ Deleter = &serviceDeleter{}
-
-type baseDeleter struct {
-	client  meshclient.MeshClient
-	timeout time.Duration
-}
-
-type serviceDeleter struct {
-	baseDeleter
-	object *resource.Service
-}
-
 // WrapDeleterByMeshObject returns a new Deleter from a MeshObject
 func WrapDeleterByMeshObject(object resource.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Deleter {
 	switch object.Kind() {
+	case resource.KindMeshController:
+		return &meshControllerDeleter{object: object.(*resource.MeshController), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceDeleter{object: object.(*resource.Service), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindCanary:
@@ -72,6 +57,32 @@ func WrapDeleterByMeshObject(object resource.MeshObject,
 	}
 
 	return nil
+}
+
+// Deleter deletes configuration from the control plane service of the EaseMesh
+type Deleter interface {
+	Delete() error
+}
+
+type baseDeleter struct {
+	client  meshclient.MeshClient
+	timeout time.Duration
+}
+
+type meshControllerDeleter struct {
+	baseDeleter
+	object *resource.MeshController
+}
+
+func (s *meshControllerDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+	return s.client.V1Alpha1().MeshController().Delete(ctx, s.object.Name())
+}
+
+type serviceDeleter struct {
+	baseDeleter
+	object *resource.Service
 }
 
 func (s *serviceDeleter) Delete() error {

@@ -51,6 +51,10 @@ func (oc *objectCreator) new(kind VersionKind, metaData MetaData) (MeshObject, e
 	}
 
 	switch kind.Kind {
+	case KindMeshController:
+		return &MeshController{
+			MeshResource: NewMeshControllerResource(apiVersion, metaData.Name),
+		}, nil
 	case KindService:
 		return &Service{
 			MeshResource: NewServiceResource(apiVersion, metaData.Name),
@@ -90,6 +94,11 @@ func (oc *objectCreator) new(kind VersionKind, metaData MetaData) (MeshObject, e
 	default:
 		return nil, errors.Errorf("unsupported kind %s", kind.Kind)
 	}
+}
+
+// NewMeshControllerResource returns a MeshResouce with the mesh controller kind.
+func NewMeshControllerResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindMeshController, name)
 }
 
 // NewIngressResource returns a MeshResource with the ingress kind

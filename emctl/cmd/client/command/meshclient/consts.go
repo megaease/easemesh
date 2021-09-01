@@ -20,6 +20,12 @@ package meshclient
 const (
 	apiURL = "/apis/v1"
 
+	// MeshControllersURL is the mesh controller prefix.
+	MeshControllersURL = apiURL + "/objects"
+
+	// MeshControllerURL is the mesh controller path.
+	MeshControllerURL = apiURL + "/objects/%s"
+
 	// MeshTenantsURL is the mesh tenant prefix.
 	MeshTenantsURL = apiURL + "/mesh/tenants"
 
