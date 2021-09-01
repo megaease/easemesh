@@ -81,7 +81,7 @@ type (
 	// MetaData is meta data for resources of the EaseMesh
 	MetaData struct {
 		Name   string            `json:"name" yaml:"name" jsonschema:"required"`
-		Labels map[string]string `json:"labels" yaml:"labels" jsonschema:"omitempty"`
+		Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" jsonschema:"omitempty"`
 	}
 
 	// MeshResource holds common information for a resource of the EaseMesh
