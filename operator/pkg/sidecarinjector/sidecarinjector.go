@@ -222,6 +222,7 @@ func New(baseRuntime *base.Runtime, meshService *MeshService, pod *corev1.PodSpe
 }
 
 // Inject injects sidecar to the pod.
+// It is idempotent.
 func (m *SidecarInjector) Inject() error {
 	err := m.setupMeshService()
 	if err != nil {
@@ -247,14 +248,30 @@ func (m *SidecarInjector) setupMeshService() error {
 
 	var container *corev1.Container
 	if m.meshService.AppContainerName == "" {
-		container = &m.pod.Containers[0]
-		m.meshService.AppContainerName = container.Name
+		for i, c := range m.pod.Containers {
+			// NOTE: Kubernetes will append renamed app container
+			// behind existed sidecar container, so we need to ignore.
+			if c.Name == sidecarContainerName {
+				continue
+			}
+
+			container = &m.pod.Containers[i]
+			break
+		}
+		if container == nil {
+			return errors.Errorf("no app container")
+		}
 	} else {
 		var exists bool
 		container, exists = findContainer(m.pod.Containers, m.meshService.AppContainerName)
 		if !exists {
 			return errors.Errorf("container %s not found", m.meshService.AppContainerName)
 		}
+	}
+
+	m.meshService.AppContainerName = container.Name
+	if m.meshService.AppContainerName == sidecarContainerName {
+		return errors.Errorf("app container name is conflict with sidecar: %s", sidecarContainerName)
 	}
 
 	if m.meshService.ApplicationPort == 0 {
