@@ -1,0 +1,6 @@
+FROM scratch
+
+COPY bin/easemesh-shadow-service-controller /easemesh-shadow-service-controller
+
+CMD ["/easemesh-shadow-service-controller"]
+
