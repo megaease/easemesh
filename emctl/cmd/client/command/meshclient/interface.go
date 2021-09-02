@@ -30,6 +30,7 @@ type MeshClient interface {
 
 // V1Alpha1Interface is an interface that aggregates all resources accessor for the EaseMesh
 type V1Alpha1Interface interface {
+	MeshControllerGetter
 	TenantGetter
 	ServiceGetter
 	LoadbalanceGetter
@@ -37,6 +38,11 @@ type V1Alpha1Interface interface {
 	ObservabilityGetter
 	ResilienceGetter
 	IngressGetter
+}
+
+// MeshControllerGetter represents a mesh controller resource accessor
+type MeshControllerGetter interface {
+	MeshController() MeshControllerInterface
 }
 
 // TenantGetter represents a Tenant resource accessor
@@ -74,6 +80,15 @@ type ResilienceGetter interface {
 // IngressGetter represents an Ingress resource accessor
 type IngressGetter interface {
 	Ingress() IngressInterface
+}
+
+// MeshControllerInterface captures the set of operations for interacting with the EaseMesh REST apis of the mesh controller resource.
+type MeshControllerInterface interface {
+	Get(context.Context, string) (*resource.MeshController, error)
+	Patch(context.Context, *resource.MeshController) error
+	Create(context.Context, *resource.MeshController) error
+	Delete(context.Context, string) error
+	List(context.Context) ([]*resource.MeshController, error)
 }
 
 // TenantInterface captures the set of operations for interacting with the EaseMesh REST apis of the tenant resource.

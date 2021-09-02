@@ -5,10 +5,17 @@
   - [Installation](#installation)
   - [Client command tool](#client-command-tool)
   - [Mesh service](#mesh-service)
+    - [Tenant Spec](#tenant-spec)
+    - [MeshService Spec](#meshservice-spec)
   - [MeshDeployment](#meshdeployment)
+  - [Native Deployment](#native-deployment)
+    - [Create a specific (interested) namespace](#create-a-specific-interested-namespace)
+    - [Deploy an annotated deployment](#deploy-an-annotated-deployment)
   - [Sidecar Traffic](#sidecar-traffic)
     - [Inbound](#inbound)
     - [Outbound](#outbound)
+      - [Load balance](#load-balance)
+      - [Traffic split](#traffic-split)
     - [Sidecar Configuration](#sidecar-configuration)
   - [Resilience](#resilience)
     - [CircuitBreaker](#circuitbreaker)
@@ -46,15 +53,18 @@ The client command tool of the EaseMesh is `emctl`, please checkout [emctl.md](.
 
 Services are the first-class citizens of the EaseMesh. Developers need to breakdown their business logic into small units and implement it as services.
 
-A service could have co-exist multiple versions, a version of the service is a [MeshDeployment](#meshdeployment) which binds to Kubernetes Deployment resource
+Different from K8s service, the EaseMesh manages application by the service, a service has a logic name that is related to one or multiple K8s deployments. The service has its [own specification ](#mesh-service) and must belong to a [tenant](#tenant-spec).
 
+A service could have co-exist multiple versions, a version of the service is a [MeshDeployment](#meshdeployment) or [native K8s deployment](#deploy-an-annotated-deployment) which binds to Kubernetes Deployment resource.
+
+
+### Tenant Spec
 The `tenant` is used to group several services of the same business domain. Services can communicate with each other in the same tenant. In EaseMesh, there is a special global tenant that is visible to the entire mesh. Users can put some global, shared services in this special tenant.
 
 > ** Note: **
 > All specs in the EaseMesh are written in Yaml formation
-> Please remember to change the YAML's placeholders such as ${your-service-name} to your real service name before applying.
 
-1. **Create a tenant for services** You can choose to deploy a new mesh service in an existing tenant, or creating a new one for it. Modify example YAML content below and apply it
+**Create a tenant for services** You can choose to deploy a new mesh service in an existing tenant, or creating a new one for it. Modify example YAML content below and apply it:
 
 
 ```yaml
@@ -62,9 +72,12 @@ name: ${your-tenant-name}
 description: "This is a test tenant for EaseMesh demoing"
 ```
 
+> Please remember to change the YAML's placeholders such as ${your-tenant-name} to your real service name before applying.
 >Tenant Spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Tenant
 
-2. **Create a service and specify which tenant the service belonged to**. Creating your mesh service in EaseMesh. Note, we only need to add this new service's logic entity now. The actual business logic and the way to deploy will be introduced later. Modify example YAML content below and apply it
+### MeshService Spec
+
+**Create a service and specify which tenant the service belonged to**. Creating your mesh service in EaseMesh. Note, we only need to add this new service's logic entity now. The actual business logic and the way to deploy will be introduced later. Modify example YAML content below and apply it
 
 
 ```yaml
@@ -84,93 +97,9 @@ sidecar:
 
 >Service Spec Reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Service
 
-3. With steps 1 and 2, now we have a new tenant and a new mesh service. They are both logic units without actual processing entities. EaseMesh relies on Kubernetes to transparent the resource management and deployment details. In K8s, we need to build the business logic (your **Java Spring Cloud application**) into an image and tell K8s the number of your instances and resources, with so-called declarative API, mostly in a YAML form. We will use a K8s [ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/) to store your application's configurations and an [Custom Resource Define(CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) called `MeshDeployment` to describe the way you want your application instances run in K8s. Here is a Java Spring Cloud application example that visiting MySQL, Eureka for service discovery/register. Preparing the deployment YAML by modifying content below, and applying it
+ Now we have a new tenant and a new mesh service.  They are both logic units without actual processing entities.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ${your-configmap-name}
-  namespace: ${your-ns-name}
-data:
-  application-sit-yml: |
-    server:
-      port: 8080
-    spring:
-      application:
-        name:  $(your-service-name}
-      datasource:
-        url: jdbc:mysql://mysql.default:3306/${your_db_name}?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&verifyServerCertificate=false
-        username: ${your-db-username}
-        password: {$your-db-password}
-      jpa:
-        database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
-      sleuth:
-        enabled: false
-        web:
-          servlet:
-          enabled: false
-    eureka:
-      client:
-        serviceUrl:
-          defaultZone: http://127.0.0.1:13009/mesh/eureka
-      instance:
-        preferIpAddress: true
-        lease-expiration-duration-in-seconds: 60
----
-apiVersion: mesh.megaease.com/v1beta1
-kind: MeshDeployment
-metadata:
-  namespace: ${your-ns-name}
-  name: ${your-service-name}
-spec:
-  service:
-    name: ${your-service-name}
-  deploy:
-    replicas: 2
-    selector:
-      matchLabels:
-        app: ${your-service-name}
-    template:
-      metadata:
-        labels:
-          app: ${your-service-name}
-      spec:
-        containers:
-        - image: ${your-image-url}
-          name: ${your-service-name}
-          imagePullPolicy: IfNotPresent
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sh", "-c", "sleep 10"]
-          command: ["/bin/sh"]
-          args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
-          resources:
-            limits:
-              cpu: 2000m
-              memory: 1Gi
-            requests:
-              cpu: 200m
-              memory: 256Mi
-          ports:
-          - containerPort: 8080
-          volumeMounts:
-          - mountPath: /application/application-sit.yml
-            name: configmap-volume-0
-            subPath: application-sit.yml
-        volumes:
-          - configMap:
-              defaultMode: 420
-              items:
-                - key: application-sit-yml
-                  path: application-sit.yml
-              name: ${your-service-name}
-            name: ${your_service}-volume-0
-        restartPolicy: Always
-```
-
-4. For service register/discovery, EaseMesh supports three mainstream solutions, Eureka/Consul/Nacos. Check out the corresponding configuration URL below:
+For service register/discovery, EaseMesh supports three mainstream solutions, Eureka/Consul/Nacos. Check out the corresponding configuration URL below:
 
 | Name   | URL In Mesh deployment configuration |
 | ------ | ------------------------------------ |
@@ -178,20 +107,13 @@ spec:
 | Consul | http://127.0.0.1:13009               |
 | Nacos  | http://127.0.0.1:13009/nacos/v1      |
 
-5. Communications between internal mesh services can be done through Spring Cloud's recommended clients, such as `WebClient`, `RestTemplate`, and `FeignClient`. The original HTTP domain-based RPC remains unchanged. Please notice, EaseMesh will host the Ease-West way traffic by its mesh service name, so it is necessary to keep the mesh service name the same as the original Spring Cloud application name for HTTP domain-based RPC.
+Communications between internal mesh services can be done through Spring Cloud's recommended clients, such as `WebClient`, `RestTemplate`, and `FeignClient`. The original HTTP domain-based RPC remains unchanged. Please notice, EaseMesh will host the Ease-West way traffic by its mesh service name, so it is necessary to keep the mesh service name the same as the original Spring Cloud application name for HTTP domain-based RPC.
 
-## MeshDeployment
+## MeshDeployment 
 
 EaseMesh relies on Kubernetes for managing service instances and the resources they require. For example, we can scale the number of instances with the help of Kubernetes. In fact, EaseMesh uses a mechanism called [Kubernetes  Custom Resource Define(CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to combine the service metadata used by EaseMesh and Kubernetes original deployment. MeshDeployment can be used not only to deploy and manage service instances, it can also help us implement the canary deployment.
 
 MeshDeployment wraps native K8s [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment) resources. The contents of `spec.deploy` section in the MeshDeployment spec is fully K8s deployments spec definition.
-
-
-The canary deployment is a pattern for rolling out releases to a subset of servers. The idea is to first deploy the change to a small subset of servers, test it with real users' traffic, and then roll the change out to the rest of the servers. The canary deployment serves as an early warning indicator with less impact on downtime: if the canary deployment fails, the rest of the servers aren't impacted. In order to be safer, we can divide traffic into two kinds, normal traffic, and colored traffic. Only the colored traffic will be routed to the canary instance. The traffic can be colored with the users' model, then setting into standard HTTP header fields.
-
-![canary-deployment](./../imgs/canary-deployment.png)
-
-1. Preparing new business logic with a new application image. Adding a new `MeshDeployment`, we would like to separate the original mesh server's instances from the new canary instances by labeling `version: canary` to canary instances. Modify example YAML content below and apply it
 
 ```yaml
 apiVersion: mesh.megaease.com/v1beta1
@@ -215,72 +137,68 @@ spec:
           app: ${your-service-name}
       spec:
         containers:
-        - image: ${your-image-new-url}    # the canary instance's new image URL
-          name: ${your-service-name}
-          imagePullPolicy: IfNotPresent
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sh", "-c", "sleep 10"]
-          command: ["/bin/sh"]
-          args: ["-c", "java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom -jar /application/application.jar"]
-          resources:
-            limits:
-              cpu: 2000m
-              memory: 1Gi
-            requests:
-              cpu: 200m
-              memory: 256Mi
-          ports:
-          - containerPort: 8080
-          volumeMounts:
-          - mountPath: /application/application-sit.yml
-            name: configmap-volume-0
-            subPath: application-sit.yml
-        volumes:
-          - configMap:
-              defaultMode: 420
-              items:
-                - key: application-sit-yml
-                  path: application-sit.yml
-              name: ${your-service-name}
-            name: ${your_service}-volume-0
-        restartPolicy: Always
-
-```
-2. Checking the original normal instances and canary instances with cmd
-
-```bash
-$ kubectl get pod -l app: ${your-service-name}
-
-NAME                                      READY   STATUS    RESTARTS   AGE
-${your-service-name}-6c59797565-qv927      2/2     Running   0          8d
-${your-service-name}-6c59797565-wmgw7      2/2     Running   0          8d
-${your-service-name}-canary-84586f7675-lhrr5      2/2     Running   0          5min
-${your-service-name}-canary-7fbbfd777b-hbshm      2/2     Running   0          5min
+...
 ```
 
-3. When canary instances are ready for work, it's time to set the policy for traffic-matching. In this example, we would like to color traffic for the canary instance with HTTP header filed `X-Mesh-Canary: lv1` (Note, we want exact matching here, can be set to a Regular Expression) and all mesh service's APIs are the canary targets. Modify example canary rule YAML content below and apply it
 
+## Native Deployment
+
+Except for the custom resource `MeshDeployment`, we support the native K8s deployment resource to automatically inject the JavaAgent and sidecar.
+
+If you want the EaseMesh to govern applications, you need to fulfill the following prerequisites:
+1. Create the namespace with the specified label.
+2. Deploy applications via the K8s Deployments.
+3. Annotated the deployment with specific annotations.
+
+### Create a specific (interested) namespace
+The EaseMesh only watches the create/update operation that occurred in the interested namespace. What's is the interested namespace, it's a namespace label with a specific key. So if you want the EaseMesh to automatically inject the sidecar and the JavaAgent for the Deployment in the namespace, you need to create the namespace with the label key: `mesh.megaease.com/mesh-service`
+
+For example:
 ```yaml
-canary:
-  canaryRules:
-  - serviceInstanceLabels:
-      version: canary   # The canary instances must have this `version: canary` label.
-    headers:
-        X-Mesh-Canary:
-          exact: lv1    # The colored traffic with this exact matching HTTP header value.
-    urls:
-      - methods: ["GET","POST","PUT","DELETE"]
-        url:
-          prefix: "/"  # Routing colored traffic to canary instances all HTTP APIs.
-
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spring-petclinic
+  labels:
+    mesh.megaease.com/mesh-service: "true"
 ```
+> No matter what's the value of the `mesh.megaease.com/mesh-service` is set, EaseMesh will regard the namespace as the interested namespace in which deployments create/updated will be instrumented.
 
-> CanaryRule spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.CanaryRule
+### Deploy an annotated deployment
+
+As mentioned before,  the EaseMesh will instrument the deployments create/update operation in the specified namespace, but the EaseMesh's injection will not be always applied on all deployments in the namespace, it will only influent the deployment annotated with specified annotation.
+
+The EaseMesh provides the following annotations to users which will help the EaseMesh efficiently manage users' applications:
+
+- `mesh.megaease.com/service-name`: *Required annotation*, it is the name of [MeshService](#mesh-service).
+- `mesh.megaease.com/service-labels`: *Optional annotation*, if you need a canary version of applications, you could specify it via a "key=value" form. These labels will be attached to instances registered in the service registry.
+- `mesh.megaease.com/app-container-name`: *Optional annotation*, If your deployments contain multiple containers, you need to specify what's container is your app container. If it is omitted, the EaseMesh assumes the first container is the application container.
+- `mesh.megaease.com/application-port`: *Optional annotation*, If the application container listens on multiple ports, you must specify a port as an application port from which services are provided. If it is omitted, the first port is regarded as an application port.
+- `mesh.megaease.com/alive-probe-url`: *Optional annotation*, The sidecar needs to know whether the application container is alive or dead. If it is omitted, the default is:`http://localhost:9900/health`, The JavaAgent will open the port to listen.
 
 
-4. Visiting your mesh service with and without HTTP header `X-Mesh-Canary: lv1`, the colored traffic will be handled by canary instances.
+For example:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ${your-ns-name}
+  name: ${your_service-name}-canary
+  annotations:
+    mesh.megaease.com/service-name: ${your_service-name} 
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: app1    #Note! service name should remain the same with the origin mesh service
+  template:
+    metadata:
+      labels:
+        app: app1
+    spec:
+      containers:
+...
+```
 
 ## Sidecar Traffic
 
@@ -308,8 +226,6 @@ MeshController will create dedicated pipelines to handle outbound traffic:
 3. Use load balance to choose the service instance.
 4. Transport traffic to the chosen service instance.
 
-
-
 > The diagram above is a logical direction of the **request** of traffic, the responses flow in the opposite direction which is the same category with corresponding requests.
 
 Please notice the sidecar only handle business request traffic, which means it doesn't hijack traffic to:
@@ -317,6 +233,44 @@ Please notice the sidecar only handle business request traffic, which means it d
 2. Any other control plane, such as the `Istio` pilot.
 
 But we are well compatible with the Java ecosystem, so we adapt the mainstream service discovery registry like Eureka, Nacos, and Consul. We do hijack traffic to the service discovery, so it's required that the service **changes service registry address to sidecar address** in the startup-config.
+
+#### Load balance
+
+Load balance defines the service traffic intended policy that is how to schedule traffic between instance of the service. The spec can be omitted, the EaseMesh chose the RoundRobin as the default policy.
+
+> Load balance spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#loadbalance
+
+#### Traffic split
+
+The canary deployment is a pattern for rolling out releases to a subset of servers. The idea is to first deploy the change to a small subset of servers, test it with real users' traffic, and then roll the change out to the rest of the servers. The canary deployment serves as an early warning indicator with less impact on downtime: if the canary deployment fails, the rest of the servers aren't impacted. In order to be safer, we can divide traffic into two kinds, normal traffic, and colored traffic. Only the colored traffic will be routed to the canary instance. The traffic can be colored with the users' model, then setting into standard HTTP header fields.
+
+![canary-deployment](./../imgs/canary-deployment.png)
+
+Preparing new business logic with a new application image. Adding a new `MeshDeployment`, we would like to separate the original mesh server's instances from the new canary instances by labeling `version: canary` to canary instances. Modify example YAML content below and apply it
+
+
+When canary instances are ready for work, it's time to set the policy for traffic-matching. In this example, we would like to color traffic for the canary instance with HTTP header filed `X-Mesh-Canary: lv1` (Note, we want exact matching here, can be set to a Regular Expression) and all mesh service's APIs are the canary targets. Modify example canary rule YAML content below and apply it
+
+```yaml
+canary:
+  canaryRules:
+  - serviceInstanceLabels:
+      version: canary   # The canary instances must have this `version: canary` label.
+    headers:
+        X-Mesh-Canary:
+          exact: lv1    # The colored traffic with this exact matching HTTP header value.
+    urls:
+      - methods: ["GET","POST","PUT","DELETE"]
+        url:
+          prefix: "/"  # Routing colored traffic to canary instances all HTTP APIs.
+
+```
+
+> CanaryRule spec reference: https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.CanaryRule
+
+
+4. Visiting your mesh service with and without HTTP header `X-Mesh-Canary: lv1`, the colored traffic will be handled by canary instances.
+
 
 ### Sidecar Configuration
 * **Note: Please remember to change the YAML's placeholders to your real service name tenant name.**
@@ -338,7 +292,6 @@ sidecar:
   egressProtocol: http
 ```
 > Sidecar Spec reference :https://github.com/megaease/easemesh-api/blob/master/v1alpha1/meshmodel.md#easemesh.v1alpha1.Sidecar
-
 
 ## Resilience
 

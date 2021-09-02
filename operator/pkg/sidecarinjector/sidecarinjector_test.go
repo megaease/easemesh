@@ -15,17 +15,18 @@
  * limitations under the License.
  */
 
-package deploymentmodifier
+package sidecarinjector
 
 import (
 	_ "embed"
 
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
+
 	v1 "k8s.io/api/apps/v1"
+	"sigs.k8s.io/yaml"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -36,8 +37,8 @@ var (
 	wantDeployStr string
 )
 
-var _ = Describe("DeploymentModifier", func() {
-	It("modify deployment", func() {
+var _ = Describe("SidecarInjector", func() {
+	It("injects pod", func() {
 		originalDeploy := &v1.Deployment{}
 		wantDeploy := &v1.Deployment{}
 
@@ -64,8 +65,8 @@ var _ = Describe("DeploymentModifier", func() {
 		// Expect(err).ShouldNot(HaveOccurred())
 		// fmt.Printf("%s\n", gotDeployStr)
 
-		modifier := New(baseRuntime, service, originalDeploy)
-		Expect(modifier.Modify()).To(Succeed())
+		injector := New(baseRuntime, service, &originalDeploy.Spec.Template.Spec)
+		Expect(injector.Inject()).To(Succeed())
 		Expect(originalDeploy).To(Equal(wantDeploy))
 	})
 })

@@ -40,6 +40,9 @@ const (
 	// DefaultSideEgressPort is default port listend by the sidecar for outbound traffic
 	DefaultSideEgressPort = 13002
 
+	// KindMeshController is mesh controller kind of the EaseMesh control plane.
+	KindMeshController = "MeshController"
+
 	// KindService is service kind of the EaseMesh resource
 	KindService = "Service"
 
@@ -57,8 +60,10 @@ const (
 
 	// KindTenant is tenant kind of the EaseMesh resource
 	KindTenant = "Tenant"
+
 	// KindLoadBalance is loadbalance kind of the EaseMesh resource
 	KindLoadBalance = "LoadBalance"
+
 	// KindResilience is resilience kind of the EaseMesh resource
 	KindResilience = "Resilience"
 
@@ -69,20 +74,20 @@ const (
 type (
 	// VersionKind holds version and kind information for APIs
 	VersionKind struct {
-		APIVersion string `json:"apiVersion" jsonschema:"required"`
-		Kind       string `json:"kind" jsonschema:"required"`
+		APIVersion string `json:"apiVersion" yaml:"apiVersion" jsonschema:"required"`
+		Kind       string `json:"kind" yaml:"kind" jsonschema:"required"`
 	}
 
 	// MetaData is meta data for resources of the EaseMesh
 	MetaData struct {
-		Name   string            `json:"name" jsonschema:"required"`
-		Labels map[string]string `json:"labels" jsonschema:"omitempty"`
+		Name   string            `json:"name" yaml:"name" jsonschema:"required"`
+		Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" jsonschema:"omitempty"`
 	}
 
 	// MeshResource holds common information for a resource of the EaseMesh
 	MeshResource struct {
-		VersionKind `json:",inline"`
-		MetaData    MetaData `json:"metadata" jsonschema:"required"`
+		VersionKind `json:",inline" yaml:",inline"`
+		MetaData    MetaData `json:"metadata" yaml:"metadata" jsonschema:"required"`
 	}
 
 	// MeshObject describes what's feature of a comman EaseMesh object
@@ -95,6 +100,36 @@ type (
 )
 
 type (
+	// MeshController is the spec of MeshController on Easegress.
+	MeshController struct {
+		MeshResource        `json:",inline" yaml:",inline"`
+		MeshControllerAdmin `json:",inline" yaml:",inline"`
+	}
+
+	// MeshControllerV1Alpha1 is the v1alphv1 version of mesh controller.
+	MeshControllerV1Alpha1 struct {
+		Kind                string `json:"kind" yaml:"kind"`
+		Name                string `json:"name" yaml:"name"`
+		MeshControllerAdmin `json:",inline" yaml:",inline"`
+	}
+
+	// MeshControllerAdmin is the admin config of mesh controller.
+	MeshControllerAdmin struct {
+		// HeartbeatInterval is the interval for one service instance reporting its heartbeat.
+		HeartbeatInterval string `json:"heartbeatInterval" yaml:"heartbeatInterval"`
+
+		// RegistryTime indicates which protocol the registry center accepts.
+		RegistryType string `json:"registryType" yaml:"registryType"`
+
+		// APIPort is the port for worker's API server
+		APIPort int `json:"apiPort" yaml:"apiPort"`
+
+		// IngressPort is the port for http server in mesh ingress
+		IngressPort int `json:"ingressPort" yaml:"ingressPort"`
+
+		// ExternalServiceRegistry is the external service registry
+		ExternalServiceRegistry string `json:"externalServiceRegistry" yaml:"externalServiceRegistry"`
+	}
 
 	// Tenant describes tenant resource of the EaseMesh
 	Tenant struct {
@@ -173,6 +208,7 @@ type (
 	}
 )
 
+var _ MeshObject = &MeshController{}
 var _ MeshObject = &Service{}
 var _ MeshObject = &Tenant{}
 var _ MeshObject = &Canary{}
@@ -228,6 +264,15 @@ func (m *MeshResource) APIVersion() string {
 // Labels returns labels of the EaseMesh resource
 func (m *MeshResource) Labels() map[string]string {
 	return m.MetaData.Labels
+}
+
+// ToV1Alpha1 converts MeshController resouce to v1alpha1.
+func (mc *MeshController) ToV1Alpha1() *MeshControllerV1Alpha1 {
+	return &MeshControllerV1Alpha1{
+		Kind:                mc.Kind(),
+		Name:                mc.Name(),
+		MeshControllerAdmin: mc.MeshControllerAdmin,
+	}
 }
 
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
@@ -304,6 +349,14 @@ func ToIngress(ingress *v1alpha1.Ingress) *Ingress {
 	result.MeshResource = NewIngressResource(DefaultAPIVersion, ingress.Name)
 	result.Spec.Rules = ingress.Rules
 	return result
+}
+
+// ToMeshController converts a MeshControllerV1Alpha1 resouce to a MeshController resource.
+func ToMeshController(meshController *MeshControllerV1Alpha1) *MeshController {
+	return &MeshController{
+		MeshResource:        NewMeshResource(DefaultAPIVersion, meshController.Kind, meshController.Name),
+		MeshControllerAdmin: meshController.MeshControllerAdmin,
+	}
 }
 
 // ToService converts a v1alpha1.Service resource to a Service resource

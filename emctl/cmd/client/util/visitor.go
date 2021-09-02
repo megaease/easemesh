@@ -297,6 +297,8 @@ func newCommandVisitor(kind, name string) *commandVisitor {
 func adaptCommandKind(kind string) string {
 	low := strings.ToLower
 	switch low(kind) {
+	case low(resource.KindMeshController):
+		return resource.KindMeshController
 	case low(resource.KindService):
 		return resource.KindService
 	case low(resource.KindTenant):

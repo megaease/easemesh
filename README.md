@@ -171,15 +171,18 @@ emctl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petcli
 
 leverage kubectl to create `spring-petclinic` namespace
 
+We support to automatically inject sidecar and the JavaAgent when a deployment was created or updated in an interested namespace. So you need to create a namespace with a specific label, we are prepared a spring-petclinic namespace, you can create it via:
+
 ```bash
-kubectl create namespace spring-petclinic
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/namespace/spring-petclinic.yaml
 ```
+
 
 #### 7.1.3 Step 4: Setup Database
 
-Petclinic needs to access database, the default is memory database. But in the EaseMesh quick start, you need to prepare a Mysql database for the demo.
+The pet clinic demo needs to access database, the default is memory database. But in the EaseMesh quick start, you could to use memory database by default.
 
-Use the DB table schemes and records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
+>If you want to use the MySQL database, you could create the DB table schemes and import records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
 
 #### 7.1.4 Step 3: Apply petclinic stack
 
@@ -187,14 +190,16 @@ Deploy petclinic resources to k8s cluster, we have developed an [operator](./ope
 
 > The Operator of the EaseMesh will automatically inject a sidecar to pod and a JavaAgent into the application's JVM
 
+Now, we support injecting the JavaAgent and sidecar into the native deployment, but you need to explicitly specify the service name in the Deployment spec via `mesh.megaease.com/service-name: "{service-name}"` of the annotation. EaseMesh has a [`admission control`](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/) server, which will watch Create/Update operation of Deployments in the specified namespace. If a deployment with `mesh.megaease.com/service-name` annotation was created in the specific namespace (labeled with key `mesh.megaease.com/mesh-service`), the admission control server will mutate the deployment spec and inject the sidecar and the JavaAgent.
+
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/api-gateway-deployment.yaml
-kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/customers-service-deployment.yaml
-kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/vets-service-deployment.yaml
-kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/mesh-deployments/visits-service-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/deployments/01-vets.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/deployments/02-visits.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/deployments/03-customers.yaml
+kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/deployments/04-api-gateway.yaml
 ```
 
-> ATTENTION: There is a ConfigMap spec in yaml file, it describes how to connected the database for applications. You need to change as per your real environment
+> ATTENTION: There is a ConfigMap spec in yaml file, if you to want to use the MySQL database, you need to change it per your environments.
 
 #### 7.1.5 Get exposed port of `EaseMesh ingress` service
 
@@ -353,7 +358,7 @@ Building the canary Customer service's image, and update image version in `https
 
 #### 7.2.5 Step 5. Deploy canary version
 
-Being similar to [7.1.4](#714-step-3-apply-petclinic-stack),  we leverage kubectl to deploy the canary version of `MeshDeployment`
+Being similar to [7.1.4](#714-step-3-apply-petclinic-stack),  we leverage kubectl to deploy the canary version of the `Deployment`
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/canary/customers-service-deployment-canary.yaml`
@@ -366,6 +371,8 @@ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petc
 Turning on the chrome **ModHeader** plugin to color the traffic, then visit PetClinic website. You can see the change to the table which adds an "-US" suffix to every city record.
 
   ![plugin](./imgs/chrome_plugin.png)
+
+> [ModHeader](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) is a chrome extension, we use it solely for demonstrating coloring the requests.
 
 ### 7.3 Clean
 
