@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -51,20 +50,17 @@ type ServiceCloneBlock struct {
 
 func (searcher *SearchHandler) Start() error {
 	searcher.Registry.Add("", nil, searcher.Interval, searcher.queryDeploymentForShadowServiceFunc())
-	fmt.Println("Start")
 	return nil
 }
 
 func (searcher *SearchHandler) queryDeploymentForShadowServiceFunc() common.CallbackFunc {
 	return func(context map[string]string, executeContext map[string]interface{}, interval time.Duration) bool {
-
 		shadowServices, err := searcher.queryShadowServices()
 		// an error occurs in retrieving metrics process this time, just ignore it.
 		if err != nil {
 			log.Printf("Query shadow service from easemesh control plane error %s", err)
 		}
 		searcher.queryOriginDeployments(shadowServices)
-
 		return true
 	}
 }
@@ -92,7 +88,7 @@ func (searcher *SearchHandler) queryOriginDeployments(shadowServices []*object.S
 		}
 		meshDeploymentList, err := utils.ListMeshDeployment(namespace, searcher.CRDClient, metav1.ListOptions{})
 		if err != nil {
-			// logger.Errorf("Query MeshDeployment for shadow service error.", err)
+			log.Printf("Query MeshDeployment for shadow service error. %s", err)
 		}
 
 		for _, meshDeployment := range meshDeploymentList.Items {
@@ -125,9 +121,9 @@ func (searcher *SearchHandler) queryOriginDeployments(shadowServices []*object.S
 			}
 		}
 
-		// for serviceName, _ := range serviceNameMap {
-		// 	// fmt.Errorf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s", serviceName)
-		// }
+		for serviceName, _ := range serviceNameMap {
+			log.Printf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s", serviceName)
+		}
 	}
 }
 

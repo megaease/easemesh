@@ -67,4 +67,10 @@ const (
 
 	// MeshIngressURL is the mesh ingress path.
 	MeshIngressURL = apiURL + "/mesh/ingresses/%s"
+
+	// MeshShadowServicesURL is mesh shadow service prefix.
+	MeshShadowServicesURL = apiURL + "/mesh/shadowservices"
+
+	// MeshShadowServicesURL is the mesh service path.
+	MeshShadowServiceURL = apiURL + "/mesh/shadowservices/%s"
 )

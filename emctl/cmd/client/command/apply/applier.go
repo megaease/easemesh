@@ -64,6 +64,8 @@ func WrapApplierByMeshObject(object resource.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindShadowService:
+		return &shadowServiceApplier{object: object.(*resource.ShadowService), baseApplier: baseApplier{client: client, timeout: timeout}}
 	default:
 		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
 	}
@@ -364,5 +366,35 @@ func (i *ingressApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply resilience %s", i.object.Name())
 		}
+	}
+}
+
+type shadowServiceApplier struct {
+	baseApplier
+	object *resource.ShadowService
+}
+
+func (s *shadowServiceApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+	err := s.client.V1Alpha1().ShadowService().Create(ctx, s.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = s.client.V1Alpha1().ShadowService().Patch(ctx, s.object)
+			if err != nil {
+				return errors.Wrapf(err, "update shadow service %s", s.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = s.client.V1Alpha1().ShadowService().Create(ctx, s.object)
+			if err != nil {
+				return errors.Wrapf(err, "create shadow service  %s", s.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply shadow service  %s", s.object.Name())
+		}
+
 	}
 }

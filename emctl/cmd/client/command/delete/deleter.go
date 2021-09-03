@@ -52,6 +52,8 @@ func WrapDeleterByMeshObject(object resource.MeshObject,
 		return &observabilityTracingsDeleter{object: object.(*resource.ObservabilityTracings), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressDeleter{object: object.(*resource.Ingress), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindShadowService:
+		return &shadowServiceDeleter{object: object.(*resource.ShadowService), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	default:
 		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
 	}
@@ -225,4 +227,16 @@ func (i *ingressDeleter) Delete() error {
 	}
 
 	return err
+}
+
+
+type shadowServiceDeleter struct {
+	baseDeleter
+	object *resource.ShadowService
+}
+
+func (s *shadowServiceDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+	return s.client.V1Alpha1().ShadowService().Delete(ctx, s.object.Name())
 }

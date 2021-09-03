@@ -56,6 +56,8 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 		return &observabilityTracingsGetter{object: object.(*resource.ObservabilityTracings), baseGetter: base}
 	case resource.KindIngress:
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
+	case resource.KindShadowService:
+		return &shadowServiceGetter{object: object.(*resource.ShadowService), baseGetter: base}
 	default:
 		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
 	}
@@ -380,6 +382,38 @@ func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
 	objects := make([]resource.MeshObject, len(ingresses))
 	for i := range ingresses {
 		objects[i] = ingresses[i]
+	}
+
+	return objects, nil
+}
+
+
+type shadowServiceGetter struct {
+	baseGetter
+	object *resource.ShadowService
+}
+
+func (s *shadowServiceGetter) Get() ([]resource.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+
+	if s.object.Name() != "" {
+		shadowService, err := s.client.V1Alpha1().ShadowService().Get(ctx, s.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []resource.MeshObject{shadowService}, nil
+	}
+
+	shadowServices, err := s.client.V1Alpha1().ShadowService().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(shadowServices))
+	for i := range shadowServices {
+		objects[i] = shadowServices[i]
 	}
 
 	return objects, nil

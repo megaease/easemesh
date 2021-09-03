@@ -38,6 +38,7 @@ type V1Alpha1Interface interface {
 	ObservabilityGetter
 	ResilienceGetter
 	IngressGetter
+	ShadowServiceGetter
 }
 
 // MeshControllerGetter represents a mesh controller resource accessor
@@ -170,4 +171,19 @@ type IngressInterface interface {
 	Create(context.Context, *resource.Ingress) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.Ingress, error)
+}
+
+
+// ShadowServiceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service resource.
+type ShadowServiceInterface interface {
+	Get(context.Context, string) (*resource.ShadowService, error)
+	Patch(context.Context, *resource.ShadowService) error
+	Create(context.Context, *resource.ShadowService) error
+	Delete(context.Context, string) error
+	List(context.Context) ([]*resource.ShadowService, error)
+}
+
+// ShadowServiceGetter represents a ShadowService resource accessor
+type ShadowServiceGetter interface {
+	ShadowService() ShadowServiceInterface
 }

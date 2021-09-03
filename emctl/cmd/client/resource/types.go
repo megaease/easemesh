@@ -69,6 +69,8 @@ const (
 
 	// KindIngress is ingress kind of the EaseMesh resource
 	KindIngress = "Ingress"
+
+	KindShadowService = "ShadowService"
 )
 
 type (
@@ -206,6 +208,56 @@ type (
 	IngressSpec struct {
 		Rules []*v1alpha1.IngressRule `json:"rules" jsonschema:"omitempty"`
 	}
+
+	// ShadowService describes shadow service resource of the EaseMesh
+	ShadowService struct {
+		MeshResource `json:",inline"`
+		Spec         *ShadowServiceSpec `json:"spec" jsonschema:"omitempty"`
+	}
+
+	// ShadowServiceSpec describes details of the shadow service resource
+	ShadowServiceSpec struct {
+		Namespace     string         `yaml:"namespace" jsonschema:"required"`
+		MySQL         *MySQL         `yaml:"mysql" jsonschema:"omitempty"`
+		Kafka         *Kafka         `yaml:"kafka" jsonschema:"omitempty"`
+		Redis         *Redis         `ymal:"redis" jsonschema:"omitempty"`
+		RabbitMQ      *RabbitMQ      `ymal:"rabbitMq" jsonschema:"omitempty"`
+		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
+	}
+
+	// MySQL describes the configuration of shadow service's MySQL
+	MySQL struct {
+		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		UserName string   `yaml:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" jsonschema:"required"`
+	}
+
+	// Kafka describes the configuration of shadow service's Kafka
+	Kafka struct {
+		Hosts []string `yaml:"hosts" jsonschema:"required"`
+	}
+
+	// Redis describes the configuration of shadow service's Redis
+	Redis struct {
+		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		UserName string   `yaml:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" jsonschema:"required"`
+	}
+
+	// RabbitMQ describes the configuration of shadow service's RabbitMQ
+	RabbitMQ struct {
+		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		UserName string   `yaml:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" jsonschema:"required"`
+	}
+
+	// ElasticSearch describes the configuration of shadow service's ElasticSearch
+	ElasticSearch struct {
+		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		UserName string   `yaml:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" jsonschema:"required"`
+	}
+
 )
 
 var _ MeshObject = &MeshController{}
@@ -216,6 +268,7 @@ var _ MeshObject = &ObservabilityTracings{}
 var _ MeshObject = &LoadBalance{}
 var _ MeshObject = &Resilience{}
 var _ MeshObject = &Ingress{}
+var _ MeshObject = &ShadowService{}
 
 // Default set default value for ServiceSpec
 func (s *ServiceSpec) Default() {
@@ -341,6 +394,21 @@ func (r *ObservabilityMetrics) ToV1Alpha1() (result *v1alpha1.ObservabilityMetri
 	return r.Spec
 }
 
+// ToV1Alpha1 converts an ShadowService resource to v1alpha1.ShadowService
+func (s *ShadowService) ToV1Alpha1() *v1alpha1.ShadowService {
+	result := &v1alpha1.ShadowService{}
+	result.Name = s.Name()
+	if s.Spec != nil {
+		result.MySQL = s.Spec.MySQL
+		result.Kafka = s.Spec.Kafka
+		result.Redis = s.Spec.Redis
+		result.RabbitMQ = s.Spec.RabbitMQ
+		result.ElasticSearch = s.Spec.ElasticSearch
+		result.Namespace = s.Spec.Namespace
+	}
+	return result
+}
+
 // ToIngress converts a v1alpha1.Ingress resource to an Ingress resource
 func ToIngress(ingress *v1alpha1.Ingress) *Ingress {
 	result := &Ingress{
@@ -445,5 +513,20 @@ func ToResilience(name string, resilience *v1alpha1.Resilience) *Resilience {
 	result.Spec.Retryer = resilience.Retryer
 	result.Spec.CircuitBreaker = resilience.CircuitBreaker
 	result.Spec.TimeLimiter = resilience.TimeLimiter
+	return result
+}
+
+// ToService converts a v1alpha1.Service resource to a Service resource
+func ToShadowService(service *v1alpha1.ShadowService) *ShadowService {
+	result := &ShadowService{
+		Spec: &ShadowServiceSpec{},
+	}
+	result.MeshResource = NewServiceResource(DefaultAPIVersion, service.Name)
+	result.Spec.MySQL = service.MySQL
+	result.Spec.Kafka = service.Kafka
+	result.Spec.Redis = service.Redis
+	result.Spec.RabbitMQ = service.RabbitMQ
+	result.Spec.ElasticSearch = service.ElasticSearch
+	result.Spec.Namespace = service.Namespace
 	return result
 }
