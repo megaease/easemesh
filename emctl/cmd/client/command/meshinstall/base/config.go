@@ -28,11 +28,15 @@ import (
 )
 
 var (
-	DefaultKubernetesConfigDir  = path.Join(homedir.HomeDir(), DefaultKubeDir)
+	// DefaultKubernetesConfigDir is the default directory of kubernetes config.
+	DefaultKubernetesConfigDir = path.Join(homedir.HomeDir(), DefaultKubeDir)
+
+	// DefaultKubernetesConfigPath is the default path of kubernetes config.
 	DefaultKubernetesConfigPath = path.Join(DefaultKubernetesConfigDir, DefaultKubernetesConfig)
 )
 
 type (
+	// EasegressConfig is the startup config of Easegress.
 	EasegressConfig struct {
 		Name                    string   `yaml:"name" jsonschema:"required"`
 		ClusterName             string   `yaml:"cluster-name" jsonschema:"required"`
@@ -50,6 +54,7 @@ type (
 		StdLogLevel             string   `yaml:"std-log-level" jsonschema:"required"`
 	}
 
+	// MeshControllerConfig is the config of mesh controller in Easegress.
 	MeshControllerConfig struct {
 		Name              string `json:"name" jsonschema:"required"`
 		Kind              string `json:"kind" jsonschema:"required"`
@@ -58,6 +63,7 @@ type (
 		IngressPort       int32  `json:"ingressPort" jsonschema:"omitempty"`
 	}
 
+	// MeshOperatorConfig is the startup config of mesh operator
 	MeshOperatorConfig struct {
 		ImageRegistryURL     string   `yaml:"image-registry-url" jsonschema:"required"`
 		ClusterName          string   `yaml:"cluster-name" jsonschema:"required"`
@@ -71,6 +77,7 @@ type (
 		KeyName              string   `yaml:"key-name" jsonschema:"required"`
 	}
 
+	// EasegressReaderParams is the reader role parameters.
 	EasegressReaderParams struct {
 		ClusterJoinUrls       string            `yaml:"cluster-join-urls" jsonschema:"required"`
 		ClusterRequestTimeout string            `yaml:"cluster-request-timeout" jsonschema:"required"`
@@ -80,6 +87,7 @@ type (
 		Labels                map[string]string `yaml:"labels" jsonschema:"required"`
 	}
 
+	// StageContext is the context of every install stage.
 	StageContext struct {
 		// System level.
 		Cmd                 *cobra.Command
@@ -94,9 +102,11 @@ type (
 		OperatorCertPem []byte
 	}
 
+	// InstallFunc is the type of install function.
 	InstallFunc func(ctx *StageContext) error
 )
 
+// Deploy executes the install function.
 func (fn InstallFunc) Deploy(ctx *StageContext) error {
 	return fn(ctx)
 }
