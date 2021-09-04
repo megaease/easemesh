@@ -16,4 +16,3 @@ func (o *Options) Validate() []error {
 	}
 	return errors
 }
-

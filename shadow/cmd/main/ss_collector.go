@@ -4,6 +4,8 @@ import (
 	"flag"
 	"log"
 
+	"github.com/megaease/easemesh/mesh-shadow/cmd/main/rcfile"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/common"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/flow"
 
 	// load all auth plugins
@@ -16,7 +18,24 @@ var (
 
 func easemeshOption(config *flow.ServiceConfig) error {
 	config.MeshServer = *meshServer
+	if config.MeshServer == "" {
+		config.MeshServer = GetServerAddress()
+	}
 	return nil
+}
+
+func GetServerAddress() string {
+	rc, err := rcfile.New()
+	if err != nil {
+		return ""
+	}
+
+	err = rc.Unmarshal()
+	if err != nil {
+		common.OutputErrorf("unmarshal rcfile failed: %v", err)
+		return ""
+	}
+	return rc.Server
 }
 
 func main() {
