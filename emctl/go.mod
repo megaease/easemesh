@@ -10,7 +10,7 @@ require (
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/googleapis/gnostic v0.5.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/megaease/easemesh-api v1.0.0
+	github.com/megaease/easemesh-api v0.0.0-20210904040530-ac63254c7d42
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4

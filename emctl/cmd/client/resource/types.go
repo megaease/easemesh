@@ -399,11 +399,29 @@ func (s *ShadowService) ToV1Alpha1() *v1alpha1.ShadowService {
 	result := &v1alpha1.ShadowService{}
 	result.Name = s.Name()
 	if s.Spec != nil {
-		result.MySQL = s.Spec.MySQL
-		result.Kafka = s.Spec.Kafka
-		result.Redis = s.Spec.Redis
-		result.RabbitMQ = s.Spec.RabbitMQ
-		result.ElasticSearch = s.Spec.ElasticSearch
+		result.Mysql = &v1alpha1.ShadowServiceMySQL{
+			Uris: s.Spec.MySQL.Hosts,
+			Password: s.Spec.MySQL.Password,
+			UserName: s.Spec.MySQL.UserName,
+		}
+		result.Kafka = &v1alpha1.ShadowServiceKafka{
+			Uris: s.Spec.Kafka.Hosts,
+		}
+		result.Redis = &v1alpha1.ShadowServiceRedis{
+			Uris: s.Spec.Redis.Hosts,
+			Password: s.Spec.Redis.Password,
+			UserName: s.Spec.Redis.UserName,
+		}
+		result.Rabbitmq = &v1alpha1.ShadowServiceRabbitMQ{
+			Uris: s.Spec.RabbitMQ.Hosts,
+			UserName: s.Spec.RabbitMQ.UserName,
+			Password: s.Spec.RabbitMQ.Password,
+		}
+		result.Elasticsearch = &v1alpha1.ShadowServiceElasticSearch{
+			Uris: s.Spec.ElasticSearch.Hosts,
+			UserName: s.Spec.ElasticSearch.UserName,
+			Password: s.Spec.ElasticSearch.Password,
+		}
 		result.Namespace = s.Spec.Namespace
 	}
 	return result
@@ -522,11 +540,29 @@ func ToShadowService(service *v1alpha1.ShadowService) *ShadowService {
 		Spec: &ShadowServiceSpec{},
 	}
 	result.MeshResource = NewServiceResource(DefaultAPIVersion, service.Name)
-	result.Spec.MySQL = service.MySQL
-	result.Spec.Kafka = service.Kafka
-	result.Spec.Redis = service.Redis
-	result.Spec.RabbitMQ = service.RabbitMQ
-	result.Spec.ElasticSearch = service.ElasticSearch
+	result.Spec.MySQL = &MySQL{
+		Hosts: service.Mysql.Uris,
+		UserName: service.Mysql.UserName,
+		Password: service.Mysql.Password,
+	}
+	result.Spec.Kafka = &Kafka{
+		Hosts: service.Kafka.Uris,
+	}
+	result.Spec.Redis = &Redis{
+		Hosts: service.Redis.Uris,
+		UserName: service.Redis.UserName,
+		Password: service.Redis.Password,
+	}
+	result.Spec.RabbitMQ = &RabbitMQ{
+		Hosts: service.Rabbitmq.Uris,
+		UserName: service.Rabbitmq.UserName,
+		Password: service.Rabbitmq.Password,
+	}
+	result.Spec.ElasticSearch = &ElasticSearch{
+		Hosts: service.Elasticsearch.Uris,
+		UserName: service.Elasticsearch.UserName,
+		Password: service.Elasticsearch.Password,
+	}
 	result.Spec.Namespace = service.Namespace
 	return result
 }
