@@ -65,26 +65,26 @@ func (searcher *SearchHandler) queryDeploymentForShadowServiceFunc() common.Call
 	}
 }
 
-func (searcher *SearchHandler) queryOriginDeployments(shadowServices []*object.ShadowService) {
+func (searcher *SearchHandler) queryOriginDeployments(shadowServices []object.ShadowService) {
 
 	namespaceMap := make(map[string][]*object.ShadowService)
 
 	for _, shadowService := range shadowServices {
-		services, ok := namespaceMap[shadowService.NameSpace]
+		services, ok := namespaceMap[shadowService.Namespace]
 		if ok {
-			services = append(services, shadowService)
-			namespaceMap[shadowService.NameSpace] = services
+			services = append(services, &shadowService)
+			namespaceMap[shadowService.Namespace] = services
 		} else {
 			services = []*object.ShadowService{}
-			services = append(services, shadowService)
-			namespaceMap[shadowService.NameSpace] = services
+			services = append(services, &shadowService)
+			namespaceMap[shadowService.Namespace] = services
 		}
 	}
 
 	for namespace, services := range namespaceMap {
 		serviceNameMap := make(map[string]*object.ShadowService)
 		for _, service := range services {
-			serviceNameMap[service.Name] = service
+			serviceNameMap[service.ServiceName] = service
 		}
 		meshDeploymentList, err := utils.ListMeshDeployment(namespace, searcher.CRDClient, metav1.ListOptions{})
 		if err != nil {
@@ -93,7 +93,6 @@ func (searcher *SearchHandler) queryOriginDeployments(shadowServices []*object.S
 
 		for _, meshDeployment := range meshDeploymentList.Items {
 			if _, ok := serviceNameMap[meshDeployment.Spec.Service.Name]; ok {
-				// TODO: clone
 				searcher.CloneChan <- ServiceCloneBlock{
 					*serviceNameMap[meshDeployment.Spec.Service.Name],
 					meshDeployment,
@@ -127,7 +126,7 @@ func (searcher *SearchHandler) queryOriginDeployments(shadowServices []*object.S
 	}
 }
 
-func (searcher *SearchHandler) queryShadowServices() ([]*object.ShadowService, error) {
+func (searcher *SearchHandler) queryShadowServices() ([]object.ShadowService, error) {
 	shadowServices, err := searcher.listShadowService(context.TODO())
 	if err != nil {
 		return nil, err
@@ -136,7 +135,7 @@ func (searcher *SearchHandler) queryShadowServices() ([]*object.ShadowService, e
 
 }
 
-func (searcher *SearchHandler) listShadowService(ctx context.Context) ([]*object.ShadowService, error) {
+func (searcher *SearchHandler) listShadowService(ctx context.Context) ([]object.ShadowService, error) {
 	jsonClient := client.NewHTTPJSON()
 	url := "http://" + searcher.MeshServer + MeshShadowServicesURL
 	result, err := jsonClient.
@@ -160,5 +159,5 @@ func (searcher *SearchHandler) listShadowService(ctx context.Context) ([]*object
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*object.ShadowService), err
+	return result.([]object.ShadowService), err
 }

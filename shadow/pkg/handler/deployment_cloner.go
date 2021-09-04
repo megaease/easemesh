@@ -144,7 +144,7 @@ func (handler *CloneHandler) shadowDeploymentBaseSpec(fn cloneDeploymentSpecFunc
 		deployment := fn(sourceDeployment, shadowService)
 		deployment.Spec = sourceDeployment.Spec
 
-		labels := deployment.Labels
+		labels := deployment.Spec.Selector.MatchLabels
 		if labels == nil {
 			labels = map[string]string{}
 		}
