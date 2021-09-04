@@ -25,7 +25,6 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/common/client"
-	"k8s.io/kubernetes/test/e2e/storage/drivers/csi-test/mock/service"
 
 	"github.com/megaease/easemesh-api/v1alpha1"
 	"github.com/pkg/errors"
@@ -35,7 +34,7 @@ type shadowServiceGetter struct {
 	client *meshClient
 }
 
-func (s *shadowServiceGetter) Service() ShadowServiceInterface {
+func (s *shadowServiceGetter) ShadowService() ShadowServiceInterface {
 	return &shadowServiceInterface{client: s.client}
 }
 

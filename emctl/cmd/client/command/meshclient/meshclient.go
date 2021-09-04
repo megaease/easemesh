@@ -35,6 +35,7 @@ type v1alpha1Interface struct {
 	tenantGetter
 	observabilityGetter
 	ingressGetter
+	shadowServiceGetter
 }
 
 var _ V1Alpha1Interface = &v1alpha1Interface{}
@@ -51,6 +52,7 @@ func New(server string) MeshClient {
 		observabilityGetter:  observabilityGetter{client: client},
 		serviceGetter:        serviceGetter{client: client},
 		ingressGetter:        ingressGetter{client: client},
+		shadowServiceGetter:        shadowServiceGetter{client: client},
 	}
 	client.v1Alpha1 = &alpha1
 	return client
