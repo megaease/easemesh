@@ -91,6 +91,10 @@ func (oc *objectCreator) new(kind VersionKind, metaData MetaData) (MeshObject, e
 		return &Ingress{
 			MeshResource: NewIngressResource(apiVersion, metaData.Name),
 		}, nil
+	case KindShadowService:
+		return &ShadowService{
+			MeshResource: NewShadowServiceResource(apiVersion, metaData.Name),
+		}, nil
 	default:
 		return nil, errors.Errorf("unsupported kind %s", kind.Kind)
 	}
@@ -144,6 +148,11 @@ func NewObservabilityOutputServerResource(apiVersion, name string) MeshResource 
 // NewTenantResource returns a MeshResource with the tenant kind
 func NewTenantResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindTenant, name)
+}
+
+// NewShadowServiceResource returns a MeshResource with the service kind
+func NewShadowServiceResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindShadowService, name)
 }
 
 // NewMeshResource returns a generic MeshResource

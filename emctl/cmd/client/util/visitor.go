@@ -317,6 +317,8 @@ func adaptCommandKind(kind string) string {
 		return resource.KindResilience
 	case low(resource.KindIngress):
 		return resource.KindIngress
+	case low(resource.KindShadowService):
+		return resource.KindShadowService
 	default:
 		return kind
 	}

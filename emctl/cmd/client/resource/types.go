@@ -217,6 +217,7 @@ type (
 
 	// ShadowServiceSpec describes details of the shadow service resource
 	ShadowServiceSpec struct {
+		ServiceName   string         `yaml:"serviceName" jsonschema:"required"`
 		Namespace     string         `yaml:"namespace" jsonschema:"required"`
 		MySQL         *MySQL         `yaml:"mysql" jsonschema:"omitempty"`
 		Kafka         *Kafka         `yaml:"kafka" jsonschema:"omitempty"`
@@ -412,17 +413,18 @@ func (s *ShadowService) ToV1Alpha1() *v1alpha1.ShadowService {
 			Password: s.Spec.Redis.Password,
 			UserName: s.Spec.Redis.UserName,
 		}
-		result.Rabbitmq = &v1alpha1.ShadowServiceRabbitMQ{
+		result.RabbitMq = &v1alpha1.ShadowServiceRabbitMQ{
 			Uris: s.Spec.RabbitMQ.Hosts,
 			UserName: s.Spec.RabbitMQ.UserName,
 			Password: s.Spec.RabbitMQ.Password,
 		}
-		result.Elasticsearch = &v1alpha1.ShadowServiceElasticSearch{
+		result.ElasticSearch = &v1alpha1.ShadowServiceElasticSearch{
 			Uris: s.Spec.ElasticSearch.Hosts,
 			UserName: s.Spec.ElasticSearch.UserName,
 			Password: s.Spec.ElasticSearch.Password,
 		}
 		result.Namespace = s.Spec.Namespace
+		result.ServiceName = s.Spec.ServiceName
 	}
 	return result
 }
@@ -554,15 +556,16 @@ func ToShadowService(service *v1alpha1.ShadowService) *ShadowService {
 		Password: service.Redis.Password,
 	}
 	result.Spec.RabbitMQ = &RabbitMQ{
-		Hosts: service.Rabbitmq.Uris,
-		UserName: service.Rabbitmq.UserName,
-		Password: service.Rabbitmq.Password,
+		Hosts: service.RabbitMq.Uris,
+		UserName: service.RabbitMq.UserName,
+		Password: service.RabbitMq.Password,
 	}
 	result.Spec.ElasticSearch = &ElasticSearch{
-		Hosts: service.Elasticsearch.Uris,
-		UserName: service.Elasticsearch.UserName,
-		Password: service.Elasticsearch.Password,
+		Hosts: service.ElasticSearch.Uris,
+		UserName: service.ElasticSearch.UserName,
+		Password: service.ElasticSearch.Password,
 	}
 	result.Spec.Namespace = service.Namespace
+	result.Spec.ServiceName = service.ServiceName
 	return result
 }
