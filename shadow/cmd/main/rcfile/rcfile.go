@@ -30,10 +30,10 @@ func New() (*RCFile, error) {
 		return nil, errors.Wrap(err, "get user home dir failed")
 	}
 
-	path := path.Join(homeDir, rcfileName)
+	filePath := path.Join(homeDir, rcfileName)
 
 	return &RCFile{
-		path: path,
+		path: filePath,
 	}, nil
 }
 

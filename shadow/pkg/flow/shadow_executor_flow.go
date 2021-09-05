@@ -13,10 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	megaEaseMetricServerCollector = "megaEaseMetricServerCollector"
-)
-
 type (
 	// ShadowExecutorService is a service which orchestrator cloner and deployer
 	// to accomplish generate shadow service

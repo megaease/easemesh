@@ -24,10 +24,31 @@ import (
 	"testing"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/object/v1beta1"
 	appv1 "k8s.io/api/apps/v1"
 	k8Yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
+
+func TestCloneHandler_CloneMeshDeployment(t *testing.T) {
+	data, _ := os.ReadFile("./original_meshdeployment.yaml")
+
+	decoder := k8Yaml.NewYAMLOrJSONDecoder(bytes.NewReader(data), 1000)
+
+	sourceDeployment := &v1beta1.MeshDeployment{}
+	err := decoder.Decode(sourceDeployment)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	handler := CloneHandler{}
+	service := &object.ShadowService{
+		ServiceName: "visits-service",
+		Namespace:   "default",
+		Name:        "visits-service-shadow",
+	}
+	handler.CloneMeshDeployment(sourceDeployment, service)()
+}
 func TestCloneHandler_CloneDeploymentSpec(t *testing.T) {
 
 	data, _ := os.ReadFile("./original_deployment.yaml")
@@ -46,6 +67,6 @@ func TestCloneHandler_CloneDeploymentSpec(t *testing.T) {
 		Namespace:   "default",
 		Name:        "visits-service-shadow",
 	}
-	handler.CloneDeploymentSpec(sourceDeployment, service)
+	handler.CloneDeployment(sourceDeployment, service)
 
 }

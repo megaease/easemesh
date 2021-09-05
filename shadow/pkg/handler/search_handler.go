@@ -22,7 +22,7 @@ import (
 var (
 	// ConflictError indicate that the resource already exists
 	ConflictError = errors.Errorf("resource already exists")
-	// NotFoundError indicate that the resource does not existed
+	// NotFoundError indicate that the resource does not exist
 	NotFoundError = errors.Errorf("resource not found")
 )
 

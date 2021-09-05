@@ -26,7 +26,7 @@ type timerCallback struct {
 	stop     chan bool
 }
 
-//Start the timerCallback, execute registered func
+// Start the timerCallback, execute registered func
 func (tcb *timerCallback) Start(registry *CallbackRegistry) {
 	go func() {
 		executeContext := make(map[string]interface{})
@@ -50,12 +50,12 @@ func (tcb *timerCallback) Start(registry *CallbackRegistry) {
 	}()
 }
 
-//Stop the timerCallback
+// Stop the timerCallback
 func (tcb *timerCallback) Stop() {
 	tcb.stop <- true
 }
 
-//Close the timerCallback
+// Close the timerCallback
 func (tcb *timerCallback) Close() {
 	close(tcb.stop)
 }

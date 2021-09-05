@@ -47,7 +47,7 @@ func (handler *CloneHandler) Clone(obj interface{}) {
 	switch block.deployObj.(type) {
 	case appv1.Deployment:
 		deployment := block.deployObj.(appv1.Deployment)
-		err = handler.CloneDeploymentSpec(&deployment, &block.service)()
+		err = handler.CloneDeployment(&deployment, &block.service)()
 	case v1beta1.MeshDeployment:
 		meshDeployment := block.deployObj.(v1beta1.MeshDeployment)
 		err = handler.CloneMeshDeployment(&meshDeployment, &block.service)()

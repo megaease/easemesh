@@ -11,8 +11,8 @@ type Options struct {
 // Validate Options
 func (o *Options) Validate() []error {
 	var errors []error
-	if (o.MeshServer == "") {
-		errors = append(errors, fmt.Errorf("MeshServer is required."))
+	if o.MeshServer == "" {
+		errors = append(errors, fmt.Errorf("MeshServer is required"))
 	}
 	return errors
 }

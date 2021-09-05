@@ -29,22 +29,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// type ShadowFunc func(ctx *object.CloneContext) error
+// ShadowDeploymentFunc type ShadowFunc func(ctx *object.CloneContext) error
 type ShadowDeploymentFunc func() error
 
 type cloneDeploymentSpecFunc func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment
 
-func (handler *CloneHandler) CloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
-	shadowDeployment := handler.injectShadowConfiguration(
-		handler.shadowDeploymentBaseSpec(
-			handler.shadowDeploymentInitialize(nil)))(sourceDeployment, shadowService)
+
+func (handler *CloneHandler) CloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
+	shadowDeployment := handler.cloneDeploymentSpec(sourceDeployment, shadowService)
 	return func() error {
 		err := utils.DeployDeployment(shadowDeployment, handler.KubeClient, shadowDeployment.Namespace)
 		if err != nil {
-			return errors.Wrapf(err, "Shadow deployment operation %s failed", sourceDeployment.Name)
+			return errors.Wrapf(err, "Clone deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 		}
 		return err
 	}
+}
+
+func (handler *CloneHandler) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService)  *appsV1.Deployment{
+	shadowDeployment := handler.injectShadowConfiguration(
+		handler.shadowDeploymentBaseSpec(
+			handler.shadowDeploymentInitialize(nil)))(sourceDeployment, shadowService)
+	return shadowDeployment
 }
 
 func (handler *CloneHandler) injectShadowConfiguration(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {

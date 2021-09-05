@@ -22,17 +22,16 @@ import (
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/config"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	appsV1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -43,12 +42,12 @@ import (
 )
 
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", config.DefaultKubernetesConfigPath)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", config.DefaultKubernetesConfigPath)
 	if err != nil {
 		return nil, err
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(config)
+	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +55,12 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 }
 
 func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", config.DefaultKubernetesConfigPath)
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", config.DefaultKubernetesConfigPath)
 	if err != nil {
 		return nil, err
 	}
 
-	clientset, err := apiextensions.NewForConfig(config)
+	clientset, err := apiextensions.NewForConfig(kubeConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +114,7 @@ func ListMeshDeployment(namespace string, client *rest.RESTClient, options metav
 	return &result, err
 }
 
-func GetMeshDeployment(namespace string, name string, client *rest.RESTClient, options metav1.GetOptions) (*v1beta1.MeshDeployment, error){
+func GetMeshDeployment(namespace string, name string, client *rest.RESTClient, options metav1.GetOptions) (*v1beta1.MeshDeployment, error) {
 	result := v1beta1.MeshDeployment{}
 	err := client.
 		Get().
@@ -127,32 +126,33 @@ func GetMeshDeployment(namespace string, name string, client *rest.RESTClient, o
 	return &result, err
 }
 
-func CreateMeshDeployment(namespace string, meshDeployment *v1beta1.MeshDeployment, client *rest.RESTClient, ) (*v1beta1.MeshDeployment, error) {
+func CreateMeshDeployment(namespace string, meshDeployment v1beta1.MeshDeployment, client *rest.RESTClient) (*v1beta1.MeshDeployment, error) {
 	result := v1beta1.MeshDeployment{}
 	err := client.
 		Post().
 		Namespace(namespace).
+		Name(meshDeployment.Name).
 		Resource("meshdeployments").
-		Body(meshDeployment).
+		Body(&meshDeployment).
 		Do(context.TODO()).
 		Into(&result)
 
 	return &result, err
 }
 
-func UpdateMeshDeployment(namespace string, meshDeployment *v1beta1.MeshDeployment, client *rest.RESTClient) (*v1beta1.MeshDeployment, error) {
+func UpdateMeshDeployment(namespace string, meshDeployment v1beta1.MeshDeployment, client *rest.RESTClient) (*v1beta1.MeshDeployment, error) {
 	result := v1beta1.MeshDeployment{}
 	err := client.
 		Put().
 		Namespace(namespace).
+		Name(meshDeployment.Name).
 		Resource("meshdeployments").
-		Body(meshDeployment).
+		Body(&meshDeployment).
 		Do(context.TODO()).
 		Into(&result)
 
 	return &result, err
 }
-
 
 func GetNamespace(name string, clientSet *kubernetes.Clientset) (*v1.Namespace, error) {
 	namespace, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
@@ -207,14 +207,19 @@ func DeployDeployment(deployment *appsV1.Deployment, clientSet *kubernetes.Clien
 		})
 }
 
-func DeployMesheployment(namespace string, deployment *v1beta1.MeshDeployment,client *rest.RESTClient) error {
+func DeployMesheployment(namespace string, deployment *v1beta1.MeshDeployment, client *rest.RESTClient) error {
 	return applyResource(
 		func() error {
-			_, err := CreateMeshDeployment(namespace, deployment, client)
+			_, err := CreateMeshDeployment(namespace, *deployment, client)
 			return err
 		},
 		func() error {
-			_, err := UpdateMeshDeployment(namespace, deployment, client)
+			meshDeployment, err := GetMeshDeployment(namespace, deployment.Name, client, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			deployment.ResourceVersion = meshDeployment.ResourceVersion
+			_, err = UpdateMeshDeployment(namespace, *deployment, client)
 			return err
 		})
 }
