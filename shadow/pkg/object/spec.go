@@ -2,32 +2,31 @@ package object
 
 type (
 	MySQL struct {
-		Uris     []string `yaml:"uris" jsonschema:"required"`
-		UserName string   `yaml:"userName" jsonschema:"required"`
-		Password string   `yaml:"password" jsonschema:"required"`
+		Uris     []string `yaml:"uris" json:"uris" jsonschema:"required"`
+		UserName string   `yaml:"userName" json:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
 	Kafka struct {
-		Hosts []string
-		Uris  []string `yaml:"uris" jsonschema:"required"`
+		Uris []string `yaml:"uris" json:"uris" jsonschema:"required"`
 	}
 
 	Redis struct {
-		Uris     []string `yaml:"uris" jsonschema:"required"`
-		UserName string   `yaml:"userName" jsonschema:"required"`
-		Password string   `yaml:"password" jsonschema:"required"`
+		Uris     []string `yaml:"uris" json:"uris" jsonschema:"required"`
+		UserName string   `yaml:"userName" json:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
 	RabbitMQ struct {
-		Uris     []string `yaml:"uris" jsonschema:"required"`
-		UserName string   `yaml:"userName" jsonschema:"required"`
-		Password string   `yaml:"password" jsonschema:"required"`
+		Uris     []string `yaml:"uris" json:"uris" jsonschema:"required"`
+		UserName string   `yaml:"userName" json:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
 	ElasticSearch struct {
-		Uris     []string `yaml:"uris" jsonschema:"required"`
-		UserName string   `yaml:"userName" jsonschema:"required"`
-		Password string   `yaml:"password" jsonschema:"required"`
+		Uris     []string `yaml:"uris" json:"uris" jsonschema:"required"`
+		UserName string   `yaml:"userName" json:"userName" jsonschema:"required"`
+		Password string   `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
 	ShadowService struct {
