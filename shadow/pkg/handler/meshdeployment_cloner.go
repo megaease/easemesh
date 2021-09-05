@@ -43,8 +43,6 @@ func (handler *CloneHandler) CloneMeshDeployment(sourceMeshDeployment *v1beta1.M
 
 func (handler *CloneHandler) shadowMeshDeploymentInitialize(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
 	return func(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
-		// metaData := sourceMeshDeployment.ObjectMeta
-		// metaData.Name = shadowName(sourceMeshDeployment.Name)
 		return &v1beta1.MeshDeployment{
 			TypeMeta: sourceMeshDeployment.TypeMeta,
 			ObjectMeta: metav1.ObjectMeta{
@@ -79,6 +77,9 @@ func (handler *CloneHandler) shadowMeshDeploymentBaseSpec(fn cloneMeshDeployment
 				Namespace: sourceMeshDeployment.Namespace,
 			},
 			Spec: sourceMeshDeployment.Spec.Deploy.DeploymentSpec,
+		}
+		if sourceMeshDeployment.Spec.Service.AppContainerName != "" {
+			deployment.Annotations[shadowAppContainerNameKey] = sourceMeshDeployment.Spec.Service.AppContainerName
 		}
 		shadowDeployment := handler.cloneDeploymentSpec(deployment, shadowService)
 		meshDeployment.Spec.Deploy.DeploymentSpec = shadowDeployment.Spec

@@ -57,8 +57,6 @@ func (handler *CloneHandler) injectShadowConfiguration(fn cloneDeploymentSpecFun
 	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
 		deployment := fn(sourceDeployment, shadowService)
 
-		containers := deployment.Spec.Template.Spec.Containers
-
 		shadowConfigs := make(map[string]interface{})
 		shadowConfigs[mysqlShadowConfigEnv] = shadowService.MySQL
 		shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
@@ -74,27 +72,52 @@ func (handler *CloneHandler) injectShadowConfiguration(fn cloneDeploymentSpecFun
 			}
 		}
 
-		var appContainer = corev1.Container{}
-		newContainers := make([]corev1.Container, 0)
-		isAppContainer := false
-		for _, container := range containers {
-			envVars := container.Env
-			for _, env := range envVars {
-				if env.Name == javaToolOptionsEnvName {
-					appContainer = container
-					isAppContainer = true
-					break
-				}
-			}
-			if !isAppContainer {
-				newContainers = append(newContainers, container)
-			}
-		}
+		appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
+		appContainer, _ := findAppContainer(sourceDeployment.Spec.Template.Spec.Containers, appContainerName)
 		appContainer.Env = injectEnvVars(appContainer.Env, newEnvs...)
-		newContainers = append(newContainers, appContainer)
-		deployment.Spec.Template.Spec.Containers = newContainers
+		deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
 		return deployment
 	}
+}
+
+// findContainer returns the copy of the container,
+// which means it won't change the original container when changing the result.
+func findAppContainer(containers []corev1.Container, containerName string) (*corev1.Container, bool) {
+
+	if containerName == "" {
+		for i, c := range containers {
+			if c.Name == sidecarContainerName {
+				continue
+			}
+			return &containers[i], false
+		}
+
+	} else {
+		for _, container := range containers {
+			if container.Name == containerName {
+				return &container, true
+			}
+		}
+	}
+	return nil, false
+}
+
+
+func injectContainers(containers []corev1.Container, elems ...corev1.Container) []corev1.Container {
+	for _, elem := range elems {
+		replaced := false
+		for i, existedContainer := range containers {
+			if existedContainer.Name == elem.Name {
+				containers[i] = elem
+				replaced = true
+			}
+		}
+		if !replaced {
+			containers = append(containers, elem)
+		}
+	}
+
+	return containers
 }
 
 func injectEnvVars(envVars []corev1.EnvVar, elems ...corev1.EnvVar) []corev1.EnvVar {

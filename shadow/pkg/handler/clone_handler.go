@@ -15,15 +15,14 @@ const (
 	// Init container stuff.
 	initContainerName = "initializer"
 
-	javaToolOptionsEnvName = "JAVA_TOOL_OPTIONS"
-
 	agentVolumeName   = "agent-volume"
 	sidecarVolumeName = "sidecar-volume"
 
 	// Sidecar container stuff.
 	sidecarContainerName = "easemesh-sidecar"
 
-	shadowLabelKey = "mesh.megaease.com/shadow-service"
+	shadowLabelKey            = "mesh.megaease.com/shadow-service"
+	shadowAppContainerNameKey = "mesh.megaease.com/app-container-name"
 
 	shadowDeploymentNameSuffix = "-shadow"
 

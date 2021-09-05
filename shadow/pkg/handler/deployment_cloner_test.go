@@ -46,6 +46,11 @@ func TestCloneHandler_CloneMeshDeployment(t *testing.T) {
 		ServiceName: "visits-service",
 		Namespace:   "default",
 		Name:        "visits-service-shadow",
+		MySQL: &object.MySQL{
+			Uris: []string{"jdbc:127.0.0.1"},
+			UserName: "zyj",
+			Password: "123",
+		},
 	}
 	handler.CloneMeshDeployment(sourceDeployment, service)()
 }
@@ -66,6 +71,11 @@ func TestCloneHandler_CloneDeploymentSpec(t *testing.T) {
 		ServiceName: "visits-service",
 		Namespace:   "default",
 		Name:        "visits-service-shadow",
+		MySQL: &object.MySQL{
+			Uris: []string{"jdbc:127.0.0.1"},
+			UserName: "zyj",
+			Password: "123",
+		},
 	}
 	handler.CloneDeployment(sourceDeployment, service)
 
