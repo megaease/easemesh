@@ -219,42 +219,42 @@ type (
 	ShadowServiceSpec struct {
 		ServiceName   string         `yaml:"serviceName" jsonschema:"required"`
 		Namespace     string         `yaml:"namespace" jsonschema:"required"`
-		MySQL         *MySQL         `yaml:"mysql" jsonschema:"omitempty"`
-		Kafka         *Kafka         `yaml:"kafka" jsonschema:"omitempty"`
-		Redis         *Redis         `ymal:"redis" jsonschema:"omitempty"`
-		RabbitMQ      *RabbitMQ      `ymal:"rabbitMq" jsonschema:"omitempty"`
-		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
+		Mysql         *v1alpha1.ShadowServiceMySQL         `yaml:"mysql" jsonschema:"omitempty"`
+		Kafka         *v1alpha1.ShadowServiceKafka         `yaml:"kafka" jsonschema:"omitempty"`
+		Redis         *v1alpha1.ShadowServiceRedis         `ymal:"redis" jsonschema:"omitempty"`
+		RabbitMQ      *v1alpha1.ShadowServiceRabbitMQ      `ymal:"rabbitMq" jsonschema:"omitempty"`
+		ElasticSearch *v1alpha1.ShadowServiceElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
 	}
 
 	// MySQL describes the configuration of shadow service's MySQL
-	MySQL struct {
-		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+	ShadowServiceMySQL struct {
+		Uris    []string `yaml:"uris" jsonschema:"required"`
 		UserName string   `yaml:"userName" jsonschema:"required"`
 		Password string   `yaml:"password" jsonschema:"required"`
 	}
 
 	// Kafka describes the configuration of shadow service's Kafka
 	Kafka struct {
-		Hosts []string `yaml:"hosts" jsonschema:"required"`
+		Uris []string `yaml:"uris" jsonschema:"required"`
 	}
 
 	// Redis describes the configuration of shadow service's Redis
 	Redis struct {
-		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		Uris    []string `yaml:"uris" jsonschema:"required"`
 		UserName string   `yaml:"userName" jsonschema:"required"`
 		Password string   `yaml:"password" jsonschema:"required"`
 	}
 
 	// RabbitMQ describes the configuration of shadow service's RabbitMQ
 	RabbitMQ struct {
-		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		Uris    []string `yaml:"uris" jsonschema:"required"`
 		UserName string   `yaml:"userName" jsonschema:"required"`
 		Password string   `yaml:"password" jsonschema:"required"`
 	}
 
 	// ElasticSearch describes the configuration of shadow service's ElasticSearch
 	ElasticSearch struct {
-		Hosts    []string `yaml:"hosts" jsonschema:"required"`
+		Uris    []string `yaml:"uris" jsonschema:"required"`
 		UserName string   `yaml:"userName" jsonschema:"required"`
 		Password string   `yaml:"password" jsonschema:"required"`
 	}
@@ -400,29 +400,12 @@ func (s *ShadowService) ToV1Alpha1() *v1alpha1.ShadowService {
 	result := &v1alpha1.ShadowService{}
 	result.Name = s.Name()
 	if s.Spec != nil {
-		result.Mysql = &v1alpha1.ShadowServiceMySQL{
-			Uris: s.Spec.MySQL.Hosts,
-			Password: s.Spec.MySQL.Password,
-			UserName: s.Spec.MySQL.UserName,
-		}
-		result.Kafka = &v1alpha1.ShadowServiceKafka{
-			Uris: s.Spec.Kafka.Hosts,
-		}
-		result.Redis = &v1alpha1.ShadowServiceRedis{
-			Uris: s.Spec.Redis.Hosts,
-			Password: s.Spec.Redis.Password,
-			UserName: s.Spec.Redis.UserName,
-		}
-		result.RabbitMq = &v1alpha1.ShadowServiceRabbitMQ{
-			Uris: s.Spec.RabbitMQ.Hosts,
-			UserName: s.Spec.RabbitMQ.UserName,
-			Password: s.Spec.RabbitMQ.Password,
-		}
-		result.ElasticSearch = &v1alpha1.ShadowServiceElasticSearch{
-			Uris: s.Spec.ElasticSearch.Hosts,
-			UserName: s.Spec.ElasticSearch.UserName,
-			Password: s.Spec.ElasticSearch.Password,
-		}
+		result.Mysql = s.Spec.Mysql
+		result.Redis = s.Spec.Redis
+		result.RabbitMq = s.Spec.RabbitMQ
+		result.Kafka = s.Spec.Kafka
+		result.ElasticSearch = s.Spec.ElasticSearch
+
 		result.Namespace = s.Spec.Namespace
 		result.ServiceName = s.Spec.ServiceName
 	}
@@ -542,29 +525,13 @@ func ToShadowService(service *v1alpha1.ShadowService) *ShadowService {
 		Spec: &ShadowServiceSpec{},
 	}
 	result.MeshResource = NewServiceResource(DefaultAPIVersion, service.Name)
-	result.Spec.MySQL = &MySQL{
-		Hosts: service.Mysql.Uris,
-		UserName: service.Mysql.UserName,
-		Password: service.Mysql.Password,
-	}
-	result.Spec.Kafka = &Kafka{
-		Hosts: service.Kafka.Uris,
-	}
-	result.Spec.Redis = &Redis{
-		Hosts: service.Redis.Uris,
-		UserName: service.Redis.UserName,
-		Password: service.Redis.Password,
-	}
-	result.Spec.RabbitMQ = &RabbitMQ{
-		Hosts: service.RabbitMq.Uris,
-		UserName: service.RabbitMq.UserName,
-		Password: service.RabbitMq.Password,
-	}
-	result.Spec.ElasticSearch = &ElasticSearch{
-		Hosts: service.ElasticSearch.Uris,
-		UserName: service.ElasticSearch.UserName,
-		Password: service.ElasticSearch.Password,
-	}
+
+	result.Spec.Mysql = service.Mysql
+	result.Spec.Kafka = service.Kafka
+	result.Spec.Redis = service.Redis
+	result.Spec.RabbitMQ = service.RabbitMq
+	result.Spec.ElasticSearch = service.ElasticSearch
+
 	result.Spec.Namespace = service.Namespace
 	result.Spec.ServiceName = service.ServiceName
 	return result
