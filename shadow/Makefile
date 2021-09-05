@@ -15,7 +15,7 @@ endif
 
 GO_BUILD_FLAGS := -ldflags "-X main.commit=${COMMIT} -X main.buildDate=${BUILDDATE}" -v 
 
-TARGET = ${MKFILE_DIR}/bin/easemesh-shadow-service-controller
+TARGET = ${MKFILE_DIR}/bin/easemesh-shadowservice-controller
 
 build: vet ${TARGET}
 ${TARGET}: ${ALL_FILES}
@@ -34,6 +34,6 @@ clean:
 	@rm -f ${TARGET}
 
 image: rootfs/Dockerfile vet ${ALL_FILES}
-	docker build -t megaease/easemesh-shadow-service-controller :1.0-alpine \
+	docker build -t megaease/easemesh-shadowservice-controller:1.0-alpine \
      -f ${MKFILE_DIR}/rootfs/Dockerfile ${MKFILE_DIR} --build-arg COMMITID=${COMMIT} --build-arg BUILDDATE=${BUILDDATE}
 

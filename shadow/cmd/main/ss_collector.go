@@ -16,7 +16,7 @@ var (
 	meshServer = flag.String("mesh-server", "", "An address to access the EaseMesh control plane")
 )
 
-func easemeshOption(config *flow.ServiceConfig) error {
+func easemeshOption(config *controller.ServiceConfig) error {
 	config.MeshServer = *meshServer
 	if config.MeshServer == "" {
 		config.MeshServer = GetServerAddress()
@@ -42,7 +42,7 @@ func main() {
 
 	flag.Parse()
 
-	service, err := flow.New(easemeshOption)
+	service, err := controller.New(easemeshOption)
 	if err != nil {
 		log.Fatalf("new collector service error: %s", err)
 		return
