@@ -67,25 +67,26 @@ func (searcher *SearchHandler) queryDeploymentForShadowServiceFunc() common.Call
 
 func (searcher *SearchHandler) queryOriginDeployments(shadowServices []object.ShadowService) {
 
-	namespaceMap := make(map[string][]*object.ShadowService)
+	namespaceToShadowMap := make(map[string][]object.ShadowService)
 
 	for _, shadowService := range shadowServices {
-		services, ok := namespaceMap[shadowService.Namespace]
+		services, ok := namespaceToShadowMap[shadowService.Namespace]
 		if ok {
-			services = append(services, &shadowService)
-			namespaceMap[shadowService.Namespace] = services
+			services = append(services, shadowService)
+			namespaceToShadowMap[shadowService.Namespace] = services
 		} else {
-			services = []*object.ShadowService{}
-			services = append(services, &shadowService)
-			namespaceMap[shadowService.Namespace] = services
+			services = []object.ShadowService{}
+			services = append(services, shadowService)
+			namespaceToShadowMap[shadowService.Namespace] = services
 		}
 	}
 
-	for namespace, services := range namespaceMap {
-		serviceNameMap := make(map[string]*object.ShadowService)
-		for _, service := range services {
-			serviceNameMap[service.ServiceName] = service
+	for namespace, services := range namespaceToShadowMap {
+		serviceNameMap := make(map[string]object.ShadowService)
+		for _, ss := range services {
+			serviceNameMap[ss.ServiceName] = ss
 		}
+
 		meshDeploymentList, err := utils.ListMeshDeployment(namespace, searcher.CRDClient, metav1.ListOptions{})
 		if err != nil {
 			log.Printf("Query MeshDeployment for shadow service error. %s", err)
@@ -94,16 +95,15 @@ func (searcher *SearchHandler) queryOriginDeployments(shadowServices []object.Sh
 		for _, meshDeployment := range meshDeploymentList.Items {
 			if _, ok := serviceNameMap[meshDeployment.Spec.Service.Name]; ok {
 				searcher.CloneChan <- ServiceCloneBlock{
-					*serviceNameMap[meshDeployment.Spec.Service.Name],
+					serviceNameMap[meshDeployment.Spec.Service.Name],
 					meshDeployment,
 				}
 				delete(serviceNameMap, meshDeployment.Spec.Service.Name)
 			}
 		}
-
 		deployments, err := utils.ListDeployments(namespace, searcher.KubeClient, metav1.ListOptions{})
 		if err != nil {
-			// logger.Errorf("Query Deployment for shadow service error.", err)
+			log.Printf("Query Deployment for shadow service error. %s", err)
 		}
 
 		for _, deployment := range deployments {
@@ -112,7 +112,7 @@ func (searcher *SearchHandler) queryOriginDeployments(shadowServices []object.Sh
 				serviceName := annotations[MeshServiceAnnotation]
 				if _, ok = serviceNameMap[serviceName]; ok {
 					searcher.CloneChan <- ServiceCloneBlock{
-						*serviceNameMap[serviceName],
+						serviceNameMap[serviceName],
 						deployment,
 					}
 					delete(serviceNameMap, serviceName)

@@ -26,11 +26,11 @@ const (
 
 	shadowDeploymentNameSuffix = "-shadow"
 
-	mysqlShadowConfigEnv         = "EASE_MYSQL_CONFIG"
-	kafkaShadowConfigEnv         = "EASE_KAFKA_CONFIG"
-	rabbitmqShadowConfigEnv      = "EASE_RABBITMQ_CONFIG"
-	redisShadowConfigEnv         = "EASE_REDIS_CONFIG"
-	elasticsearchShadowConfigEnv = "EASE_ELASTICSEARCH_CONFIG"
+	databaseShadowConfigEnv      = "EASE_RESOURCE_DATABASE"
+	kafkaShadowConfigEnv         = "EASE_RESOURCE_KAFKA"
+	rabbitmqShadowConfigEnv      = "EASE_RESOURCE_RABBITMQ"
+	redisShadowConfigEnv         = "EASE_RESOURCE_REDIS"
+	elasticsearchShadowConfigEnv = "EASE_RESOURCE_ELASTICSEARCH"
 )
 
 type CloneHandler struct {

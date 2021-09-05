@@ -34,7 +34,6 @@ type ShadowDeploymentFunc func() error
 
 type cloneDeploymentSpecFunc func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment
 
-
 func (handler *CloneHandler) CloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
 	shadowDeployment := handler.cloneDeploymentSpec(sourceDeployment, shadowService)
 	return func() error {
@@ -46,7 +45,7 @@ func (handler *CloneHandler) CloneDeployment(sourceDeployment *appsV1.Deployment
 	}
 }
 
-func (handler *CloneHandler) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService)  *appsV1.Deployment{
+func (handler *CloneHandler) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
 	shadowDeployment := handler.injectShadowConfiguration(
 		handler.shadowDeploymentBaseSpec(
 			handler.shadowDeploymentInitialize(nil)))(sourceDeployment, shadowService)
@@ -58,7 +57,7 @@ func (handler *CloneHandler) injectShadowConfiguration(fn cloneDeploymentSpecFun
 		deployment := fn(sourceDeployment, shadowService)
 
 		shadowConfigs := make(map[string]interface{})
-		shadowConfigs[mysqlShadowConfigEnv] = shadowService.MySQL
+		shadowConfigs[databaseShadowConfigEnv] = shadowService.MySQL
 		shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
 		shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
 		shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
@@ -101,7 +100,6 @@ func findAppContainer(containers []corev1.Container, containerName string) (*cor
 	}
 	return nil, false
 }
-
 
 func injectContainers(containers []corev1.Container, elems ...corev1.Container) []corev1.Container {
 	for _, elem := range elems {
