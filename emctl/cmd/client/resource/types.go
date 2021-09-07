@@ -74,20 +74,20 @@ const (
 type (
 	// VersionKind holds version and kind information for APIs
 	VersionKind struct {
-		APIVersion string `json:"apiVersion" yaml:"apiVersion" jsonschema:"required"`
-		Kind       string `json:"kind" yaml:"kind" jsonschema:"required"`
+		APIVersion string `yaml:"apiVersion" yaml:"apiVersion" jsonschema:"omitempty"`
+		Kind       string `yaml:"kind" yaml:"kind" jsonschema:"required"`
 	}
 
 	// MetaData is meta data for resources of the EaseMesh
 	MetaData struct {
-		Name   string            `json:"name" yaml:"name" jsonschema:"required"`
-		Labels map[string]string `json:"labels,omitempty" yaml:"labels,omitempty" jsonschema:"omitempty"`
+		Name   string            `yaml:"name" yaml:"name" jsonschema:"required"`
+		Labels map[string]string `yaml:"labels,omitempty" yaml:"labels,omitempty" jsonschema:"omitempty"`
 	}
 
 	// MeshResource holds common information for a resource of the EaseMesh
 	MeshResource struct {
-		VersionKind `json:",inline" yaml:",inline"`
-		MetaData    MetaData `json:"metadata" yaml:"metadata" jsonschema:"required"`
+		VersionKind `yaml:",inline" yaml:",inline"`
+		MetaData    MetaData `yaml:"metadata" yaml:"metadata" jsonschema:"required"`
 	}
 
 	// MeshObject describes what's feature of a comman EaseMesh object
@@ -97,114 +97,112 @@ type (
 		APIVersion() string
 		Labels() map[string]string
 	}
-)
 
-type (
 	// MeshController is the spec of MeshController on Easegress.
 	MeshController struct {
-		MeshResource        `json:",inline" yaml:",inline"`
-		MeshControllerAdmin `json:",inline" yaml:",inline"`
+		MeshResource        `yaml:",inline"`
+		MeshControllerAdmin `yaml:",inline"`
 	}
 
 	// MeshControllerV1Alpha1 is the v1alphv1 version of mesh controller.
 	MeshControllerV1Alpha1 struct {
-		Kind                string `json:"kind" yaml:"kind"`
-		Name                string `json:"name" yaml:"name"`
-		MeshControllerAdmin `json:",inline" yaml:",inline"`
+		Kind                string `yaml:"kind"`
+		Name                string `yaml:"name"`
+		MeshControllerAdmin `yaml:",inline"`
 	}
 
 	// MeshControllerAdmin is the admin config of mesh controller.
 	MeshControllerAdmin struct {
 		// HeartbeatInterval is the interval for one service instance reporting its heartbeat.
-		HeartbeatInterval string `json:"heartbeatInterval" yaml:"heartbeatInterval"`
+		HeartbeatInterval string `yaml:"heartbeatInterval" jsonschema:"required,format=duration"`
 
 		// RegistryTime indicates which protocol the registry center accepts.
-		RegistryType string `json:"registryType" yaml:"registryType"`
+		RegistryType string `yaml:"registryType" jsonschema:"required"`
 
 		// APIPort is the port for worker's API server
-		APIPort int `json:"apiPort" yaml:"apiPort"`
+		APIPort int `yaml:"apiPort" jsonschema:"required"`
 
 		// IngressPort is the port for http server in mesh ingress
-		IngressPort int `json:"ingressPort" yaml:"ingressPort"`
+		IngressPort int `yaml:"ingressPort" jsonschema:"required"`
 
-		// ExternalServiceRegistry is the external service registry
-		ExternalServiceRegistry string `json:"externalServiceRegistry" yaml:"externalServiceRegistry"`
+		// ExternalServiceRegistry is the external service registry name.
+		ExternalServiceRegistry string `yaml:"externalServiceRegistry" jsonschema:"omitempty"`
 	}
 
 	// Tenant describes tenant resource of the EaseMesh
 	Tenant struct {
-		MeshResource `json:",inline"`
-		Spec         *TenantSpec `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *TenantSpec `yaml:"spec" jsonschema:"required"`
 	}
 
 	// TenantSpec describes whats service resided in
 	TenantSpec struct {
-		Services    []string `json:"services" jsonschema:"omitempty"`
-		Description string   `json:"description" jsonschema:"omitempty"`
+		Services    []string `yaml:"services" jsonschema:"omitempty"`
+		Description string   `yaml:"description" jsonschema:"omitempty"`
 	}
 
 	// Service describes service resource of the EaseMesh
 	Service struct {
-		MeshResource `json:",inline"`
-		Spec         *ServiceSpec `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *ServiceSpec `yaml:"spec" jsonschema:"required"`
 	}
 
 	// ServiceSpec describes details of the service resource
 	ServiceSpec struct {
-		RegisterTenant string `json:"registerTenant" jsonschema:"required"`
+		RegisterTenant string `yaml:"registerTenant" jsonschema:"required"`
 
-		Sidecar       *v1alpha1.Sidecar       `json:"sidecar" jsonschema:"required"`
-		Resilience    *v1alpha1.Resilience    `json:"resilience" jsonschema:"omitempty"`
-		Canary        *v1alpha1.Canary        `json:"canary" jsonschema:"omitempty"`
-		LoadBalance   *v1alpha1.LoadBalance   `json:"loadBalance" jsonschema:"omitempty"`
-		Observability *v1alpha1.Observability `json:"observability" jsonschema:"omitempty"`
+		Sidecar       *v1alpha1.Sidecar       `yaml:"sidecar" jsonschema:"required"`
+		Resilience    *v1alpha1.Resilience    `yaml:"resilience" jsonschema:"omitempty"`
+		Canary        *v1alpha1.Canary        `yaml:"canary" jsonschema:"omitempty"`
+		LoadBalance   *v1alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
+		Observability *v1alpha1.Observability `yaml:"observability" jsonschema:"omitempty"`
 	}
 
 	// Canary describes canary resource of the EaseMesh
 	Canary struct {
-		MeshResource `json:",inline"`
-		Spec         *v1alpha1.Canary `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.Canary `yaml:"spec" jsonschema:"required"`
 	}
 
 	// ObservabilityTracings describes observability tracings resource of the EaseMesh
 	ObservabilityTracings struct {
-		MeshResource `json:",inline"`
-		Spec         *v1alpha1.ObservabilityTracings `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ObservabilityTracings `yaml:"spec" jsonschema:"required"`
 	}
 
 	// ObservabilityOutputServer describes observability output server resource of the EaseMesh
 	ObservabilityOutputServer struct {
-		MeshResource `json:",inline"`
-		Spec         *v1alpha1.ObservabilityOutputServer `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ObservabilityOutputServer `yaml:"spec" jsonschema:"required"`
 	}
 
 	// ObservabilityMetrics describes observability metrics resource of the EaseMesh
 	ObservabilityMetrics struct {
-		MeshResource `json:",inline"`
-		Spec         *v1alpha1.ObservabilityMetrics `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ObservabilityMetrics `yaml:"spec" jsonschema:"required"`
 	}
 
 	// LoadBalance describes loadbalance resource of the EaseMesh
 	LoadBalance struct {
-		MeshResource `json:",inline"`
-		Spec         *v1alpha1.LoadBalance `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.LoadBalance `yaml:"spec" jsonschema:"required"`
 	}
 
 	// Resilience describes resilience resource of the EaseMesh
 	Resilience struct {
-		MeshResource `json:",inline"`
-		Spec         *v1alpha1.Resilience `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.Resilience `yaml:"spec" jsonschema:"required"`
 	}
 
 	// Ingress describes ingress resource of the EaseMesh
 	Ingress struct {
-		MeshResource `json:",inline"`
-		Spec         *IngressSpec `json:"spec" jsonschema:"omitempty"`
+		MeshResource `yaml:",inline"`
+		Spec         *IngressSpec `yaml:"spec" jsonschema:"required"`
 	}
 
 	// IngressSpec wraps all route rules
 	IngressSpec struct {
-		Rules []*v1alpha1.IngressRule `json:"rules" jsonschema:"omitempty"`
+		Rules []*v1alpha1.IngressRule `yaml:"rules" jsonschema:"required"`
 	}
 )
 

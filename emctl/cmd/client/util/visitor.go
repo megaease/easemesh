@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
-	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
@@ -199,7 +198,6 @@ func (v *streamVisitor) Visit(fn VisitorFunc) error {
 
 		err1 := fn(info, err)
 		if err1 != nil {
-			common.OutputError(err1)
 			errs = append(errs, err1)
 		}
 	}
