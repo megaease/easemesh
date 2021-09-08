@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/valid"
 
 	"github.com/pkg/errors"
 )
@@ -50,6 +51,12 @@ func (d *decoder) Decode(jsonBuff []byte) (resource.MeshObject, *resource.Versio
 	if err != nil {
 		return nil, vk, errors.Wrap(err, "unmarshal data to MeshObject")
 	}
+
+	vr := valid.Validate(meshObject)
+	if !vr.Valid() {
+		return nil, nil, vr
+	}
+
 	return meshObject, vk, nil
 }
 

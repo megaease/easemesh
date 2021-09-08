@@ -57,6 +57,7 @@ metadata:
   name: service_{id}
 spec:
    registerTenant: tenant_{id}
+   sidecar: {}
 `
 )
 
