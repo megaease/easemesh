@@ -36,7 +36,7 @@ import (
 )
 
 func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(ctx.Client, ctx.Flags.MeshNamespace,
+	entrypoints, err := installbase.GetMeshControlPanelEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
@@ -76,7 +76,7 @@ func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
 }
 
 func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNamespace,
+	entrypoints, err := installbase.GetMeshControlPanelEndpoints(kubeClient, installFlags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {

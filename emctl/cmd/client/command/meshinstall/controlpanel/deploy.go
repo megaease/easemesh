@@ -153,7 +153,7 @@ func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 	// Wait a fix time for the Easegress cluster to start
 	time.Sleep(time.Second * 10)
 
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(ctx.Client, ctx.Flags.MeshNamespace,
+	entrypoints, err := installbase.GetMeshControlPanelEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {

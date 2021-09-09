@@ -50,7 +50,6 @@ const (
 func Deploy(ctx *installbase.StageContext) error {
 	err := installbase.BatchDeployResources(ctx,
 		[]installbase.InstallFunc{
-			csrSpec(ctx),
 			secretSpec(ctx),
 			configMapSpec(ctx),
 			roleSpec(ctx),
