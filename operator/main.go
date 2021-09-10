@@ -20,8 +20,10 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
+	"go.uber.org/zap/zapcore"
 
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
@@ -116,7 +118,8 @@ func main() {
 
 	pflag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(false)))
+	setupLogger()
+
 	setupLog := ctrl.Log.WithName("setup")
 
 	if configFile != "" {
@@ -215,4 +218,36 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func loggerEncoderConfig() zapcore.EncoderConfig {
+	const RFC3339Milli = "2006-01-02T15:04:05.999Z07:00"
+
+	timeEncoder := func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format(RFC3339Milli))
+	}
+
+	return zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "name",
+		CallerKey:      "caller",
+		MessageKey:     "message",
+		StacktraceKey:  "stackstrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     timeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+}
+
+func setupLogger() {
+	encoderConfig := loggerEncoderConfig()
+	encoder := zapcore.NewConsoleEncoder(encoderConfig)
+
+	logger := zap.New(func(o *zap.Options) {
+		o.Encoder = encoder
+	})
+	ctrl.SetLogger(logger)
 }

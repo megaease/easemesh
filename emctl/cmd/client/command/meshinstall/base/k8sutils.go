@@ -36,6 +36,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// NewKubernetesClient creates a kubernetes client set from default config.
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
 	if err != nil {
@@ -49,6 +50,7 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	return kubeClient, nil
 }
 
+// NewKubernetesAPIExtensionsClient creates a kubernetes api extensions client from default config.
 func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
 	if err != nil {
@@ -62,6 +64,10 @@ func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
 	return clientset, nil
 }
 
+// FIXME: CreateNamespace won't update namespace spec such as labels if it has existed already.
+// Fix it along with https://github.com/megaease/easemesh/issues/73.
+
+// CreateNamespace creates a namesapce if not existing.
 func CreateNamespace(namespace *v1.Namespace, clientSet *kubernetes.Clientset) error {
 	_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace.Name, metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {

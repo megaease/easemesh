@@ -49,7 +49,7 @@ ALL_SOURCE_FILES = $(shell find ${MKFILE_DIR} -type f -name "*.go")
 all: manager
 
 # Run tests
-ENVTEST_ASSETS_DIR=${MKFILE_DIR}/testbin
+ENVTEST_ASSETS_DIR=${MKFILE_DIR}testbin
 new_test: generate fmt vet manifests setup_envtest
 	${SETUP_ENVTEST} use -i -p env ${K8S_VER} > ${MKFILE_DIR}_env.sh
 	source ${MKFILE_DIR}_env.sh; rm -f ${MKFILE_DIR}_env.sh; go test ./... ${TEST_FLAGS}
@@ -60,9 +60,9 @@ test: generate fmt vet manifests setup_envtest
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... ${TEST_FLAGS}
 
 # Build manager binary
-manager: generate fmt vet build 
+manager: generate fmt vet build
 
-build: ${TARGET} 
+build: ${TARGET}
 
 ${TARGET} : ${ALL_SOURCE_FILES}
 	go build -o ${TARGET} main.go
@@ -117,7 +117,7 @@ docker-push:
 	docker push ${IMG}
 
 # Download controller-gen locally if necessary
-CONTROLLER_GEN = ${MKFILE_DIR}/bin/controller-gen
+CONTROLLER_GEN = ${MKFILE_DIR}bin/controller-gen
 controller-gen:
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
@@ -126,7 +126,7 @@ KUSTOMIZE = ${MKFILE_DIR}/bin/kustomize
 kustomize:
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
-# Download setup-envtest 
+# Download setup-envtest
 SETUP_ENVTEST = ${MKFILE_DIR}/bin/setup-envtest
 setup_envtest:
 	$(call go-get-tool,$(SETUP_ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
