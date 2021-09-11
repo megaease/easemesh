@@ -26,14 +26,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func meshControlPanelLabel() map[string]string {
+func meshControlPlaneLabel() map[string]string {
 	selector := map[string]string{}
 	selector["mesh-controlpanel-app"] = "easegress-mesh-controlpanel"
 	return selector
 }
 
 func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	labels := meshControlPanelLabel()
+	labels := meshControlPlaneLabel()
 
 	headlessService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{

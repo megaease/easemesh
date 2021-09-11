@@ -57,7 +57,7 @@ func initialStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
 		spec := fn(ctx)
-		labels := meshControlPanelLabel()
+		labels := meshControlPlaneLabel()
 		spec.Name = installbase.DefaultMeshControlPlaneName
 		spec.Spec.ServiceName = installbase.DefaultMeshControlPlaneHeadlessServiceName
 

@@ -35,8 +35,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
-	entrypoints, err := installbase.GetMeshControlPanelEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
+func provisionEaseMeshControlPlane(ctx *installbase.StageContext) error {
+	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
@@ -75,8 +75,8 @@ func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
 	return errors.Wrapf(err, "call EaseMesh control panel %v", entrypoints)
 }
 
-func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
-	entrypoints, err := installbase.GetMeshControlPanelEndpoints(kubeClient, installFlags.MeshNamespace,
+func clearEaseMeshControlPlaneProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
+	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(kubeClient, installFlags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {

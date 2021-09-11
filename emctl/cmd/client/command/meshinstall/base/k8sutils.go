@@ -545,8 +545,8 @@ func CheckDeploymentResourceStatus(client *kubernetes.Clientset, namespace, name
 	return predict(deploy), nil
 }
 
-// GetMeshControlPanelEndpoints gets the endpoints of EaseMesh control plane.
-func GetMeshControlPanelEndpoints(client *kubernetes.Clientset, namespace, resourceName, portName string) ([]string, error) {
+// GetMeshControlPlaneEndpoints gets the endpoints of EaseMesh control plane.
+func GetMeshControlPlaneEndpoints(client *kubernetes.Clientset, namespace, resourceName, portName string) ([]string, error) {
 	service, err := client.CoreV1().Services(namespace).Get(requestContext(), resourceName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
