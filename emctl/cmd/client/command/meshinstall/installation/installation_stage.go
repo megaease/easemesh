@@ -32,7 +32,7 @@ type InstallStage interface {
 	Clear(*installbase.StageContext) error
 }
 
-// Installation represents installing or clearing infrastructure
+// Installation represents installing or cleaning infrastructure
 // components for the EaseMesh
 type Installation interface {
 	DoInstallStage(*installbase.StageContext) error

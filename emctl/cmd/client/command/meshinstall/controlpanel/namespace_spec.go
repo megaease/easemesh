@@ -31,7 +31,7 @@ func namespaceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 		Labels: map[string]string{},
 	}}
 	return func(ctx *installbase.StageContext) error {
-		err := installbase.CreateNamespace(ns, ctx.Client)
+		err := installbase.DeployNamespace(ns, ctx.Client)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
