@@ -21,6 +21,9 @@ header:
     - '**/emctl/**/*.go'
     - '**/operator/**/*.go'
 
+  paths-ignore:
+    - '**/zz_generated.*.go'
+
   comment: on-failure
 
 dependency:
