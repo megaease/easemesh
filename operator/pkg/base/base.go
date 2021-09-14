@@ -18,9 +18,9 @@ type (
 		ImageRegistryURL string
 		ImagePullPolicy  string
 		SidecarImageName string
-		// The image name of the easeagent initializer
+		// AgentInitializerImageName is the image name of the Agent initializer.
 		EaseagentInitializerImageName string
-		// Log4jConfigName default is easeagent-log4j.xml
+		// Log4jConfigName is  the name of log4f config name.
 		Log4jConfigName string
 
 		ClusterJoinURLs []string
