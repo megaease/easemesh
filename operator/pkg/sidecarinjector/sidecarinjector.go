@@ -48,8 +48,8 @@ var (
 	// Init container stuff.
 	initContainerName      = "initializer"
 	initContainerImageName = func(br *base.Runtime) string {
-		if br.EaseagentInitializerImageName != "" {
-			return br.EaseagentInitializerImageName
+		if br.AgentInitializerImageName != "" {
+			return br.AgentInitializerImageName
 		}
 		return "megaease/easeagent-initializer:latest"
 	}

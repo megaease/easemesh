@@ -56,10 +56,10 @@ const (
 	// DefaultImagePullPolicy is the default image pull policy.
 	DefaultImagePullPolicy = "IfNotPresent"
 
-	// DefaultEaseagentInitializerImageName is the default easeagent initializer image name
-	DefaultEaseagentInitializerImageName = "megaease/easeagent-initializer"
+	// DefaultAgentInitializerImageName is the default easeagent initializer image name.
+	DefaultAgentInitializerImageName = "megaease/easeagent-initializer"
 
-	// DefaultLog4jConfigName is the default log4j config file name
+	// DefaultLog4jConfigName is the default log4j config file name.
 	DefaultLog4jConfigName = "log4j.xml"
 )
 
@@ -88,8 +88,8 @@ type ConfigSpec struct {
 	KeyName              string   `yaml:"key-name" jsonschema:"required"`
 	Log4jConfigName      string   `yaml:"log4j-config-name" jsonschema:"required"`
 
-	EaseagentInitializerImageName string `yaml:"easeagent-initializer-image-name" jsonschema:"required"`
-	SidecarImageName              string `yaml:"sidecar-image-name" jsonschema:"required"`
+	AgentInitializerImageName string `yaml:"agent-initializer-image-name" jsonschema:"required"`
+	SidecarImageName          string `yaml:"sidecar-image-name" jsonschema:"required"`
 }
 
 func main() {
@@ -111,12 +111,12 @@ func main() {
 		keyName              string
 		log4jConfigName      string
 		//
-		easeagentInitializerImageName string
+		agentInitializerImageName string
 	)
 
 	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
 	pflag.StringVar(&sidecarImageName, "sidecar-image-name", DefaultSidecarImageName, "The sidecar image name.")
-	pflag.StringVar(&easeagentInitializerImageName, "easegress-initializer-image-name", DefaultEaseagentInitializerImageName, "The easeagent initializer image name.")
+	pflag.StringVar(&agentInitializerImageName, "agent-initializer-image-name", DefaultAgentInitializerImageName, "The agent initializer image name.")
 	pflag.StringVar(&log4jConfigName, "log4j-config-name", DefaultLog4jConfigName, "The log4j config file name")
 	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
 	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
@@ -149,7 +149,7 @@ func main() {
 			certDir = spec.CertDir
 			certName = spec.CertName
 			keyName = spec.KeyName
-			easeagentInitializerImageName = spec.EaseagentInitializerImageName
+			agentInitializerImageName = spec.AgentInitializerImageName
 			sidecarImageName = spec.SidecarImageName
 			log4jConfigName = spec.Log4jConfigName
 		})
@@ -175,9 +175,9 @@ func main() {
 		ImageRegistryURL: imageRegistryURL,
 		ImagePullPolicy:  imagePullPolicy,
 
-		SidecarImageName:              sidecarImageName,
-		EaseagentInitializerImageName: easeagentInitializerImageName,
-		Log4jConfigName:               log4jConfigName,
+		SidecarImageName:          sidecarImageName,
+		AgentInitializerImageName: agentInitializerImageName,
+		Log4jConfigName:           log4jConfigName,
 
 		ClusterJoinURLs: clusterJoinURLs,
 		ClusterName:     clusterName,

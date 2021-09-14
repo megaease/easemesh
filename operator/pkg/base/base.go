@@ -19,7 +19,7 @@ type (
 		ImagePullPolicy  string
 		SidecarImageName string
 		// AgentInitializerImageName is the image name of the Agent initializer.
-		EaseagentInitializerImageName string
+		AgentInitializerImageName string
 		// Log4jConfigName is  the name of log4f config name.
 		Log4jConfigName string
 

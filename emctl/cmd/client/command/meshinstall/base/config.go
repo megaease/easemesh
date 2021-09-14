@@ -79,7 +79,7 @@ type (
 		SidecarImageName string `yaml:"sidecar-image-name" jsonschema:"required"`
 
 		// The image name of the easeagent initializer
-		EaseagentInitializerImageName string `yaml:"easeagent-initializer-image-name" jsonschema:"required"`
+		AgentInitializerImageName string `yaml:"agent-initializer-image-name" jsonschema:"required"`
 		// Log4jConfigName default is easeagent-log4j.xml
 		Log4jConfigName string `yaml:"log4j-config-name" jsonschema:"required"`
 	}

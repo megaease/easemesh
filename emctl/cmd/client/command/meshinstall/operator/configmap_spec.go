@@ -32,19 +32,19 @@ import (
 
 func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	cfg := installbase.MeshOperatorConfig{
-		ImageRegistryURL:     ctx.Flags.ImageRegistryURL,
-		ClusterName:          installbase.DefaultMeshControlPlaneName,
-		ClusterJoinURLs:      []string{"http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + ctx.Flags.MeshNamespace + ":" + strconv.Itoa(ctx.Flags.EgPeerPort)},
-		MetricsAddr:          "127.0.0.1:8080",
-		EnableLeaderElection: false,
-		ProbeAddr:            ":8081",
-		WebhookPort:          installbase.DefaultMeshOperatorMutatingWebhookPort,
-		CertDir:              installbase.DefaultMeshOperatorCertDir,
-		CertName:             installbase.DefaultMeshOperatorCertFileName,
-		KeyName:              installbase.DefaultMeshOperatorKeyFileName,
-		SidecarImageName: installbase.DefaultSidecarImageName,
-		EaseagentInitializerImageName: installbase.DefaultEaseagentInitializerImageName,
-		Log4jConfigName:               installbase.DefaultLog4jConfigName,
+		ImageRegistryURL:          ctx.Flags.ImageRegistryURL,
+		ClusterName:               installbase.DefaultMeshControlPlaneName,
+		ClusterJoinURLs:           []string{"http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + ctx.Flags.MeshNamespace + ":" + strconv.Itoa(ctx.Flags.EgPeerPort)},
+		MetricsAddr:               "127.0.0.1:8080",
+		EnableLeaderElection:      false,
+		ProbeAddr:                 ":8081",
+		WebhookPort:               installbase.DefaultMeshOperatorMutatingWebhookPort,
+		CertDir:                   installbase.DefaultMeshOperatorCertDir,
+		CertName:                  installbase.DefaultMeshOperatorCertFileName,
+		KeyName:                   installbase.DefaultMeshOperatorKeyFileName,
+		SidecarImageName:          installbase.DefaultSidecarImageName,
+		AgentInitializerImageName: installbase.DefaultEaseagentInitializerImageName,
+		Log4jConfigName:           installbase.DefaultLog4jConfigName,
 	}
 
 	configMap := &v1.ConfigMap{
