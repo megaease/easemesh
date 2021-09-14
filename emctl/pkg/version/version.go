@@ -27,6 +27,8 @@ var (
 	// COMMIT returns the short sha from git
 	COMMIT = "UNKNOWN"
 
+	// Short is version display in the short form
 	Short = fmt.Sprintf("EaseMesh %s", RELEASE)
-	Long  = fmt.Sprintf("EaseMesh release: %s, repo: %s, commit: %s", RELEASE, REPO, COMMIT)
+	// Long is version display in the long form
+	Long = fmt.Sprintf("EaseMesh release: %s, repo: %s, commit: %s", RELEASE, REPO, COMMIT)
 )
