@@ -84,7 +84,7 @@ const (
 	//DefaultEaseagentInitializerImageName is the default easeagent initializer image name.
 	DefaultEaseagentInitializerImageName = "megaease/easeagent-initializer:latest"
 	//DefaultLog4jConfigName is the default log4j config file name of the easeagent.
-	DefaultLog4jConfigName = "log4j.xml"
+	DefaultLog4jConfigName = "log4j2.xml"
 
 	//DefaultMeshIngressConfig is the default configmap name of the meshingress.
 	DefaultMeshIngressConfig = "easemesh-ingress-config"
