@@ -75,6 +75,13 @@ type (
 		CertDir              string   `yaml:"cert-dir" jsonschema:"required"`
 		CertName             string   `yaml:"cert-name" jsonschema:"required"`
 		KeyName              string   `yaml:"key-name" jsonschema:"required"`
+		// The image name of the injecting sidecar
+		SidecarImageName string `yaml:"sidecar-image-name" jsonschema:"required"`
+
+		// The image name of the easeagent initializer
+		AgentInitializerImageName string `yaml:"agent-initializer-image-name" jsonschema:"required"`
+		// Log4jConfigName default is easeagent-log4j.xml
+		Log4jConfigName string `yaml:"log4j-config-name" jsonschema:"required"`
 	}
 
 	// EasegressReaderParams is the parameters of Easegress reader role.

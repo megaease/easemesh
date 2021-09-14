@@ -27,44 +27,81 @@ const (
 )
 
 const (
+	// DefaultOperatorPath is path of default operation configuration.
 	DefaultOperatorPath = "./manifests/easemesh-operator.yaml"
 
-	DefaultMeshControlPlaneName                = "easemesh-control-plane"
-	DefaultMeshClientPortName                  = "client-port"
-	DefaultMeshPeerPortName                    = "peer-port"
-	DefaultMeshAdminPortName                   = "admin-port"
-	DefaultMeshControlPlanePlubicServiceName   = "easemesh-controlplane-public"
+	// DefaultMeshControlPlaneName is the default control plane name of easemesh.
+	DefaultMeshControlPlaneName = "easemesh-control-plane"
+	// DefaultMeshClientPortName is the default port name of etcd client.
+	DefaultMeshClientPortName = "client-port"
+	// DefaultMeshPeerPortName is the default port name of etcd peer.
+	DefaultMeshPeerPortName = "peer-port"
+	// DefaultMeshAdminPortName is the default port name of etcd administration.
+	DefaultMeshAdminPortName = "admin-port"
+	// DefaultMeshControlPlanePlubicServiceName is the default exposed public service name of the EaseMesh.
+	DefaultMeshControlPlanePlubicServiceName = "easemesh-controlplane-public"
+
+	//DefaultMeshControlPlaneHeadlessServiceName is the default headless service name.
 	DefaultMeshControlPlaneHeadlessServiceName = "easemesh-controlplane-hs"
-	DefaultMeshControlPlaneServicePeerPort     = 2380
-	DefaultMeshControlPlanelServiceAdminPort   = 2381
+	//DefaultMeshControlPlaneServicePeerPort  is the default value of etcd peer port.
+	DefaultMeshControlPlaneServicePeerPort = 2380
+	//DefaultMeshControlPlanelServiceAdminPort is the default value of etcd admin port.
+	DefaultMeshControlPlanelServiceAdminPort = 2381
 
-	DefaultMeshControlPlanePVName     = "easegress-control-plane-pv"
+	//DefaultMeshControlPlanePVName is the default name of the persisten volume used by the control plane.
+	DefaultMeshControlPlanePVName = "easegress-control-plane-pv"
+	//DefaultMeshControlPlanePVHostPath is the default of path of pv.
 	DefaultMeshControlPlanePVHostPath = "/opt/easemesh"
-	DefaultMeshControlPlaneConfig     = "easemesh-cluster-cm"
+	//DefaultMeshControlPlaneConfig is the default configmap name of the easemesh control plane.
+	DefaultMeshControlPlaneConfig = "easemesh-cluster-cm"
 
-	DefaultMeshControllerName = "easemesh-controller"
+	//MeshControllerName is the mesh controller name in the easegress.
+	MeshControllerName = "easemesh-controller"
 
-	DefaultMeshOperatorName                = "easemesh-operator"
-	DefaultMeshOperatorServiceName         = "easemesh-operator-service"
-	DefaultMeshOperatorSecretName          = "easemesh-operator-secret"
-	DefaultMeshOperatorCSRName             = "easemesh-operator-csr"
+	//DefaultMeshOperatorName is the default meshdeployment operator name of the EaseMesh.
+	DefaultMeshOperatorName = "easemesh-operator"
+	//DefaultMeshOperatorServiceName is the default service name of the meshdeployment operator.
+	DefaultMeshOperatorServiceName = "easemesh-operator-service"
+	//DefaultMeshOperatorSecretName is the default secret resource name of the meshdeployment operator.
+	DefaultMeshOperatorSecretName = "easemesh-operator-secret"
+	//DefaultMeshOperatorCSRName is the default CSR resource name of the meshdeployment operator.
+	DefaultMeshOperatorCSRName = "easemesh-operator-csr"
+	//DefaultMeshOperatorMutatingWebhookName  is the default operator mutating-webhook name of the adminission control.
 	DefaultMeshOperatorMutatingWebhookName = "easemesh-operator-mutating-webhook"
+	//DefaultMeshOperatorMutatingWebhookPath is the default path of the admission control for the EaseMesh.
 	DefaultMeshOperatorMutatingWebhookPath = "/mutate"
+	//DefaultMeshOperatorMutatingWebhookPort is the default port listened by the adminssion control for the EaseMesh.
 	DefaultMeshOperatorMutatingWebhookPort = 9090
-	DefaultMeshOperatorCertDir             = "/cert-volume"
-	DefaultMeshOperatorCertFileName        = "cert.pem"
-	DefaultMeshOperatorKeyFileName         = "key.pem"
+	//DefaultMeshOperatorCertDir is the default certs file localtion the adminssion control server.
+	DefaultMeshOperatorCertDir = "/cert-volume"
+	//DefaultMeshOperatorCertFileName is the default certs file name of the admission control server.
+	DefaultMeshOperatorCertFileName = "cert.pem"
+	//DefaultMeshOperatorKeyFileName is the default key name of the admission control server.
+	DefaultMeshOperatorKeyFileName = "key.pem"
 
-	DefaultMeshIngressConfig         = "easemesh-ingress-config"
-	DefaultMeshIngressService        = "easemesh-ingress-service"
+	// DefaultSidecarImageName is the default sidecar image name.
+	DefaultSidecarImageName = "megaease/easegress:server-sidecar"
+	//DefaultEaseagentInitializerImageName is the default easeagent initializer image name.
+	DefaultEaseagentInitializerImageName = "megaease/easeagent-initializer:latest"
+	//DefaultLog4jConfigName is the default log4j config file name of the easeagent.
+	DefaultLog4jConfigName = "log4j2.xml"
+
+	//DefaultMeshIngressConfig is the default configmap name of the meshingress.
+	DefaultMeshIngressConfig = "easemesh-ingress-config"
+	//DefaultMeshIngressService is the default service name of the meshingress.
+	DefaultMeshIngressService = "easemesh-ingress-service"
+	//DefaultMeshIngressControllerName is the default deployment name of the meshingress.
 	DefaultMeshIngressControllerName = "easemesh-ingress-easegress"
 
-	// DefaultKubeDir represents default kubernetes client configuration directory
+	// DefaultKubeDir represents default kubernetes client configuration directory.
 	DefaultKubeDir = ".kube"
 
+	//DefaultKubernetesConfig is the default config name of the K8s.
 	DefaultKubernetesConfig = "config"
-	WriterClusterRole       = "writer"
-	ReaderClusterRole       = "reader"
+	//WriterClusterRole is the write role name of the Easegress.
+	WriterClusterRole = "writer"
+	//ReaderClusterRole is the read role name of the Easegress.
+	ReaderClusterRole = "reader"
 )
 
 // InstallPhase is the phrase of installation.
