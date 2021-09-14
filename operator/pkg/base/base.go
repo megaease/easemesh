@@ -18,6 +18,10 @@ type (
 		ImageRegistryURL string
 		ImagePullPolicy  string
 		SidecarImageName string
+		// The image name of the easeagent initializer
+		EaseagentInitializerImageName string
+		// Log4jConfigName default is easeagent-log4j.xml
+		Log4jConfigName string
 
 		ClusterJoinURLs []string
 		ClusterName     string

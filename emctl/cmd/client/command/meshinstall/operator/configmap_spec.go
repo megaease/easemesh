@@ -42,6 +42,11 @@ func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 		CertDir:              installbase.DefaultMeshOperatorCertDir,
 		CertName:             installbase.DefaultMeshOperatorCertFileName,
 		KeyName:              installbase.DefaultMeshOperatorKeyFileName,
+		// sidecar image name
+		SidecarImageName: installbase.DefaultSidecarImageName,
+		// initializer image name
+		EaseagentInitializerImageName: installbase.DefaultEaseagentInitializerImageName,
+		Log4jConfigName:               installbase.DefaultLog4jConfigName,
 	}
 
 	configMap := &v1.ConfigMap{

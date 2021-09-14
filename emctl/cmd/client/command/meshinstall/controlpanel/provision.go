@@ -44,7 +44,7 @@ func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
 	}
 
 	meshControllerConfig := installbase.MeshControllerConfig{
-		Name:              installbase.DefaultMeshControllerName,
+		Name:              installbase.MeshControllerName,
 		Kind:              flags.MeshControllerKind,
 		RegistryType:      ctx.Flags.EaseMeshRegistryType,
 		HeartbeatInterval: strconv.Itoa(ctx.Flags.HeartbeatInterval) + "s",
@@ -87,7 +87,7 @@ func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernet
 	}
 
 	for _, entrypoint := range entrypoints {
-		url := fmt.Sprintf(entrypoint+installbase.ObjectURL, installbase.DefaultMeshControllerName)
+		url := fmt.Sprintf(entrypoint+installbase.ObjectURL, installbase.MeshControllerName)
 		_, err = client.NewHTTPJSON().
 			Delete(url, nil, time.Second*5, nil).
 			HandleResponse(func(body []byte, statusCode int) (interface{}, error) {

@@ -22,8 +22,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/yaml.v2"
 
 	meshv1beta1 "github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
@@ -41,9 +43,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
 	// +kubebuilder:scaffold:imports
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -55,6 +55,12 @@ const (
 
 	// DefaultImagePullPolicy is the default image pull policy.
 	DefaultImagePullPolicy = "IfNotPresent"
+
+	// DefaultEaseagentInitializerImageName is the default easeagent initializer image name
+	DefaultEaseagentInitializerImageName = "megaease/easeagent-initializer"
+
+	// DefaultLog4jConfigName is the default log4j config file name
+	DefaultLog4jConfigName = "log4j.xml"
 )
 
 var (
@@ -80,6 +86,10 @@ type ConfigSpec struct {
 	CertDir              string   `yaml:"cert-dir" jsonschema:"required"`
 	CertName             string   `yaml:"cert-name" jsonschema:"required"`
 	KeyName              string   `yaml:"key-name" jsonschema:"required"`
+	Log4jConfigName      string   `yaml:"log4j-config-name" jsonschema:"required"`
+
+	EaseagentInitializerImageName string `yaml:"easeagent-initializer-image-name" jsonschema:"required"`
+	SidecarImageName              string `yaml:"sidecar-image-name" jsonschema:"required"`
 }
 
 func main() {
@@ -99,10 +109,15 @@ func main() {
 		certDir              string
 		certName             string
 		keyName              string
+		log4jConfigName      string
+		//
+		easeagentInitializerImageName string
 	)
 
 	pflag.StringVar(&imageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "The image registry URL")
 	pflag.StringVar(&sidecarImageName, "sidecar-image-name", DefaultSidecarImageName, "The sidecar image name.")
+	pflag.StringVar(&easeagentInitializerImageName, "easegress-initializer-image-name", DefaultEaseagentInitializerImageName, "The easeagent initializer image name.")
+	pflag.StringVar(&log4jConfigName, "log4j-config-name", DefaultLog4jConfigName, "The log4j config file name")
 	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
 	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
 	pflag.StringSliceVar(&clusterJoinURLs, "cluster-join-urls", []string{"http://easemesh-controlplane-svc.easemesh:2380"}, "The addresses to join the Easegress.")
@@ -123,28 +138,21 @@ func main() {
 	setupLog := ctrl.Log.WithName("setup")
 
 	if configFile != "" {
-		config, err := ioutil.ReadFile(configFile)
-		if err != nil {
-			setupLog.Error(err, "Read configFile error, %v", err)
-			os.Exit(1)
-		}
-		spec := &ConfigSpec{}
-		err = yaml.Unmarshal(config, spec)
-		if err != nil {
-			setupLog.Error(err, "Read configFile error, %v", err)
-			os.Exit(1)
-		}
-
-		imageRegistryURL = spec.ImageRegistryURL
-		clusterName = spec.ClusterName
-		clusterJoinURLs = spec.ClusterJoinURLs
-		metricsAddr = spec.MetricsAddr
-		enableLeaderElection = spec.EnableLeaderElection
-		probeAddr = spec.ProbeAddr
-		webhookPort = spec.WebhookPort
-		certDir = spec.CertDir
-		certName = spec.CertName
-		keyName = spec.KeyName
+		unmarshalConfigFile(configFile, setupLog, func(spec *ConfigSpec) {
+			imageRegistryURL = spec.ImageRegistryURL
+			clusterName = spec.ClusterName
+			clusterJoinURLs = spec.ClusterJoinURLs
+			metricsAddr = spec.MetricsAddr
+			enableLeaderElection = spec.EnableLeaderElection
+			probeAddr = spec.ProbeAddr
+			webhookPort = spec.WebhookPort
+			certDir = spec.CertDir
+			certName = spec.CertName
+			keyName = spec.KeyName
+			easeagentInitializerImageName = spec.EaseagentInitializerImageName
+			sidecarImageName = spec.SidecarImageName
+			log4jConfigName = spec.Log4jConfigName
+		})
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -166,7 +174,10 @@ func main() {
 		Recorder:         mgr.GetEventRecorderFor("controller.MeshDeployment"),
 		ImageRegistryURL: imageRegistryURL,
 		ImagePullPolicy:  imagePullPolicy,
-		SidecarImageName: sidecarImageName,
+
+		SidecarImageName:              sidecarImageName,
+		EaseagentInitializerImageName: easeagentInitializerImageName,
+		Log4jConfigName:               log4jConfigName,
 
 		ClusterJoinURLs: clusterJoinURLs,
 		ClusterName:     clusterName,
@@ -250,4 +261,19 @@ func setupLogger() {
 		o.Encoder = encoder
 	})
 	ctrl.SetLogger(logger)
+}
+
+func unmarshalConfigFile(file string, setupLog logr.Logger, onSuccess func(*ConfigSpec)) {
+	config, err := ioutil.ReadFile(file)
+	if err != nil {
+		setupLog.Error(err, "Read configFile error, %v", err)
+		os.Exit(1)
+	}
+	spec := &ConfigSpec{}
+	err = yaml.Unmarshal(config, spec)
+	if err != nil {
+		setupLog.Error(err, "Read configFile error, %v", err)
+		os.Exit(1)
+	}
+	onSuccess(spec)
 }

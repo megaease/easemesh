@@ -47,7 +47,12 @@ var (
 
 	// Init container stuff.
 	initContainerName      = "initializer"
-	initContainerImageName = "megaease/easeagent-initializer:latest"
+	initContainerImageName = func(br *base.Runtime) string {
+		if br.EaseagentInitializerImageName != "" {
+			return br.EaseagentInitializerImageName
+		}
+		return "megaease/easeagent-initializer:latest"
+	}
 
 	initContainerAgentVolumeName        = "agent-volume"
 	initContainerAgentVolumeMountPath   = "/agent-volume"
@@ -76,13 +81,13 @@ var (
 	}
 
 	appContainerJavaEnvName  = "JAVA_TOOL_OPTIONS"
-	appContainerJavaEnvValue = fmt.Sprintf(" -javaagent:%s/easeagent.jar -Deaseagent.log.conf=%s/log4j2.xml ",
-		appContainerAgentVolumeMountPath, appContainerAgentVolumeMountPath)
-	appContainerEnvs = []corev1.EnvVar{
-		{
-			Name:  appContainerJavaEnvName,
-			Value: appContainerJavaEnvValue,
-		},
+	appContainerJavaEnvValue = func(br *base.Runtime) string {
+		log4jConfigName := "log4j2.xml"
+		if br.Log4jConfigName != "" {
+			log4jConfigName = br.Log4jConfigName
+		}
+		return fmt.Sprintf(" -javaagent:%s/easeagent.jar -Deaseagent.log.conf=%s/%s ",
+			appContainerAgentVolumeMountPath, appContainerAgentVolumeMountPath, log4jConfigName)
 	}
 
 	// Sidecar container stuff.
@@ -305,7 +310,7 @@ func (m *SidecarInjector) injectVolumes(volumes ...corev1.Volume) {
 func (m *SidecarInjector) injectInitContainer() {
 	initContainer := corev1.Container{
 		Name:            initContainerName,
-		Image:           m.completeImageURL(initContainerImageName),
+		Image:           m.completeImageURL(initContainerImageName(m.Runtime)),
 		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
 		Command:         initContainerCommand(m.meshService),
 		VolumeMounts:    initContainerVolumeMounts,
@@ -327,6 +332,14 @@ func (m *SidecarInjector) adaptAppContainerSpec() error {
 	}
 
 	appContainer.VolumeMounts = injectVolumeMounts(appContainer.VolumeMounts, appContainerVolumeMounts...)
+
+	appContainerEnvs := []corev1.EnvVar{
+		{
+			Name:  appContainerJavaEnvName,
+			Value: appContainerJavaEnvValue(m.Runtime),
+		},
+	}
+
 	appContainer.Env = injectEnvVars(appContainer.Env, appContainerEnvs...)
 
 	m.pod.Containers = injectContainers(m.pod.Containers, *appContainer)
