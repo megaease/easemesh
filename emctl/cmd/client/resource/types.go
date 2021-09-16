@@ -18,6 +18,9 @@
 package resource
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/megaease/easemesh-api/v1alpha1"
 )
 
@@ -45,6 +48,8 @@ const (
 
 	// KindService is service kind of the EaseMesh resource
 	KindService = "Service"
+
+	KindServiceInstance = "ServiceInstance"
 
 	// KindCanary is canary kind of the EaseMesh resource
 	KindCanary = "Canary"
@@ -156,6 +161,22 @@ type (
 		Canary        *v1alpha1.Canary        `yaml:"canary" jsonschema:"omitempty"`
 		LoadBalance   *v1alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
 		Observability *v1alpha1.Observability `yaml:"observability" jsonschema:"omitempty"`
+	}
+
+	ServiceInstance struct {
+		MeshResource `yaml:",inline"`
+		Spec         *v1alpha1.ServiceInstance `yaml:"spec" jsonschema:"required"`
+	}
+
+	ServiceInstanceSpec struct {
+		RegistryName string            `yaml:"registryName" jsonschema:"required"`
+		ServiceName  string            `yaml:"serviceName" jsonschema:"required"`
+		InstanceID   string            `yaml:"instanceID" jsonschema:"required"`
+		IP           string            `yaml:"ip" jsonschema:"required"`
+		Port         uint32            `yaml:"port" jsonschema:"required"`
+		RegistryTime string            `yaml:"registryTime" jsonschema:"omitempty"`
+		Labels       map[string]string `yaml:"labels" jsonschema:"omitempty"`
+		Status       string            `yaml:"status" jsonschema:"omitempty"`
 	}
 
 	// Canary describes canary resource of the EaseMesh
@@ -298,6 +319,21 @@ func (s *Service) ToV1Alpha1() *v1alpha1.Service {
 	return result
 }
 
+func (si *ServiceInstance) ParseName() (serviceName, instanceID string, err error) {
+	ss := strings.Split(si.Name(), "/")
+
+	if len(ss) != 2 {
+		return "", "", fmt.Errorf("invalid service instance name (format: serviceName/instanceID)")
+	}
+
+	return ss[0], ss[1], nil
+}
+
+// ToV1Alpha1 converts a Service resource to v1alpha1.ServiceInstance.
+func (si *ServiceInstance) ToV1Alpha1() *v1alpha1.ServiceInstance {
+	return si.Spec
+}
+
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
 	result := &v1alpha1.Tenant{}
@@ -369,6 +405,19 @@ func ToService(service *v1alpha1.Service) *Service {
 	result.Spec.Canary = service.Canary
 	result.Spec.LoadBalance = service.LoadBalance
 	result.Spec.Observability = service.Observability
+	return result
+}
+
+func ToServiceInstance(instance *v1alpha1.ServiceInstance) *ServiceInstance {
+	result := &ServiceInstance{
+		Spec: &v1alpha1.ServiceInstance{},
+	}
+
+	name := fmt.Sprintf("%s/%s", instance.ServiceName, instance.InstanceID)
+
+	result.MeshResource = NewServiceInstanceResource(DefaultAPIVersion, name)
+	result.Spec = instance
+
 	return result
 }
 

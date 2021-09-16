@@ -59,6 +59,10 @@ func (oc *objectCreator) new(kind VersionKind, metaData MetaData) (MeshObject, e
 		return &Service{
 			MeshResource: NewServiceResource(apiVersion, metaData.Name),
 		}, nil
+	case KindServiceInstance:
+		return &ServiceInstance{
+			MeshResource: NewServiceInstanceResource(apiVersion, metaData.Name),
+		}, nil
 	case KindTenant:
 		return &Tenant{
 			MeshResource: NewTenantResource(apiVersion, metaData.Name),
@@ -109,6 +113,11 @@ func NewIngressResource(apiVersion, name string) MeshResource {
 // NewServiceResource returns a MeshResource with the service kind
 func NewServiceResource(apiVersion, name string) MeshResource {
 	return NewMeshResource(apiVersion, KindService, name)
+}
+
+// NewServiceInstanceResource returns a MeshResource with the service kind
+func NewServiceInstanceResource(apiVersion, name string) MeshResource {
+	return NewMeshResource(apiVersion, KindServiceInstance, name)
 }
 
 // NewCanaryResource returns a MeshResource with the canary kind

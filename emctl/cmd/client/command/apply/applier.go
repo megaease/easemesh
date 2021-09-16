@@ -48,6 +48,8 @@ func WrapApplierByMeshObject(object resource.MeshObject,
 		return &meshControllerApplier{object: object.(*resource.MeshController), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindServiceInstance:
+		return &serviceInstanceApplier{object: object.(*resource.ServiceInstance), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCanary:
 		return &canaryApplier{object: object.(*resource.Canary), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindLoadBalance:
@@ -129,6 +131,15 @@ func (s *serviceApplier) Apply() error {
 		}
 
 	}
+}
+
+type serviceInstanceApplier struct {
+	baseApplier
+	object *resource.ServiceInstance
+}
+
+func (si *serviceInstanceApplier) Apply() error {
+	return errors.New("not support applying service instance")
 }
 
 type canaryApplier struct {

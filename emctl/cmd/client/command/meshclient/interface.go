@@ -33,6 +33,7 @@ type V1Alpha1Interface interface {
 	MeshControllerGetter
 	TenantGetter
 	ServiceGetter
+	ServiceInstanceGetter
 	LoadbalanceGetter
 	CanaryGetter
 	ObservabilityGetter
@@ -53,6 +54,11 @@ type TenantGetter interface {
 // ServiceGetter represents a Service resource accessor
 type ServiceGetter interface {
 	Service() ServiceInterface
+}
+
+// ServiceInstanceGetter represents a Service resource accessor
+type ServiceInstanceGetter interface {
+	ServiceInstance() ServiceInstanceInterface
 }
 
 // LoadbalanceGetter represents a Loadbalance resource accessor
@@ -107,6 +113,13 @@ type ServiceInterface interface {
 	Create(context.Context, *resource.Service) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.Service, error)
+}
+
+// ServiceInstanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service instance resource.
+type ServiceInstanceInterface interface {
+	Get(ctx context.Context, serviceName, instanceID string) (*resource.ServiceInstance, error)
+	Delete(ctx context.Context, serviceName, instanceID string) error
+	List(context.Context) ([]*resource.ServiceInstance, error)
 }
 
 // LoadBalanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the loadbalance resource.

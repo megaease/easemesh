@@ -40,6 +40,8 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 		return &meshControllerGetter{object: object.(*resource.MeshController), baseGetter: base}
 	case resource.KindService:
 		return &serviceGetter{object: object.(*resource.Service), baseGetter: base}
+	case resource.KindServiceInstance:
+		return &serviceInstanceGetter{object: object.(*resource.ServiceInstance), baseGetter: base}
 	case resource.KindCanary:
 		return &canaryGetter{object: object.(*resource.Canary), baseGetter: base}
 	case resource.KindLoadBalance:
@@ -132,6 +134,43 @@ func (s *serviceGetter) Get() ([]resource.MeshObject, error) {
 	objects := make([]resource.MeshObject, len(services))
 	for i := range services {
 		objects[i] = services[i]
+	}
+
+	return objects, nil
+}
+
+type serviceInstanceGetter struct {
+	baseGetter
+	object *resource.ServiceInstance
+}
+
+func (s *serviceInstanceGetter) Get() ([]resource.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+
+	if s.object.Name() != "" {
+		serviceName, instanceID, err := s.object.ParseName()
+		if err != nil {
+			return nil, err
+		}
+
+		serviceInstance, err := s.client.V1Alpha1().ServiceInstance().Get(ctx,
+			serviceName, instanceID)
+		if err != nil {
+			return nil, err
+		}
+
+		return []resource.MeshObject{serviceInstance}, nil
+	}
+
+	serviceInstances, err := s.client.V1Alpha1().ServiceInstance().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]resource.MeshObject, len(serviceInstances))
+	for i := range serviceInstances {
+		objects[i] = serviceInstances[i]
 	}
 
 	return objects, nil

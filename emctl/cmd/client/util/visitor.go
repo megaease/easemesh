@@ -299,6 +299,8 @@ func adaptCommandKind(kind string) string {
 		return resource.KindMeshController
 	case low(resource.KindService):
 		return resource.KindService
+	case low(resource.KindServiceInstance):
+		return resource.KindServiceInstance
 	case low(resource.KindTenant):
 		return resource.KindTenant
 	case low(resource.KindLoadBalance):
