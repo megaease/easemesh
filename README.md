@@ -26,7 +26,7 @@ EaseMesh is a service mesh that is compatible with the Spring Cloud ecosystem. I
       - [7.1.5 Get exposed port of `EaseMesh ingress` service](#715-get-exposed-port-of-easemesh-ingress-service)
       - [7.1.6 Step 5: Configure reverse proxy](#716-step-5-configure-reverse-proxy)
         - [7.1.6.1 Config reverse proxy via Easegress](#7161-config-reverse-proxy-via-easegress)
-        - [7.1.6.2 Config reverse proxy via Easegress](#7162-config-reverse-proxy-via-easegress)
+        - [7.1.6.2 Config reverse proxy via Nginx](#7162-config-reverse-proxy-via-nginx)
     - [7.2 Canary Deployment](#72-canary-deployment)
       - [7.2.1  Step 1: Coloring traffic](#721--step-1-coloring-traffic)
       - [7.2.2 Step 2: Apply canary configuration of the EaseMesh](#722-step-2-apply-canary-configuration-of-the-easemesh)
@@ -68,13 +68,13 @@ Why do we reinvent another wheel?
 - **Java Register/Discovery**: Compatible with popular Java Spring Cloud ecosystem's Service registry/discovery.
   - **Multiple tenants(namespace)** Supporting multiple tenants' service registration, isolate services from different tenants.
   - **Share (global) tenant** Support share tenants, all services have visibility to the service registered in the global tenant.
-  - **Compatible** 
+  - **Compatible**
     - Be compatible with the Eureka registry.
     - Be compatible with the Consul registry.
     - Be compatible with the Nacos registry.
   - **Extensibility** Support registering services with metadata.
 - **Resource Management**: Rely on Kubernetes platform for CPU/Memory resources management.
-- **Traffic Orchestration** 
+- **Traffic Orchestration**
 	- **Rich Routing Rules:** Exact path, path prefix, regular expression of the path, method, headers.
   - **Traffic Splitting** Coloring & Scheduling east-west and north-south traffic to configured services.
   - **LoadBalance** Support Round Robin, Weight Round Robin, Random, Hash by Client IP Address, Hash by HTTP Headers.
@@ -87,7 +87,7 @@ Why do we reinvent another wheel?
   - **Chaos engineering**
     - **Fault injection** *Working in progress.*
     - **Delay injection** *Working in progress.*
-- **Observability**: 
+- **Observability**:
   - **Logs**
     - **Access Logs** Generate HTTP access log for all requests per service.
     - **Application log** Automatically inject the tracing context into log data.
@@ -176,7 +176,6 @@ We support to automatically inject sidecar and the JavaAgent when a deployment w
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/namespace/spring-petclinic.yaml
 ```
-
 
 #### 7.1.3 Step 4: Setup Database
 
@@ -279,7 +278,7 @@ egctl apply -f http-petclinic-pipeline.yaml
 
 Visiting PetClinic website with `$your_domain/#!/welcome`
 
-##### 7.1.6.2 Config reverse proxy via Easegress
+##### 7.1.6.2 Config reverse proxy via Nginx
 
 > **ATTENTION**: Only for scenarios that the Nginx acts as the role of reverse proxy service
 
