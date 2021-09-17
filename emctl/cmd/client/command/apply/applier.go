@@ -23,6 +23,7 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
@@ -41,7 +42,7 @@ type baseApplier struct {
 }
 
 // WrapApplierByMeshObject returns a Applier from a MeshObject
-func WrapApplierByMeshObject(object resource.MeshObject,
+func WrapApplierByMeshObject(object meta.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Applier {
 	switch object.Kind() {
 	case resource.KindMeshController:

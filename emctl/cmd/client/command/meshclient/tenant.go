@@ -145,7 +145,8 @@ func (t *tenantInterface) List(ctx context.Context) ([]*resource.Tenant, error) 
 
 			results := []*resource.Tenant{}
 			for _, tenant := range tenants {
-				results = append(results, resource.ToTenant(&tenant))
+				copy := tenant
+				results = append(results, resource.ToTenant(&copy))
 			}
 			return results, nil
 		})

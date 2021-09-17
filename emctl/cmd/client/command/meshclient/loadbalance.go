@@ -139,9 +139,9 @@ func (s *loadbalanceInterface) List(ctx context.Context) ([]*resource.LoadBalanc
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.LoadBalance{}
-			for _, ss := range services {
-				if ss.LoadBalance != nil {
-					results = append(results, resource.ToLoadBalance(ss.Name, ss.LoadBalance))
+			for _, service := range services {
+				if service.LoadBalance != nil {
+					results = append(results, resource.ToLoadBalance(service.Name, service.LoadBalance))
 				}
 			}
 			return results, nil

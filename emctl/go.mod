@@ -10,8 +10,9 @@ require (
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/googleapis/gnostic v0.5.1 // indirect
+	github.com/json-iterator/go v1.1.12
 	github.com/kr/text v0.2.0 // indirect
-	github.com/megaease/easemesh-api v1.0.0
+	github.com/megaease/easemesh-api v1.3.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4

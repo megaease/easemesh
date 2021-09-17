@@ -146,7 +146,8 @@ func (i *ingressInterface) List(ctx context.Context) ([]*resource.Ingress, error
 
 			results := []*resource.Ingress{}
 			for _, ingress := range ingresses {
-				results = append(results, resource.ToIngress(&ingress))
+				copy := ingress
+				results = append(results, resource.ToIngress(&copy))
 			}
 			return results, nil
 		})

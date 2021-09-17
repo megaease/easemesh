@@ -23,13 +23,14 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
 )
 
 // WrapDeleterByMeshObject returns a new Deleter from a MeshObject
-func WrapDeleterByMeshObject(object resource.MeshObject,
+func WrapDeleterByMeshObject(object meta.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Deleter {
 	switch object.Kind() {
 	case resource.KindMeshController:

@@ -105,14 +105,17 @@ func (s *serviceInstanceInterface) List(ctx context.Context) ([]*resource.Servic
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal serviceInstances result")
 			}
+
 			results := []*resource.ServiceInstance{}
-			for _, ss := range serviceInstances {
-				results = append(results, resource.ToServiceInstance(&ss))
+			for _, serviceInstance := range serviceInstances {
+				copy := serviceInstance
+				results = append(results, resource.ToServiceInstance(&copy))
 			}
 			return results, nil
 		})
 	if err != nil {
 		return nil, err
 	}
+
 	return result.([]*resource.ServiceInstance), err
 }

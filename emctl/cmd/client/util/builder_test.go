@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 
 	"github.com/davecgh/go-spew/spew"
 	utiltesting "k8s.io/client-go/util/testing"
@@ -78,7 +79,7 @@ func TestBuilderVisitor(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		meshObject    resource.MeshObject
+		meshObject    meta.MeshObject
 		recursive     bool
 		directory     string
 		expectedNames []string
@@ -100,9 +101,9 @@ func TestBuilderVisitor(t *testing.T) {
 				t.Fatal("number of visitors built should greater than 1 ")
 			}
 
-			var results []resource.MeshObject
+			var results []meta.MeshObject
 			for _, v := range vs {
-				v.Visit(func(mo resource.MeshObject, e error) error {
+				v.Visit(func(mo meta.MeshObject, e error) error {
 					if e != nil {
 						t.Errorf("visitor error meshobject: %s", e)
 					}

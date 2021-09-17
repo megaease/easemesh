@@ -143,9 +143,9 @@ func (c *canaryInterface) List(ctx context.Context) ([]*resource.Canary, error) 
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.Canary{}
-			for _, ss := range services {
-				if ss.Canary != nil {
-					results = append(results, resource.ToCanary(ss.Name, ss.Canary))
+			for _, service := range services {
+				if service.Canary != nil {
+					results = append(results, resource.ToCanary(service.Name, service.Canary))
 				}
 			}
 			return results, nil

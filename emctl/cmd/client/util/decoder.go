@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/client/valid"
 
 	"github.com/pkg/errors"
@@ -28,15 +29,15 @@ import (
 
 // Decoder decodes bytes stream to a MeshObject
 type Decoder interface {
-	Decode(data []byte) (resource.MeshObject, *resource.VersionKind, error)
+	Decode(data []byte) (meta.MeshObject, *meta.VersionKind, error)
 }
 
 type decoder struct {
 	oc resource.ObjectCreator
 }
 
-func (d *decoder) Decode(jsonBuff []byte) (resource.MeshObject, *resource.VersionKind, error) {
-	vk := &resource.VersionKind{}
+func (d *decoder) Decode(jsonBuff []byte) (meta.MeshObject, *meta.VersionKind, error) {
+	vk := &meta.VersionKind{}
 	err := json.Unmarshal(jsonBuff, vk)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "unmarshal data to resource.VersionKind failed")
