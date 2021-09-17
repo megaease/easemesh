@@ -39,16 +39,14 @@ jobs:
         shell: bash
         run: |
           cd emctl && make test TEST_FLAGS="-race -coverprofile=coverage.emctl.txt -covermode=atomic"
-      - name: Upload coverage to Codecov 
-        uses: codecov/codecov-action@v2.0.2
-        with:
-          file: ./emctl/coverage.emctl.txt
 
       - name: Test Operator
         shell: bash
         run: |
           cd operator && make test TEST_FLAGS="-race -coverprofile=coverage.operator.txt -covermode=atomic"
+
       - name: Upload coverage to Codecov 
-        uses: codecov/codecov-action@v2.0.2
+        uses: codecov/codecov-action@v2.1.0
         with:
-          file: ./operator/coverage.operator.txt
+          files: ./emctl/coverage.emctl.txt,./operator/coverage.operator.txt
+          verbose: true

@@ -24,7 +24,8 @@ TARGET=${MKFILE_DIR}bin/emctl
 all: build
 
 test:
-	@go list ${MKFILE_DIR}/cmd/... | grep -v -E 'vendor' | xargs -n1 go test ${TEST_FLAGS}
+	go test ./... ${TEST_FLAGS}
+#	@go list ${MKFILE_DIR}/cmd/... | grep -v -E 'vendor' | xargs -n1 go test ${TEST_FLAGS}
 
 clean:
 	rm -rf ${TARGET}
