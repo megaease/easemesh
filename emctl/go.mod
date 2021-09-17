@@ -22,6 +22,7 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/text v0.3.6
+	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
