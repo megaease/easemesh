@@ -141,9 +141,9 @@ func (r *resilienceInterface) List(ctx context.Context) ([]*resource.Resilience,
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.Resilience{}
-			for _, ss := range services {
-				if ss.Resilience != nil {
-					results = append(results, resource.ToResilience(ss.Name, ss.Resilience))
+			for _, service := range services {
+				if service.Resilience != nil {
+					results = append(results, resource.ToResilience(service.Name, service.Resilience))
 				}
 			}
 			return results, nil

@@ -23,19 +23,22 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
 )
 
 // WrapDeleterByMeshObject returns a new Deleter from a MeshObject
-func WrapDeleterByMeshObject(object resource.MeshObject,
+func WrapDeleterByMeshObject(object meta.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Deleter {
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerDeleter{object: object.(*resource.MeshController), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceDeleter{object: object.(*resource.Service), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindServiceInstance:
+		return &serviceInstanceDeleter{object: object.(*resource.ServiceInstance), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindCanary:
 		return &canaryDeleter{object: object.(*resource.Canary), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindLoadBalance:
@@ -89,6 +92,24 @@ func (s *serviceDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
 	return s.client.V1Alpha1().Service().Delete(ctx, s.object.Name())
+}
+
+type serviceInstanceDeleter struct {
+	baseDeleter
+	object *resource.ServiceInstance
+}
+
+func (s *serviceInstanceDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+
+	serviceName, instanceID, err := s.object.ParseName()
+	if err != nil {
+		return err
+	}
+
+	return s.client.V1Alpha1().ServiceInstance().Delete(ctx,
+		serviceName, instanceID)
 }
 
 type canaryDeleter struct {

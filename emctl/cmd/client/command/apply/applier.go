@@ -23,6 +23,7 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
@@ -41,13 +42,15 @@ type baseApplier struct {
 }
 
 // WrapApplierByMeshObject returns a Applier from a MeshObject
-func WrapApplierByMeshObject(object resource.MeshObject,
+func WrapApplierByMeshObject(object meta.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Applier {
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerApplier{object: object.(*resource.MeshController), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindServiceInstance:
+		return &serviceInstanceApplier{object: object.(*resource.ServiceInstance), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCanary:
 		return &canaryApplier{object: object.(*resource.Canary), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindLoadBalance:
@@ -129,6 +132,15 @@ func (s *serviceApplier) Apply() error {
 		}
 
 	}
+}
+
+type serviceInstanceApplier struct {
+	baseApplier
+	object *resource.ServiceInstance
+}
+
+func (si *serviceInstanceApplier) Apply() error {
+	return errors.New("not support applying service instance")
 }
 
 type canaryApplier struct {
