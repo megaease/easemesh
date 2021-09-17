@@ -40,6 +40,7 @@ type (
 		outputFormat string
 	}
 
+	// TableColumn is the user-defined table column.
 	TableColumn struct {
 		Name  string
 		Value string

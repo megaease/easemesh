@@ -27,6 +27,7 @@ import (
 )
 
 type (
+	// ServiceInstance describes service instance resource of the EaseMesh
 	ServiceInstance struct {
 		meta.MeshResource `yaml:",inline"`
 		Spec              *v1alpha1.ServiceInstance `yaml:"spec" jsonschema:"required"`
@@ -35,6 +36,7 @@ type (
 
 var _ printer.TableObject = &ServiceInstance{}
 
+// ParseName parses the name of service instance to service name and instance id.
 func (si *ServiceInstance) ParseName() (serviceName, instanceID string, err error) {
 	ss := strings.Split(si.Name(), "/")
 
@@ -45,7 +47,7 @@ func (si *ServiceInstance) ParseName() (serviceName, instanceID string, err erro
 	return ss[0], ss[1], nil
 }
 
-// Columns returns self-defined columns.
+// Columns returns the columns of ServiceInstance.
 func (si *ServiceInstance) Columns() []*printer.TableColumn {
 	if si.Spec == nil {
 		return nil
@@ -71,6 +73,7 @@ func (si *ServiceInstance) Columns() []*printer.TableColumn {
 	}
 }
 
+// ToServiceInstance converts a v1alpha1.ServiceInstance resource to a ServiceInstance resource.
 func ToServiceInstance(instance *v1alpha1.ServiceInstance) *ServiceInstance {
 	result := &ServiceInstance{
 		Spec: &v1alpha1.ServiceInstance{},

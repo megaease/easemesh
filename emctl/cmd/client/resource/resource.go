@@ -52,6 +52,7 @@ const (
 	// KindService is service kind of the EaseMesh resource
 	KindService = "Service"
 
+	// KindServiceInstance is the service instance kind of EaseMesh resource.
 	KindServiceInstance = "ServiceInstance"
 
 	// KindCanary is canary kind of the EaseMesh resource

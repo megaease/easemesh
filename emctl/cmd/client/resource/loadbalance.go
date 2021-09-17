@@ -33,6 +33,7 @@ type (
 
 var _ printer.TableObject = &LoadBalance{}
 
+// Columns returns the columns of LoadBalance.
 func (l *LoadBalance) Columns() []*printer.TableColumn {
 	if l.Spec == nil {
 		return nil

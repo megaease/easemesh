@@ -41,6 +41,7 @@ type (
 
 var _ printer.TableObject = &Service{}
 
+// Columns returns the columns of Tenant.
 func (t *Tenant) Columns() []*printer.TableColumn {
 	if t.Spec == nil {
 		return nil

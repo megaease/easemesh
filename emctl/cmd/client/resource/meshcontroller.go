@@ -60,6 +60,7 @@ type (
 
 var _ printer.TableObject = &MeshController{}
 
+// Columns returns the columns of MeshController.
 func (mc *MeshController) Columns() []*printer.TableColumn {
 	ports := fmt.Sprintf("%d/API,%d/Ingress", mc.APIPort, mc.IngressPort)
 
