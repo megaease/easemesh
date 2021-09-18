@@ -97,9 +97,9 @@ type (
 	// StageContext is the context for every installation stage.
 	StageContext struct {
 		Cmd                 *cobra.Command
-		Client              *kubernetes.Clientset
+		Client              kubernetes.Interface
 		Flags               *flags.Install
-		APIExtensionsClient *apiextensions.Clientset
+		APIExtensionsClient apiextensions.Interface
 		ClearFuncs          []func(*StageContext) error
 	}
 

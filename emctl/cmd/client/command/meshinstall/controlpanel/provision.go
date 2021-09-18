@@ -75,7 +75,7 @@ func provisionEaseMeshControlPlane(ctx *installbase.StageContext) error {
 	return errors.Wrapf(err, "call EaseMesh control panel %v", entrypoints)
 }
 
-func clearEaseMeshControlPlaneProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
+func clearEaseMeshControlPlaneProvision(cmd *cobra.Command, kubeClient kubernetes.Interface, installFlags *flags.Install) {
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(kubeClient, installFlags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)

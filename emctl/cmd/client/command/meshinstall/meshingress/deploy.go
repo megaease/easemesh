@@ -76,7 +76,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	return ""
 }
 
-func checkMeshIngressStatus(client *kubernetes.Clientset, installFlags *flags.Install) error {
+func checkMeshIngressStatus(client kubernetes.Interface, installFlags *flags.Install) error {
 	i := 0
 	for {
 		time.Sleep(time.Millisecond * 100)
