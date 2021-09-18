@@ -135,7 +135,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	return ""
 }
 
-func checkOperatorStatus(client *kubernetes.Clientset, installFlags *flags.Install) error {
+func checkOperatorStatus(client kubernetes.Interface, installFlags *flags.Install) error {
 	i := 0
 	for {
 		time.Sleep(time.Millisecond * 100)
