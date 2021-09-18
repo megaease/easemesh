@@ -19,7 +19,6 @@ package resource
 
 import (
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
-	"github.com/pkg/errors"
 )
 
 // TODO: Split every kind of resource to a deidcate package,
@@ -78,6 +77,9 @@ const (
 
 	// KindIngress is ingress kind of the EaseMesh resource
 	KindIngress = "Ingress"
+
+	// KindCustomObjectKind is the kind of 'custom object kind' of the EaseMesh resource
+	KindCustomObjectKind = "CustomObjectKind"
 )
 
 type (
@@ -154,8 +156,14 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 		return &Ingress{
 			MeshResource: NewIngressResource(apiVersion, metaData.Name),
 		}, nil
+	case KindCustomObjectKind:
+		return &CustomObjectKind{
+			MeshResource: NewCustomObjectKindResource(apiVersion, metaData.Name),
+		}, nil
 	default:
-		return nil, errors.Errorf("unsupported kind %s", kind.Kind)
+		return &CustomObject{
+			MeshResource: NewMeshResource(apiVersion, kind.Kind, metaData.Name),
+		}, nil
 	}
 }
 
@@ -212,6 +220,11 @@ func NewObservabilityOutputServerResource(apiVersion, name string) meta.MeshReso
 // NewTenantResource returns a MeshResource with the tenant kind
 func NewTenantResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindTenant, name)
+}
+
+// NewCustomObjectKindResource returns a MeshResource with the custom object kind
+func NewCustomObjectKindResource(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindCustomObjectKind, name)
 }
 
 // NewMeshResource returns a generic MeshResource

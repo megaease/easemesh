@@ -24,7 +24,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
-	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
 )
@@ -67,11 +66,11 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindCustomObjectKind:
+		return &customObjectKindApplier{object: object.(*resource.CustomObjectKind), baseApplier: baseApplier{client: client, timeout: timeout}}
 	default:
-		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
+		return &customObjectApplier{object: object.(*resource.CustomObject), baseApplier: baseApplier{client: client, timeout: timeout}}
 	}
-
-	return nil
 }
 
 type meshControllerApplier struct {
@@ -375,6 +374,64 @@ func (i *ingressApplier) Apply() error {
 			}
 		default:
 			return errors.Wrapf(err, "apply resilience %s", i.object.Name())
+		}
+	}
+}
+
+type customObjectKindApplier struct {
+	baseApplier
+	object *resource.CustomObjectKind
+}
+
+func (k *customObjectKindApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
+	defer cancelFunc()
+	err := k.client.V1Alpha1().CustomObjectKind().Create(ctx, k.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = k.client.V1Alpha1().CustomObjectKind().Patch(ctx, k.object)
+			if err != nil {
+				return errors.Wrapf(err, "update custom object kind %s", k.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = k.client.V1Alpha1().CustomObjectKind().Create(ctx, k.object)
+			if err != nil {
+				return errors.Wrapf(err, "create custom object kind %s", k.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply custom object kind %s", k.object.Name())
+		}
+	}
+}
+
+type customObjectApplier struct {
+	baseApplier
+	object *resource.CustomObject
+}
+
+func (o *customObjectApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
+	defer cancelFunc()
+	err := o.client.V1Alpha1().CustomObject().Create(ctx, o.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = o.client.V1Alpha1().CustomObject().Patch(ctx, o.object)
+			if err != nil {
+				return errors.Wrapf(err, "update custom object %s", o.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = o.client.V1Alpha1().CustomObject().Create(ctx, o.object)
+			if err != nil {
+				return errors.Wrapf(err, "create custom object %s", o.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply custom object %s", o.object.Name())
 		}
 	}
 }

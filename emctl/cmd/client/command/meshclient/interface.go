@@ -39,6 +39,8 @@ type V1Alpha1Interface interface {
 	ObservabilityGetter
 	ResilienceGetter
 	IngressGetter
+	CustomObjectKindGetter
+	CustomObjectGetter
 }
 
 // MeshControllerGetter represents a mesh controller resource accessor
@@ -86,6 +88,16 @@ type ResilienceGetter interface {
 // IngressGetter represents an Ingress resource accessor
 type IngressGetter interface {
 	Ingress() IngressInterface
+}
+
+// CustomObjectKindGetter represents an CustomObjectKind resource accessor
+type CustomObjectKindGetter interface {
+	CustomObjectKind() CustomObjectKindInterface
+}
+
+// CustomObjectGetter represents an CustomObject resource accessor
+type CustomObjectGetter interface {
+	CustomObject() CustomObjectInterface
 }
 
 // MeshControllerInterface captures the set of operations for interacting with the EaseMesh REST apis of the mesh controller resource.
@@ -183,4 +195,22 @@ type IngressInterface interface {
 	Create(context.Context, *resource.Ingress) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.Ingress, error)
+}
+
+// CustomObjectKindInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom object kind resource.
+type CustomObjectKindInterface interface {
+	Get(context.Context, string) (*resource.CustomObjectKind, error)
+	Patch(context.Context, *resource.CustomObjectKind) error
+	Create(context.Context, *resource.CustomObjectKind) error
+	Delete(context.Context, string) error
+	List(context.Context) ([]*resource.CustomObjectKind, error)
+}
+
+// CustomObjectInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom object resource.
+type CustomObjectInterface interface {
+	Get(context.Context, string, string) (*resource.CustomObject, error)
+	Patch(context.Context, *resource.CustomObject) error
+	Create(context.Context, *resource.CustomObject) error
+	Delete(context.Context, string, string) error
+	List(context.Context, string) ([]*resource.CustomObject, error)
 }

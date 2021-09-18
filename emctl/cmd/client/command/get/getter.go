@@ -24,7 +24,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
-	"github.com/megaease/easemeshctl/cmd/common"
 )
 
 // WrapGetterByMeshObject wraps getter for mesh object.
@@ -59,11 +58,11 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsGetter{object: object.(*resource.ObservabilityTracings), baseGetter: base}
 	case resource.KindIngress:
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
+	case resource.KindCustomObjectKind:
+		return &customObjectKindGetter{object: object.(*resource.CustomObjectKind), baseGetter: base}
 	default:
-		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
+		return &customObjectGetter{object: object.(*resource.CustomObject), baseGetter: base}
 	}
-
-	return nil
 }
 
 type (
@@ -420,6 +419,68 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	objects := make([]meta.MeshObject, len(ingresses))
 	for i := range ingresses {
 		objects[i] = ingresses[i]
+	}
+
+	return objects, nil
+}
+
+type customObjectKindGetter struct {
+	baseGetter
+	object *resource.CustomObjectKind
+}
+
+func (k *customObjectKindGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
+	defer cancelFunc()
+
+	if k.object.Name() != "" {
+		customObjectKind, err := k.client.V1Alpha1().CustomObjectKind().Get(ctx, k.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{customObjectKind}, nil
+	}
+
+	customObjectKindes, err := k.client.V1Alpha1().CustomObjectKind().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(customObjectKindes))
+	for i := range customObjectKindes {
+		objects[i] = customObjectKindes[i]
+	}
+
+	return objects, nil
+}
+
+type customObjectGetter struct {
+	baseGetter
+	object *resource.CustomObject
+}
+
+func (o *customObjectGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
+	defer cancelFunc()
+
+	if o.object.Name() != "" {
+		customObject, err := o.client.V1Alpha1().CustomObject().Get(ctx, o.object.Kind(), o.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{customObject}, nil
+	}
+
+	customObjectes, err := o.client.V1Alpha1().CustomObject().List(ctx, o.object.Kind())
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(customObjectes))
+	for i := range customObjectes {
+		objects[i] = customObjectes[i]
 	}
 
 	return objects, nil
