@@ -128,7 +128,7 @@ EaseMesh是一个与Spring Cloud生态系统兼容的服务网格。它基于[Ea
 
 - Linux内核版本4.15以上
 - Kubernetes版本1.18以上
-- MySQL版本14.14+
+- MySQL版本5.7+
 
 ### 6.2 健全测试
 
@@ -270,7 +270,7 @@ filters:
         policy: roundRobin
 ```
 
-根据你的环境改变`{}`中的内容，并通过Easegress客户端命令工具`egctl`应用它。
+根据你的环境改变`{}`中的内容，并通过Easegress客户端命令工具`egctl`生效它。
 
 ```bash
 egctl apply -f http-server.yaml

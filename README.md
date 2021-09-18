@@ -126,7 +126,7 @@ Why do we reinvent another wheel?
 
 - Linux kernel version 4.15+
 - Kubernetes version 1.18+
-- Mysql version 14.14+
+- MySQL version 5.7+
 
 ### 6.2 Sanity Checking
 
