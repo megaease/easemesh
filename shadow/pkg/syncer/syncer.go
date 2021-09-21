@@ -63,19 +63,20 @@ func (s *Syncer) watch(kind string, send func(data []object.CustomObject)) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.server.RequestTimeout)
 	defer cancelFunc()
 
+	var err error
 	reader, err := s.server.Watch(ctx, kind)
 	if err != nil {
 		logger.Errorf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
 		return
 	}
 	for {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
+		line, e := reader.ReadBytes('\n')
+		if e != nil {
 			logger.Errorf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
 			return
 		} else {
 			var objects []object.CustomObject
-			err = json.Unmarshal(line, objects)
+			err := json.Unmarshal(line, &objects)
 			if err != nil {
 				logger.Errorf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, err)
 				continue
@@ -86,10 +87,9 @@ func (s *Syncer) watch(kind string, send func(data []object.CustomObject)) {
 }
 
 func (s *Syncer) run(kind string, send func(data []object.CustomObject)) {
-
+	s.watch(kind, send)
 	ticker := time.NewTicker(s.pullInterval)
 	defer ticker.Stop()
-
 	pullCompareSend := func() {
 		data, err := s.pull(kind)
 		if err != nil {
@@ -109,7 +109,6 @@ func (s *Syncer) run(kind string, send func(data []object.CustomObject)) {
 			pullCompareSend()
 		}
 	}
-	s.watch(kind, send)
 }
 
 // Sync syncs a given EaseMesh kind's value through the returned channel.

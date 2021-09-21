@@ -41,7 +41,7 @@ type (
 	Opt func(sc *ServiceConfig) error
 )
 
-// NewController a CollectorService to collect K8s metrics
+// New a CollectorService to collect K8s metrics
 func New(opts ...Opt) (*ShadowServiceController, error) {
 	config := ServiceConfig{}
 	for _, opt := range opts {
@@ -82,13 +82,13 @@ func New(opts ...Opt) (*ShadowServiceController, error) {
 	}
 
 	server := syncer.Server{
-		10 * time.Second,
-		config.MeshServer,
+		RequestTimeout: 10 * time.Second,
+		MeshServer:     config.MeshServer,
 	}
-	syncer, err := server.NewSyncer(1 * time.Minute)
+	newSyncer, err := server.NewSyncer(1 * time.Minute)
 
 	return &ShadowServiceController{kubernetesClient, &runtimeClient, crdRestClient,
-		syncer, searchHandler, cloneHandler, cloneChan}, nil
+		newSyncer, searchHandler, cloneHandler, cloneChan}, nil
 }
 
 // Do start shadow service query and clone data

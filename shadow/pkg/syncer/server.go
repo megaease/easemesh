@@ -70,7 +70,7 @@ func (server *Server) Watch(ctx context.Context, kind string) (*bufio.Reader, er
 	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjectsURL, kind)
 	httpResp, err := resty.New().R().SetContext(ctx).Get(url)
 	if err != nil {
-		return nil, errors.Errorf("list %s objects failed,", url, kind)
+		return nil, errors.Errorf("list %s objects failed,", kind)
 	}
 	statusCode := httpResp.StatusCode()
 	if statusCode == http.StatusNotFound {
