@@ -6,7 +6,7 @@ import (
 
 	"github.com/megaease/easemesh/mesh-shadow/cmd/main/rcfile"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/common"
-	"github.com/megaease/easemesh/mesh-shadow/pkg/flow"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/controller"
 
 	// load all auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -42,11 +42,11 @@ func main() {
 
 	flag.Parse()
 
-	service, err := controller.New(easemeshOption)
+	controller, err := controller.New(easemeshOption)
 	if err != nil {
 		log.Fatalf("new collector service error: %s", err)
 		return
 	}
 
-	<-service.Do()
+	<-controller.Do()
 }

@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"log"
 	"time"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/common"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/handler"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/syncer"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
@@ -20,13 +21,13 @@ type (
 		Do()
 	}
 
-	ShadowService struct {
+	ShadowServiceController struct {
 		KubeClient    *kubernetes.Clientset
 		RunTimeClient *client.Client
 		CRDClient     *rest.RESTClient
-
-		searchHanler *handler.SearchHandler
-		cloneHandler *handler.CloneHandler
+		syncer        *syncer.Syncer
+		searchHanler  *handler.SearchHandler
+		cloneHandler  *handler.CloneHandler
 
 		cloneChan chan interface{}
 	}
@@ -40,8 +41,8 @@ type (
 	Opt func(sc *ServiceConfig) error
 )
 
-// New a CollectorService to collect K8s metrics
-func New(opts ...Opt) (*ShadowService, error) {
+// NewController a CollectorService to collect K8s metrics
+func New(opts ...Opt) (*ShadowServiceController, error) {
 	config := ServiceConfig{}
 	for _, opt := range opts {
 		if err := opt(&config); err != nil {
@@ -80,18 +81,31 @@ func New(opts ...Opt) (*ShadowService, error) {
 		CRDClient:     crdRestClient,
 	}
 
-	return &ShadowService{kubernetesClient, &runtimeClient, crdRestClient,
-		searchHandler, cloneHandler, cloneChan}, nil
+	server := syncer.Server{
+		10 * time.Second,
+		config.MeshServer,
+	}
+	syncer, err := server.NewSyncer(1 * time.Minute)
+
+	return &ShadowServiceController{kubernetesClient, &runtimeClient, crdRestClient,
+		syncer, searchHandler, cloneHandler, cloneChan}, nil
 }
 
 // Do start shadow service query and clone data
-func (s *ShadowService) Do() <-chan struct{} {
+func (s *ShadowServiceController) Do() <-chan struct{} {
 	result := make(chan struct{})
-
-	err := s.searchHanler.Start()
-	if err != nil {
-		log.Fatalf("start ShadowSearch Search failed: %s", err)
-	}
+	customObjectsChan, _ := s.syncer.Sync("ShadowService")
+	go func() {
+		for {
+			select {
+			case obj := <-customObjectsChan:
+				for _, v := range obj {
+					shadowService := v.(object.ShadowService)
+					s.searchHanler.SearchOriginDeployments(shadowService)
+				}
+			}
+		}
+	}()
 
 	go func() {
 		for {

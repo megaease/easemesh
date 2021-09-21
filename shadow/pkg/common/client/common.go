@@ -18,6 +18,7 @@
 package client
 
 import (
+	"bufio"
 	"context"
 	"time"
 
@@ -228,6 +229,7 @@ func (h *httpJSONClient) Get(url string, reqBody interface{}, timeout time.Durat
 func (h *httpJSONClient) GetByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).Get(url)
+	bufio.NewReader(r.RawResponse.Body)
 	return (httpJSONResponseFunc)(func(fn UnmarshalFunc) (interface{}, error) {
 		defer closeRawBody(r)
 

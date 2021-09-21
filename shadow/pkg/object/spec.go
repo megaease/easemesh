@@ -39,4 +39,6 @@ type (
 		RabbitMQ      *RabbitMQ      `ymal:"rabbitMq" jsonschema:"omitempty"`
 		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
 	}
+
+	CustomObject map[string]interface{}
 )
