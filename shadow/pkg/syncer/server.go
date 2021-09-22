@@ -18,8 +18,8 @@ const (
 	MeshServiceAnnotation   = "mesh.megaease.com/service-name"
 	apiURL                  = "/apis/v1"
 	MeshShadowServicesURL   = apiURL + "/mesh/shadowservices"
-	MeshCustomObjetWatchURL = apiURL + "/mesh/watchCustomObjects/{kind}"
-	MeshCustomObjectsURL    = apiURL + "/mesh/customObjects/{kind}"
+	MeshCustomObjetWatchURL = apiURL + "/mesh/watchcustomobjects/%s"
+	MeshCustomObjectsURL    = apiURL + "/mesh/customobjects/%s"
 )
 
 var (
@@ -67,7 +67,7 @@ func (server *Server) List(ctx context.Context, kind string) ([]object.CustomObj
 }
 
 func (server *Server) Watch(ctx context.Context, kind string) (*bufio.Reader, error) {
-	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjectsURL, kind)
+	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjetWatchURL, kind)
 	httpResp, err := resty.New().R().SetContext(ctx).Get(url)
 	if err != nil {
 		return nil, errors.Errorf("list %s objects failed,", kind)

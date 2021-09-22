@@ -78,7 +78,7 @@ func (s *Syncer) watch(kind string, send func(data []object.CustomObject)) {
 			var objects []object.CustomObject
 			err := json.Unmarshal(line, &objects)
 			if err != nil {
-				logger.Errorf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, err)
+				logger.Errorf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, err.Error())
 				continue
 			}
 			send(objects)
@@ -115,8 +115,10 @@ func (s *Syncer) run(kind string, send func(data []object.CustomObject)) {
 func (s *Syncer) Sync(kind string) (<-chan object.CustomObject, error) {
 	ch := make(chan object.CustomObject, 10)
 	fn := func(data []object.CustomObject) {
-		for _, obj := range data {
-			ch <- obj
+		if data != nil && len(data) > 0 {
+			for _, obj := range data {
+				ch <- obj
+			}
 		}
 	}
 

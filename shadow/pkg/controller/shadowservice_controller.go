@@ -94,7 +94,7 @@ func New(opts ...Opt) (*ShadowServiceController, error) {
 // Do start shadow service query and clone data
 func (s *ShadowServiceController) Do() <-chan struct{} {
 	result := make(chan struct{})
-	customObjectsChan, _ := s.syncer.Sync("ShadowService")
+	customObjectsChan, _ := s.syncer.Sync("shadowservice")
 	go func() {
 		for {
 			select {
