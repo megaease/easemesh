@@ -117,7 +117,7 @@ func (t *meshControllerInterface) Create(ctx context.Context, meshController *re
 }
 
 func (t *meshControllerInterface) Delete(ctx context.Context, meshControllerID string) error {
-	return errors.New("unsupport deleting mesh controller, use easegress client to do it")
+	return errors.New("not support deleting mesh controller, use easegress client to do it")
 }
 
 func (t *meshControllerInterface) List(ctx context.Context) ([]*resource.MeshController, error) {

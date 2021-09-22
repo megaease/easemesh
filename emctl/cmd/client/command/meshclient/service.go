@@ -142,8 +142,9 @@ func (s *serviceInterface) List(ctx context.Context) ([]*resource.Service, error
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.Service{}
-			for _, ss := range services {
-				results = append(results, resource.ToService(&ss))
+			for _, service := range services {
+				copy := service
+				results = append(results, resource.ToService(&copy))
 			}
 			return results, nil
 		})

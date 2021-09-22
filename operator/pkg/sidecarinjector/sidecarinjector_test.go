@@ -61,12 +61,14 @@ var _ = Describe("SidecarInjector", func() {
 			AliveProbeURL:    "http://localhost:9000/health",
 		}
 
-		// gotDeployStr, err := yaml.Marshal(originalDeploy)
-		// Expect(err).ShouldNot(HaveOccurred())
-		// fmt.Printf("%s\n", gotDeployStr)
-
 		injector := New(baseRuntime, service, &originalDeploy.Spec.Template.Spec)
 		Expect(injector.Inject()).To(Succeed())
-		Expect(originalDeploy).To(Equal(wantDeploy))
+
+		// gotBuff, _ := yaml.Marshal(wantDeploy.Spec.Template.Spec)
+		// wantBuff, _ := yaml.Marshal(originalDeploy.Spec.Template.Spec)
+		// fmt.Printf("got:\n%s\n---\n", gotBuff)
+		// fmt.Printf("want:%s\n", wantBuff)
+
+		Expect(originalDeploy.Spec.Template.Spec).To(Equal(wantDeploy.Spec.Template.Spec))
 	})
 })

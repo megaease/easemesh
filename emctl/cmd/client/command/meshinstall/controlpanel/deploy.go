@@ -53,7 +53,7 @@ func Deploy(ctx *installbase.StageContext) error {
 		return errors.Wrap(err, "check mesh control panel status")
 	}
 
-	err = provisionEaseMeshControlPanel(ctx)
+	err = provisionEaseMeshControlPlane(ctx)
 	if err != nil {
 		return errors.Wrap(err, "provision mesh control panel")
 	}
@@ -117,7 +117,7 @@ func Clear(context *installbase.StageContext) error {
 		{"configmaps", installbase.DefaultMeshControlPlaneConfig},
 	}
 
-	clearEaseMeshControlPanelProvision(context.Cmd, context.Client, context.Flags)
+	clearEaseMeshControlPlaneProvision(context.Cmd, context.Client, context.Flags)
 
 	installbase.DeleteResources(context.Client, statefulsetResource, context.Flags.MeshNamespace, installbase.DeleteStatefulsetResource)
 	installbase.DeleteResources(context.Client, coreV1Resources, context.Flags.MeshNamespace, installbase.DeleteCoreV1Resource)
@@ -134,7 +134,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	case installbase.EndPhase:
 		return fmt.Sprintf("\nControl panel statefulset %s\n%s", installbase.DefaultMeshControlPlaneName,
 			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
-				installbase.AdaptListPodFunc(meshControlPanelLabel())))
+				installbase.AdaptListPodFunc(meshControlPlaneLabel())))
 	}
 	return ""
 }
@@ -153,7 +153,7 @@ func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 	// Wait a fix time for the Easegress cluster to start
 	time.Sleep(time.Second * 10)
 
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(ctx.Client, ctx.Flags.MeshNamespace,
+	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {

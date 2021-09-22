@@ -32,7 +32,7 @@ type InstallStage interface {
 	Clear(*installbase.StageContext) error
 }
 
-// Installation represents installing or clearing infrastructure
+// Installation represents installing or cleaning infrastructure
 // components for the EaseMesh
 type Installation interface {
 	DoInstallStage(*installbase.StageContext) error
@@ -73,7 +73,7 @@ type InstallFunc func(*installbase.StageContext) error
 // HookFunc is the type of hook function
 type HookFunc InstallFunc
 
-// CleanFunc is the type of clean function which cleans installed resources when installation failed
+// ClearFunc is the type of clean function which cleans installed resources when installation failed
 type ClearFunc HookFunc
 
 // PreCheckFunc is the type of function previously checking condition whether is satisfied with the installation

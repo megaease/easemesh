@@ -21,7 +21,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/command/printer"
-	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/client/util"
 	"github.com/megaease/easemeshctl/cmd/common"
 
@@ -69,7 +69,7 @@ func Run(cmd *cobra.Command, flag *flags.Get) {
 	printer := printer.New(flag.OutputFormat)
 	var errs []error
 	for _, vs := range vss {
-		err := vs.Visit(func(mo resource.MeshObject, e error) error {
+		err := vs.Visit(func(mo meta.MeshObject, e error) error {
 			if e != nil {
 				return errors.Wrap(e, "visit failed")
 			}

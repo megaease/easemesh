@@ -23,11 +23,11 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
-	"github.com/megaease/easemeshctl/cmd/common"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
 // WrapGetterByMeshObject wraps getter for mesh object.
-func WrapGetterByMeshObject(object resource.MeshObject,
+func WrapGetterByMeshObject(object meta.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Getter {
 
 	base := baseGetter{
@@ -40,6 +40,8 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 		return &meshControllerGetter{object: object.(*resource.MeshController), baseGetter: base}
 	case resource.KindService:
 		return &serviceGetter{object: object.(*resource.Service), baseGetter: base}
+	case resource.KindServiceInstance:
+		return &serviceInstanceGetter{object: object.(*resource.ServiceInstance), baseGetter: base}
 	case resource.KindCanary:
 		return &canaryGetter{object: object.(*resource.Canary), baseGetter: base}
 	case resource.KindLoadBalance:
@@ -56,19 +58,17 @@ func WrapGetterByMeshObject(object resource.MeshObject,
 		return &observabilityTracingsGetter{object: object.(*resource.ObservabilityTracings), baseGetter: base}
 	case resource.KindIngress:
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
-	case resource.KindShadowService:
-		return &shadowServiceGetter{object: object.(*resource.ShadowService), baseGetter: base}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindGetter{object: object.(*resource.CustomResourceKind), baseGetter: base}
 	default:
-		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
+		return &customResourceGetter{object: object.(*resource.CustomResource), baseGetter: base}
 	}
-
-	return nil
 }
 
 type (
 	// Getter is the getter interface fo mesh object.
 	Getter interface {
-		Get() ([]resource.MeshObject, error)
+		Get() ([]meta.MeshObject, error)
 	}
 
 	baseGetter struct {
@@ -82,7 +82,7 @@ type meshControllerGetter struct {
 	object *resource.MeshController
 }
 
-func (s *meshControllerGetter) Get() ([]resource.MeshObject, error) {
+func (s *meshControllerGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
 
@@ -92,7 +92,7 @@ func (s *meshControllerGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{meshController}, nil
+		return []meta.MeshObject{meshController}, nil
 	}
 
 	meshControllers, err := s.client.V1Alpha1().MeshController().List(ctx)
@@ -100,7 +100,7 @@ func (s *meshControllerGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(meshControllers))
+	objects := make([]meta.MeshObject, len(meshControllers))
 	for i := range meshControllers {
 		objects[i] = meshControllers[i]
 	}
@@ -113,7 +113,7 @@ type serviceGetter struct {
 	object *resource.Service
 }
 
-func (s *serviceGetter) Get() ([]resource.MeshObject, error) {
+func (s *serviceGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
 
@@ -123,7 +123,7 @@ func (s *serviceGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{service}, nil
+		return []meta.MeshObject{service}, nil
 	}
 
 	services, err := s.client.V1Alpha1().Service().List(ctx)
@@ -131,9 +131,46 @@ func (s *serviceGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(services))
+	objects := make([]meta.MeshObject, len(services))
 	for i := range services {
 		objects[i] = services[i]
+	}
+
+	return objects, nil
+}
+
+type serviceInstanceGetter struct {
+	baseGetter
+	object *resource.ServiceInstance
+}
+
+func (s *serviceInstanceGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+
+	if s.object.Name() != "" {
+		serviceName, instanceID, err := s.object.ParseName()
+		if err != nil {
+			return nil, err
+		}
+
+		serviceInstance, err := s.client.V1Alpha1().ServiceInstance().Get(ctx,
+			serviceName, instanceID)
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{serviceInstance}, nil
+	}
+
+	serviceInstances, err := s.client.V1Alpha1().ServiceInstance().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(serviceInstances))
+	for i := range serviceInstances {
+		objects[i] = serviceInstances[i]
 	}
 
 	return objects, nil
@@ -144,7 +181,7 @@ type canaryGetter struct {
 	object *resource.Canary
 }
 
-func (c *canaryGetter) Get() ([]resource.MeshObject, error) {
+func (c *canaryGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
 	defer cancelFunc()
 
@@ -154,7 +191,7 @@ func (c *canaryGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{canary}, nil
+		return []meta.MeshObject{canary}, nil
 	}
 
 	canaries, err := c.client.V1Alpha1().Canary().List(ctx)
@@ -162,7 +199,7 @@ func (c *canaryGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(canaries))
+	objects := make([]meta.MeshObject, len(canaries))
 	for i := range canaries {
 		objects[i] = canaries[i]
 	}
@@ -175,7 +212,7 @@ type observabilityTracingsGetter struct {
 	object *resource.ObservabilityTracings
 }
 
-func (o *observabilityTracingsGetter) Get() ([]resource.MeshObject, error) {
+func (o *observabilityTracingsGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
@@ -185,7 +222,7 @@ func (o *observabilityTracingsGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{tracings}, nil
+		return []meta.MeshObject{tracings}, nil
 	}
 
 	tracings, err := o.client.V1Alpha1().ObservabilityTracings().List(ctx)
@@ -193,7 +230,7 @@ func (o *observabilityTracingsGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(tracings))
+	objects := make([]meta.MeshObject, len(tracings))
 	for i := range tracings {
 		objects[i] = tracings[i]
 	}
@@ -206,7 +243,7 @@ type observabilityMetricsGetter struct {
 	object *resource.ObservabilityMetrics
 }
 
-func (o *observabilityMetricsGetter) Get() ([]resource.MeshObject, error) {
+func (o *observabilityMetricsGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
@@ -216,7 +253,7 @@ func (o *observabilityMetricsGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{metrics}, nil
+		return []meta.MeshObject{metrics}, nil
 	}
 
 	metrics, err := o.client.V1Alpha1().ObservabilityMetrics().List(ctx)
@@ -224,7 +261,7 @@ func (o *observabilityMetricsGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(metrics))
+	objects := make([]meta.MeshObject, len(metrics))
 	for i := range metrics {
 		objects[i] = metrics[i]
 	}
@@ -237,7 +274,7 @@ type observabilityOutputServerGetter struct {
 	object *resource.ObservabilityOutputServer
 }
 
-func (o *observabilityOutputServerGetter) Get() ([]resource.MeshObject, error) {
+func (o *observabilityOutputServerGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
@@ -247,7 +284,7 @@ func (o *observabilityOutputServerGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{server}, nil
+		return []meta.MeshObject{server}, nil
 	}
 
 	servers, err := o.client.V1Alpha1().ObservabilityOutputServer().List(ctx)
@@ -255,7 +292,7 @@ func (o *observabilityOutputServerGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(servers))
+	objects := make([]meta.MeshObject, len(servers))
 	for i := range servers {
 		objects[i] = servers[i]
 	}
@@ -268,7 +305,7 @@ type loadBalanceGetter struct {
 	object *resource.LoadBalance
 }
 
-func (l *loadBalanceGetter) Get() ([]resource.MeshObject, error) {
+func (l *loadBalanceGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), l.timeout)
 	defer cancelFunc()
 
@@ -278,7 +315,7 @@ func (l *loadBalanceGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{lb}, nil
+		return []meta.MeshObject{lb}, nil
 	}
 
 	lbs, err := l.client.V1Alpha1().LoadBalance().List(ctx)
@@ -286,7 +323,7 @@ func (l *loadBalanceGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(lbs))
+	objects := make([]meta.MeshObject, len(lbs))
 	for i := range lbs {
 		objects[i] = lbs[i]
 	}
@@ -299,7 +336,7 @@ type tenantGetter struct {
 	object *resource.Tenant
 }
 
-func (t *tenantGetter) Get() ([]resource.MeshObject, error) {
+func (t *tenantGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), t.timeout)
 	defer cancelFunc()
 
@@ -309,7 +346,7 @@ func (t *tenantGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{tenant}, nil
+		return []meta.MeshObject{tenant}, nil
 	}
 
 	tenants, err := t.client.V1Alpha1().Tenant().List(ctx)
@@ -317,7 +354,7 @@ func (t *tenantGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(tenants))
+	objects := make([]meta.MeshObject, len(tenants))
 	for i := range tenants {
 		objects[i] = tenants[i]
 	}
@@ -330,7 +367,7 @@ type resilienceGetter struct {
 	object *resource.Resilience
 }
 
-func (r *resilienceGetter) Get() ([]resource.MeshObject, error) {
+func (r *resilienceGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), r.timeout)
 	defer cancelFunc()
 
@@ -340,7 +377,7 @@ func (r *resilienceGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{resilience}, nil
+		return []meta.MeshObject{resilience}, nil
 	}
 
 	resiliences, err := r.client.V1Alpha1().Resilience().List(ctx)
@@ -348,7 +385,7 @@ func (r *resilienceGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(resiliences))
+	objects := make([]meta.MeshObject, len(resiliences))
 	for i := range resiliences {
 		objects[i] = resiliences[i]
 	}
@@ -361,7 +398,7 @@ type ingressGetter struct {
 	object *resource.Ingress
 }
 
-func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
+func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), i.timeout)
 	defer cancelFunc()
 
@@ -371,7 +408,7 @@ func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
 			return nil, err
 		}
 
-		return []resource.MeshObject{ingress}, nil
+		return []meta.MeshObject{ingress}, nil
 	}
 
 	ingresses, err := i.client.V1Alpha1().Ingress().List(ctx)
@@ -379,7 +416,7 @@ func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(ingresses))
+	objects := make([]meta.MeshObject, len(ingresses))
 	for i := range ingresses {
 		objects[i] = ingresses[i]
 	}
@@ -387,33 +424,63 @@ func (i *ingressGetter) Get() ([]resource.MeshObject, error) {
 	return objects, nil
 }
 
-
-type shadowServiceGetter struct {
+type customResourceKindGetter struct {
 	baseGetter
-	object *resource.ShadowService
+	object *resource.CustomResourceKind
 }
 
-func (s *shadowServiceGetter) Get() ([]resource.MeshObject, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+func (k *customResourceKindGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
 
-	if s.object.Name() != "" {
-		shadowService, err := s.client.V1Alpha1().ShadowService().Get(ctx, s.object.Name())
+	if k.object.Name() != "" {
+		customResourceKind, err := k.client.V1Alpha1().CustomResourceKind().Get(ctx, k.object.Name())
 		if err != nil {
 			return nil, err
 		}
 
-		return []resource.MeshObject{shadowService}, nil
+		return []meta.MeshObject{customResourceKind}, nil
 	}
 
-	shadowServices, err := s.client.V1Alpha1().ShadowService().List(ctx)
+	customResourceKinds, err := k.client.V1Alpha1().CustomResourceKind().List(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	objects := make([]resource.MeshObject, len(shadowServices))
-	for i := range shadowServices {
-		objects[i] = shadowServices[i]
+	objects := make([]meta.MeshObject, len(customResourceKinds))
+	for i := range customResourceKinds {
+		objects[i] = customResourceKinds[i]
+	}
+
+	return objects, nil
+}
+
+type customResourceGetter struct {
+	baseGetter
+	object *resource.CustomResource
+}
+
+func (crg *customResourceGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), crg.timeout)
+	defer cancelFunc()
+
+	if crg.object.Name() != "" {
+		customResource, err := crg.client.V1Alpha1().CustomResource().Get(ctx, crg.object.Kind(), crg.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{customResource}, nil
+	}
+
+	customResources, err := crg.client.V1Alpha1().CustomResource().List(ctx, crg.object.Kind())
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(customResources))
+	for i := range customResources {
+		objects[i] = customResources[i]
 	}
 
 	return objects, nil

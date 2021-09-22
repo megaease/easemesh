@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+// ContainerVisitor visits components in the constainer spec of the Pod
 type ContainerVisitor interface {
 	VisitorCommandAndArgs(c *v1.Container) (command []string, args []string)
 	VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error)
@@ -37,6 +38,7 @@ type ContainerVisitor interface {
 	VisitorSecurityContext(c *v1.Container) (*v1.SecurityContext, error)
 }
 
+// AcceptContainerVisitor accept a ContainerVisitor to visit
 func AcceptContainerVisitor(name, image string, imagePullPolicy v1.PullPolicy, visitor ContainerVisitor) (*v1.Container, error) {
 	container := &v1.Container{Name: name, Image: image, ImagePullPolicy: imagePullPolicy}
 	command, args := visitor.VisitorCommandAndArgs(container)

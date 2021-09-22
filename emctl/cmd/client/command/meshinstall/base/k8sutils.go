@@ -19,6 +19,7 @@ package installbase
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -31,12 +32,50 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func NewKubernetesClient() (*kubernetes.Clientset, error) {
+var (
+	scheme         = runtime.NewScheme()
+	codecs         = serializer.NewCodecFactory(scheme)
+	parameterCodec = runtime.NewParameterCodec(scheme)
+
+	encoder = unstructured.NewJSONFallbackEncoder(codecs.LegacyCodec(scheme.PrioritizedVersionsAllGroups()...))
+
+	metadataAccessor = meta.NewAccessor()
+)
+
+type (
+	createResourceFunc func() error
+	getResourceRunc    func() (runtime.Object, error)
+	updateResourceFunc func() error
+
+	// PredictFunc is the type of function to predict if the resource is ready.
+	PredictFunc func(interface{}) bool
+
+	// PodStatus is the status of Pod.
+	PodStatus struct {
+		Name            string
+		ReadyContainer  int
+		ExpectContainer int
+		Status          string
+		Restarts        int
+	}
+
+	deleteResourceFunc func(kubernetes.Interface, string, string, string) error
+
+	// ListPodFunc is the type of function to list pod.
+	ListPodFunc func(kubernetes.Interface, string) []PodStatus
+)
+
+// NewKubernetesClient creates Kubernetes client set.
+func NewKubernetesClient() (kubernetes.Interface, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
 	if err != nil {
 		return nil, err
@@ -49,7 +88,8 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	return kubeClient, nil
 }
 
-func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
+// NewKubernetesAPIExtensionsClient creates Kubernetes API extensions client.
+func NewKubernetesAPIExtensionsClient() (apiextensions.Interface, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
 	if err != nil {
 		return nil, err
@@ -62,164 +102,408 @@ func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
 	return clientset, nil
 }
 
-func CreateNamespace(namespace *v1.Namespace, clientSet *kubernetes.Clientset) error {
-	_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace.Name, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
-		if err != nil && errors.IsAlreadyExists(err) {
-			return nil
-		}
+func requestContext() context.Context     { return context.TODO() }
+func createOptions() metav1.CreateOptions { return metav1.CreateOptions{} }
+func getOptions() metav1.GetOptions       { return metav1.GetOptions{} }
+func updateOptions() metav1.UpdateOptions { return metav1.UpdateOptions{} }
+
+func adaptReplaceObject(old, new runtime.Object) error {
+	oldAnnots, err := metadataAccessor.Annotations(old)
+	if err != nil {
 		return err
 	}
+
+	delete(oldAnnots, v1.LastAppliedConfigAnnotation)
+	metadataAccessor.SetAnnotations(old, oldAnnots)
+
+	lastConfig, err := json.Marshal(old)
+	if err != nil {
+		return err
+	}
+
+	newAnnots, err := metadataAccessor.Annotations(new)
+	if err != nil {
+		return err
+	}
+	if newAnnots == nil {
+		newAnnots = make(map[string]string)
+	}
+	newAnnots[v1.LastAppliedConfigAnnotation] = string(lastConfig)
+
+	err = metadataAccessor.SetAnnotations(new, newAnnots)
+	if err != nil {
+		return err
+	}
+
+	oldResourceVersion, err := metadataAccessor.ResourceVersion(old)
+	if err == nil {
+		metadataAccessor.SetResourceVersion(new, oldResourceVersion)
+	}
+
 	return nil
 }
 
-func applyResource(createFunc func() error, updateFunc func() error) error {
-	err := createFunc()
-	if err != nil && errors.IsAlreadyExists(err) {
-		err = updateFunc()
+func deployResource(createFn createResourceFunc, updateFn updateResourceFunc) error {
+	err := createFn()
+	if err == nil {
+		return nil
 	}
-	return err
-}
 
-func DeployDeployment(deployment *appsV1.Deployment, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.AppsV1().Deployments(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.AppsV1().Deployments(namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
-			return err
-		})
-}
-
-func DeployStatefulset(statefulSet *appsV1.StatefulSet, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.AppsV1().StatefulSets(namespace).Create(context.TODO(), statefulSet, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.AppsV1().StatefulSets(namespace).Update(context.TODO(), statefulSet, metav1.UpdateOptions{})
-			return err
-		},
-	)
-}
-
-func DeployService(service *v1.Service, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.CoreV1().Services(namespace).Create(context.TODO(), service, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.CoreV1().Services(namespace).Update(context.TODO(), service, metav1.UpdateOptions{})
-			return err
-		},
-	)
-}
-
-func DeployConfigMap(configMap *v1.ConfigMap, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.CoreV1().ConfigMaps(namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.CoreV1().ConfigMaps(namespace).Update(context.TODO(), configMap, metav1.UpdateOptions{})
-			return err
-		})
-}
-
-func DeploySecret(secret *v1.Secret, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.CoreV1().Secrets(namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.CoreV1().Secrets(namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
-			return err
-		})
-}
-
-func DeployMutatingWebhookConfig(mutatingWebhookConfig *admissionregv1.MutatingWebhookConfiguration, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().Create(context.TODO(), mutatingWebhookConfig, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().Update(context.TODO(), mutatingWebhookConfig, metav1.UpdateOptions{})
-			return err
-		})
-}
-
-func ListPersistentVolume(clientSet *kubernetes.Clientset) (*v1.PersistentVolumeList, error) {
-	return clientSet.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
-}
-
-func DeployRole(role *rbacv1.Role, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.RbacV1().Roles(namespace).Create(context.TODO(), role, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.RbacV1().Roles(namespace).Update(context.TODO(), role, metav1.UpdateOptions{})
-			return err
-		})
-}
-
-func DeployRoleBinding(roleBinding *rbacv1.RoleBinding, clientSet *kubernetes.Clientset, namespace string) error {
-	_, err := clientSet.RbacV1().RoleBindings(namespace).Get(context.TODO(), roleBinding.Name, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		_, err = clientSet.RbacV1().RoleBindings(namespace).Create(context.TODO(), roleBinding, metav1.CreateOptions{})
-	} else {
-		_, err = clientSet.RbacV1().RoleBindings(namespace).Update(context.TODO(), roleBinding, metav1.UpdateOptions{})
+	if !errors.IsAlreadyExists(err) {
+		return err
 	}
-	return err
+
+	return updateFn()
 }
 
-func DeployClusterRole(clusterRole *rbacv1.ClusterRole, clientSet *kubernetes.Clientset) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.RbacV1().ClusterRoles().Create(context.TODO(), clusterRole, metav1.CreateOptions{})
+// DeployNamespace creates or updates Namespace.
+func DeployNamespace(namespace *v1.Namespace, clientSet kubernetes.Interface) error {
+	createFn := func() error {
+		_, err := clientSet.CoreV1().Namespaces().
+			Create(requestContext(), namespace, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.CoreV1().Namespaces().
+			Get(requestContext(), namespace.Name, getOptions())
+		if err != nil {
 			return err
-		},
-		func() error {
-			_, err := clientSet.RbacV1().ClusterRoles().Update(context.TODO(), clusterRole, metav1.UpdateOptions{})
+		}
+
+		err = adaptReplaceObject(oldObject, namespace)
+		if err != nil {
 			return err
-		})
+		}
+
+		_, err = clientSet.CoreV1().Namespaces().
+			Update(requestContext(), namespace, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
 }
 
-func DeployClusterRoleBinding(clusterRoleBinding *rbacv1.ClusterRoleBinding, clientSet *kubernetes.Clientset) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.RbacV1().ClusterRoleBindings().Create(context.TODO(), clusterRoleBinding, metav1.CreateOptions{})
+// DeployDeployment creates or updates Deployment.
+func DeployDeployment(deployment *appsV1.Deployment, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.AppsV1().Deployments(namespace).
+			Create(requestContext(), deployment, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.AppsV1().Deployments(namespace).
+			Get(requestContext(), deployment.Name, getOptions())
+		if err != nil {
 			return err
-		},
-		func() error {
-			_, err := clientSet.RbacV1().ClusterRoleBindings().Update(context.TODO(), clusterRoleBinding, metav1.UpdateOptions{})
+		}
+
+		err = adaptReplaceObject(oldObject, deployment)
+		if err != nil {
 			return err
-		})
+		}
+
+		_, err = clientSet.AppsV1().Deployments(namespace).
+			Update(requestContext(), deployment, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
 }
 
-func DeployCustomResourceDefinition(crd *apiextensionsv1.CustomResourceDefinition, clientSet *apiextensions.Clientset) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.ApiextensionsV1().CustomResourceDefinitions().Create(context.TODO(), crd, metav1.CreateOptions{})
+// DeployStatefulset creates or updates StatefulSet.
+func DeployStatefulset(statefulset *appsV1.StatefulSet, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.AppsV1().StatefulSets(namespace).
+			Create(requestContext(), statefulset, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.AppsV1().StatefulSets(namespace).
+			Get(requestContext(), statefulset.Name, getOptions())
+		if err != nil {
 			return err
-		},
-		func() error {
-			_, err := clientSet.ApiextensionsV1().CustomResourceDefinitions().Update(context.TODO(), crd, metav1.UpdateOptions{})
+		}
+
+		err = adaptReplaceObject(oldObject, statefulset)
+		if err != nil {
 			return err
-		})
+		}
+
+		_, err = clientSet.AppsV1().StatefulSets(namespace).
+			Update(requestContext(), statefulset, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
 }
 
-type PredictFunc func(interface{}) bool
+// DeployService creates or updates Service.
+func DeployService(service *v1.Service, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.CoreV1().Services(namespace).
+			Create(requestContext(), service, createOptions())
+		return err
+	}
 
+	updateFn := func() error {
+		oldObject, err := clientSet.CoreV1().Services(namespace).
+			Get(requestContext(), service.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, service)
+		if err != nil {
+			return err
+		}
+
+		// NOTE: https://github.com/helm/helm/issues/6378#issuecomment-557746499
+		service.Spec.ClusterIP = oldObject.Spec.ClusterIP
+		service.Spec.ClusterIPs = oldObject.Spec.ClusterIPs
+
+		_, err = clientSet.CoreV1().Services(namespace).
+			Update(requestContext(), service, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeployConfigMap creates or updates ConfigMap.
+func DeployConfigMap(configMap *v1.ConfigMap, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.CoreV1().ConfigMaps(namespace).
+			Create(requestContext(), configMap, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.CoreV1().ConfigMaps(namespace).
+			Get(requestContext(), configMap.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, configMap)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.CoreV1().ConfigMaps(namespace).
+			Update(requestContext(), configMap, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeploySecret creates or updates Secret.
+func DeploySecret(secret *v1.Secret, clientSet kubernetes.Interface, namespace string) error {
+
+	createFn := func() error {
+		_, err := clientSet.CoreV1().Secrets(namespace).
+			Create(requestContext(), secret, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.CoreV1().Secrets(namespace).
+			Get(requestContext(), secret.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, secret)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.CoreV1().Secrets(namespace).
+			Update(requestContext(), secret, updateOptions())
+
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeployMutatingWebhookConfig creates or updates WebHookConfig.
+func DeployMutatingWebhookConfig(mutatingWebhookConfig *admissionregv1.MutatingWebhookConfiguration, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().
+			Create(requestContext(), mutatingWebhookConfig, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().
+			Get(requestContext(), mutatingWebhookConfig.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, mutatingWebhookConfig)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.AdmissionregistrationV1().MutatingWebhookConfigurations().
+			Update(requestContext(), mutatingWebhookConfig, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// ListPersistentVolume lists persistent volumes.
+func ListPersistentVolume(clientSet kubernetes.Interface) (*v1.PersistentVolumeList, error) {
+	return clientSet.CoreV1().PersistentVolumes().List(requestContext(), metav1.ListOptions{})
+}
+
+// DeployRole creates or updates Role.
+func DeployRole(role *rbacv1.Role, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.RbacV1().Roles(namespace).
+			Create(requestContext(), role, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.RbacV1().Roles(namespace).
+			Get(requestContext(), role.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, role)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.RbacV1().Roles(namespace).
+			Update(requestContext(), role, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeployRoleBinding creates or updates RoleBinding.
+func DeployRoleBinding(roleBinding *rbacv1.RoleBinding, clientSet kubernetes.Interface, namespace string) error {
+	createFn := func() error {
+		_, err := clientSet.RbacV1().RoleBindings(namespace).
+			Create(requestContext(), roleBinding, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.RbacV1().RoleBindings(namespace).
+			Get(requestContext(), roleBinding.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, roleBinding)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.RbacV1().RoleBindings(namespace).
+			Update(requestContext(), roleBinding, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeployClusterRole creates or updates ClusterRole.
+func DeployClusterRole(clusterRole *rbacv1.ClusterRole, clientSet kubernetes.Interface) error {
+	createFn := func() error {
+		_, err := clientSet.RbacV1().ClusterRoles().
+			Create(requestContext(), clusterRole, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.RbacV1().ClusterRoles().
+			Get(requestContext(), clusterRole.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, clusterRole)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.RbacV1().ClusterRoles().
+			Update(requestContext(), clusterRole, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeployClusterRoleBinding creates or updates ClusterRoleBinding.
+func DeployClusterRoleBinding(clusterRoleBinding *rbacv1.ClusterRoleBinding, clientSet kubernetes.Interface) error {
+	createFn := func() error {
+		_, err := clientSet.RbacV1().ClusterRoleBindings().
+			Create(requestContext(), clusterRoleBinding, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.RbacV1().ClusterRoleBindings().
+			Get(requestContext(), clusterRoleBinding.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, clusterRoleBinding)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.RbacV1().ClusterRoleBindings().
+			Update(requestContext(), clusterRoleBinding, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// DeployCustomResourceDefinition creates or updates CustomResourceDefinition.
+func DeployCustomResourceDefinition(crd *apiextensionsv1.CustomResourceDefinition, clientSet apiextensions.Interface) error {
+	createFn := func() error {
+		_, err := clientSet.ApiextensionsV1().CustomResourceDefinitions().
+			Create(requestContext(), crd, createOptions())
+		return err
+	}
+
+	updateFn := func() error {
+		oldObject, err := clientSet.ApiextensionsV1().CustomResourceDefinitions().
+			Get(requestContext(), crd.Name, getOptions())
+		if err != nil {
+			return err
+		}
+
+		err = adaptReplaceObject(oldObject, crd)
+		if err != nil {
+			return err
+		}
+
+		_, err = clientSet.ApiextensionsV1().CustomResourceDefinitions().
+			Update(requestContext(), crd, updateOptions())
+		return err
+	}
+
+	return deployResource(createFn, updateFn)
+}
+
+// StatefulsetReadyPredict returns if the StatefultSet is ready.
 func StatefulsetReadyPredict(object interface{}) (ready bool) {
 	statefulset, ok := object.(*appsV1.StatefulSet)
 	if !ok {
@@ -227,6 +511,8 @@ func StatefulsetReadyPredict(object interface{}) (ready bool) {
 	}
 	return statefulset.Status.ReadyReplicas == *statefulset.Spec.Replicas
 }
+
+// DeploymentReadyPredict returns if the Deployment is ready.
 func DeploymentReadyPredict(object interface{}) (ready bool) {
 	deploy, ok := object.(*appsV1.Deployment)
 	if !ok {
@@ -234,8 +520,10 @@ func DeploymentReadyPredict(object interface{}) (ready bool) {
 	}
 	return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas
 }
-func CheckStatefulsetResourceStatus(client *kubernetes.Clientset, namespace, resourceName string, predict PredictFunc) (bool, error) {
-	statefulset, err := client.AppsV1().StatefulSets(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+
+// CheckStatefulsetResourceStatus checks if the StatefulSet is ready.
+func CheckStatefulsetResourceStatus(client kubernetes.Interface, namespace, resourceName string, predict PredictFunc) (bool, error) {
+	statefulset, err := client.AppsV1().StatefulSets(namespace).Get(requestContext(), resourceName, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -245,9 +533,9 @@ func CheckStatefulsetResourceStatus(client *kubernetes.Clientset, namespace, res
 	return predict(statefulset), nil
 }
 
-func CheckDeploymentResourceStatus(client *kubernetes.Clientset, namespace, name string, predict PredictFunc) (bool, error) {
-
-	deploy, err := client.AppsV1().Deployments(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+// CheckDeploymentResourceStatus checks if the Deployment is ready.
+func CheckDeploymentResourceStatus(client kubernetes.Interface, namespace, name string, predict PredictFunc) (bool, error) {
+	deploy, err := client.AppsV1().Deployments(namespace).Get(requestContext(), name, metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -257,13 +545,14 @@ func CheckDeploymentResourceStatus(client *kubernetes.Clientset, namespace, name
 	return predict(deploy), nil
 }
 
-func GetMeshControlPanelEntryPoints(client *kubernetes.Clientset, namespace, resourceName, portName string) ([]string, error) {
-	service, err := client.CoreV1().Services(namespace).Get(context.TODO(), resourceName, metav1.GetOptions{})
+// GetMeshControlPlaneEndpoints gets the endpoints of EaseMesh control plane.
+func GetMeshControlPlaneEndpoints(client kubernetes.Interface, namespace, resourceName, portName string) ([]string, error) {
+	service, err := client.CoreV1().Services(namespace).Get(requestContext(), resourceName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	nodes, err := client.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	nodes, err := client.CoreV1().Nodes().List(requestContext(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -286,6 +575,7 @@ func GetMeshControlPanelEntryPoints(client *kubernetes.Clientset, namespace, res
 	return entrypoints, nil
 }
 
+// BatchDeployResources deploy resources in batches.
 func BatchDeployResources(ctx *StageContext, installFuncs []InstallFunc) error {
 	for _, fn := range installFuncs {
 		err := fn.Deploy(ctx)
@@ -296,7 +586,8 @@ func BatchDeployResources(ctx *StageContext, installFuncs []InstallFunc) error {
 	return nil
 }
 
-func DeleteStatefulsetResource(client *kubernetes.Clientset, resource, namespace, name string) error {
+// DeleteStatefulsetResource deletes Statefulset.
+func DeleteStatefulsetResource(client kubernetes.Interface, resource, namespace, name string) error {
 	err := client.AppsV1().StatefulSets(namespace).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -304,7 +595,8 @@ func DeleteStatefulsetResource(client *kubernetes.Clientset, resource, namespace
 	return nil
 }
 
-func DeleteAppsV1Resource(client *kubernetes.Clientset, resource, namespace, name string) error {
+// DeleteAppsV1Resource deletes resources within group AppV1.
+func DeleteAppsV1Resource(client kubernetes.Interface, resource, namespace, name string) error {
 	err := client.AppsV1().RESTClient().Delete().Resource(resource).Namespace(namespace).Name(name).Do(context.Background()).Error()
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -312,7 +604,8 @@ func DeleteAppsV1Resource(client *kubernetes.Clientset, resource, namespace, nam
 	return nil
 }
 
-func DeleteCoreV1Resource(client *kubernetes.Clientset, resource, namespace, name string) error {
+// DeleteCoreV1Resource deletes resources within group CoreV1.
+func DeleteCoreV1Resource(client kubernetes.Interface, resource, namespace, name string) error {
 	err := client.CoreV1().RESTClient().Delete().Resource(resource).Namespace(namespace).Name(name).Do(context.Background()).Error()
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -320,7 +613,8 @@ func DeleteCoreV1Resource(client *kubernetes.Clientset, resource, namespace, nam
 	return nil
 }
 
-func DeleteRbacV1Resources(client *kubernetes.Clientset, resources, namespace, name string) error {
+// DeleteRbacV1Resources deletes resources within group RbacV1.
+func DeleteRbacV1Resources(client kubernetes.Interface, resources, namespace, name string) error {
 	err := client.RbacV1().RESTClient().Delete().Resource(resources).Namespace(namespace).Name(name).Do(context.Background()).Error()
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -328,16 +622,18 @@ func DeleteRbacV1Resources(client *kubernetes.Clientset, resources, namespace, n
 	return nil
 }
 
-func DeleteAdmissionregV1Resources(client *kubernetes.Clientset, resources, namespace, name string) error {
+// DeleteAdmissionregV1Resources deletes resources within group AdmissionregV1.
+func DeleteAdmissionregV1Resources(client kubernetes.Interface, resources, namespace, name string) error {
 	// NOTE: RESTClinet can't find mutatingwebhookconfigurations resource.
-	err := client.AdmissionregistrationV1().MutatingWebhookConfigurations().Delete(context.TODO(), name, metav1.DeleteOptions{})
+	err := client.AdmissionregistrationV1().MutatingWebhookConfigurations().Delete(requestContext(), name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 	return nil
 }
 
-func DeleteCertificateV1Beta1Resources(client *kubernetes.Clientset, resources, namespace, name string) error {
+// DeleteCertificateV1Beta1Resources deletes resources within group CertificateV1Beta1.
+func DeleteCertificateV1Beta1Resources(client kubernetes.Interface, resources, namespace, name string) error {
 	// NOTE: RESTClinet can't find csr resource.
 	err := client.CertificatesV1beta1().CertificateSigningRequests().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
@@ -346,7 +642,8 @@ func DeleteCertificateV1Beta1Resources(client *kubernetes.Clientset, resources, 
 	return nil
 }
 
-func DeleteCRDResource(client *apiextensions.Clientset, name string) error {
+// DeleteCRDResource deletes resources within group CustomResourceDefinitions.
+func DeleteCRDResource(client apiextensions.Interface, name string) error {
 	err := client.ApiextensionsV1().CustomResourceDefinitions().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
@@ -354,9 +651,8 @@ func DeleteCRDResource(client *apiextensions.Clientset, name string) error {
 	return nil
 }
 
-type deleteResourceFunc func(*kubernetes.Clientset, string, string, string) error
-
-func DeleteResources(client *kubernetes.Clientset, resourceAndName [][]string, namespace string, deletefunc deleteResourceFunc) {
+// DeleteResources deletes resources.
+func DeleteResources(client kubernetes.Interface, resourceAndName [][]string, namespace string, deletefunc deleteResourceFunc) {
 	for _, s := range resourceAndName {
 		err := deletefunc(client, s[0], namespace, s[1])
 		if err != nil {
@@ -365,15 +661,7 @@ func DeleteResources(client *kubernetes.Clientset, resourceAndName [][]string, n
 	}
 }
 
-type PodStatus struct {
-	Name            string
-	ReadyContainer  int
-	ExpectContainer int
-	Status          string
-	Restarts        int
-}
-
-func listPodByLabels(client *kubernetes.Clientset, labels map[string]string, namespace string) []PodStatus {
+func listPodByLabels(client kubernetes.Interface, labels map[string]string, namespace string) []PodStatus {
 	i := 0
 	labelSelector := ""
 	for k, v := range labels {
@@ -416,15 +704,15 @@ func readyAndRestartCount(statuses []v1.ContainerStatus) (readyCount, restartCou
 	return
 }
 
-type ListPodFunc func(*kubernetes.Clientset, string) []PodStatus
-
+// AdaptListPodFunc adapts the ListPodFunc with labels.
 func AdaptListPodFunc(labels map[string]string) ListPodFunc {
-	return func(client *kubernetes.Clientset, namespace string) []PodStatus {
+	return func(client kubernetes.Interface, namespace string) []PodStatus {
 		return listPodByLabels(client, labels, namespace)
 	}
 }
 
-func FormatPodStatus(client *kubernetes.Clientset, namespace string, fn ListPodFunc) (format string) {
+// FormatPodStatus formats PodStatus.
+func FormatPodStatus(client kubernetes.Interface, namespace string, fn ListPodFunc) (format string) {
 	pods := fn(client, namespace)
 	format += fmt.Sprintf("%-45s%-8s%-15s%-10s\n", "Name", "Ready", "Status", "Restarts")
 	for _, p := range pods {

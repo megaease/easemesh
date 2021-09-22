@@ -23,7 +23,7 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
-	"github.com/megaease/easemeshctl/cmd/common"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 
 	"github.com/pkg/errors"
 )
@@ -41,13 +41,15 @@ type baseApplier struct {
 }
 
 // WrapApplierByMeshObject returns a Applier from a MeshObject
-func WrapApplierByMeshObject(object resource.MeshObject,
+func WrapApplierByMeshObject(object meta.MeshObject,
 	client meshclient.MeshClient, timeout time.Duration) Applier {
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerApplier{object: object.(*resource.MeshController), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindServiceInstance:
+		return &serviceInstanceApplier{object: object.(*resource.ServiceInstance), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCanary:
 		return &canaryApplier{object: object.(*resource.Canary), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindLoadBalance:
@@ -64,13 +66,11 @@ func WrapApplierByMeshObject(object resource.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
-	case resource.KindShadowService:
-		return &shadowServiceApplier{object: object.(*resource.ShadowService), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindApplier{object: object.(*resource.CustomResourceKind), baseApplier: baseApplier{client: client, timeout: timeout}}
 	default:
-		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
+		return &customResourceApplier{object: object.(*resource.CustomResource), baseApplier: baseApplier{client: client, timeout: timeout}}
 	}
-
-	return nil
 }
 
 type meshControllerApplier struct {
@@ -131,6 +131,15 @@ func (s *serviceApplier) Apply() error {
 		}
 
 	}
+}
+
+type serviceInstanceApplier struct {
+	baseApplier
+	object *resource.ServiceInstance
+}
+
+func (si *serviceInstanceApplier) Apply() error {
+	return errors.New("not support applying service instance")
 }
 
 type canaryApplier struct {
@@ -369,32 +378,61 @@ func (i *ingressApplier) Apply() error {
 	}
 }
 
-type shadowServiceApplier struct {
+type customResourceKindApplier struct {
 	baseApplier
-	object *resource.ShadowService
+	object *resource.CustomResourceKind
 }
 
-func (s *shadowServiceApplier) Apply() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+func (k *customResourceKindApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
-	err := s.client.V1Alpha1().ShadowService().Create(ctx, s.object)
+	err := k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
+>>>>>>> mai
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = s.client.V1Alpha1().ShadowService().Patch(ctx, s.object)
+			err = k.client.V1Alpha1().CustomResourceKind().Patch(ctx, k.object)
 			if err != nil {
-				return errors.Wrapf(err, "update shadow service %s", s.object.Name())
+				return errors.Wrapf(err, "update custom resource kind %s", k.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = s.client.V1Alpha1().ShadowService().Create(ctx, s.object)
+			err = k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
 			if err != nil {
-				return errors.Wrapf(err, "create shadow service  %s", s.object.Name())
+				return errors.Wrapf(err, "create custom resource kind %s", k.object.Name())
 			}
 		default:
-			return errors.Wrapf(err, "apply shadow service  %s", s.object.Name())
+			return errors.Wrapf(err, "apply custom resource kind %s", k.object.Name())
 		}
+	}
+}
 
+type customResourceApplier struct {
+	baseApplier
+	object *resource.CustomResource
+}
+
+func (cra *customResourceApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), cra.timeout)
+	defer cancelFunc()
+	err := cra.client.V1Alpha1().CustomResource().Create(ctx, cra.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = cra.client.V1Alpha1().CustomResource().Patch(ctx, cra.object)
+			if err != nil {
+				return errors.Wrapf(err, "update custom resource %s", cra.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = cra.client.V1Alpha1().CustomResource().Create(ctx, cra.object)
+			if err != nil {
+				return errors.Wrapf(err, "create custom resource %s", cra.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply custom resource %s", cra.object.Name())
+		}
 	}
 }

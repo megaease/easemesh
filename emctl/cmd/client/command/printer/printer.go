@@ -18,23 +18,38 @@
 package printer
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
-	yamljsontool "github.com/ghodss/yaml"
-	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"github.com/megaease/easemeshctl/cmd/common"
 	"github.com/olekukonko/tablewriter"
+
+	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v2"
 )
 
 type (
 	// Printer prints information about the EaseMesh objects
 	Printer interface {
-		PrintObjects(objects []resource.MeshObject)
+		PrintObjects(objects []meta.MeshObject)
 	}
+
 	printer struct {
 		outputFormat string
+	}
+
+	// TableColumn is the user-defined table column.
+	TableColumn struct {
+		Name  string
+		Value string
+	}
+
+	// TableObject is the object which wants to
+	// customize its own output in format table.
+	TableObject interface {
+		Columns() []*TableColumn
 	}
 )
 
@@ -43,7 +58,7 @@ func New(outputFormat string) Printer {
 	return &printer{outputFormat: outputFormat}
 }
 
-func (p *printer) PrintObjects(objects []resource.MeshObject) {
+func (p *printer) PrintObjects(objects []meta.MeshObject) {
 	if len(objects) == 0 {
 		fmt.Println("No resource")
 		return
@@ -60,10 +75,24 @@ func (p *printer) PrintObjects(objects []resource.MeshObject) {
 	}
 }
 
-func (p *printer) printTable(objects []resource.MeshObject) {
+func (p *printer) printTable(objects []meta.MeshObject) {
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Kind", "Name", "Labels"})
 
+	header := []string{"Kind", "Name", "Labels"}
+
+	var headerColumns []*TableColumn
+	for _, object := range objects {
+		if tableObject, ok := object.(TableObject); ok {
+			headerColumns = tableObject.Columns()
+			break
+		}
+	}
+
+	for _, column := range headerColumns {
+		header = append(header, column.Name)
+	}
+
+	table.SetHeader(header)
 	table.SetBorder(false)
 	table.SetRowLine(false)
 	table.SetColumnSeparator("")
@@ -72,38 +101,54 @@ func (p *printer) printTable(objects []resource.MeshObject) {
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
 	for _, object := range objects {
-		var labels string
+		var labels []string
 		for k, v := range object.Labels() {
-			labels += k + "=" + v
+			labels = append(labels, k+"="+v)
 		}
-		table.Append([]string{
+
+		row := []string{
 			object.Kind(),
 			object.Name(),
-			labels,
-		})
+			strings.Join(labels, ","),
+		}
+
+		tableObject, ok := object.(TableObject)
+		if ok {
+			for _, column := range tableObject.Columns() {
+				row = append(row, column.Value)
+			}
+		}
+
+		table.Append(row)
 	}
 
 	table.Render()
 }
 
-func (p *printer) printYAML(objects []resource.MeshObject) {
-	jsonBuff, err := json.Marshal(objects)
+func (p *printer) printYAML(objects []meta.MeshObject) {
+	yamlBuff, err := yaml.Marshal(objects)
 	if err != nil {
-		common.ExitWithErrorf("marshal %#v to json failed: %v", objects, err)
-	}
-
-	yamlBuff, err := yamljsontool.JSONToYAML(jsonBuff)
-	if err != nil {
-		common.ExitWithErrorf("transform yaml %s to json failed: %v", yamlBuff, err)
+		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
 	}
 
 	fmt.Printf("%s", yamlBuff)
 }
 
-func (p *printer) printJSON(objects []resource.MeshObject) {
-	prettyJSONBuff, err := json.MarshalIndent(objects, "", "  ")
+func (p *printer) printJSON(objects []meta.MeshObject) {
+	yamlBuff, err := yaml.Marshal(objects)
 	if err != nil {
-		common.ExitWithErrorf("unmarshal %#v to json failed: %v", objects, err)
+		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
+	}
+
+	var m interface{}
+	err = yaml.Unmarshal(yamlBuff, &m)
+	if err != nil {
+		common.ExitWithErrorf("unmarshal %#v to yaml failed: %v", objects, err)
+	}
+
+	prettyJSONBuff, err := jsoniter.MarshalIndent(m, "", "  ")
+	if err != nil {
+		common.ExitWithErrorf("marshal %#v to json failed: %v", m, err)
 	}
 
 	fmt.Printf("%s\n", prettyJSONBuff)

@@ -29,7 +29,7 @@ import (
 	"time"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
-	"github.com/megaease/easemeshctl/cmd/common"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
@@ -51,7 +51,7 @@ type Visitor interface {
 }
 
 // VisitorFunc executes visition logic
-type VisitorFunc func(resource.MeshObject, error) error
+type VisitorFunc func(meta.MeshObject, error) error
 
 // RawExtension is a raw struct that holds raw information of the spec
 type RawExtension struct {
@@ -199,7 +199,6 @@ func (v *streamVisitor) Visit(fn VisitorFunc) error {
 
 		err1 := fn(info, err)
 		if err1 != nil {
-			common.OutputError(err1)
 			errs = append(errs, err1)
 		}
 	}
@@ -220,7 +219,7 @@ func (v *streamVisitor) Visit(fn VisitorFunc) error {
 	return finalErr
 }
 
-func (v *streamVisitor) decodeMeshObject(data []byte, source string) (resource.MeshObject, error) {
+func (v *streamVisitor) decodeMeshObject(data []byte, source string) (meta.MeshObject, error) {
 	meshObject, _, err := v.Decoder.Decode(data)
 	if err != nil {
 		return nil, err
@@ -301,6 +300,8 @@ func adaptCommandKind(kind string) string {
 		return resource.KindMeshController
 	case low(resource.KindService):
 		return resource.KindService
+	case low(resource.KindServiceInstance):
+		return resource.KindServiceInstance
 	case low(resource.KindTenant):
 		return resource.KindTenant
 	case low(resource.KindLoadBalance):
@@ -317,28 +318,28 @@ func adaptCommandKind(kind string) string {
 		return resource.KindResilience
 	case low(resource.KindIngress):
 		return resource.KindIngress
-	case low(resource.KindShadowService):
-		return resource.KindShadowService
+	case low(resource.KindCustomResourceKind):
+		return resource.KindCustomResourceKind
 	default:
 		return kind
 	}
 }
 
 func (v *commandVisitor) Visit(fn VisitorFunc) error {
-	vk := resource.VersionKind{
+	vk := meta.VersionKind{
 		APIVersion: resource.DefaultAPIVersion,
 		Kind:       v.Kind,
 	}
 
-	var mo resource.MeshObject
+	var mo meta.MeshObject
 	var err error
 
 	if v.Name == "" {
 		mo, err = v.oc.NewFromKind(vk)
 	} else {
-		mo, err = v.oc.NewFromResource(resource.MeshResource{
+		mo, err = v.oc.NewFromResource(meta.MeshResource{
 			VersionKind: vk,
-			MetaData: resource.MetaData{
+			MetaData: meta.MetaData{
 				Name: v.Name,
 			},
 		})

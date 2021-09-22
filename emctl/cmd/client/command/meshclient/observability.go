@@ -148,9 +148,9 @@ func (o *observabilityTracingInterface) List(ctx context.Context) ([]*resource.O
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.ObservabilityTracings{}
-			for _, ss := range services {
-				if ss.Observability != nil && ss.Observability.Tracings != nil {
-					results = append(results, resource.ToObservabilityTracings(ss.Name, ss.Observability.Tracings))
+			for _, service := range services {
+				if service.Observability != nil && service.Observability.Tracings != nil {
+					results = append(results, resource.ToObservabilityTracings(service.Name, service.Observability.Tracings))
 				}
 			}
 			return results, nil
@@ -263,9 +263,9 @@ func (o *observabilityMetricInterface) List(ctx context.Context) ([]*resource.Ob
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.ObservabilityMetrics{}
-			for _, ss := range services {
-				if ss.Observability != nil && ss.Observability.Metrics != nil {
-					results = append(results, resource.ToObservabilityMetrics(ss.Name, ss.Observability.Metrics))
+			for _, service := range services {
+				if service.Observability != nil && service.Observability.Metrics != nil {
+					results = append(results, resource.ToObservabilityMetrics(service.Name, service.Observability.Metrics))
 				}
 			}
 			return results, nil
@@ -378,9 +378,9 @@ func (o *observabilityOutputServerInterface) List(ctx context.Context) ([]*resou
 				return nil, errors.Wrapf(err, "unmarshal services result")
 			}
 			results := []*resource.ObservabilityOutputServer{}
-			for _, ss := range services {
-				if ss.Observability != nil && ss.Observability.OutputServer != nil {
-					results = append(results, resource.ToObservabilityOutputServer(ss.Name, ss.Observability.OutputServer))
+			for _, service := range services {
+				if service.Observability != nil && service.Observability.OutputServer != nil {
+					results = append(results, resource.ToObservabilityOutputServer(service.Name, service.Observability.OutputServer))
 				}
 			}
 			return results, nil

@@ -35,8 +35,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(ctx.Client, ctx.Flags.MeshNamespace,
+func provisionEaseMeshControlPlane(ctx *installbase.StageContext) error {
+	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
@@ -44,7 +44,7 @@ func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
 	}
 
 	meshControllerConfig := installbase.MeshControllerConfig{
-		Name:              installbase.DefaultMeshControllerName,
+		Name:              installbase.MeshControllerName,
 		Kind:              flags.MeshControllerKind,
 		RegistryType:      ctx.Flags.EaseMeshRegistryType,
 		HeartbeatInterval: strconv.Itoa(ctx.Flags.HeartbeatInterval) + "s",
@@ -75,8 +75,8 @@ func provisionEaseMeshControlPanel(ctx *installbase.StageContext) error {
 	return errors.Wrapf(err, "call EaseMesh control panel %v", entrypoints)
 }
 
-func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernetes.Clientset, installFlags *flags.Install) {
-	entrypoints, err := installbase.GetMeshControlPanelEntryPoints(kubeClient, installFlags.MeshNamespace,
+func clearEaseMeshControlPlaneProvision(cmd *cobra.Command, kubeClient kubernetes.Interface, installFlags *flags.Install) {
+	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(kubeClient, installFlags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
 		installbase.DefaultMeshAdminPortName)
 	if err != nil {
@@ -87,7 +87,7 @@ func clearEaseMeshControlPanelProvision(cmd *cobra.Command, kubeClient *kubernet
 	}
 
 	for _, entrypoint := range entrypoints {
-		url := fmt.Sprintf(entrypoint+installbase.ObjectURL, installbase.DefaultMeshControllerName)
+		url := fmt.Sprintf(entrypoint+installbase.ObjectURL, installbase.MeshControllerName)
 		_, err = client.NewHTTPJSON().
 			Delete(url, nil, time.Second*5, nil).
 			HandleResponse(func(body []byte, statusCode int) (interface{}, error) {

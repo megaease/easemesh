@@ -8,7 +8,7 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
 # Version
-RELEASE?=1.1.0
+RELEASE?=1.2.0
 # Git Related
 GIT_REPO_INFO=$(shell cd ${MKFILE_DIR} && git config --get remote.origin.url)
 ifndef GIT_COMMIT
@@ -24,7 +24,8 @@ TARGET=${MKFILE_DIR}bin/emctl
 all: build
 
 test:
-	@go list ${MKFILE_DIR}/cmd/... | grep -v -E 'vendor' | xargs -n1 go test ${TEST_FLAGS}
+	go test ./... ${TEST_FLAGS}
+#	@go list ${MKFILE_DIR}/cmd/... | grep -v -E 'vendor' | xargs -n1 go test ${TEST_FLAGS}
 
 clean:
 	rm -rf ${TARGET}

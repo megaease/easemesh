@@ -19,6 +19,7 @@ package labelstool
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -28,6 +29,10 @@ func Marshal(labels map[string]string) string {
 	for k, v := range labels {
 		labelsSlice = append(labelsSlice, k+"="+v)
 	}
+
+	// NOTE: It might cause unit test failure if the result is inconsistent.
+	sort.Strings(labelsSlice)
+
 	// FIXME: Replace & with , in all in the future.
 	return strings.Join(labelsSlice, "&")
 }

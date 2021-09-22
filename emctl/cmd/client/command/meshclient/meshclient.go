@@ -32,10 +32,12 @@ type v1alpha1Interface struct {
 	canaryGetter
 	resilienceGetter
 	serviceGetter
+	serviceInstanceGetter
 	tenantGetter
 	observabilityGetter
 	ingressGetter
-	shadowServiceGetter
+	customResourceKindGetter
+	customResourceGetter
 }
 
 var _ V1Alpha1Interface = &v1alpha1Interface{}
@@ -44,15 +46,17 @@ var _ V1Alpha1Interface = &v1alpha1Interface{}
 func New(server string) MeshClient {
 	client := &meshClient{server: server}
 	alpha1 := v1alpha1Interface{
-		meshControllerGetter: meshControllerGetter{client: client},
-		loadbalanceGetter:    loadbalanceGetter{client: client},
-		canaryGetter:         canaryGetter{client: client},
-		resilienceGetter:     resilienceGetter{client: client},
-		tenantGetter:         tenantGetter{client: client},
-		observabilityGetter:  observabilityGetter{client: client},
-		serviceGetter:        serviceGetter{client: client},
-		ingressGetter:        ingressGetter{client: client},
-		shadowServiceGetter:        shadowServiceGetter{client: client},
+		meshControllerGetter:     meshControllerGetter{client: client},
+		loadbalanceGetter:        loadbalanceGetter{client: client},
+		canaryGetter:             canaryGetter{client: client},
+		resilienceGetter:         resilienceGetter{client: client},
+		tenantGetter:             tenantGetter{client: client},
+		observabilityGetter:      observabilityGetter{client: client},
+		serviceGetter:            serviceGetter{client: client},
+		serviceInstanceGetter:    serviceInstanceGetter{client: client},
+		ingressGetter:            ingressGetter{client: client},
+		customResourceKindGetter: customResourceKindGetter{client: client},
+		customResourceGetter:     customResourceGetter{client: client},
 	}
 	client.v1Alpha1 = &alpha1
 	return client

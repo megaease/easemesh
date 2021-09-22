@@ -33,12 +33,14 @@ type V1Alpha1Interface interface {
 	MeshControllerGetter
 	TenantGetter
 	ServiceGetter
+	ServiceInstanceGetter
 	LoadbalanceGetter
 	CanaryGetter
 	ObservabilityGetter
 	ResilienceGetter
 	IngressGetter
-	ShadowServiceGetter
+	CustomResourceKindGetter
+	CustomResourceGetter
 }
 
 // MeshControllerGetter represents a mesh controller resource accessor
@@ -54,6 +56,11 @@ type TenantGetter interface {
 // ServiceGetter represents a Service resource accessor
 type ServiceGetter interface {
 	Service() ServiceInterface
+}
+
+// ServiceInstanceGetter represents a Service resource accessor
+type ServiceInstanceGetter interface {
+	ServiceInstance() ServiceInstanceInterface
 }
 
 // LoadbalanceGetter represents a Loadbalance resource accessor
@@ -83,6 +90,16 @@ type IngressGetter interface {
 	Ingress() IngressInterface
 }
 
+// CustomResourceKindGetter represents an CustomResourceKind accessor
+type CustomResourceKindGetter interface {
+	CustomResourceKind() CustomResourceKindInterface
+}
+
+// CustomResourceGetter represents an CustomResource accessor
+type CustomResourceGetter interface {
+	CustomResource() CustomResourceInterface
+}
+
 // MeshControllerInterface captures the set of operations for interacting with the EaseMesh REST apis of the mesh controller resource.
 type MeshControllerInterface interface {
 	Get(context.Context, string) (*resource.MeshController, error)
@@ -108,6 +125,13 @@ type ServiceInterface interface {
 	Create(context.Context, *resource.Service) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.Service, error)
+}
+
+// ServiceInstanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service instance resource.
+type ServiceInstanceInterface interface {
+	Get(ctx context.Context, serviceName, instanceID string) (*resource.ServiceInstance, error)
+	Delete(ctx context.Context, serviceName, instanceID string) error
+	List(context.Context) ([]*resource.ServiceInstance, error)
 }
 
 // LoadBalanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the loadbalance resource.
@@ -173,17 +197,20 @@ type IngressInterface interface {
 	List(context.Context) ([]*resource.Ingress, error)
 }
 
-
-// ShadowServiceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service resource.
-type ShadowServiceInterface interface {
-	Get(context.Context, string) (*resource.ShadowService, error)
-	Patch(context.Context, *resource.ShadowService) error
-	Create(context.Context, *resource.ShadowService) error
+// CustomResourceKindInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom resource kind.
+type CustomResourceKindInterface interface {
+	Get(context.Context, string) (*resource.CustomResourceKind, error)
+	Patch(context.Context, *resource.CustomResourceKind) error
+	Create(context.Context, *resource.CustomResourceKind) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]*resource.ShadowService, error)
+	List(context.Context) ([]*resource.CustomResourceKind, error)
 }
 
-// ShadowServiceGetter represents a ShadowService resource accessor
-type ShadowServiceGetter interface {
-	ShadowService() ShadowServiceInterface
+// CustomResourceInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom resource.
+type CustomResourceInterface interface {
+	Get(context.Context, string, string) (*resource.CustomResource, error)
+	Patch(context.Context, *resource.CustomResource) error
+	Create(context.Context, *resource.CustomResource) error
+	Delete(context.Context, string, string) error
+	List(context.Context, string) ([]*resource.CustomResource, error)
 }
