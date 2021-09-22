@@ -60,6 +60,22 @@ spec:
    registerTenant: tenant_{id}
    sidecar: {}
 `
+
+	aCustomResourceKind = `kind: CustomResourceKind
+apiVersion: mesh.megaease.com/v1alpha1
+metadata:
+  name: custom_resource_kind_{id}
+spec:
+   jsonSchema:
+`
+
+	aCustomResource = `kind: custom_resource_kind_1
+apiVersion: mesh.megaease.com/v1alpha1
+metadata:
+  name: custom_resource_{id}
+spec:
+   abc: 123
+`
 )
 
 func TestBuilderVisitor(t *testing.T) {
@@ -71,11 +87,17 @@ func TestBuilderVisitor(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 	createTestDir(t, fmt.Sprintf("%s/%s", tmpDir, "recursive/tenant/tenant1"))
 	createTestDir(t, fmt.Sprintf("%s/%s", tmpDir, "recursive/service/service1"))
+	createTestDir(t, fmt.Sprintf("%s/%s", tmpDir, "recursive/customresourcekind/customresourcekind1"))
+	createTestDir(t, fmt.Sprintf("%s/%s", tmpDir, "recursive/customresource/customresource1"))
 
 	writeTestFile(t, fmt.Sprintf("%s/recursive/tenant/tenant0.yaml", tmpDir), strings.Replace(aTenant, "{id}", "0", -1))
 	writeTestFile(t, fmt.Sprintf("%s/recursive/tenant/tenant1/tenant1.yaml", tmpDir), strings.Replace(aTenant, "{id}", "1", -1))
 	writeTestFile(t, fmt.Sprintf("%s/recursive/service/service0.yaml", tmpDir), strings.Replace(aService, "{id}", "0", -1))
 	writeTestFile(t, fmt.Sprintf("%s/recursive/service/service1/service1.yaml", tmpDir), strings.Replace(aService, "{id}", "1", -1))
+	writeTestFile(t, fmt.Sprintf("%s/recursive/customresourcekind/customresourcekind0.yaml", tmpDir), strings.Replace(aCustomResourceKind, "{id}", "0", -1))
+	writeTestFile(t, fmt.Sprintf("%s/recursive/customresourcekind/customresourcekind1/customresourcekind1.yaml", tmpDir), strings.Replace(aCustomResourceKind, "{id}", "1", -1))
+	writeTestFile(t, fmt.Sprintf("%s/recursive/customresource/customresource0.yaml", tmpDir), strings.Replace(aCustomResource, "{id}", "0", -1))
+	writeTestFile(t, fmt.Sprintf("%s/recursive/customresource/customresource1/customresource1.yaml", tmpDir), strings.Replace(aCustomResource, "{id}", "1", -1))
 
 	tests := []struct {
 		name          string
@@ -86,6 +108,8 @@ func TestBuilderVisitor(t *testing.T) {
 	}{
 		{"recursive-service", &resource.Service{}, true, fmt.Sprintf("%s/recursive/service", tmpDir), []string{"service_0", "service_1"}},
 		{"recursive-tenant", &resource.Tenant{}, true, fmt.Sprintf("%s/recursive/tenant", tmpDir), []string{"tenant_0", "tenant_1"}},
+		{"recursive-custom-resource-kind", &resource.CustomResourceKind{}, true, fmt.Sprintf("%s/recursive/customresourcekind", tmpDir), []string{"custom_resource_kind_0", "custom_resource_kind_1"}},
+		{"recursive-custom-resource", &resource.CustomResource{}, true, fmt.Sprintf("%s/recursive/customresource", tmpDir), []string{"custom_resource_0", "custom_resource_1"}},
 	}
 
 	for _, tt := range tests {
@@ -125,6 +149,14 @@ func TestBuilderVisitor(t *testing.T) {
 				case *resource.Service:
 					if service, ok := r.(*resource.Service); !ok || service.Name() != tt.expectedNames[i] {
 						t.Errorf("expect service: %s but unexpected info: %v", tt.expectedNames[i], spew.Sdump(r))
+					}
+				case *resource.CustomResourceKind:
+					if kind, ok := r.(*resource.CustomResourceKind); !ok || kind.Name() != tt.expectedNames[i] {
+						t.Errorf("expect custom resource kind: %s but unexpected info: %v", tt.expectedNames[i], spew.Sdump(r))
+					}
+				case *resource.CustomResource:
+					if rsrc, ok := r.(*resource.CustomResource); !ok || rsrc.Name() != tt.expectedNames[i] {
+						t.Errorf("expect custom resource: %s but unexpected info: %v", tt.expectedNames[i], spew.Sdump(r))
 					}
 				}
 			}

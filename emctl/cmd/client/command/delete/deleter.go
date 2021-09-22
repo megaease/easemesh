@@ -24,7 +24,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
-	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/pkg/errors"
 )
@@ -55,11 +54,11 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsDeleter{object: object.(*resource.ObservabilityTracings), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressDeleter{object: object.(*resource.Ingress), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindDeleter{object: object.(*resource.CustomResourceKind), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	default:
-		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
+		return &customResourceDeleter{object: object.(*resource.CustomResource), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	}
-
-	return nil
 }
 
 // Deleter deletes configuration from the control plane service of the EaseMesh
@@ -243,6 +242,40 @@ func (i *ingressDeleter) Delete() error {
 	err := i.client.V1Alpha1().Ingress().Delete(ctx, i.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete ingress %s", i.object.Name())
+	}
+
+	return err
+}
+
+type customResourceKindDeleter struct {
+	baseDeleter
+	object *resource.CustomResourceKind
+}
+
+func (k *customResourceKindDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
+	defer cancelFunc()
+
+	err := k.client.V1Alpha1().CustomResourceKind().Delete(ctx, k.object.Name())
+	if meshclient.IsNotFoundError(err) {
+		return errors.Wrapf(err, "delete custom resource kind %s", k.object.Name())
+	}
+
+	return err
+}
+
+type customResourceDeleter struct {
+	baseDeleter
+	object *resource.CustomResource
+}
+
+func (crd *customResourceDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), crd.timeout)
+	defer cancelFunc()
+
+	err := crd.client.V1Alpha1().CustomResource().Delete(ctx, crd.object.Kind(), crd.object.Name())
+	if meshclient.IsNotFoundError(err) {
+		return errors.Wrapf(err, "delete custom resource %s", crd.object.Name())
 	}
 
 	return err

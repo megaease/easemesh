@@ -318,6 +318,8 @@ func adaptCommandKind(kind string) string {
 		return resource.KindResilience
 	case low(resource.KindIngress):
 		return resource.KindIngress
+	case low(resource.KindCustomResourceKind):
+		return resource.KindCustomResourceKind
 	default:
 		return kind
 	}

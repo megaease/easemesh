@@ -24,7 +24,6 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
-	"github.com/megaease/easemeshctl/cmd/common"
 )
 
 // WrapGetterByMeshObject wraps getter for mesh object.
@@ -59,11 +58,11 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsGetter{object: object.(*resource.ObservabilityTracings), baseGetter: base}
 	case resource.KindIngress:
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindGetter{object: object.(*resource.CustomResourceKind), baseGetter: base}
 	default:
-		common.ExitWithErrorf("BUG: unsupported kind: %s", object.Kind())
+		return &customResourceGetter{object: object.(*resource.CustomResource), baseGetter: base}
 	}
-
-	return nil
 }
 
 type (
@@ -420,6 +419,68 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	objects := make([]meta.MeshObject, len(ingresses))
 	for i := range ingresses {
 		objects[i] = ingresses[i]
+	}
+
+	return objects, nil
+}
+
+type customResourceKindGetter struct {
+	baseGetter
+	object *resource.CustomResourceKind
+}
+
+func (k *customResourceKindGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
+	defer cancelFunc()
+
+	if k.object.Name() != "" {
+		customResourceKind, err := k.client.V1Alpha1().CustomResourceKind().Get(ctx, k.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{customResourceKind}, nil
+	}
+
+	customResourceKinds, err := k.client.V1Alpha1().CustomResourceKind().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(customResourceKinds))
+	for i := range customResourceKinds {
+		objects[i] = customResourceKinds[i]
+	}
+
+	return objects, nil
+}
+
+type customResourceGetter struct {
+	baseGetter
+	object *resource.CustomResource
+}
+
+func (crg *customResourceGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), crg.timeout)
+	defer cancelFunc()
+
+	if crg.object.Name() != "" {
+		customResource, err := crg.client.V1Alpha1().CustomResource().Get(ctx, crg.object.Kind(), crg.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{customResource}, nil
+	}
+
+	customResources, err := crg.client.V1Alpha1().CustomResource().List(ctx, crg.object.Kind())
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(customResources))
+	for i := range customResources {
+		objects[i] = customResources[i]
 	}
 
 	return objects, nil
