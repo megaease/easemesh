@@ -54,10 +54,10 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsDeleter{object: object.(*resource.ObservabilityTracings), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressDeleter{object: object.(*resource.Ingress), baseDeleter: baseDeleter{client: client, timeout: timeout}}
-	case resource.KindCustomObjectKind:
-		return &customObjectKindDeleter{object: object.(*resource.CustomObjectKind), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindDeleter{object: object.(*resource.CustomResourceKind), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	default:
-		return &customObjectDeleter{object: object.(*resource.CustomObject), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+		return &customResourceDeleter{object: object.(*resource.CustomResource), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	}
 }
 
@@ -247,35 +247,35 @@ func (i *ingressDeleter) Delete() error {
 	return err
 }
 
-type customObjectKindDeleter struct {
+type customResourceKindDeleter struct {
 	baseDeleter
-	object *resource.CustomObjectKind
+	object *resource.CustomResourceKind
 }
 
-func (k *customObjectKindDeleter) Delete() error {
+func (k *customResourceKindDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
 
-	err := k.client.V1Alpha1().CustomObjectKind().Delete(ctx, k.object.Name())
+	err := k.client.V1Alpha1().CustomResourceKind().Delete(ctx, k.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete custom object kind %s", k.object.Name())
+		return errors.Wrapf(err, "delete custom resource kind %s", k.object.Name())
 	}
 
 	return err
 }
 
-type customObjectDeleter struct {
+type customResourceDeleter struct {
 	baseDeleter
-	object *resource.CustomObject
+	object *resource.CustomResource
 }
 
-func (o *customObjectDeleter) Delete() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
+func (crd *customResourceDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), crd.timeout)
 	defer cancelFunc()
 
-	err := o.client.V1Alpha1().CustomObject().Delete(ctx, o.object.Kind(), o.object.Name())
+	err := crd.client.V1Alpha1().CustomResource().Delete(ctx, crd.object.Kind(), crd.object.Name())
 	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete custom object %s", o.object.Name())
+		return errors.Wrapf(err, "delete custom resource %s", crd.object.Name())
 	}
 
 	return err

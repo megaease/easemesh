@@ -30,53 +30,53 @@ import (
 	"github.com/pkg/errors"
 )
 
-type customObjectKindGetter struct {
+type customResourceKindGetter struct {
 	client *meshClient
 }
 
-func (t *customObjectKindGetter) CustomObjectKind() CustomObjectKindInterface {
-	return &customObjectKindInterface{client: t.client}
+func (t *customResourceKindGetter) CustomResourceKind() CustomResourceKindInterface {
+	return &customResourceKindInterface{client: t.client}
 }
 
-type customObjectKindInterface struct {
+type customResourceKindInterface struct {
 	client *meshClient
 }
 
-func (k *customObjectKindInterface) Get(ctx context.Context, customObjectKindID string) (*resource.CustomObjectKind, error) {
-	url := fmt.Sprintf("http://"+k.client.server+MeshCustomObjectKindURL, customObjectKindID)
+func (k *customResourceKindInterface) Get(ctx context.Context, customResourceKindID string) (*resource.CustomResourceKind, error) {
+	url := fmt.Sprintf("http://"+k.client.server+MeshCustomResourceKindURL, customResourceKindID)
 	re, err := client.NewHTTPJSON().
 		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get custom object kind %s", customObjectKindID)
+				return nil, errors.Wrapf(NotFoundError, "get custom resource kind %s", customResourceKindID)
 			}
 
 			if statusCode >= 300 {
 				return nil, errors.Errorf("call %s failed, return status code: %d text:%s", url, statusCode, string(b))
 			}
-			customObjectKind := &v1alpha1.CustomObjectKind{}
-			err := json.Unmarshal(b, customObjectKind)
+			customResourceKind := &v1alpha1.CustomResourceKind{}
+			err := json.Unmarshal(b, customResourceKind)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.CustomObjectKind")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.CustomResourceKind")
 			}
-			return resource.ToCustomObjectKind(customObjectKind), nil
+			return resource.ToCustomResourceKind(customResourceKind), nil
 		})
 	if err != nil {
 		return nil, err
 	}
 
-	return re.(*resource.CustomObjectKind), nil
+	return re.(*resource.CustomResourceKind), nil
 }
 
-func (k *customObjectKindInterface) Patch(ctx context.Context, customObjectKind *resource.CustomObjectKind) error {
+func (k *customResourceKindInterface) Patch(ctx context.Context, customResourceKind *resource.CustomResourceKind) error {
 	jsonClient := client.NewHTTPJSON()
-	url := "http://" + k.client.server + MeshCustomObjectKindsURL
-	update := customObjectKind.ToV1Alpha1()
+	url := "http://" + k.client.server + MeshCustomResourceKindsURL
+	update := customResourceKind.ToV1Alpha1()
 	_, err := jsonClient.
 		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch custom object kind %s", customObjectKind.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch custom resource kind %s", customResourceKind.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -87,16 +87,16 @@ func (k *customObjectKindInterface) Patch(ctx context.Context, customObjectKind 
 	return err
 }
 
-func (k *customObjectKindInterface) Create(ctx context.Context, customObjectKind *resource.CustomObjectKind) error {
-	created := customObjectKind.ToV1Alpha1()
-	url := "http://" + k.client.server + MeshCustomObjectKindsURL
+func (k *customResourceKindInterface) Create(ctx context.Context, customResourceKind *resource.CustomResourceKind) error {
+	created := customResourceKind.ToV1Alpha1()
+	url := "http://" + k.client.server + MeshCustomResourceKindsURL
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
 		// Current URL form should be corrected in the feature
 		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create custom object kind %s", customObjectKind.Name())
+				return nil, errors.Wrapf(ConflictError, "create custom resource kind %s", customResourceKind.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -107,13 +107,13 @@ func (k *customObjectKindInterface) Create(ctx context.Context, customObjectKind
 	return err
 }
 
-func (k *customObjectKindInterface) Delete(ctx context.Context, customObjectKindID string) error {
-	url := fmt.Sprintf("http://"+k.client.server+MeshCustomObjectKindURL, customObjectKindID)
+func (k *customResourceKindInterface) Delete(ctx context.Context, customResourceKindID string) error {
+	url := fmt.Sprintf("http://"+k.client.server+MeshCustomResourceKindURL, customResourceKindID)
 	_, err := client.NewHTTPJSON().
 		DeleteByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete custom object kind %s", customObjectKindID)
+				return nil, errors.Wrapf(NotFoundError, "delete custom resource kind %s", customResourceKindID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -124,85 +124,85 @@ func (k *customObjectKindInterface) Delete(ctx context.Context, customObjectKind
 	return err
 }
 
-func (k *customObjectKindInterface) List(ctx context.Context) ([]*resource.CustomObjectKind, error) {
-	url := "http://" + k.client.server + MeshCustomObjectKindsURL
+func (k *customResourceKindInterface) List(ctx context.Context) ([]*resource.CustomResourceKind, error) {
+	url := "http://" + k.client.server + MeshCustomResourceKindsURL
 	result, err := client.NewHTTPJSON().
 		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list customObjectKind")
+				return nil, errors.Wrap(NotFoundError, "list custom resource kind")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
 				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
 			}
 
-			customObjectKinds := []v1alpha1.CustomObjectKind{}
-			err := json.Unmarshal(b, &customObjectKinds)
+			customResourceKinds := []v1alpha1.CustomResourceKind{}
+			err := json.Unmarshal(b, &customResourceKinds)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal custom object kind result")
+				return nil, errors.Wrapf(err, "unmarshal custom resource kind result")
 			}
 
-			results := []*resource.CustomObjectKind{}
-			for _, customObjectKind := range customObjectKinds {
-				copy := customObjectKind
-				results = append(results, resource.ToCustomObjectKind(&copy))
+			results := []*resource.CustomResourceKind{}
+			for _, customResourceKind := range customResourceKinds {
+				copy := customResourceKind
+				results = append(results, resource.ToCustomResourceKind(&copy))
 			}
 			return results, nil
 		})
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.CustomObjectKind), err
+	return result.([]*resource.CustomResourceKind), err
 }
 
-type customObjectGetter struct {
+type customResourceGetter struct {
 	client *meshClient
 }
 
-func (t *customObjectGetter) CustomObject() CustomObjectInterface {
-	return &customObjectInterface{client: t.client}
+func (t *customResourceGetter) CustomResource() CustomResourceInterface {
+	return &customResourceInterface{client: t.client}
 }
 
-type customObjectInterface struct {
+type customResourceInterface struct {
 	client *meshClient
 }
 
-func (o *customObjectInterface) Get(ctx context.Context, kind, customObjectID string) (*resource.CustomObject, error) {
-	url := fmt.Sprintf("http://"+o.client.server+MeshCustomObjectURL, kind, customObjectID)
+func (o *customResourceInterface) Get(ctx context.Context, kind, customResourceID string) (*resource.CustomResource, error) {
+	url := fmt.Sprintf("http://"+o.client.server+MeshCustomResourceURL, kind, customResourceID)
 	re, err := client.NewHTTPJSON().
 		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get custom object %s", customObjectID)
+				return nil, errors.Wrapf(NotFoundError, "get custom resource %s", customResourceID)
 			}
 
 			if statusCode >= 300 {
 				return nil, errors.Errorf("call %s failed, return status code: %d text:%s", url, statusCode, string(b))
 			}
-			customObject := map[string]interface{}{}
-			err := json.Unmarshal(b, &customObject)
+			customResource := map[string]interface{}{}
+			err := json.Unmarshal(b, &customResource)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.CustomObject")
+				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.CustomResource")
 			}
-			return resource.ToCustomObject(customObject), nil
+			return resource.ToCustomResource(customResource), nil
 		})
 	if err != nil {
 		return nil, err
 	}
 
-	return re.(*resource.CustomObject), nil
+	return re.(*resource.CustomResource), nil
 }
 
-func (o *customObjectInterface) Patch(ctx context.Context, customObject *resource.CustomObject) error {
+func (o *customResourceInterface) Patch(ctx context.Context, customResource *resource.CustomResource) error {
 	jsonClient := client.NewHTTPJSON()
-	url := "http://" + o.client.server + MeshAllCustomObjectsURL
-	update := customObject.ToV1Alpha1()
+	url := "http://" + o.client.server + MeshAllCustomResourcesURL
+	update := customResource.ToV1Alpha1()
 	_, err := jsonClient.
 		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch custom object %s", customObject.Name())
+				return nil, errors.Wrapf(NotFoundError, "patch custom resource %s", customResource.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -213,16 +213,16 @@ func (o *customObjectInterface) Patch(ctx context.Context, customObject *resourc
 	return err
 }
 
-func (o *customObjectInterface) Create(ctx context.Context, customObject *resource.CustomObject) error {
-	created := customObject.ToV1Alpha1()
-	url := "http://" + o.client.server + MeshAllCustomObjectsURL
+func (o *customResourceInterface) Create(ctx context.Context, customResource *resource.CustomResource) error {
+	created := customResource.ToV1Alpha1()
+	url := "http://" + o.client.server + MeshAllCustomResourcesURL
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
 		// Current URL form should be corrected in the feature
 		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create custom object %s", customObject.Name())
+				return nil, errors.Wrapf(ConflictError, "create custom resource %s", customResource.Name())
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -233,13 +233,13 @@ func (o *customObjectInterface) Create(ctx context.Context, customObject *resour
 	return err
 }
 
-func (o *customObjectInterface) Delete(ctx context.Context, kind, customObjectID string) error {
-	url := fmt.Sprintf("http://"+o.client.server+MeshCustomObjectURL, kind, customObjectID)
+func (o *customResourceInterface) Delete(ctx context.Context, kind, customResourceID string) error {
+	url := fmt.Sprintf("http://"+o.client.server+MeshCustomResourceURL, kind, customResourceID)
 	_, err := client.NewHTTPJSON().
 		DeleteByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete custom object %s", customObjectID)
+				return nil, errors.Wrapf(NotFoundError, "delete custom resource %s", customResourceID)
 			}
 
 			if statusCode < 300 && statusCode >= 200 {
@@ -250,34 +250,34 @@ func (o *customObjectInterface) Delete(ctx context.Context, kind, customObjectID
 	return err
 }
 
-func (o *customObjectInterface) List(ctx context.Context, kind string) ([]*resource.CustomObject, error) {
-	url := fmt.Sprintf("http://"+o.client.server+MeshCustomObjectsURL, kind)
+func (o *customResourceInterface) List(ctx context.Context, kind string) ([]*resource.CustomResource, error) {
+	url := fmt.Sprintf("http://"+o.client.server+MeshCustomResourcesURL, kind)
 	result, err := client.NewHTTPJSON().
 		GetByContext(ctx, url, nil, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list custom object")
+				return nil, errors.Wrap(NotFoundError, "list custom resource")
 			}
 
 			if statusCode >= 300 || statusCode < 200 {
 				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
 			}
 
-			customObjects := []map[string]interface{}{}
-			err := json.Unmarshal(b, &customObjects)
+			customResources := []map[string]interface{}{}
+			err := json.Unmarshal(b, &customResources)
 			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal custom object result")
+				return nil, errors.Wrapf(err, "unmarshal custom resource result")
 			}
 
-			results := []*resource.CustomObject{}
-			for _, customObject := range customObjects {
-				copy := customObject
-				results = append(results, resource.ToCustomObject(copy))
+			results := []*resource.CustomResource{}
+			for _, customResource := range customResources {
+				copy := customResource
+				results = append(results, resource.ToCustomResource(copy))
 			}
 			return results, nil
 		})
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.CustomObject), err
+	return result.([]*resource.CustomResource), err
 }

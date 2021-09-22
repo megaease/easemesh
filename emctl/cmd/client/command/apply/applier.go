@@ -66,10 +66,10 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
-	case resource.KindCustomObjectKind:
-		return &customObjectKindApplier{object: object.(*resource.CustomObjectKind), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindApplier{object: object.(*resource.CustomResourceKind), baseApplier: baseApplier{client: client, timeout: timeout}}
 	default:
-		return &customObjectApplier{object: object.(*resource.CustomObject), baseApplier: baseApplier{client: client, timeout: timeout}}
+		return &customResourceApplier{object: object.(*resource.CustomResource), baseApplier: baseApplier{client: client, timeout: timeout}}
 	}
 }
 
@@ -378,60 +378,60 @@ func (i *ingressApplier) Apply() error {
 	}
 }
 
-type customObjectKindApplier struct {
+type customResourceKindApplier struct {
 	baseApplier
-	object *resource.CustomObjectKind
+	object *resource.CustomResourceKind
 }
 
-func (k *customObjectKindApplier) Apply() error {
+func (k *customResourceKindApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
-	err := k.client.V1Alpha1().CustomObjectKind().Create(ctx, k.object)
+	err := k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = k.client.V1Alpha1().CustomObjectKind().Patch(ctx, k.object)
+			err = k.client.V1Alpha1().CustomResourceKind().Patch(ctx, k.object)
 			if err != nil {
-				return errors.Wrapf(err, "update custom object kind %s", k.object.Name())
+				return errors.Wrapf(err, "update custom resource kind %s", k.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = k.client.V1Alpha1().CustomObjectKind().Create(ctx, k.object)
+			err = k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
 			if err != nil {
-				return errors.Wrapf(err, "create custom object kind %s", k.object.Name())
+				return errors.Wrapf(err, "create custom resource kind %s", k.object.Name())
 			}
 		default:
-			return errors.Wrapf(err, "apply custom object kind %s", k.object.Name())
+			return errors.Wrapf(err, "apply custom resource kind %s", k.object.Name())
 		}
 	}
 }
 
-type customObjectApplier struct {
+type customResourceApplier struct {
 	baseApplier
-	object *resource.CustomObject
+	object *resource.CustomResource
 }
 
-func (o *customObjectApplier) Apply() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
+func (cra *customResourceApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), cra.timeout)
 	defer cancelFunc()
-	err := o.client.V1Alpha1().CustomObject().Create(ctx, o.object)
+	err := cra.client.V1Alpha1().CustomResource().Create(ctx, cra.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = o.client.V1Alpha1().CustomObject().Patch(ctx, o.object)
+			err = cra.client.V1Alpha1().CustomResource().Patch(ctx, cra.object)
 			if err != nil {
-				return errors.Wrapf(err, "update custom object %s", o.object.Name())
+				return errors.Wrapf(err, "update custom resource %s", cra.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = o.client.V1Alpha1().CustomObject().Create(ctx, o.object)
+			err = cra.client.V1Alpha1().CustomResource().Create(ctx, cra.object)
 			if err != nil {
-				return errors.Wrapf(err, "create custom object %s", o.object.Name())
+				return errors.Wrapf(err, "create custom resource %s", cra.object.Name())
 			}
 		default:
-			return errors.Wrapf(err, "apply custom object %s", o.object.Name())
+			return errors.Wrapf(err, "apply custom resource %s", cra.object.Name())
 		}
 	}
 }

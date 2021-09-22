@@ -24,26 +24,26 @@ import (
 )
 
 type (
-	// CustomObjectKind describes tenant resource of the EaseMesh
-	CustomObjectKind struct {
+	// CustomResourceKind describes custom resource kind of the EaseMesh
+	CustomResourceKind struct {
 		meta.MeshResource `yaml:",inline"`
-		Spec              *CustomObjectKindSpec `yaml:"spec" jsonschema:"required"`
+		Spec              *CustomResourceKindSpec `yaml:"spec" jsonschema:"required"`
 	}
 
-	// CustomObjectKindSpec describes whats service resided in
-	CustomObjectKindSpec struct {
+	// CustomResourceKindSpec describes the spec of a custom resource kind
+	CustomResourceKindSpec struct {
 		JSONSchema string `yaml:"jsonSchema" jsonschema:"omitempty"`
 	}
 
-	// CustomObject describes tenant resource of the EaseMesh
-	CustomObject struct {
+	// CustomResource describes custom resource of the EaseMesh
+	CustomResource struct {
 		meta.MeshResource `yaml:",inline"`
 		Spec              map[string]interface{} `yaml:"spec" jsonschema:"required"`
 	}
 )
 
-// Columns returns the columns of CustomObjectKind.
-func (k *CustomObjectKind) Columns() []*printer.TableColumn {
+// Columns returns the columns of CustomResourceKind.
+func (k *CustomResourceKind) Columns() []*printer.TableColumn {
 	if k.Spec == nil {
 		return nil
 	}
@@ -57,8 +57,8 @@ func (k *CustomObjectKind) Columns() []*printer.TableColumn {
 }
 
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (k *CustomObjectKind) ToV1Alpha1() *v1alpha1.CustomObjectKind {
-	result := &v1alpha1.CustomObjectKind{}
+func (k *CustomResourceKind) ToV1Alpha1() *v1alpha1.CustomResourceKind {
+	result := &v1alpha1.CustomResourceKind{}
 	result.Name = k.Name()
 	if k.Spec != nil {
 		result.JsonSchema = k.Spec.JSONSchema
@@ -66,37 +66,37 @@ func (k *CustomObjectKind) ToV1Alpha1() *v1alpha1.CustomObjectKind {
 	return result
 }
 
-// ToCustomObjectKind converts a v1alpha1.CustomObjectKind resource to a CustomObjectKind resource
-func ToCustomObjectKind(k *v1alpha1.CustomObjectKind) *CustomObjectKind {
-	result := &CustomObjectKind{
-		Spec: &CustomObjectKindSpec{},
+// ToCustomResourceKind converts a v1alpha1.CustomResourceKind resource to a CustomResourceKind resource
+func ToCustomResourceKind(k *v1alpha1.CustomResourceKind) *CustomResourceKind {
+	result := &CustomResourceKind{
+		Spec: &CustomResourceKindSpec{},
 	}
-	result.MeshResource = NewCustomObjectKindResource(DefaultAPIVersion, k.Name)
+	result.MeshResource = NewCustomResourceKindResource(DefaultAPIVersion, k.Name)
 	result.Spec.JSONSchema = k.JsonSchema
 	return result
 }
 
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (o *CustomObject) ToV1Alpha1() map[string]interface{} {
+func (r *CustomResource) ToV1Alpha1() map[string]interface{} {
 	result := map[string]interface{}{}
-	result["name"] = o.Name()
-	result["kind"] = o.Kind()
-	for k, v := range o.Spec {
+	result["name"] = r.Name()
+	result["kind"] = r.Kind()
+	for k, v := range r.Spec {
 		result[k] = v
 	}
 	return result
 }
 
-// ToCustomObject converts a v1alpha1.CustomObject resource to a CustomObject resource
-func ToCustomObject(o map[string]interface{}) *CustomObject {
-	result := &CustomObject{
+// ToCustomResource converts a v1alpha1.CustomResource resource to a CustomResource resource
+func ToCustomResource(r map[string]interface{}) *CustomResource {
+	result := &CustomResource{
 		Spec: map[string]interface{}{},
 	}
-	name := o["name"].(string)
-	kind := o["kind"].(string)
+	name := r["name"].(string)
+	kind := r["kind"].(string)
 	result.MeshResource = NewMeshResource(DefaultAPIVersion, kind, name)
-	delete(o, "name")
-	delete(o, "kind")
-	result.Spec = o
+	delete(r, "name")
+	delete(r, "kind")
+	result.Spec = r
 	return result
 }

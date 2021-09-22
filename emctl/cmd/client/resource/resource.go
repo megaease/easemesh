@@ -78,8 +78,8 @@ const (
 	// KindIngress is ingress kind of the EaseMesh resource
 	KindIngress = "Ingress"
 
-	// KindCustomObjectKind is the kind of 'custom object kind' of the EaseMesh resource
-	KindCustomObjectKind = "CustomObjectKind"
+	// KindCustomResourceKind is the kind of 'custom resource kind' of the EaseMesh resource
+	KindCustomResourceKind = "CustomResourceKind"
 )
 
 type (
@@ -156,12 +156,12 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 		return &Ingress{
 			MeshResource: NewIngressResource(apiVersion, metaData.Name),
 		}, nil
-	case KindCustomObjectKind:
-		return &CustomObjectKind{
-			MeshResource: NewCustomObjectKindResource(apiVersion, metaData.Name),
+	case KindCustomResourceKind:
+		return &CustomResourceKind{
+			MeshResource: NewCustomResourceKindResource(apiVersion, metaData.Name),
 		}, nil
 	default:
-		return &CustomObject{
+		return &CustomResource{
 			MeshResource: NewMeshResource(apiVersion, kind.Kind, metaData.Name),
 		}, nil
 	}
@@ -222,9 +222,9 @@ func NewTenantResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindTenant, name)
 }
 
-// NewCustomObjectKindResource returns a MeshResource with the custom object kind
-func NewCustomObjectKindResource(apiVersion, name string) meta.MeshResource {
-	return NewMeshResource(apiVersion, KindCustomObjectKind, name)
+// NewCustomResourceKindResource returns a MeshResource with the custom resource kind
+func NewCustomResourceKindResource(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindCustomResourceKind, name)
 }
 
 // NewMeshResource returns a generic MeshResource

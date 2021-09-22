@@ -58,10 +58,10 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsGetter{object: object.(*resource.ObservabilityTracings), baseGetter: base}
 	case resource.KindIngress:
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
-	case resource.KindCustomObjectKind:
-		return &customObjectKindGetter{object: object.(*resource.CustomObjectKind), baseGetter: base}
+	case resource.KindCustomResourceKind:
+		return &customResourceKindGetter{object: object.(*resource.CustomResourceKind), baseGetter: base}
 	default:
-		return &customObjectGetter{object: object.(*resource.CustomObject), baseGetter: base}
+		return &customResourceGetter{object: object.(*resource.CustomResource), baseGetter: base}
 	}
 }
 
@@ -424,63 +424,63 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	return objects, nil
 }
 
-type customObjectKindGetter struct {
+type customResourceKindGetter struct {
 	baseGetter
-	object *resource.CustomObjectKind
+	object *resource.CustomResourceKind
 }
 
-func (k *customObjectKindGetter) Get() ([]meta.MeshObject, error) {
+func (k *customResourceKindGetter) Get() ([]meta.MeshObject, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
 
 	if k.object.Name() != "" {
-		customObjectKind, err := k.client.V1Alpha1().CustomObjectKind().Get(ctx, k.object.Name())
+		customResourceKind, err := k.client.V1Alpha1().CustomResourceKind().Get(ctx, k.object.Name())
 		if err != nil {
 			return nil, err
 		}
 
-		return []meta.MeshObject{customObjectKind}, nil
+		return []meta.MeshObject{customResourceKind}, nil
 	}
 
-	customObjectKindes, err := k.client.V1Alpha1().CustomObjectKind().List(ctx)
+	customResourceKinds, err := k.client.V1Alpha1().CustomResourceKind().List(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	objects := make([]meta.MeshObject, len(customObjectKindes))
-	for i := range customObjectKindes {
-		objects[i] = customObjectKindes[i]
+	objects := make([]meta.MeshObject, len(customResourceKinds))
+	for i := range customResourceKinds {
+		objects[i] = customResourceKinds[i]
 	}
 
 	return objects, nil
 }
 
-type customObjectGetter struct {
+type customResourceGetter struct {
 	baseGetter
-	object *resource.CustomObject
+	object *resource.CustomResource
 }
 
-func (o *customObjectGetter) Get() ([]meta.MeshObject, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
+func (crg *customResourceGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), crg.timeout)
 	defer cancelFunc()
 
-	if o.object.Name() != "" {
-		customObject, err := o.client.V1Alpha1().CustomObject().Get(ctx, o.object.Kind(), o.object.Name())
+	if crg.object.Name() != "" {
+		customResource, err := crg.client.V1Alpha1().CustomResource().Get(ctx, crg.object.Kind(), crg.object.Name())
 		if err != nil {
 			return nil, err
 		}
 
-		return []meta.MeshObject{customObject}, nil
+		return []meta.MeshObject{customResource}, nil
 	}
 
-	customObjectes, err := o.client.V1Alpha1().CustomObject().List(ctx, o.object.Kind())
+	customResources, err := crg.client.V1Alpha1().CustomResource().List(ctx, crg.object.Kind())
 	if err != nil {
 		return nil, err
 	}
 
-	objects := make([]meta.MeshObject, len(customObjectes))
-	for i := range customObjectes {
-		objects[i] = customObjectes[i]
+	objects := make([]meta.MeshObject, len(customResources))
+	for i := range customResources {
+		objects[i] = customResources[i]
 	}
 
 	return objects, nil

@@ -68,18 +68,18 @@ const (
 	// MeshIngressURL is the mesh ingress path.
 	MeshIngressURL = apiURL + "/mesh/ingresses/%s"
 
-	// MeshCustomObjectKindsURL is the mesh custom object kind prefix.
-	MeshCustomObjectKindsURL = apiURL + "/mesh/customobjectkinds"
+	// MeshCustomResourceKindsURL is the mesh custom resource kind prefix.
+	MeshCustomResourceKindsURL = apiURL + "/mesh/customresourcekinds"
 
-	// MeshCustomObjectKindURL is the mesh custom object kind path.
-	MeshCustomObjectKindURL = apiURL + "/mesh/customobjectkinds/%s"
+	// MeshCustomResourceKindURL is the mesh custom resource kind path.
+	MeshCustomResourceKindURL = apiURL + "/mesh/customresourcekinds/%s"
 
-	// MeshAllCustomObjectsURL is the mesh custom object.
-	MeshAllCustomObjectsURL = apiURL + "/mesh/customobjects"
+	// MeshAllCustomResourcesURL is the mesh custom resource.
+	MeshAllCustomResourcesURL = apiURL + "/mesh/customresources"
 
-	// MeshCustomObjectsURL is the mesh custom object prefix.
-	MeshCustomObjectsURL = apiURL + "/mesh/customobjects/%s"
+	// MeshCustomResourcesURL is the mesh custom resource prefix.
+	MeshCustomResourcesURL = apiURL + "/mesh/customresources/%s"
 
-	// MeshCustomObjectURL is the mesh custom object path.
-	MeshCustomObjectURL = apiURL + "/mesh/customobjects/%s/%s"
+	// MeshCustomResourceURL is the mesh custom resource path.
+	MeshCustomResourceURL = apiURL + "/mesh/customresources/%s/%s"
 )

@@ -39,8 +39,8 @@ type V1Alpha1Interface interface {
 	ObservabilityGetter
 	ResilienceGetter
 	IngressGetter
-	CustomObjectKindGetter
-	CustomObjectGetter
+	CustomResourceKindGetter
+	CustomResourceGetter
 }
 
 // MeshControllerGetter represents a mesh controller resource accessor
@@ -90,14 +90,14 @@ type IngressGetter interface {
 	Ingress() IngressInterface
 }
 
-// CustomObjectKindGetter represents an CustomObjectKind resource accessor
-type CustomObjectKindGetter interface {
-	CustomObjectKind() CustomObjectKindInterface
+// CustomResourceKindGetter represents an CustomResourceKind accessor
+type CustomResourceKindGetter interface {
+	CustomResourceKind() CustomResourceKindInterface
 }
 
-// CustomObjectGetter represents an CustomObject resource accessor
-type CustomObjectGetter interface {
-	CustomObject() CustomObjectInterface
+// CustomResourceGetter represents an CustomResource accessor
+type CustomResourceGetter interface {
+	CustomResource() CustomResourceInterface
 }
 
 // MeshControllerInterface captures the set of operations for interacting with the EaseMesh REST apis of the mesh controller resource.
@@ -197,20 +197,20 @@ type IngressInterface interface {
 	List(context.Context) ([]*resource.Ingress, error)
 }
 
-// CustomObjectKindInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom object kind resource.
-type CustomObjectKindInterface interface {
-	Get(context.Context, string) (*resource.CustomObjectKind, error)
-	Patch(context.Context, *resource.CustomObjectKind) error
-	Create(context.Context, *resource.CustomObjectKind) error
+// CustomResourceKindInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom resource kind.
+type CustomResourceKindInterface interface {
+	Get(context.Context, string) (*resource.CustomResourceKind, error)
+	Patch(context.Context, *resource.CustomResourceKind) error
+	Create(context.Context, *resource.CustomResourceKind) error
 	Delete(context.Context, string) error
-	List(context.Context) ([]*resource.CustomObjectKind, error)
+	List(context.Context) ([]*resource.CustomResourceKind, error)
 }
 
-// CustomObjectInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom object resource.
-type CustomObjectInterface interface {
-	Get(context.Context, string, string) (*resource.CustomObject, error)
-	Patch(context.Context, *resource.CustomObject) error
-	Create(context.Context, *resource.CustomObject) error
+// CustomResourceInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom resource.
+type CustomResourceInterface interface {
+	Get(context.Context, string, string) (*resource.CustomResource, error)
+	Patch(context.Context, *resource.CustomResource) error
+	Create(context.Context, *resource.CustomResource) error
 	Delete(context.Context, string, string) error
-	List(context.Context, string) ([]*resource.CustomObject, error)
+	List(context.Context, string) ([]*resource.CustomResource, error)
 }
