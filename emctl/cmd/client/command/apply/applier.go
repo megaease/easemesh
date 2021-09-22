@@ -387,7 +387,6 @@ func (k *customResourceKindApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
 	err := k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
->>>>>>> mai
 	for {
 		switch {
 		case err == nil:
