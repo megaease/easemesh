@@ -89,10 +89,8 @@ func (t *tenantInterface) Patch(ctx context.Context, tenant *resource.Tenant) er
 
 func (t *tenantInterface) Create(ctx context.Context, tenant *resource.Tenant) error {
 	created := tenant.ToV1Alpha1()
-	url := fmt.Sprintf("http://"+t.client.server+MeshTenantURL, tenant.Name())
+	url := fmt.Sprintf("http://" + t.client.server + MeshTenantsURL)
 	_, err := client.NewHTTPJSON().
-		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
-		// Current URL form should be corrected in the feature
 		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {
