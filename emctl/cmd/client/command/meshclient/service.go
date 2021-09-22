@@ -91,7 +91,7 @@ func (s *serviceInterface) Patch(ctx context.Context, service *resource.Service)
 
 func (s *serviceInterface) Create(ctx context.Context, service *resource.Service) error {
 	created := service.ToV1Alpha1()
-	url := fmt.Sprintf("http://"+s.client.server+MeshServicesURL)
+	url := fmt.Sprintf("http://" + s.client.server + MeshServicesURL)
 	_, err := client.NewHTTPJSON().
 		PostByContext(ctx, url, created, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {

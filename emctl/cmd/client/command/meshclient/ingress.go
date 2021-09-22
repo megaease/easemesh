@@ -89,7 +89,7 @@ func (i *ingressInterface) Patch(ctx context.Context, ingress *resource.Ingress)
 }
 
 func (i *ingressInterface) Create(ctx context.Context, ingress *resource.Ingress) error {
-	url := fmt.Sprintf("http://"+i.client.server+MeshIngressesURL)
+	url := fmt.Sprintf("http://" + i.client.server + MeshIngressesURL)
 	created := ingress.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
