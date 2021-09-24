@@ -20,9 +20,9 @@ package syncer
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 
-	"github.com/megaease/easegress/pkg/logger"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 )
 
@@ -32,89 +32,88 @@ import (
 // The syncer also pulls full data from Etcd at a configurable pull interval, this
 // is to ensure data consistency, as Etcd watcher may be cancelled if it cannot catch
 // up with the key-value store.
-type Syncer struct {
+
+type ShadowServiceSyncer struct {
 	server       *Server
 	pullInterval time.Duration
-	done         chan struct{}
 }
 
-func (server *Server) NewSyncer(pullInterval time.Duration) (*Syncer, error) {
-	return &Syncer{
-		server:       server,
+func NewSyncer(meshServer string, requestTimeout time.Duration, pullInterval time.Duration) (*ShadowServiceSyncer, error) {
+	return &ShadowServiceSyncer{
+		server: &Server{
+			RequestTimeout: requestTimeout,
+			MeshServer:     meshServer,
+		},
 		pullInterval: pullInterval,
-		done:         make(chan struct{}),
 	}, nil
 }
 
-func (s *Syncer) pull(kind string) ([]object.CustomObject, error) {
+func (s *ShadowServiceSyncer) pull(kind string) ([]object.ShadowService, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.server.RequestTimeout)
 	defer cancelFunc()
 
 	result, err := s.server.List(ctx, kind)
 	if err != nil {
-		logger.Errorf("failed to pull data for kind %s: %v", kind, err)
+		log.Printf("failed to pull data for kind %s: %v", kind, err)
 		return nil, err
 	}
+	log.Printf("Pull ShadowService Success.")
 	return result, nil
 }
 
-func (s *Syncer) watch(kind string, send func(data []object.CustomObject)) {
-
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.server.RequestTimeout)
-	defer cancelFunc()
-
-	var err error
-	reader, err := s.server.Watch(ctx, kind)
+func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowService)) {
+	reader, err := s.server.Watch(kind)
 	if err != nil {
-		logger.Errorf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
+		log.Printf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
 		return
 	}
-	for {
-		line, e := reader.ReadBytes('\n')
-		if e != nil {
-			logger.Errorf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
-			return
-		} else {
-			var objects []object.CustomObject
-			err := json.Unmarshal(line, &objects)
-			if err != nil {
-				logger.Errorf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, err.Error())
-				continue
+	go func() {
+		for {
+			line, e := reader.ReadBytes('\n')
+			if e != nil {
+				log.Printf("Watch response from MeshServer error: %s. Stop watch.", e.Error())
+				return
+			} else {
+				var objects []object.ShadowService
+				e = json.Unmarshal(line, &objects)
+				if e != nil {
+					log.Printf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, e.Error())
+					continue
+				}
+				send(objects)
 			}
-			send(objects)
 		}
-	}
+	}()
 }
 
-func (s *Syncer) run(kind string, send func(data []object.CustomObject)) {
+func (s *ShadowServiceSyncer) run(kind string, send func(data []object.ShadowService)) {
 	s.watch(kind, send)
+
 	ticker := time.NewTicker(s.pullInterval)
 	defer ticker.Stop()
-	pullCompareSend := func() {
+
+	pullAndSend := func() {
 		data, err := s.pull(kind)
 		if err != nil {
-			logger.Errorf("pull data for kind %s failed: %v", kind, err)
+			log.Printf("pull data for kind %s failed: %v", kind, err)
 			return
 		}
 		send(data)
 	}
-
-	pullCompareSend()
+	pullAndSend()
 
 	for {
 		select {
-		case <-s.done:
-			return
 		case <-ticker.C:
-			pullCompareSend()
+			pullAndSend()
 		}
 	}
 }
 
 // Sync syncs a given EaseMesh kind's value through the returned channel.
-func (s *Syncer) Sync(kind string) (<-chan object.CustomObject, error) {
-	ch := make(chan object.CustomObject, 10)
-	fn := func(data []object.CustomObject) {
+func (s *ShadowServiceSyncer) Sync(kind string) (<-chan object.ShadowService, error) {
+	ch := make(chan object.ShadowService, 10)
+	fn := func(data []object.ShadowService) {
 		if data != nil && len(data) > 0 {
 			for _, obj := range data {
 				ch <- obj
@@ -127,9 +126,4 @@ func (s *Syncer) Sync(kind string) (<-chan object.CustomObject, error) {
 		s.run(kind, fn)
 	}()
 	return ch, nil
-}
-
-// Close closes the syncer.
-func (s *Syncer) Close() {
-	close(s.done)
 }

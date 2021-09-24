@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"github.com/megaease/easemesh/mesh-shadow/cmd/main/rcfile"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/common"
@@ -16,11 +17,13 @@ var (
 	meshServer = flag.String("mesh-server", "", "An address to access the EaseMesh control plane")
 )
 
-func easemeshOption(config *controller.ServiceConfig) error {
+func easemeshOption(config *controller.Config) error {
 	config.MeshServer = *meshServer
 	if config.MeshServer == "" {
 		config.MeshServer = GetServerAddress()
 	}
+	config.RequestTimeout = 10 * time.Second
+	config.PullInterval = 1 * time.Minute
 	return nil
 }
 
@@ -42,7 +45,7 @@ func main() {
 
 	flag.Parse()
 
-	controller, err := controller.New(easemeshOption)
+	controller, err := controller.NewShadowServiceController(easemeshOption)
 	if err != nil {
 		log.Fatalf("new collector service error: %s", err)
 		return

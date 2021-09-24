@@ -34,10 +34,10 @@ type ShadowDeploymentFunc func() error
 
 type cloneDeploymentSpecFunc func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment
 
-func (handler *CloneHandler) CloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
-	shadowDeployment := handler.cloneDeploymentSpec(sourceDeployment, shadowService)
+func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
+	shadowDeployment := cloner.cloneDeploymentSpec(sourceDeployment, shadowService)
 	return func() error {
-		err := utils.DeployDeployment(shadowDeployment, handler.KubeClient, shadowDeployment.Namespace)
+		err := utils.DeployDeployment(shadowDeployment, cloner.KubeClient, shadowDeployment.Namespace)
 		if err != nil {
 			return errors.Wrapf(err, "Clone deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 		}
@@ -45,14 +45,14 @@ func (handler *CloneHandler) CloneDeployment(sourceDeployment *appsV1.Deployment
 	}
 }
 
-func (handler *CloneHandler) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-	shadowDeployment := handler.injectShadowConfiguration(
-		handler.shadowDeploymentBaseSpec(
-			handler.shadowDeploymentInitialize(nil)))(sourceDeployment, shadowService)
+func (cloner *ShadowServiceCloner) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
+	shadowDeployment := cloner.injectShadowConfiguration(
+		cloner.shadowDeploymentBaseSpec(
+			cloner.shadowDeploymentInitialize(nil)))(sourceDeployment, shadowService)
 	return shadowDeployment
 }
 
-func (handler *CloneHandler) injectShadowConfiguration(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
+func (cloner *ShadowServiceCloner) injectShadowConfiguration(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
 	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
 		deployment := fn(sourceDeployment, shadowService)
 
@@ -151,7 +151,7 @@ func generateShadowConfigEnv(envName string, config interface{}) *corev1.EnvVar 
 
 }
 
-func (handler *CloneHandler) shadowDeploymentInitialize(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
+func (cloner *ShadowServiceCloner) shadowDeploymentInitialize(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
 	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
 		return &appsV1.Deployment{
 			TypeMeta: sourceDeployment.TypeMeta,
@@ -166,7 +166,7 @@ func (handler *CloneHandler) shadowDeploymentInitialize(fn cloneDeploymentSpecFu
 	}
 }
 
-func (handler *CloneHandler) shadowDeploymentBaseSpec(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
+func (cloner *ShadowServiceCloner) shadowDeploymentBaseSpec(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
 	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
 		deployment := fn(sourceDeployment, shadowService)
 		deployment.Spec = sourceDeployment.Spec

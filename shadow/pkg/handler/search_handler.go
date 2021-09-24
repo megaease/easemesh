@@ -2,43 +2,29 @@ package handler
 
 import (
 	"log"
-	"time"
 
-	"github.com/megaease/easemesh/mesh-shadow/pkg/common"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
+	appsV1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/pkg/errors"
-)
-
-var (
-	// ConflictError indicate that the resource already exists
-	ConflictError = errors.Errorf("resource already exists")
-	// NotFoundError indicate that the resource does not exist
-	NotFoundError = errors.Errorf("resource not found")
 )
 
 const (
-	MeshServiceAnnotation   = "mesh.megaease.com/service-name"
-	apiURL                  = "/apis/v1"
-	MeshShadowServicesURL   = apiURL + "/mesh/shadowservices"
-	MeshCustomObjetWatchURL = apiURL + "/mesh/watchCustomObjects/{kind}"
-	MeshCustomObjectsURL    = apiURL + "/mesh/customObjects/{kind}"
+	MeshServiceAnnotation = "mesh.megaease.com/service-name"
 )
 
-type SearchHandler struct {
+type Searcher interface {
+	Search(obj interface{})
+}
+
+type ShadowServiceDeploySearcher struct {
 	KubeClient    *kubernetes.Clientset
 	RunTimeClient *runTimeClient.Client
 	CRDClient     *rest.RESTClient
-	MeshServer    string
-	CloneChan     chan interface{}
-
-	Interval time.Duration
-	Registry *common.CallbackRegistry
+	ResultChan    chan interface{}
 }
 
 type ServiceCloneBlock struct {
@@ -46,21 +32,25 @@ type ServiceCloneBlock struct {
 	deployObj interface{}
 }
 
-func (searcher *SearchHandler) SearchOriginDeployments(shadowService object.ShadowService) {
-
+func (searcher *ShadowServiceDeploySearcher) Search(obj interface{}) {
+	shadowService := obj.(object.ShadowService)
 	namespace := shadowService.Namespace
 	serviceName := shadowService.ServiceName
+
 	meshDeploymentList, err := utils.ListMeshDeployment(namespace, searcher.CRDClient, metav1.ListOptions{})
 	if err != nil {
 		log.Printf("Query MeshDeployment for shadow service error. %s", err)
 	}
-
 	for _, meshDeployment := range meshDeploymentList.Items {
+		if isShadowDeployment(meshDeployment.Spec.Deploy.DeploymentSpec) {
+			continue
+		}
 		if meshDeployment.Spec.Service.Name == serviceName {
-			searcher.CloneChan <- ServiceCloneBlock{
+			searcher.ResultChan <- ServiceCloneBlock{
 				shadowService,
 				meshDeployment,
 			}
+			return
 		}
 	}
 
@@ -68,17 +58,28 @@ func (searcher *SearchHandler) SearchOriginDeployments(shadowService object.Shad
 	if err != nil {
 		log.Printf("Query Deployment for shadow service error. %s", err)
 	}
-
 	for _, deployment := range deployments {
+		if isShadowDeployment(deployment.Spec) {
+			continue
+		}
 		annotations := deployment.Annotations
 		if _, ok := annotations[MeshServiceAnnotation]; ok {
 			if serviceName == annotations[MeshServiceAnnotation] {
-				searcher.CloneChan <- ServiceCloneBlock{
+				searcher.ResultChan <- ServiceCloneBlock{
 					shadowService,
 					deployment,
 				}
+				return
 			}
 		}
 	}
-	log.Printf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s", serviceName)
+	log.Printf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s, NameSpace: %s, " +
+		"ShadowService: %s", serviceName, namespace, shadowService.Name)
+}
+
+func isShadowDeployment(spec appsV1.DeploymentSpec) bool {
+	if shadowLabel, ok := spec.Selector.MatchLabels[shadowLabelKey]; ok {
+		return shadowLabel == "true"
+	}
+	return false
 }

@@ -30,10 +30,10 @@ type CloneMeshDeploymentFunc func() error
 
 type cloneMeshDeploymentSpecFunc func(ourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment
 
-func (handler *CloneHandler) CloneMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) CloneMeshDeploymentFunc {
-	shadowMeshDeployment := handler.shadowMeshDeploymentBaseSpec(handler.shadowMeshDeploymentInitialize(nil))(sourceMeshDeployment, shadowService)
+func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) CloneMeshDeploymentFunc {
+	shadowMeshDeployment := cloner.shadowMeshDeploymentBaseSpec(cloner.shadowMeshDeploymentInitialize(nil))(sourceMeshDeployment, shadowService)
 	return func() error {
-		err := utils.DeployMesheployment(shadowMeshDeployment.Namespace, shadowMeshDeployment, handler.CRDClient)
+		err := utils.DeployMesheployment(shadowMeshDeployment.Namespace, shadowMeshDeployment, cloner.CRDClient)
 		if err != nil {
 			return errors.Wrapf(err, "Clone mesh deployment %s for service %s failed", sourceMeshDeployment.Name, shadowService.ServiceName)
 		}
@@ -41,7 +41,7 @@ func (handler *CloneHandler) CloneMeshDeployment(sourceMeshDeployment *v1beta1.M
 	}
 }
 
-func (handler *CloneHandler) shadowMeshDeploymentInitialize(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
+func (cloner *ShadowServiceCloner) shadowMeshDeploymentInitialize(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
 	return func(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
 		return &v1beta1.MeshDeployment{
 			TypeMeta: sourceMeshDeployment.TypeMeta,
@@ -55,7 +55,7 @@ func (handler *CloneHandler) shadowMeshDeploymentInitialize(fn cloneMeshDeployme
 	}
 }
 
-func (handler *CloneHandler) shadowMeshDeploymentBaseSpec(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
+func (cloner *ShadowServiceCloner) shadowMeshDeploymentBaseSpec(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
 	return func(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
 		meshDeployment := fn(sourceMeshDeployment, shadowService)
 		meshDeployment.Spec.Service = sourceMeshDeployment.Spec.Service
@@ -81,7 +81,7 @@ func (handler *CloneHandler) shadowMeshDeploymentBaseSpec(fn cloneMeshDeployment
 		if sourceMeshDeployment.Spec.Service.AppContainerName != "" {
 			deployment.Annotations[shadowAppContainerNameKey] = sourceMeshDeployment.Spec.Service.AppContainerName
 		}
-		shadowDeployment := handler.cloneDeploymentSpec(deployment, shadowService)
+		shadowDeployment := cloner.cloneDeploymentSpec(deployment, shadowService)
 		meshDeployment.Spec.Deploy.DeploymentSpec = shadowDeployment.Spec
 
 		return meshDeployment

@@ -33,23 +33,27 @@ const (
 	elasticsearchShadowConfigEnv = "EASE_RESOURCE_ELASTICSEARCH"
 )
 
-type CloneHandler struct {
+type Cloner interface {
+	Clone(obj interface{})
+}
+
+type ShadowServiceCloner struct {
 	KubeClient    *kubernetes.Clientset
 	RunTimeClient *client.Client
 	CRDClient     *rest.RESTClient
 }
 
-func (handler *CloneHandler) Clone(obj interface{}) {
+func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
 
 	var err error
 	block := obj.(ServiceCloneBlock)
 	switch block.deployObj.(type) {
 	case appv1.Deployment:
 		deployment := block.deployObj.(appv1.Deployment)
-		err = handler.CloneDeployment(&deployment, &block.service)()
+		err = cloner.cloneDeployment(&deployment, &block.service)()
 	case v1beta1.MeshDeployment:
 		meshDeployment := block.deployObj.(v1beta1.MeshDeployment)
-		err = handler.CloneMeshDeployment(&meshDeployment, &block.service)()
+		err = cloner.cloneMeshDeployment(&meshDeployment, &block.service)()
 	}
 	if err != nil {
 		log.Printf("Create shadow service failed. service: %s error: %s", block.service.ServiceName, err)

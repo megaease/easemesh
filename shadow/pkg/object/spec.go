@@ -40,5 +40,9 @@ type (
 		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
 	}
 
-	CustomObject map[string]interface{}
+	CustomObjectKind struct {
+		Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+		// JSONSchema is the json schema to validate a custom object of this kind
+		JsonSchema string `protobuf:"bytes,2,opt,name=jsonSchema,proto3" json:"jsonSchema,omitempty"`
+	}
 )
