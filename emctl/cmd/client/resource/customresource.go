@@ -19,8 +19,8 @@ package resource
 
 import (
 	"github.com/megaease/easemesh-api/v1alpha1"
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type (
@@ -32,7 +32,7 @@ type (
 
 	// CustomResourceKindSpec describes the spec of a custom resource kind
 	CustomResourceKindSpec struct {
-		JSONSchema string `yaml:"jsonSchema" jsonschema:"omitempty"`
+		JSONSchema map[string]interface{} `yaml:"jsonSchema" jsonschema:"omitempty"`
 	}
 
 	// CustomResource describes custom resource of the EaseMesh
@@ -42,26 +42,13 @@ type (
 	}
 )
 
-// Columns returns the columns of CustomResourceKind.
-func (k *CustomResourceKind) Columns() []*printer.TableColumn {
-	if k.Spec == nil {
-		return nil
-	}
-
-	return []*printer.TableColumn{
-		{
-			Name:  "JSONSchema",
-			Value: k.Spec.JSONSchema,
-		},
-	}
-}
-
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (k *CustomResourceKind) ToV1Alpha1() *v1alpha1.CustomResourceKind {
 	result := &v1alpha1.CustomResourceKind{}
 	result.Name = k.Name()
 	if k.Spec != nil {
-		result.JsonSchema = k.Spec.JSONSchema
+		s, _ := structpb.NewStruct(k.Spec.JSONSchema)
+		result.JsonSchema = s
 	}
 	return result
 }
@@ -72,7 +59,9 @@ func ToCustomResourceKind(k *v1alpha1.CustomResourceKind) *CustomResourceKind {
 		Spec: &CustomResourceKindSpec{},
 	}
 	result.MeshResource = NewCustomResourceKindResource(DefaultAPIVersion, k.Name)
-	result.Spec.JSONSchema = k.JsonSchema
+	if k.JsonSchema != nil {
+		result.Spec.JSONSchema = k.JsonSchema.AsMap()
+	}
 	return result
 }
 
