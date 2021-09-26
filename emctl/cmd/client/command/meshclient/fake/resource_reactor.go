@@ -55,9 +55,13 @@ type (
 
 	// ResourceReactor is a reactor to react test request
 	ResourceReactor interface {
-		PrependReactor(verb, kind, resource string, f ReactorFunc)
-		AddReactor(verb, kind, resource string, f ReactorFunc)
-		DoRequest(string, string, string, meta.MeshObject) ([]meta.MeshObject, error)
+		DoRequest(verb, kind, resource string, obj meta.MeshObject) ([]meta.MeshObject, error)
+	}
+
+	//ResourceReactorBuilder is a builder to build a ResourceReactor
+	ResourceReactorBuilder struct {
+		reactorType string
+		reactors    []reactor
 	}
 
 	reactor struct {
@@ -83,13 +87,6 @@ func (a *actionImpl) Matches(verb, kind, resource string) bool {
 
 func (w *writeActionImpl) GetObject() meta.MeshObject { return w.obj }
 
-func (r *resourceReactor) PrependReactor(verb, kind, resource string, f ReactorFunc) {
-	r.reactors = append([]reactor{{matchVerb: verb, matchKind: kind, matchResource: resource, f: f}}, r.reactors...)
-}
-func (r *resourceReactor) AddReactor(verb, kind, resource string, f ReactorFunc) {
-	r.reactors = append(r.reactors, reactor{matchVerb: verb, matchKind: kind, matchResource: resource, f: f})
-
-}
 func (r *resourceReactor) DoRequest(verb, kind, resource string, obj meta.MeshObject) ([]meta.MeshObject, error) {
 	var a Action
 	action := &actionImpl{
@@ -132,4 +129,26 @@ func ResourceReactorForType(reactorType string) ResourceReactor {
 		panic("unknown reactor type {" + reactorType + "}")
 	}
 	return reactor
+}
+
+// PrependReactor prepend a reactor header
+func (r *ResourceReactorBuilder) PrependReactor(verb, kind, resource string, f ReactorFunc) *ResourceReactorBuilder {
+	r.reactors = append([]reactor{{matchVerb: verb, matchKind: kind, matchResource: resource, f: f}}, r.reactors...)
+	return r
+}
+
+// AddReactor add a reactor to tail
+func (r *ResourceReactorBuilder) AddReactor(verb, kind, resource string, f ReactorFunc) *ResourceReactorBuilder {
+	r.reactors = append(r.reactors, reactor{matchVerb: verb, matchKind: kind, matchResource: resource, f: f})
+	return r
+}
+
+// Added add construct a resourceReactor and insert it to globalReactor
+func (r *ResourceReactorBuilder) Added() {
+	globalReactor[r.reactorType] = &resourceReactor{r.reactors}
+}
+
+// NewResourceReactorBuilder return a ResourceReactorBuilder
+func NewResourceReactorBuilder(t string) *ResourceReactorBuilder {
+	return &ResourceReactorBuilder{reactorType: t}
 }

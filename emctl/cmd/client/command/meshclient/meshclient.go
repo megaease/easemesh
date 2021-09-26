@@ -17,6 +17,21 @@
 
 package meshclient
 
+import (
+	"os"
+	"strings"
+)
+
+var isTest bool
+
+func init() {
+	// For test, if the code detect it run in test, could set isTest to true
+	if strings.Contains(os.Args[0], "/_test/") ||
+		strings.Contains(os.Args[0], ".test") {
+		isTest = true
+	}
+}
+
 type meshClient struct {
 	server   string
 	v1Alpha1 V1Alpha1Interface
@@ -44,6 +59,12 @@ var _ V1Alpha1Interface = &v1alpha1Interface{}
 
 // New initials a new MeshClient
 func New(server string) MeshClient {
+
+	if isTest {
+		// This is for test, in the unit test we will create a mock MeshClient
+		return &fakeMeshClient{reactorType: server}
+	}
+
 	client := &meshClient{server: server}
 	alpha1 := v1alpha1Interface{
 		meshControllerGetter:     meshControllerGetter{client: client},

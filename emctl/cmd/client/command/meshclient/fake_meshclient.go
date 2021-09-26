@@ -697,8 +697,8 @@ func (f *fakeCustomResourceGetter) Delete(ctx context.Context, kind, name string
 	return f.doModifyRequest(kind, name, nil)
 }
 
-func (f *fakeCustomResourceGetter) List(ctx context.Context) ([]*resource.CustomResource, error) {
-	o, err := f.resourceReactor.DoRequest("list", "-", "", nil)
+func (f *fakeCustomResourceGetter) List(ctx context.Context, kind string) ([]*resource.CustomResource, error) {
+	o, err := f.resourceReactor.DoRequest("list", kind, "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -713,4 +713,9 @@ func (f *fakeCustomResourceGetter) List(ctx context.Context) ([]*resource.Custom
 		}
 	}
 	return result, nil
+}
+
+// NewFakeClient return a fake meshclient
+func NewFakeClient(t string) MeshClient {
+	return &fakeMeshClient{reactorType: t}
 }
