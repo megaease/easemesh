@@ -51,13 +51,13 @@ type (
 	}
 
 	// ReactorFunc represent a mock behavior
-	ReactorFunc func(action Action) (handled bool, ret meta.MeshObject, err error)
+	ReactorFunc func(action Action) (handled bool, rets []meta.MeshObject, err error)
 
 	// ResourceReactor is a reactor to react test request
 	ResourceReactor interface {
 		PrependReactor(verb, kind, resource string, f ReactorFunc)
 		AddReactor(verb, kind, resource string, f ReactorFunc)
-		DoRequest(string, string, string, meta.MeshObject) (meta.MeshObject, error)
+		DoRequest(string, string, string, meta.MeshObject) ([]meta.MeshObject, error)
 	}
 
 	reactor struct {
@@ -78,7 +78,7 @@ func (a *actionImpl) GetName() string                  { return a.name }
 func (a *actionImpl) Matches(verb, kind, resource string) bool {
 	return (verb == "*" || strings.EqualFold(verb, a.verb)) &&
 		(kind == "*" || strings.EqualFold(kind, a.vk.Kind)) &&
-		(resource == "*" || strings.EqualFold(resource, a.name))
+		(resource == "" || resource == "*" || strings.EqualFold(resource, a.name))
 }
 
 func (w *writeActionImpl) GetObject() meta.MeshObject { return w.obj }
@@ -90,7 +90,7 @@ func (r *resourceReactor) AddReactor(verb, kind, resource string, f ReactorFunc)
 	r.reactors = append(r.reactors, reactor{matchVerb: verb, matchKind: kind, matchResource: resource, f: f})
 
 }
-func (r *resourceReactor) DoRequest(verb, kind, resource string, obj meta.MeshObject) (meta.MeshObject, error) {
+func (r *resourceReactor) DoRequest(verb, kind, resource string, obj meta.MeshObject) ([]meta.MeshObject, error) {
 	var a Action
 	action := &actionImpl{
 		verb: verb,
