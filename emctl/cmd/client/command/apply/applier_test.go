@@ -25,6 +25,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient/fake"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
+	"github.com/pkg/errors"
 )
 
 type resourceKind struct {
@@ -46,7 +47,6 @@ func getResourceKinds() []resourceKind {
 		{rType: reflect.TypeOf(resource.ObservabilityTracings{}), kind: resource.KindObservabilityTracings},
 		{rType: reflect.TypeOf(resource.Canary{}), kind: resource.KindCanary},
 		{rType: reflect.TypeOf(resource.Service{}), kind: resource.KindService},
-		{rType: reflect.TypeOf(resource.ServiceInstance{}), kind: resource.KindServiceInstance},
 		{rType: reflect.TypeOf(resource.Resilience{}), kind: resource.KindResilience},
 	}
 }
@@ -78,9 +78,126 @@ func TestApplierCreateSuccessful(t *testing.T) {
 
 	types := getResourceKinds()
 	client := meshclient.NewFakeClient(reactorType)
-	for _, t := range types {
-		resource := createMeshObjectFromType(t.rType, t.kind, "new")
-		WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
+	for _, tp := range types {
+		resource := createMeshObjectFromType(tp.rType, tp.kind, "new")
+		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
+		if err != nil {
+			t.Fatalf("apply %+v, error:%s", resource, err)
+		}
 	}
 
+}
+
+func TestApplierLoopOver(t *testing.T) {
+	status := map[string]error{}
+	reactorType := "__reactor"
+	fake.NewResourceReactorBuilder(reactorType).
+		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
+			err1, ok := status[action.GetVersionKind().Kind]
+			if !ok {
+				status[action.GetVersionKind().Kind] = meshclient.ConflictError
+				return true, nil, meshclient.ConflictError
+			}
+			switch {
+			case meshclient.IsConflictError(err1):
+				status[action.GetVersionKind().Kind] = meshclient.NotFoundError
+				return true, nil, meshclient.NotFoundError
+			case meshclient.IsNotFoundError(err1):
+				return true, nil, nil
+			}
+			return true, nil, nil
+		}).
+		Added()
+	types := getResourceKinds()
+	client := meshclient.NewFakeClient(reactorType)
+	for _, tp := range types {
+		resource := createMeshObjectFromType(tp.rType, tp.kind, "new")
+		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
+		if err != nil {
+			t.Fatalf("apply %+v, error:%s", resource, err)
+		}
+	}
+}
+
+func TestApplierFastFail(t *testing.T) {
+	reactorType := "__reactor"
+	fake.NewResourceReactorBuilder(reactorType).
+		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
+			return true, nil, errors.Errorf("unknown error")
+		}).
+		Added()
+	types := getResourceKinds()
+	client := meshclient.NewFakeClient(reactorType)
+	for _, tp := range types {
+		resource := createMeshObjectFromType(tp.rType, tp.kind, "new")
+		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
+		if err == nil {
+			t.Fatalf("apply %+v, error:%s", resource, err)
+		}
+	}
+
+	serviceInstance := createMeshObjectFromType(reflect.TypeOf(resource.ServiceInstance{}), resource.KindServiceInstance, "new")
+	err := WrapApplierByMeshObject(serviceInstance, client, time.Second*1).Apply()
+	if err == nil {
+		t.Fatal("serviceinstance applier should failure")
+	}
+}
+
+func TestApplierCreateFail(t *testing.T) {
+	status := map[string]error{}
+	reactorType := "__reactor"
+	fake.NewResourceReactorBuilder(reactorType).
+		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
+			err1, ok := status[action.GetVersionKind().Kind]
+			if !ok {
+				status[action.GetVersionKind().Kind] = meshclient.ConflictError
+				return true, nil, meshclient.ConflictError
+			}
+			switch {
+			case meshclient.IsConflictError(err1):
+				status[action.GetVersionKind().Kind] = meshclient.NotFoundError
+				return true, nil, meshclient.NotFoundError
+			case meshclient.IsNotFoundError(err1):
+				return true, nil, err1
+			}
+			return true, nil, nil
+		}).
+		Added()
+	types := getResourceKinds()
+	client := meshclient.NewFakeClient(reactorType)
+	for _, tp := range types {
+		resource := createMeshObjectFromType(tp.rType, tp.kind, "new")
+		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
+		if err == nil {
+			t.Fatalf("apply %+v, should raise an error", resource)
+		}
+	}
+}
+
+func TestApplierPatchFail(t *testing.T) {
+	status := map[string]error{}
+	reactorType := "__reactor"
+	fake.NewResourceReactorBuilder(reactorType).
+		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
+			err1, ok := status[action.GetVersionKind().Kind]
+			if !ok {
+				status[action.GetVersionKind().Kind] = meshclient.ConflictError
+				return true, nil, meshclient.ConflictError
+			}
+			switch {
+			case meshclient.IsConflictError(err1):
+				return true, nil, err1
+			}
+			return true, nil, nil
+		}).
+		Added()
+	types := getResourceKinds()
+	client := meshclient.NewFakeClient(reactorType)
+	for _, tp := range types {
+		resource := createMeshObjectFromType(tp.rType, tp.kind, "new")
+		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
+		if err == nil {
+			t.Fatalf("apply %+v, should raise an error", resource)
+		}
+	}
 }
