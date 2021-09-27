@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package fake
 
 import (
@@ -104,8 +105,12 @@ func (r *resourceReactor) DoRequest(verb, kind, resource string, obj meta.MeshOb
 		fallthrough
 	case "delete":
 		fallthrough
+	case "list":
+		fallthrough
 	case "*":
 		a = &writeActionImpl{actionImpl: *action, obj: obj}
+	default:
+		return nil, errors.Errorf("unknown operation %s", verb)
 	}
 	for _, reactor := range r.reactors {
 		if a.Matches(reactor.matchVerb, reactor.matchKind, reactor.matchResource) {

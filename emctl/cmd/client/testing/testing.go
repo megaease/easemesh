@@ -104,3 +104,8 @@ func PrepareApplyFlags(server, spec string, t *testing.T) *flags.Apply {
 func PrepareDeleteFlags(server, spec string, t *testing.T) *flags.Delete {
 	return &flags.Delete{AdminGlobal: prepareAdminGlobal(server), AdminFileInput: prepareFileInput(spec, t)}
 }
+
+// PrepareGetFlags return a mock Get flag
+func PrepareGetFlags(server, spec string, t *testing.T) *flags.Get {
+	return &flags.Get{AdminGlobal: prepareAdminGlobal(server), OutputFormat: "yaml"}
+}
