@@ -92,7 +92,7 @@ func (r *resourceReactor) DoRequest(verb, kind, resource string, obj meta.MeshOb
 	action := &actionImpl{
 		verb: verb,
 		vk: meta.VersionKind{
-			APIVersion: "mesh.megaease.com/v1alphla1", Kind: kind,
+			APIVersion: "mesh.megaease.com/v1alpha1", Kind: kind,
 		},
 	}
 	switch verb {
@@ -126,7 +126,7 @@ var globalReactor = map[string]ResourceReactor{
 func ResourceReactorForType(reactorType string) ResourceReactor {
 	reactor := globalReactor[reactorType]
 	if reactor == nil {
-		panic("unknown reactor type {" + reactorType + "}")
+		return nil
 	}
 	return reactor
 }

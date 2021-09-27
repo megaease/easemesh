@@ -20,6 +20,8 @@ package meshclient
 import (
 	"os"
 	"strings"
+
+	"github.com/megaease/easemeshctl/cmd/client/command/meshclient/fake"
 )
 
 var isTest bool
@@ -62,7 +64,9 @@ func New(server string) MeshClient {
 
 	if isTest {
 		// This is for test, in the unit test we will create a mock MeshClient
-		return &fakeMeshClient{reactorType: server}
+		if fake.ResourceReactorForType(server) != nil {
+			return &fakeMeshClient{reactorType: server}
+		}
 	}
 
 	client := &meshClient{server: server}
