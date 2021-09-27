@@ -111,7 +111,10 @@ func (f *fakeV1alpha1) Service() ServiceInterface {
 	return &fakeServiceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
 		kind: resource.KindTenant}}
 }
-func (f *fakeV1alpha1) ServiceInstance() ServiceInstanceInterface { return nil }
+func (f *fakeV1alpha1) ServiceInstance() ServiceInstanceInterface {
+	return &fakeServiceInstanceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
+		kind: resource.KindTenant}}
+}
 
 func (f *fakeV1alpha1) LoadBalance() LoadBalanceInterface {
 	return &fakeLoadbalanceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
@@ -284,6 +287,45 @@ func (f *fakeServiceGetter) List(ctx context.Context) ([]*resource.Service, erro
 	result := []*resource.Service{}
 	for _, m := range o {
 		c := m.(*resource.Service)
+		if c != nil {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+// fakeServiceInstanceGetter implementation
+
+func (f *fakeServiceInstanceGetter) Get(ctx context.Context, name, instanceID string) (*resource.ServiceInstance, error) {
+	o, err := f.resourceReactor.DoRequest("get", resource.KindServiceInstance, name+"/"+instanceID, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	service, ok := o[0].(*resource.ServiceInstance)
+	if !ok {
+		return nil, errors.Errorf("get an unknown MeshObject %+v", o)
+	}
+	return service, nil
+}
+
+func (f *fakeServiceInstanceGetter) Delete(ctx context.Context, name, instanceID string) error {
+	return f.doModifyRequest(resource.KindServiceInstance, name+"/"+instanceID, nil)
+}
+
+func (f *fakeServiceInstanceGetter) List(ctx context.Context) ([]*resource.ServiceInstance, error) {
+	o, err := f.resourceReactor.DoRequest("list", resource.KindServiceInstance, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result := []*resource.ServiceInstance{}
+	for _, m := range o {
+		c := m.(*resource.ServiceInstance)
 		if c != nil {
 			result = append(result, c)
 		}

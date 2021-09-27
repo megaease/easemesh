@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package apply
+
+package delete
 
 import (
 	"os"
@@ -23,48 +24,53 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient/fake"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
-
-	"bou.ke/monkey"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"bou.ke/monkey"
 )
 
-func TestRun(t *testing.T) {
-	flag := meshtesting.PrepareApplyFlags("__test_apply_reactor", tenantSpec, t)
-
-	fake.NewResourceReactorBuilder(flag.Server).
+func TestDeleteRun(t *testing.T) {
+	deleteFlag := meshtesting.PrepareDeleteFlags("__test_delete_reactor", tenantSpec, t)
+	fake.NewResourceReactorBuilder(deleteFlag.Server).
 		AddReactor("*", "*", "*", func(action fake.Action) (handled bool, rets []meta.MeshObject, err error) {
 			return true, nil, nil
-		}).
-		Added()
-
+		}).Added()
 	cmd := &cobra.Command{}
-	Run(cmd, flag)
+	Run(cmd, deleteFlag)
 }
 
-func TestRunFail(t *testing.T) {
+func TestDeleteRunFail(t *testing.T) {
 	fakeExit := func(int) {
 	}
 	patch := monkey.Patch(os.Exit, fakeExit)
 	defer patch.Unpatch()
 
-	flag := meshtesting.PrepareApplyFlags("__test_apply_reactor", tenantSpec, t)
-
-	fake.NewResourceReactorBuilder(flag.Server).
+	reactorType := "__test_delete_reactor"
+	deleteFlag := meshtesting.PrepareDeleteFlags(reactorType, tenantSpec, t)
+	fake.NewResourceReactorBuilder(deleteFlag.Server).
 		AddReactor("*", "*", "*", func(action fake.Action) (handled bool, rets []meta.MeshObject, err error) {
-			return true, nil, errors.Errorf("mock an error")
-		}).
-		Added()
-
+			return true, nil, errors.Errorf("mock delete error")
+		}).Added()
 	cmd := &cobra.Command{}
-	Run(cmd, flag)
+	Run(cmd, deleteFlag)
 
-	flag.Server = ""
-	Run(cmd, flag)
+	deleteFlag.Server = ""
+	Run(cmd, deleteFlag)
 
-	flag.Server = "placehold"
-	flag.YamlFile = ""
-	Run(cmd, flag)
+	deleteFlag.Server = reactorType
+	deleteFlag.YamlFile = ""
+	Run(cmd, deleteFlag)
+
+	cmd.ParseFlags([]string{"tenant", "mesh-service"})
+	Run(cmd, deleteFlag)
+
+	cmd.ParseFlags([]string{"tenant", "mesh-service", "unknown option"})
+	Run(cmd, deleteFlag)
+
+	deleteFlag.YamlFile = "invalidYamlSpecFile"
+	Run(cmd, deleteFlag)
+
 }
 
 var tenantSpec = `
