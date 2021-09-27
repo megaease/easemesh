@@ -68,3 +68,35 @@ func TestGetter(t *testing.T) {
 
 	}
 }
+
+func TestGetterFail(t *testing.T) {
+	reactorType := "__test_reactor_type"
+	rks := meshtesting.GetAllResourceKinds()
+	rks = append(rks, meshtesting.ResourceTypeKind{Type: reflect.TypeOf(resource.ServiceInstance{}),
+		Kind: resource.KindServiceInstance})
+	fake.NewResourceReactorBuilder(reactorType).
+		AddReactor("*", "*", "*", func(action fake.Action) (handled bool, rets []meta.MeshObject, err error) {
+			return true, nil, nil
+		}).Added()
+
+	client := meshclient.NewFakeClient(reactorType)
+	for _, rk := range rks {
+
+		obj := meshtesting.CreateMeshObjectFromType(rk.Type, rk.Kind, "new/bbb")
+		_, err := WrapGetterByMeshObject(obj, client, time.Second*1).Get()
+		if err == nil {
+			t.Fatalf("expect got an error with getting operation")
+		}
+	}
+
+	for _, rk := range rks {
+		obj := meshtesting.CreateMeshObjectFromType(rk.Type, rk.Kind, "")
+		_, err := WrapGetterByMeshObject(obj, client, time.Second*1).Get()
+		if err == nil {
+			t.Fatalf("expect got an error with getting operation")
+		}
+	}
+
+	WrapGetterByMeshObject(meshtesting.CreateMeshObjectFromType(reflect.TypeOf(resource.ServiceInstance{}),
+		resource.KindServiceInstance, "aaaa"), client, time.Second*1).Get()
+}

@@ -29,18 +29,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestDeleteRun(t *testing.T) {
+func TestDeleteRunFail(t *testing.T) {
 	fakeExit := func(int) {
 	}
 	patch := monkey.Patch(os.Exit, fakeExit)
 	defer patch.Unpatch()
-	getFlag := meshtesting.PrepareGetFlags("__test_get_reactor", tenantSpec, t)
+	reactorType := "__test_get_reactor"
+	getFlag := meshtesting.PrepareGetFlags(reactorType, tenantSpec, t)
 	fake.NewResourceReactorBuilder(getFlag.Server).
 		AddReactor("*", "*", "*", func(action fake.Action) (handled bool, rets []meta.MeshObject, err error) {
 			return true, nil, nil
 		}).Added()
 	cmd := &cobra.Command{}
 	cmd.ParseFlags([]string{"tenant", "mesh-service"})
+	Run(cmd, getFlag)
+
+	getFlag.Server = ""
+	Run(cmd, getFlag)
+
+	getFlag.Server = reactorType
+	getFlag.OutputFormat = "jyaml"
+	Run(cmd, getFlag)
+
+	getFlag.OutputFormat = "yaml"
+	cmd.ParseFlags([]string{})
+	Run(cmd, getFlag)
+
+	cmd.ParseFlags([]string{"tenant"})
+	Run(cmd, getFlag)
+
+	cmd.ParseFlags([]string{"tenant", "mesh-service", "other_args"})
 	Run(cmd, getFlag)
 }
 
