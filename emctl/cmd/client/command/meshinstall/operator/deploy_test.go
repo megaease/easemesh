@@ -28,8 +28,10 @@ import (
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	extensionfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
@@ -44,9 +46,13 @@ func TestDeploy(t *testing.T) {
 	ctx := meshtesting.PrepareInstallContext(cmd, client, exptensionClient, install)
 	Deploy(ctx)
 
+	client.PrependReactor("create", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, nil, nil
+	})
 	client.PrependReactor("create", "certificatesigningrequests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, nil, nil
 	})
+
 	for _, f := range []func(*installbase.StageContext) installbase.InstallFunc{
 		secretSpec, configMapSpec, roleSpec, clusterRoleSpec, roleBindingSpec, clusterRoleBindingSpec,
 		operatorDeploymentSpec, serviceSpec, mutatingWebhookSpec,
@@ -68,6 +74,12 @@ func TestDeploy(t *testing.T) {
 	})
 	mutatingWebhookSpec(ctx).Deploy(ctx)
 
+	client.PrependReactor("get", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, nil, k8serr.NewNotFound(schema.GroupResource{
+			Resource: "Namespace",
+			Group:    "v1",
+		}, "na")
+	})
 	client.PrependReactor("get", "certificatesigningrequests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, &certv1beta1.CertificateSigningRequest{
 			TypeMeta: metav1.TypeMeta{
@@ -91,7 +103,6 @@ func TestDeploy(t *testing.T) {
 			},
 		}, nil
 	})
-
 	secretSpec(ctx).Deploy(ctx)
 
 }
