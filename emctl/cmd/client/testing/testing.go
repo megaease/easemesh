@@ -24,9 +24,13 @@ import (
 	"testing"
 
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
+	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
+	"github.com/spf13/cobra"
 
+	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/kubernetes"
 	utiltesting "k8s.io/client-go/util/testing"
 )
 
@@ -115,4 +119,19 @@ func PrepareDeleteFlags(server, spec string, t *testing.T) *flags.Delete {
 // PrepareGetFlags return a mock Get flag
 func PrepareGetFlags(server, spec string, t *testing.T) *flags.Get {
 	return &flags.Get{AdminGlobal: prepareAdminGlobal(server), OutputFormat: "yaml"}
+}
+
+// PrepareInstallContext return a StageContext of install
+func PrepareInstallContext(cmd *cobra.Command,
+	client kubernetes.Interface,
+	extensionClient apiextensions.Interface,
+	installFlags *flags.Install) *installbase.StageContext {
+	clearFunc := func(*installbase.StageContext) error { return nil }
+	return &installbase.StageContext{
+		Cmd:                 cmd,
+		Client:              client,
+		APIExtensionsClient: extensionClient,
+		ClearFuncs:          []func(*installbase.StageContext) error{clearFunc},
+		Flags:               installFlags,
+	}
 }
