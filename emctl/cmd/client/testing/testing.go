@@ -79,17 +79,24 @@ func prepareAdminGlobal(server string) *flags.AdminGlobal {
 	}
 }
 
-func prepareFileInput(spec string, t *testing.T) *flags.AdminFileInput {
+// PrepareYamlFile prepare a temporary spec file for using
+func PrepareYamlFile(spec string, t *testing.T) (specFile string) {
 	specDir, err := utiltesting.MkTmpdir("specdir")
 	if err != nil {
 		t.Fatalf("mkdir tmpdir %s error:%s", specDir, err)
 	}
 
-	specFile := filepath.Join(specDir, "01-tenant.yaml")
+	specFile = filepath.Join(specDir, "01-tenant.yaml")
 	err = ioutil.WriteFile(specFile, []byte(spec), 0600)
 	if err != nil {
 		t.Fatalf("write %s file error:%s", specFile, err)
 	}
+	return specFile
+
+}
+
+func prepareFileInput(spec string, t *testing.T) *flags.AdminFileInput {
+	specFile := PrepareYamlFile(spec, t)
 	return &flags.AdminFileInput{
 		YamlFile: specFile,
 	}
