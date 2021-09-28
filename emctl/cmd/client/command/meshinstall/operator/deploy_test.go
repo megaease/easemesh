@@ -21,10 +21,17 @@ import (
 	"testing"
 
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
+	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
+
 	"github.com/spf13/cobra"
+	certv1beta1 "k8s.io/api/certificates/v1beta1"
+	v1 "k8s.io/api/core/v1"
 	extensionfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 func TestDeploy(t *testing.T) {
@@ -37,15 +44,56 @@ func TestDeploy(t *testing.T) {
 	ctx := meshtesting.PrepareInstallContext(cmd, client, exptensionClient, install)
 	Deploy(ctx)
 
-	secretSpec(ctx).Deploy(ctx)
-	configMapSpec(ctx).Deploy(ctx)
-	roleSpec(ctx).Deploy(ctx)
-	clusterRoleSpec(ctx).Deploy(ctx)
-	roleBindingSpec(ctx).Deploy(ctx)
-	clusterRoleBindingSpec(ctx).Deploy(ctx)
+	client.PrependReactor("create", "certificatesigningrequests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, nil, nil
+	})
+	for _, f := range []func(*installbase.StageContext) installbase.InstallFunc{
+		secretSpec, configMapSpec, roleSpec, clusterRoleSpec, roleBindingSpec, clusterRoleBindingSpec,
+		operatorDeploymentSpec, serviceSpec, mutatingWebhookSpec,
+	} {
+		f(ctx).Deploy(ctx)
+	}
 
-	operatorDeploymentSpec(ctx).Deploy(ctx)
+	client.PrependReactor("get", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &v1.Secret{}, nil
+	})
 
-	serviceSpec(ctx).Deploy(ctx)
 	mutatingWebhookSpec(ctx).Deploy(ctx)
+	secretSpec(ctx).Deploy(ctx)
+
+	client.PrependReactor("get", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &v1.Secret{
+			Data: map[string][]byte{installbase.DefaultMeshOperatorCertFileName: []byte(helloWorld)},
+		}, nil
+	})
+	mutatingWebhookSpec(ctx).Deploy(ctx)
+
+	client.PrependReactor("get", "certificatesigningrequests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &certv1beta1.CertificateSigningRequest{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "CertificateSigningRequest",
+				APIVersion: "certificates.k8s.io/v1beta1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      installbase.DefaultMeshOperatorCSRName,
+				Namespace: ctx.Flags.MeshNamespace,
+			},
+			Spec: certv1beta1.CertificateSigningRequestSpec{
+				Groups: []string{"system:authenticated"},
+				// NOTE: []byte will be automatically encoded as a base64-encoded string.
+				// Reference: https://golang.org/pkg/encoding/json/#Marshal
+				Request: []byte(helloWorld),
+				Usages: []certv1beta1.KeyUsage{
+					certv1beta1.UsageDigitalSignature,
+					certv1beta1.UsageKeyEncipherment,
+					certv1beta1.UsageServerAuth,
+				},
+			},
+		}, nil
+	})
+
+	secretSpec(ctx).Deploy(ctx)
+
 }
+
+var helloWorld = "aGVsbG8gd29ybGQK"
