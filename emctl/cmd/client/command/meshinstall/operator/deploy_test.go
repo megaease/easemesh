@@ -108,6 +108,7 @@ func TestDeploy(t *testing.T) {
 
 	DescribePhase(ctx, installbase.BeginPhase)
 	DescribePhase(ctx, installbase.EndPhase)
+	DescribePhase(ctx, installbase.ErrorPhase)
 
 	client.PrependReactor("get", "*", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		var replicas int32 = 1

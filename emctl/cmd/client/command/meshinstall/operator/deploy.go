@@ -140,17 +140,20 @@ func checkOperatorStatus(client kubernetes.Interface, installFlags *flags.Instal
 	for {
 		time.Sleep(time.Millisecond * 100)
 		i++
+		// Not ready, retry
 		if i > 600 {
 			return errors.Errorf("easemesh operator deploy failed, mesh operator (EG deployment) not ready")
 		}
 		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
 			installbase.DefaultMeshOperatorName,
 			installbase.DeploymentReadyPredict)
-		if ready {
-			return nil
-		}
+
 		if err != nil {
 			return err
+		}
+
+		if ready {
+			return nil
 		}
 	}
 }
