@@ -3,6 +3,6 @@
 if [ "$(echo $1 | head -c 1)" != "-" ] ; then
   exec "$@"
 else
-  exec /opt/easemesh-shadowservice-controller/bin/easemesh-shadowservice-controller "$@"
+  exec /opt/easemesh-shadowservice/bin/easemesh-shadowservice-controller "$@"
 fi
 

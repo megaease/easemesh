@@ -1,22 +1,13 @@
-FROM golang:alpine AS builder
-RUN apk --no-cache add make git
+FROM alpine:3.13
 
-WORKDIR /opt/easemesh-shadowservice-controller
-COPY . .
+WORKDIR /opt/easemesh-shadowservice
 
-RUN make clean && make build
-
-# ---
-
-FROM alpine:latest
-
-WORKDIR /opt/easemesh-shadowservice-controller
-
-COPY --from=builder /opt/easemesh-shadowservice-controller/bin/ /opt/easemesh-shadowservice-controller/bin/
+ADD easemesh-shadowservice-controller /opt/easemesh-shadowservice/bin/
+COPY entrypoint.sh /
 
 RUN apk --no-cache add tini tzdata && \
-        chmod +x /entrypoint.sh /opt/easemesh-shadowservice-controller/bin/*
+        chmod +x /entrypoint.sh /opt/easemesh-shadowservice/bin/*
 
-ENV PATH /opt/easemesh-shadowservice-controller/bin:$PATH
+ENV PATH /opt/easemesh-shadowservice/bin:$PATH
 
 ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]
