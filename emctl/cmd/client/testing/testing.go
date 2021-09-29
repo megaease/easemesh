@@ -69,7 +69,7 @@ func CreateMeshObjectFromType(t reflect.Type, kind, nm string) meta.MeshObject {
 	knd := versionKind.FieldByName("Kind")
 
 	knd.SetString(kind)
-	version.SetString("v0alpha1")
+	version.SetString("v1alpha1")
 
 	metaData := meshObject.FieldByName("MetaData")
 	name := metaData.FieldByName("Name")
