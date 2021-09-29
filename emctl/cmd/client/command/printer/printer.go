@@ -39,18 +39,6 @@ type (
 	printer struct {
 		outputFormat string
 	}
-
-	// TableColumn is the user-defined table column.
-	TableColumn struct {
-		Name  string
-		Value string
-	}
-
-	// TableObject is the object which wants to
-	// customize its own output in format table.
-	TableObject interface {
-		Columns() []*TableColumn
-	}
 )
 
 // New creates a Printer
@@ -80,9 +68,9 @@ func (p *printer) printTable(objects []meta.MeshObject) {
 
 	header := []string{"Kind", "Name", "Labels"}
 
-	var headerColumns []*TableColumn
+	var headerColumns []*meta.TableColumn
 	for _, object := range objects {
-		if tableObject, ok := object.(TableObject); ok {
+		if tableObject, ok := object.(meta.TableObject); ok {
 			headerColumns = tableObject.Columns()
 			break
 		}
@@ -112,7 +100,7 @@ func (p *printer) printTable(objects []meta.MeshObject) {
 			strings.Join(labels, ","),
 		}
 
-		tableObject, ok := object.(TableObject)
+		tableObject, ok := object.(meta.TableObject)
 		if ok {
 			for _, column := range tableObject.Columns() {
 				row = append(row, column.Value)

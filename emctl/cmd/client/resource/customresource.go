@@ -19,7 +19,6 @@ package resource
 
 import (
 	"github.com/megaease/easemesh-api/v1alpha1"
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -43,12 +42,12 @@ type (
 )
 
 // Columns returns the columns of CustomResourceKind.
-func (k *CustomResourceKind) Columns() []*printer.TableColumn {
+func (k *CustomResourceKind) Columns() []*meta.TableColumn {
 	if k.Spec == nil {
 		return nil
 	}
 
-	return []*printer.TableColumn{
+	return []*meta.TableColumn{
 		{
 			Name:  "JSONSchema",
 			Value: k.Spec.JSONSchema,

@@ -27,8 +27,8 @@ import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
-	"github.com/spf13/cobra"
 
+	"github.com/spf13/cobra"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 	utiltesting "k8s.io/client-go/util/testing"

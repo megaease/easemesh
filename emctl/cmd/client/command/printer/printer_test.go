@@ -16,3 +16,28 @@
  */
 
 package printer
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
+	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
+)
+
+func TestPrinter(t *testing.T) {
+
+	yamlPrinter := New("yaml")
+	jsonPrinter := New("json")
+	tablePrinter := New("table")
+
+	for _, rtk := range meshtesting.GetAllResourceKinds() {
+		fmt.Printf("%+v", rtk)
+		obj := meshtesting.CreateMeshObjectFromType(rtk.Type, rtk.Kind, "obj")
+
+		yamlPrinter.PrintObjects([]meta.MeshObject{obj})
+		jsonPrinter.PrintObjects([]meta.MeshObject{obj})
+		tablePrinter.PrintObjects([]meta.MeshObject{obj})
+
+	}
+}

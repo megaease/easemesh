@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/megaease/easemesh-api/v1alpha1"
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -39,15 +38,15 @@ type (
 	}
 )
 
-var _ printer.TableObject = &Service{}
+var _ meta.TableObject = &Service{}
 
 // Columns returns the columns of Tenant.
-func (t *Tenant) Columns() []*printer.TableColumn {
+func (t *Tenant) Columns() []*meta.TableColumn {
 	if t.Spec == nil {
 		return nil
 	}
 
-	return []*printer.TableColumn{
+	return []*meta.TableColumn{
 		{
 			Name:  "Services",
 			Value: strings.Join(t.Spec.Services, ","),
