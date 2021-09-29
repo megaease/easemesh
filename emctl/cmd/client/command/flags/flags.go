@@ -72,6 +72,9 @@ const (
 	// DefaultMeshIngressServicePort is default port listened by the Easegress acted as an ingress role
 	DefaultMeshIngressServicePort = 19527
 
+	// DefaultWaitControlPlaneSeconds is the default wait control plane ready elapse, in seconds (intall command)
+	DefaultWaitControlPlaneSeconds = 10
+
 	// MeshControlPlanePVNameHelpStr is a text described name of persistent volume
 	MeshControlPlanePVNameHelpStr = "The name of PersistentVolume for EaseMesh control plane storage"
 	// MeshControlPlanePVHostPathHelpStr is a text described local path of persistent volume
@@ -163,6 +166,8 @@ type (
 		EaseMeshOperatorReplicas int
 
 		SpecFile string
+
+		WaitControlPlaneTimeOutInSeconds int
 	}
 
 	// Reset holds the option for the EaseMesh resest sub command
@@ -249,6 +254,7 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&i.EaseMeshOperatorReplicas, "easemesh-operator-replicas", DefaultMeshOperatorReplicas, "Mesh operator controller replicas")
 	cmd.Flags().StringVarP(&i.SpecFile, "file", "f", "", "A yaml file specifying the install params")
 	cmd.Flags().BoolVar(&i.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")
+	cmd.Flags().IntVar(&i.WaitControlPlaneTimeOutInSeconds, "wait-controplane-seconds", DefaultWaitControlPlaneSeconds, "Wait control plane ready timeout in seconds")
 }
 
 // AttachCmd attaches options for reset sub command

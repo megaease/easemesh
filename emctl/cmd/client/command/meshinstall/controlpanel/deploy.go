@@ -151,7 +151,7 @@ func checkPVAccessModes(accessModel v1.PersistentVolumeAccessMode, volume *v1.Pe
 func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 
 	// Wait a fix time for the Easegress cluster to start
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * time.Duration(ctx.Flags.WaitControlPlaneTimeOutInSeconds))
 
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,
