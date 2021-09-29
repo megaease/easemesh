@@ -25,6 +25,7 @@ import (
 	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
 
 	"github.com/spf13/cobra"
+	appsV1 "k8s.io/api/apps/v1"
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	extensionfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
@@ -104,6 +105,38 @@ func TestDeploy(t *testing.T) {
 		}, nil
 	})
 	secretSpec(ctx).Deploy(ctx)
+
+	DescribePhase(ctx, installbase.BeginPhase)
+	DescribePhase(ctx, installbase.EndPhase)
+
+	client.PrependReactor("get", "*", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		var replicas int32 = 1
+		switch action.GetResource().Resource {
+		case "deployments":
+			return true, &appsV1.Deployment{
+				Spec: appsV1.DeploymentSpec{
+					Replicas: &replicas,
+				},
+				Status: appsV1.DeploymentStatus{
+					ReadyReplicas: replicas,
+				},
+			}, nil
+		case "statefulsets":
+			return true, &appsV1.StatefulSet{
+				Spec: appsV1.StatefulSetSpec{
+					Replicas: &replicas,
+				},
+				Status: appsV1.StatefulSetStatus{
+					ReadyReplicas: replicas,
+				},
+			}, nil
+		}
+		return true, nil, nil
+	})
+
+	checkOperatorStatus(ctx.Client, ctx.Flags)
+
+	PreCheck(ctx)
 
 }
 
