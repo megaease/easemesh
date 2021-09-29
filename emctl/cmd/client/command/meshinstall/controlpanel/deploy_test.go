@@ -32,14 +32,18 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 )
 
-func TestDeploy(t *testing.T) {
+func prepareContext() (*installbase.StageContext, *fake.Clientset, *extensionfake.Clientset) {
 	client := fake.NewSimpleClientset()
-	exptensionClient := extensionfake.NewSimpleClientset()
+	extensionClient := extensionfake.NewSimpleClientset()
 
 	install := &flags.Install{}
 	cmd := &cobra.Command{}
 	install.AttachCmd(cmd)
-	ctx := meshtesting.PrepareInstallContext(cmd, client, exptensionClient, install)
+	return meshtesting.PrepareInstallContext(cmd, client, extensionClient, install), client, extensionClient
+}
+
+func TestDeploy(t *testing.T) {
+	ctx, client, _ := prepareContext()
 	ctx.Flags.WaitControlPlaneTimeOutInSeconds = 1
 
 	client.PrependReactor("create", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
@@ -58,11 +62,6 @@ func TestDeploy(t *testing.T) {
 	client.PrependReactor("get", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, &v1.Secret{}, nil
 	})
-
-	DescribePhase(ctx, installbase.BeginPhase)
-	DescribePhase(ctx, installbase.EndPhase)
-	DescribePhase(ctx, installbase.ErrorPhase)
-	PreCheck(ctx)
 
 	client.PrependReactor("get", "services", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, &v1.Service{
@@ -102,6 +101,14 @@ func TestCheckPV(T *testing.T) {
 func TestUnmarshal(t *testing.T) {
 	unmarshalMember([]byte{})
 	unmarshalMember([]byte("test"))
+}
+
+func TestDescribePhase(t *testing.T) {
+	ctx, _, _ := prepareContext()
+	DescribePhase(ctx, installbase.BeginPhase)
+	DescribePhase(ctx, installbase.EndPhase)
+	DescribePhase(ctx, installbase.ErrorPhase)
+	PreCheck(ctx)
 }
 
 var helloWorld = "aGVsbG8gd29ybGQK"
