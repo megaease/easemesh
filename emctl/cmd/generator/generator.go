@@ -68,6 +68,9 @@ func (g *generator) accept(visitor interfaceVisitor) error {
 	if visitor == nil {
 		return errors.Errorf("illegal argument(s): visitor is required")
 	}
+
+	fmt.Printf("visitor: %+v\n", visitor)
+
 	err := g.finder.parseFile()
 	if err != nil {
 		visitor.onError(err)
@@ -84,7 +87,7 @@ func (g *generator) accept(visitor interfaceVisitor) error {
 		if strings.HasSuffix(name, "Getter") {
 			err = visitor.visitorResourceGetterConcreatStruct(name, g.spec.buf)
 		} else if strings.HasSuffix(name, "Interface") {
-			err = visitor.visitorResourceGetterConcreatStruct(name, g.spec.buf)
+			err = visitor.visitorInterfaceConcreatStruct(name, g.spec.buf)
 		}
 		if err != nil {
 			visitor.onError(err)

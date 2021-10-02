@@ -5,6 +5,7 @@ go 1.16
 require (
 	bou.ke/monkey v1.0.2 // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20210818095345-1014919a589c
+	github.com/dave/jennifer v1.4.1 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.9.0
 	github.com/ghodss/yaml v1.0.0

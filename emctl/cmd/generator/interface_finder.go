@@ -18,6 +18,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -32,7 +33,7 @@ type interfaceFinder struct {
 }
 
 func newInterfaceFinder(filename string) *interfaceFinder {
-	return &interfaceFinder{filename: filename}
+	return &interfaceFinder{filename: filename, typeNames: make(map[string]string)}
 }
 
 func (i *interfaceFinder) parseFile() error {
@@ -52,6 +53,8 @@ func (i *interfaceFinder) parseFile() error {
 		if _, ok := ts.Type.(*ast.InterfaceType); !ok {
 			return true
 		}
+
+		fmt.Printf("ts.Name.Name is %s\n", ts.Name.Name)
 
 		i.typeNames[ts.Name.Name] = ts.Name.Name
 

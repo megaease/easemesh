@@ -68,11 +68,6 @@ type LoadbalanceGetter interface {
 	LoadBalance() LoadBalanceInterface
 }
 
-// CanaryGetter represents a Canary resource accessor
-type CanaryGetter interface {
-	Canary() CanaryInterface
-}
-
 // ObservabilityGetter represents an Observability resource accessor
 type ObservabilityGetter interface {
 	ObservabilityTracings() ObservabilityTracingInterface
@@ -141,15 +136,6 @@ type LoadBalanceInterface interface {
 	Create(context.Context, *resource.LoadBalance) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.LoadBalance, error)
-}
-
-// CanaryInterface captures the set of operations for interacting with the EaseMesh REST apis of the canaray resource.
-type CanaryInterface interface {
-	Get(context.Context, string) (*resource.Canary, error)
-	Patch(context.Context, *resource.Canary) error
-	Create(context.Context, *resource.Canary) error
-	Delete(context.Context, string) error
-	List(context.Context) ([]*resource.Canary, error)
 }
 
 // ObservabilityOutputServerInterface captures the set of operations for interacting with the EaseMesh REST apis of the observability output server resource.
