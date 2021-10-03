@@ -30,6 +30,7 @@ type interfaceFinder struct {
 	filename  string
 	found     []*ast.TypeSpec
 	typeNames map[string]string
+	imports   []*ast.ImportSpec
 }
 
 func newInterfaceFinder(filename string) *interfaceFinder {
@@ -67,7 +68,7 @@ func (i *interfaceFinder) parseFile() error {
 	if err != nil {
 		return errors.Wrapf(err, "parse file %s", i.filename)
 	}
-
+	i.imports = node.Imports
 	ast.Inspect(node, find)
 	return nil
 }

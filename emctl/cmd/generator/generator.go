@@ -55,11 +55,11 @@ func newGenerator(spec *interfaceFileSpec) *generator {
 }
 
 type interfaceVisitor interface {
-	visitorBegin(buf *jen.File) error
+	visitorBegin(buf *jen.File, imports []*ast.ImportSpec) error
 	visitorResourceGetterConcreatStruct(name string, buf *jen.File) error
 	visitorInterfaceConcreatStruct(name string, buf *jen.File) error
-	visitorResourceGetterMethod(name string, method *ast.Field, buf *jen.File) error
-	visitorIntrefaceMethod(verb Verb, method *ast.Field, buf *jen.File) error
+	visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, buf *jen.File) error
+	visitorIntrefaceMethod(verb Verb, method *ast.Field, imports []*ast.ImportSpec, buf *jen.File) error
 	visitorEnd(buf *jen.File) error
 	onError(e error)
 }
@@ -76,7 +76,7 @@ func (g *generator) accept(visitor interfaceVisitor) error {
 		visitor.onError(err)
 		return errors.Wrapf(err, "parseFile error")
 	}
-	err = visitor.visitorBegin(g.spec.buf)
+	err = visitor.visitorBegin(g.spec.buf, g.finder.imports)
 	if err != nil {
 		visitor.onError(err)
 		return errors.Wrapf(err, "visitorBegin failed")
@@ -105,7 +105,7 @@ func (g *generator) accept(visitor interfaceVisitor) error {
 						visitor.onError(err)
 						return err
 					}
-					err = visitor.visitorResourceGetterMethod(method.Names[0].Name, method, g.spec.buf)
+					err = visitor.visitorResourceGetterMethod(method.Names[0].Name, method, g.finder.imports, g.spec.buf)
 					if err != nil {
 						visitor.onError(err)
 						return errors.Wrapf(err, "visitorResourceGetterMethod name:%s, method:%+v error", method.Names[0].Name, *method)
@@ -120,7 +120,7 @@ func (g *generator) accept(visitor interfaceVisitor) error {
 						visitor.onError(err)
 						return err
 					}
-					err = visitor.visitorIntrefaceMethod(Verb(method.Names[0].Name), method, g.spec.buf)
+					err = visitor.visitorIntrefaceMethod(Verb(method.Names[0].Name), method, g.finder.imports, g.spec.buf)
 					if err != nil {
 						visitor.onError(err)
 						return errors.Wrapf(err, "visitorInterfaceMethod name:%s, method:%+v error", method.Names[0].Name, *method)

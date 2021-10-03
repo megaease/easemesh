@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	resource "github.com/megaease/cmd/client/resource"
 	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
-	http "http"
+	"net/http"
 )
 
 type canaryGetter struct {
@@ -22,11 +22,11 @@ type canaryInterface struct {
 func (c *canaryGetter) Canary() CanaryInterface {
 	return &canaryInterface{client: c.client}
 }
-func (c *canaryInterface) Get(args_0 context.Context, args_1 string) error {
+func (c *canaryInterface) Get(args_0 context.Context, args_1 string) (*resource.Canary, error) {
 	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
 	r, err := client.NewHTTPJSON().GetByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "unmarshal data to v1alpha1.canary")
+			return nil, errors.Wrapf(NotFoundError, "get canary %s", args_1)
 		}
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, b)
@@ -42,4 +42,71 @@ func (c *canaryInterface) Get(args_0 context.Context, args_1 string) error {
 		return nil, err
 	}
 	return r.(*resource.Canary), nil
+}
+func (c *canaryInterface) Patch(args_0 context.Context, args_1 *resource.Canary) error {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
+	object := args_1.ToV1Alpha1()
+	_, err := client.NewHTTPJSON().PutByContext(args_0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "patch canary %s", args_1.Name())
+		}
+		if statusCode < 300 && statusCode >= 200 {
+			return nil, nil
+		}
+		return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %+v", url, statusCode, b)
+	})
+	return err
+}
+func (c *canaryInterface) Create(args_0 context.Context, args_1 *resource.Canary) error {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
+	_, err := client.NewHTTPJSON().DeleteByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "Delete canary %s", args_1)
+		}
+		if statusCode < 300 && statusCode >= 200 {
+			return nil, nil
+		}
+		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, b)
+	})
+	return err
+}
+func (c *canaryInterface) Delete(args_0 context.Context, args_1 string) error {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
+	_, err := client.NewHTTPJSON().DeleteByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "Delete canary %s", args_1)
+		}
+		if statusCode < 300 && statusCode >= 200 {
+			return nil, nil
+		}
+		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, b)
+	})
+	return err
+}
+func (c *canaryInterface) List(args_0 context.Context) ([]*resource.Canary, error) {
+	url := "http://" + c.client.server + apiURL + "/mesh/services"
+	result, err := client.NewHTTPJSON().GetByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "list service")
+		}
+		if statusCode >= 300 && statusCode < 200 {
+			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
+		}
+		services := []v1alpha1.Service{}
+		err := json.Unmarshal(b, &services)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+		}
+		results := []*resource.Canary{}
+		for _, service := range services {
+			if service.Canary != nil {
+				results = append(results, resource.ToCanary(service.Name, service.Canary))
+			}
+		}
+		return results, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.([]*resource.Canary), nil
 }
