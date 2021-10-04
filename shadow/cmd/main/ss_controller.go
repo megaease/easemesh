@@ -23,9 +23,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/megaease/easemesh/mesh-shadow/cmd/main/rcfile"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/common"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/controller"
+	"github.com/megaease/easemeshctl/cmd/client/command/rcfile"
 
 	// load all auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
