@@ -1,4 +1,4 @@
-//go:generate go run github.com/megaease/easemeshctl/cmd/generator canary
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer canary
 
 /*
  * Copyright (c) 2017, MegaEase
