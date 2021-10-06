@@ -20,7 +20,7 @@ TARGET = ${MKFILE_DIR}/bin/easemesh-shadowservice-controller
 build: vet ${TARGET}
 ${TARGET}: ${ALL_FILES}
 	@cd ${MKFILE_DIR} && \
-	go build ${GO_BUILD_FLAGS}\
+	CGO_ENABLED=0 go build ${GO_BUILD_FLAGS}\
   	-o ${TARGET} ${MKFILE_DIR}/cmd/main
 
 

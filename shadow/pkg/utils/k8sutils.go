@@ -19,7 +19,6 @@ package utils
 
 import (
 	"context"
-	"path"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -39,21 +37,10 @@ import (
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	DefaultKubeDir          = ".kube"
-	DefaultKubernetesConfig = "config"
-)
-
-var (
-	DefaultKubernetesConfigDir  = path.Join(homedir.HomeDir(), DefaultKubeDir)
-	DefaultKubernetesConfigPath = path.Join(DefaultKubernetesConfigDir, DefaultKubernetesConfig)
 )
 
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	kubeConfig, err := ctrl.GetConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +53,7 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 }
 
 func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
-	kubeConfig, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	kubeConfig, err := ctrl.GetConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +78,7 @@ func NewRuntimeClient() (client.Client, error) {
 }
 
 func NewCRDRestClient() (*rest.RESTClient, error) {
-
-	k8sConfig, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	kubeConfig, err := ctrl.GetConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +87,7 @@ func NewCRDRestClient() (*rest.RESTClient, error) {
 		return nil, err
 	}
 
-	crdConfig := *k8sConfig
+	crdConfig := *kubeConfig
 	crdConfig.ContentConfig.GroupVersion = &schema.GroupVersion{Group: v1beta1.GroupVersion.Group, Version: v1beta1.GroupVersion.Version}
 	crdConfig.APIPath = "/apis"
 	crdConfig.NegotiatedSerializer = serializer.NewCodecFactory(scheme.Scheme)
