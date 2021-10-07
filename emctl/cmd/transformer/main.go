@@ -21,6 +21,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/megaease/easemeshctl/cmd/common"
@@ -31,13 +32,26 @@ func main() {
 
 	flag.Parse()
 
-	resourceName := flag.Arg(0)
-	if resourceName == "" {
-		common.ExitWithErrorf("usage: generator <resourceName>")
+	resourceType := flag.Arg(0)
+	if resourceType == "" {
+		common.ExitWithErrorf("usage: generator <resourceType> [resource=url]")
 	}
 
-	spec := initialSpec(resourceName)
-	err := generator.New(spec).Accept(generator.NewVisitor(spec.ResourceName))
+	var resourceMappings []string
+	if len(flag.Args()) > 1 {
+		resourceMappings = flag.Args()[1:]
+	}
+
+	var subResource = ""
+	if strings.Contains(resourceType, ".") {
+		r := strings.Split(resourceType, ".")
+		resourceType = r[0]
+		subResource = r[1]
+
+	}
+
+	spec := initialSpec(generator.ResourceType(resourceType), subResource, resourceMappings)
+	err := generator.New(spec).Accept(generator.NewVisitor(generator.ResourceType(spec.ResourceType)))
 	if err != nil {
 		common.ExitWithError(err)
 	}
@@ -48,7 +62,7 @@ func main() {
 	}
 }
 
-func initialSpec(resourceName string) *generator.InterfaceFileSpec {
+func initialSpec(resourceName generator.ResourceType, subResource string, mapping []string) *generator.InterfaceFileSpec {
 
 	spec := generator.InterfaceFileSpec{}
 	// Get the package of the file with go:generate comment
@@ -58,7 +72,22 @@ func initialSpec(resourceName string) *generator.InterfaceFileSpec {
 	spec.PkgName = goPackage
 	ext := filepath.Ext(spec.SourceFile)
 	baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
-	spec.GenerateFileName = baseFilename + "_gen.go"
-	spec.ResourceName = resourceName
+	spec.GenerateFileName = "zz_" + baseFilename + "_gen.go"
+	spec.ResourceType = resourceName
+	spec.ResourceMapping = extractResourceMapping(mapping)
+	spec.SubResource = subResource
 	return &spec
+}
+
+func extractResourceMapping(mappings []string) map[string]string {
+	result := make(map[string]string)
+	for _, mapping := range mappings {
+		r := strings.Split(mapping, "=")
+		if len(r) == 2 {
+			result[r[0]] = r[1]
+		} else {
+			result[r[0]] = r[0]
+		}
+	}
+	return result
 }

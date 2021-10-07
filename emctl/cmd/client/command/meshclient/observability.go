@@ -34,10 +34,10 @@ type observabilityGetter struct {
 	client *meshClient
 }
 
-func (o *observabilityGetter) ObservabilityTracings() ObservabilityTracingInterface {
+func (o *observabilityGetter) ObservabilityTracings() ObservabilityTracingsInterface {
 	return &observabilityTracingInterface{client: o.client}
 }
-func (o *observabilityGetter) ObservabilityMetrics() ObservabilityMetricInterface {
+func (o *observabilityGetter) ObservabilityMetrics() ObservabilityMetricsInterface {
 	return &observabilityMetricInterface{client: o.client}
 }
 func (o *observabilityGetter) ObservabilityOutputServer() ObservabilityOutputServerInterface {

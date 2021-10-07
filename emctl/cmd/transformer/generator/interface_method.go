@@ -18,6 +18,7 @@
 package generator
 
 import (
+	"bytes"
 	"go/ast"
 	"strings"
 
@@ -36,14 +37,16 @@ type (
 
 	interfaceBuilder struct{}
 
-	genCodeFactory func() jen.Code
-
-	buildInfo struct {
-		resourceName        string
+	genCodeFactory  func(string) jen.Code
+	resourceFetcher func(arguments, results []jen.Code) (string, error)
+	buildInfo       struct {
 		interfaceStructName string
 		method              *ast.Field
 		imports             []*ast.ImportSpec
 		buf                 *jen.File
+		resourceType        ResourceType
+		subResource         string
+		resource2UrlMapping map[string]string
 	}
 )
 
@@ -56,19 +59,25 @@ const (
 	resourcePkg = "github.com/megaease/easemeshctl/cmd/client/resource"
 )
 
-func (g genCodeFactory) generate() jen.Code {
-	return g()
+func (g genCodeFactory) generate(resourceName string) jen.Code {
+	return g(resourceName)
 }
 
+func (r resourceFetcher) do(arguments, results []jen.Code) (string, error) {
+	if r == nil {
+		return "", errors.Errorf("fetcher can't be nil")
+	}
+	return r(arguments, results)
+}
 func (i *interfaceBuilder) buildGetMethod(info *buildInfo) (err error) {
 	factories := []genCodeFactory{
-		buildURLStatement(info.resourceName, info.interfaceStructName),
-		buildGetByContextHTTPCallStatement(info.resourceName, info.interfaceStructName),
-		buildJudgeResponseStatement(info.resourceName, info.interfaceStructName),
-		buildReturnStatement(info.resourceName, info.interfaceStructName),
+		buildURLStatement(info),
+		buildGetByContextHTTPCallStatement(info),
+		buildJudgeResponseStatement(info),
+		buildReturnStatement(info),
 	}
 
-	err = i.buildCommonMethodBody(info, factories)
+	err = i.buildCommonMethodBody(info, factories, readMethodFetcher)
 	if err != nil {
 		return errors.Wrapf(err, "build get method of the interface error")
 	}
@@ -77,12 +86,12 @@ func (i *interfaceBuilder) buildGetMethod(info *buildInfo) (err error) {
 
 func (i *interfaceBuilder) buildPatchMethod(info *buildInfo) (err error) {
 	factories := []genCodeFactory{
-		buildURLStatement(info.resourceName, info.interfaceStructName),
-		buildResourceToObjectStatement(info.resourceName, info.interfaceStructName),
-		buildPutByContextStatement(info.resourceName, info.interfaceStructName),
-		buildReturnErrStatement(info.resourceName, info.interfaceStructName),
+		buildURLStatement(info),
+		buildResourceToObjectStatement(info),
+		buildPutByContextStatement(info),
+		buildReturnErrStatement(info),
 	}
-	err = i.buildCommonMethodBody(info, factories)
+	err = i.buildCommonMethodBody(info, factories, writeMethodFetcher)
 	if err != nil {
 		return errors.Wrapf(err, "build patch method of the interface error")
 	}
@@ -92,11 +101,11 @@ func (i *interfaceBuilder) buildPatchMethod(info *buildInfo) (err error) {
 func (i *interfaceBuilder) buildCreateMethod(info *buildInfo) (err error) {
 
 	factories := []genCodeFactory{
-		buildURLStatement(info.resourceName, info.interfaceStructName),
-		buildCreateByContextStatement(info.resourceName, info.interfaceStructName),
-		buildReturnErrStatement(info.resourceName, info.interfaceStructName),
+		buildURLStatement(info),
+		buildCreateByContextStatement(info),
+		buildReturnErrStatement(info),
 	}
-	err = i.buildCommonMethodBody(info, factories)
+	err = i.buildCommonMethodBody(info, factories, writeMethodFetcher)
 	if err != nil {
 		return errors.Wrapf(err, "build create method of the interface error")
 	}
@@ -106,11 +115,13 @@ func (i *interfaceBuilder) buildCreateMethod(info *buildInfo) (err error) {
 func (i *interfaceBuilder) buildDeleteMethod(info *buildInfo) (err error) {
 
 	factories := []genCodeFactory{
-		buildURLStatement(info.resourceName, info.interfaceStructName),
-		buildDeleteByContextStatement(info.resourceName, info.interfaceStructName),
-		buildReturnErrStatement(info.resourceName, info.interfaceStructName),
+		buildURLStatement(info),
+		buildDeleteByContextStatement(info),
+		buildReturnErrStatement(info),
 	}
-	err = i.buildCommonMethodBody(info, factories)
+
+	err = i.buildCommonMethodBody(info, factories, deleteMethodFetcher(info.interfaceStructName))
+
 	if err != nil {
 		return errors.Wrapf(err, "build delete method of the interface error")
 	}
@@ -120,19 +131,19 @@ func (i *interfaceBuilder) buildDeleteMethod(info *buildInfo) (err error) {
 
 func (i *interfaceBuilder) buildListMethod(info *buildInfo) error {
 	factories := []genCodeFactory{
-		buildListURLStatement(info.resourceName, info.interfaceStructName),
-		buildListByContextStatement(info.resourceName, info.interfaceStructName),
-		buildListJudgeErrReturnStatement(info.resourceName, info.interfaceStructName),
-		buildListReturnStatement(info.resourceName, info.interfaceStructName),
+		buildListURLStatement(info),
+		buildListByContextStatement(info),
+		buildListJudgeErrReturnStatement(info),
+		buildListReturnStatement(info),
 	}
-	err := i.buildCommonMethodBody(info, factories)
+	err := i.buildCommonMethodBody(info, factories, readMethodFetcher)
 	if err != nil {
 		return errors.Wrapf(err, "build list method of the interface error")
 	}
 	return nil
 }
 
-func (i *interfaceBuilder) buildCommonMethodBody(info *buildInfo, factories []genCodeFactory) (err error) {
+func (i *interfaceBuilder) buildCommonMethodBody(info *buildInfo, factories []genCodeFactory, fetcher resourceFetcher) (err error) {
 	var arguments, results []jen.Code
 	var funcName string
 	err = covertFuncType(info.method, info.imports).
@@ -142,45 +153,52 @@ func (i *interfaceBuilder) buildCommonMethodBody(info *buildInfo, factories []ge
 		error()
 
 	if err != nil {
-		return errors.Wrapf(err, "extract arguments and result fo the %s interface error", info.resourceName)
+		return errors.Wrapf(err, "extract arguments and result fo the interface error")
+	}
+
+	resourceName, err := fetcher.do(arguments, results)
+	if err != nil {
+		return errors.Wrapf(err, "fetch resource name failed")
 	}
 
 	info.buf.Func().Params(
-		jen.Id(string(info.resourceName[0])).Op("*").Id(info.interfaceStructName),
+		jen.Id(string(info.interfaceStructName[0])).Op("*").Id(info.interfaceStructName),
 	).Id(funcName).Params(arguments...).Params(results...).BlockFunc(func(g *jen.Group) {
-		err = i.buildMethodBody(factories, g)
+		err = i.buildMethodBody(resourceName, factories, g)
 	})
 	if err != nil {
-		return errors.Wrapf(err, "build body of the %s interface method", info.resourceName)
+		return errors.Wrapf(err, "build body of the %s interface method", resourceName)
 	}
 	return nil
 }
 
-func (i *interfaceBuilder) buildMethodBody(factories []genCodeFactory, g *jen.Group) error {
+func (i *interfaceBuilder) buildMethodBody(resourceName string, factories []genCodeFactory, g *jen.Group) error {
 	for _, factory := range factories {
-		g.Add(factory.generate())
+		g.Add(factory.generate(resourceName))
 	}
 	return nil
 }
-func buildURLStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildURLStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
+		resourceFirstName := strings.ToLower(resourceName[0:1])
+
 		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(
 			jen.Lit("http://").Op("+").
-				Id("c").Dot("client").Dot("server").
+				Id(resourceFirstName).Dot("client").Dot("server").
 				Op("+").Id("apiURL").Op("+").Lit("/mesh/services/%s/").Op("+").Lit(resourceName),
 			jen.Id("args_1"),
 		)
 	}
 }
-func buildResourceToObjectStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildResourceToObjectStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.Id("object").Op(":=").Id("args_1").Dot("ToV1Alpha1").Call()
 	}
 }
 
-func buildGetByContextHTTPCallStatement(resourceName, interfaceStructName string) func() jen.Code {
-	capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
-	return func() jen.Code {
+func buildGetByContextHTTPCallStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
+		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
 		return jen.Id("r").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("GetByContext").Call(
@@ -230,24 +248,24 @@ func buildGetByContextHTTPCallStatement(resourceName, interfaceStructName string
 	}
 }
 
-func buildJudgeResponseStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildJudgeResponseStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.If(jen.Id("err").Op("!=").Nil()).Block(
 			jen.Return(jen.Nil(), jen.Id("err")),
 		)
 	}
 }
 
-func buildReturnStatement(resourceName, interfaceStructName string) func() jen.Code {
-	capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
-	return func() jen.Code {
+func buildReturnStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
+		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
 		return jen.Return(jen.Id("r").Op(".").Parens(jen.Op("*").Qual(resourcePkg, capResourceName)).Op(",").Nil())
 	}
 }
 
-func buildPutByContextStatement(resourceName, interfaceStructName string) func() jen.Code {
+func buildPutByContextStatement(info *buildInfo) func(string) jen.Code {
 
-	return func() jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("PutByContext").Call(
@@ -284,14 +302,14 @@ func buildPutByContextStatement(resourceName, interfaceStructName string) func()
 	}
 }
 
-func buildReturnErrStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildReturnErrStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.Return(jen.Id("err"))
 	}
 }
 
-func buildDeleteByContextStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildDeleteByContextStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("DeleteByContext").Call(
@@ -327,8 +345,8 @@ func buildDeleteByContextStatement(resourceName, interfaceStructName string) fun
 	}
 }
 
-func buildCreateByContextStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildCreateByContextStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("PostByContext").Call(
@@ -364,16 +382,17 @@ func buildCreateByContextStatement(resourceName, interfaceStructName string) fun
 	}
 }
 
-func buildListURLStatement(resourceName, interfaceStructName string) func() jen.Code {
-	return func() jen.Code {
+func buildListURLStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
+		resourceFirstName := strings.ToLower(resourceName[0:1])
 		return jen.Id("url").Op(":=").Lit("http://").Op("+").
-			Id("c").Dot("client").Dot("server").
+			Id(resourceFirstName).Dot("client").Dot("server").
 			Op("+").Id("apiURL").Op("+").Lit("/mesh/services")
 	}
 }
-func buildListByContextStatement(resourceName, interfaceStructName string) func() jen.Code {
-	capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
-	return func() jen.Code {
+func buildListByContextStatement(info *buildInfo) func(string) jen.Code {
+	return func(resourceName string) jen.Code {
+		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
 		return jen.Id("result").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("GetByContext").Call(
@@ -432,18 +451,76 @@ func buildListByContextStatement(resourceName, interfaceStructName string) func(
 	}
 }
 
-func buildListJudgeErrReturnStatement(resourceName, interfaceStructName string) func() jen.Code {
+func buildListJudgeErrReturnStatement(info *buildInfo) func(string) jen.Code {
 
-	return func() jen.Code {
+	return func(resourceName string) jen.Code {
 		return jen.If(jen.Id("err").Op("!=").Nil().Block(
 			jen.Return(jen.Nil(), jen.Id("err")),
 		))
 	}
 }
-func buildListReturnStatement(resourceName, interfaceStructName string) func() jen.Code {
+func buildListReturnStatement(info *buildInfo) func(string) jen.Code {
 
-	capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
-	return func() jen.Code {
+	return func(resourceName string) jen.Code {
+		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
 		return jen.Return(jen.Id("result").Op(".").Parens(jen.Op("[]").Op("*").Qual(resourcePkg, capResourceName)), jen.Nil())
+	}
+}
+
+func readMethodFetcher(arguments, results []jen.Code) (string, error) {
+	if len(results) < 2 {
+		return "", errors.Errorf("read method should return two arguments")
+	}
+	return extractResourceName(results[0])
+}
+
+func writeMethodFetcher(arguments, results []jen.Code) (string, error) {
+	if len(arguments) < 2 {
+		return "", errors.Errorf("read method should return two arguments")
+	}
+	return extractResourceName(arguments[1])
+}
+
+func extractResourceName(statement jen.Code) (string, error) {
+	buf := &bytes.Buffer{}
+
+	s, ok := statement.(*jen.Statement)
+	if !ok {
+		return "", errors.Errorf("code should be a statements, but %+v", statement)
+	}
+
+	s1 := *s
+
+	// Add {} to suppress render error
+	s1.Block()
+	err := s1.Render(buf)
+	if err != nil {
+		return "", errors.Wrapf(err, "can not render statement:%+v", *s)
+	}
+
+	sections := strings.Split(string(buf.Bytes()), "resource.")
+	if len(sections) < 1 {
+		return "", errors.Errorf("rendered statement should contains 'resource.' but %s", string(buf.Bytes()))
+	}
+
+	// Trimming added {}
+	return strings.Trim(sections[len(sections)-1], "{}"), nil
+}
+
+// we extract resource name of delete method from interfaceStructName
+func deleteMethodFetcher(interfaceStructName string) resourceFetcher {
+	var resourceName string
+	result := strings.Split(interfaceStructName, "Interface")
+	var err error
+	if len(result) < 2 {
+		err = errors.Errorf("the interface name %s don't contain resource", interfaceStructName)
+	} else {
+		resourceName = result[0]
+	}
+
+	resourceName = strings.ToUpper(resourceName[0:1]) + resourceName[1:]
+
+	return func(arguments, results []jen.Code) (string, error) {
+		return resourceName, err
 	}
 }

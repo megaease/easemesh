@@ -28,53 +28,68 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Verb indicated how to access mesh resource
-type Verb string
-
-const (
-	// Get get a specific resource
-	Get Verb = "Get"
-	// List query a list of a kind of the mesh resource
-	List Verb = "List"
-	// Create create a mesh resource
-	Create Verb = "Create"
-	// Delete delete a specific mesh resource
-	Delete Verb = "Delete"
-	// Patch update a specific mesh resource
-	Patch Verb = "Patch"
-)
-
 type (
-	// InterfaceFileSpec hold the interface basic information to help visitor to generate concreate struct and method
+	// Verb indicated how to access mesh resource
+	Verb string
+	// ResourceType indicates what type of resource, there are three types of resources Global
+	// (tenant, service, ingress), Service (canary, loadbalance, resilience),
+	// ServiceSubresource (observabilityTracings, observabilityMetrics, observabilityOutputServer).
+	ResourceType string
+
+	// InterfaceFileSpec hold the interface basic information to help visitor to generate concreate struct and method.
 	InterfaceFileSpec struct {
 		Buf              *jen.File
 		Source           []*ast.TypeSpec
 		Writer           io.Writer
 		PkgName          string
-		ResourceName     string
+		ResourceType     ResourceType
+		SubResources     []string
 		GenerateFileName string
 		SourceFile       string
+		ResourceMapping  map[string]string
+		SubResource      string
 	}
 	generator struct {
 		spec   *InterfaceFileSpec
 		finder *interfaceFinder
 	}
 
-	// Generator is generate code
+	// Generator is generate code.
 	Generator interface {
 		Accept(visitor InterfaceVisitor) error
 	}
 
-	// InterfaceVisitor generate concret struct and method while traveling the interface
+	// InterfaceVisitor generate concret struct and method while traveling the interface.
 	InterfaceVisitor interface {
-		visitorBegin(buf *jen.File, imports []*ast.ImportSpec) error
-		visitorResourceGetterConcreatStruct(name string, buf *jen.File) error
-		visitorInterfaceConcreatStruct(name string, buf *jen.File) error
-		visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, buf *jen.File) error
-		visitorIntrefaceMethod(verb Verb, method *ast.Field, imports []*ast.ImportSpec, buf *jen.File) error
-		visitorEnd(buf *jen.File) error
+		visitorBegin(imports []*ast.ImportSpec, spec *InterfaceFileSpec) error
+		visitorResourceGetterConcreatStruct(name string, spec *InterfaceFileSpec) error
+		visitorInterfaceConcreatStruct(name string, spec *InterfaceFileSpec) error
+		visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error
+		visitorIntrefaceMethod(concreateStruct string, verb Verb, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error
+		visitorEnd(spec *InterfaceFileSpec) error
 		onError(e error)
 	}
+)
+
+const (
+	// Get get a specific resource.
+	Get Verb = "Get"
+	// List query a list of a kind of the mesh resource.
+	List Verb = "List"
+	// Create create a mesh resource.
+	Create Verb = "Create"
+	// Delete delete a specific mesh resource.
+	Delete Verb = "Delete"
+	// Patch update a specific mesh resource.
+	Patch Verb = "Patch"
+
+	// Global indicates the resource is global resource.
+	Global ResourceType = "Global"
+	// Service indicates the resource is service resource.
+	Service ResourceType = "Service"
+
+	//CustomResource indicates the resource is the custom resource.
+	CustomResource ResourceType = "CustomResource"
 )
 
 // New create a code generator
@@ -94,7 +109,7 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 		visitor.onError(err)
 		return errors.Wrapf(err, "parseFile error")
 	}
-	err = visitor.visitorBegin(g.spec.Buf, g.finder.imports)
+	err = visitor.visitorBegin(g.finder.imports, g.spec)
 	if err != nil {
 		visitor.onError(err)
 		return errors.Wrapf(err, "visitorBegin failed")
@@ -103,9 +118,9 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 	for _, name := range g.finder.typeNameResults() {
 		name = lowerFirstChar(name)
 		if strings.HasSuffix(name, "Getter") {
-			err = visitor.visitorResourceGetterConcreatStruct(name, g.spec.Buf)
+			err = visitor.visitorResourceGetterConcreatStruct(name, g.spec)
 		} else if strings.HasSuffix(name, "Interface") {
-			err = visitor.visitorInterfaceConcreatStruct(name, g.spec.Buf)
+			err = visitor.visitorInterfaceConcreatStruct(name, g.spec)
 		}
 		if err != nil {
 			visitor.onError(err)
@@ -123,7 +138,7 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 						visitor.onError(err)
 						return err
 					}
-					err = visitor.visitorResourceGetterMethod(method.Names[0].Name, method, g.finder.imports, g.spec.Buf)
+					err = visitor.visitorResourceGetterMethod(method.Names[0].Name, method, g.finder.imports, g.spec)
 					if err != nil {
 						visitor.onError(err)
 						return errors.Wrapf(err, "visitorResourceGetterMethod name:%s, method:%+v error", method.Names[0].Name, *method)
@@ -138,7 +153,7 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 						visitor.onError(err)
 						return err
 					}
-					err = visitor.visitorIntrefaceMethod(Verb(method.Names[0].Name), method, g.finder.imports, g.spec.Buf)
+					err = visitor.visitorIntrefaceMethod(name, Verb(method.Names[0].Name), method, g.finder.imports, g.spec)
 					if err != nil {
 						visitor.onError(err)
 						return errors.Wrapf(err, "visitorInterfaceMethod name:%s, method:%+v error", method.Names[0].Name, *method)
@@ -149,7 +164,7 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 		}
 	}
 
-	err = visitor.visitorEnd(g.spec.Buf)
+	err = visitor.visitorEnd(g.spec)
 	if err != nil {
 		visitor.onError(err)
 		return errors.Wrapf(err, "visitorEnd failed")

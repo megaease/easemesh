@@ -124,12 +124,12 @@ func (f *fakeV1alpha1) Canary() CanaryInterface {
 	return &fakeCanaryGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
 		kind: resource.KindTenant}}
 }
-func (f *fakeV1alpha1) ObservabilityTracings() ObservabilityTracingInterface {
+func (f *fakeV1alpha1) ObservabilityTracings() ObservabilityTracingsInterface {
 	return &fakeObservabilityTracingGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
 		kind: resource.KindTenant}}
 }
 
-func (f *fakeV1alpha1) ObservabilityMetrics() ObservabilityMetricInterface {
+func (f *fakeV1alpha1) ObservabilityMetrics() ObservabilityMetricsInterface {
 	return &fakeObservabilityMetricGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
 		kind: resource.KindTenant}}
 }
