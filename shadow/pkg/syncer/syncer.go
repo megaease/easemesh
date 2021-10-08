@@ -26,12 +26,11 @@ import (
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 )
 
-// Syncer syncs data from Etcd, it uses an Etcd watcher to receive update.
-// The syncer keeps a full copy of data, and keeps apply changes onto it when an
-// update event is received from the watcher, and then send out the full data copy.
-// The syncer also pulls full data from Etcd at a configurable pull interval, this
-// is to ensure data consistency, as Etcd watcher may be cancelled if it cannot catch
-// up with the key-value store.
+// Syncer syncs data from EaseMesh control plane, it uses a watcher to receive ShadowService object.
+// It sends out the full data copy when ShadowService object is received from the watcher.
+// The syncer also pulls full data from EaseMesh control plane at a configurable pull interval, this
+// is to ensure data consistency, as EaseMesh control plane watcher may be cancelled if it cannot catch
+// up with the ShadowService object.
 
 type ShadowServiceSyncer struct {
 	server       *Server

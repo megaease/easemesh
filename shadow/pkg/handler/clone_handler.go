@@ -21,7 +21,7 @@ package handler
 import (
 	"log"
 
-	"github.com/megaease/easemesh/mesh-shadow/pkg/object/v1beta1"
+	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -56,7 +56,7 @@ type Cloner interface {
 }
 
 type ShadowServiceCloner struct {
-	KubeClient    *kubernetes.Clientset
+	KubeClient    kubernetes.Interface
 	RunTimeClient *client.Client
 	CRDClient     *rest.RESTClient
 }

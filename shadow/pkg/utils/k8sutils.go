@@ -20,10 +20,7 @@ package utils
 import (
 	"context"
 
-	"github.com/megaease/easemesh/mesh-shadow/pkg/object/v1beta1"
 	appsV1 "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,6 +34,8 @@ import (
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+
+	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 )
 
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
@@ -50,19 +49,6 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 	return kubeClient, nil
-}
-
-func NewKubernetesAPIExtensionsClient() (*apiextensions.Clientset, error) {
-	kubeConfig, err := ctrl.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	clientset, err := apiextensions.NewForConfig(kubeConfig)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
 }
 
 func NewRuntimeClient() (client.Client, error) {
@@ -98,7 +84,6 @@ func NewCRDRestClient() (*rest.RESTClient, error) {
 }
 
 func ListMeshDeployment(namespace string, client *rest.RESTClient, options metav1.ListOptions) (*v1beta1.MeshDeploymentList, error) {
-
 	result := v1beta1.MeshDeploymentList{}
 	err := client.
 		Get().
@@ -151,37 +136,12 @@ func UpdateMeshDeployment(namespace string, meshDeployment v1beta1.MeshDeploymen
 	return &result, err
 }
 
-func GetNamespace(name string, clientSet *kubernetes.Clientset) (*v1.Namespace, error) {
-	namespace, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
-	return namespace, err
-}
-
-func CreateNamespace(namespace *v1.Namespace, clientSet *kubernetes.Clientset) error {
-	_, err := clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace.Name, metav1.GetOptions{})
-	if err != nil && errors.IsNotFound(err) {
-		_, err := clientSet.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
-		if err != nil && errors.IsAlreadyExists(err) {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func ListDeployments(namespace string, clientSet *kubernetes.Clientset, options metav1.ListOptions) ([]appsV1.Deployment, error) {
+func ListDeployments(namespace string, clientSet kubernetes.Interface, options metav1.ListOptions) ([]appsV1.Deployment, error) {
 	deploymentList, err := clientSet.AppsV1().Deployments(namespace).List(context.TODO(), options)
 	if err != nil {
 		return nil, err
 	}
 	return deploymentList.Items, nil
-}
-
-func GetDeployments(namespace string, name string, clientSet *kubernetes.Clientset, options metav1.GetOptions) (*appsV1.Deployment, error) {
-	deployment, err := clientSet.AppsV1().Deployments(namespace).Get(context.TODO(), name, options)
-	if err != nil {
-		return nil, err
-	}
-	return deployment, nil
 }
 
 func applyResource(createFunc func() error, updateFunc func() error) error {
@@ -190,18 +150,6 @@ func applyResource(createFunc func() error, updateFunc func() error) error {
 		err = updateFunc()
 	}
 	return err
-}
-
-func DeployDeployment(deployment *appsV1.Deployment, clientSet *kubernetes.Clientset, namespace string) error {
-	return applyResource(
-		func() error {
-			_, err := clientSet.AppsV1().Deployments(namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
-			return err
-		},
-		func() error {
-			_, err := clientSet.AppsV1().Deployments(namespace).Update(context.TODO(), deployment, metav1.UpdateOptions{})
-			return err
-		})
 }
 
 func DeployMesheployment(namespace string, deployment *v1beta1.MeshDeployment, client *rest.RESTClient) error {

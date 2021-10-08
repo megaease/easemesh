@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package controller
 
 import (
@@ -24,6 +23,7 @@ import (
 	"github.com/megaease/easemesh/mesh-shadow/pkg/handler"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/syncer"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
+
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -41,7 +41,7 @@ type (
 	}
 
 	ShadowServiceController struct {
-		kubeClient    *kubernetes.Clientset
+		kubeClient    kubernetes.Interface
 		runTimeClient *client.Client
 		crdClient     *rest.RESTClient
 
@@ -102,23 +102,6 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	shadowServiceSyncer, err := syncer.NewSyncer(config.MeshServer, config.RequestTimeout, config.PullInterval)
 
 	return &ShadowServiceController{kubernetesClient, &runtimeClient, crdRestClient, shadowServiceSyncer, &shadowServiceCloner, &shadowServiceSearcher, cloneChan}, nil
-}
-
-func Init() {
-	// TODO:
-	// shadowServiceKind := object.CustomObjectKind{
-	// 	Name: ShadowServiceKind,
-	// 	JsonSchema: "{" +
-	// 		"\"name\": \"string\",  " +
-	// 		"\"namespace\": \"string\", " +
-	// 		"\"serviceName\": \"string\", " +
-	// 		"\"mysql\": {\"uris\": \"[]string\",\"userName\": \"string\", \"password\": \"string\"}, " +
-	// 		"\"kafka\": {\"uris\": \"[]string\"}, " +
-	// 		"\"redis\": {\"uris\": \"[]string\",\"userName\": \"string\", \"password\": \"string\"}, " +
-	// 		"\"rabbitMq\": {\"uris\": \"[]string\",\"userName\": \"string\", \"password\": \"string\"}, " +
-	// 		"\"elasticSearch\": {\"uris\": \"[]string\",\"userName\": \"string\", \"password\": \"string\"}" +
-	// 		"}",
-	// }
 }
 
 // Do start shadow service sync and clone.

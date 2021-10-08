@@ -18,8 +18,8 @@
 package handler
 
 import (
+	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
-	"github.com/megaease/easemesh/mesh-shadow/pkg/object/v1beta1"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
 	"github.com/pkg/errors"
 	appsV1 "k8s.io/api/apps/v1"

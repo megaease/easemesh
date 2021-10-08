@@ -22,7 +22,7 @@ import (
 	"reflect"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
-	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
+	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/pkg/errors"
 	appsV1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,7 +37,7 @@ type cloneDeploymentSpecFunc func(sourceDeployment *appsV1.Deployment, shadowSer
 func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
 	shadowDeployment := cloner.cloneDeploymentSpec(sourceDeployment, shadowService)
 	return func() error {
-		err := utils.DeployDeployment(shadowDeployment, cloner.KubeClient, shadowDeployment.Namespace)
+		err := installbase.DeployDeployment(shadowDeployment, cloner.KubeClient, shadowDeployment.Namespace)
 		if err != nil {
 			return errors.Wrapf(err, "Clone deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 		}
@@ -72,7 +72,7 @@ func (cloner *ShadowServiceCloner) injectShadowConfiguration(fn cloneDeploymentS
 		}
 
 		appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
-		appContainer, _ := findAppContainer(sourceDeployment.Spec.Template.Spec.Containers, appContainerName)
+		appContainer, _ := findContainer(sourceDeployment.Spec.Template.Spec.Containers, appContainerName)
 		appContainer.Env = injectEnvVars(appContainer.Env, newEnvs...)
 		deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
 		return deployment
@@ -81,7 +81,7 @@ func (cloner *ShadowServiceCloner) injectShadowConfiguration(fn cloneDeploymentS
 
 // findContainer returns the copy of the container,
 // which means it won't change the original container when changing the result.
-func findAppContainer(containers []corev1.Container, containerName string) (*corev1.Container, bool) {
+func findContainer(containers []corev1.Container, containerName string) (*corev1.Container, bool) {
 
 	if containerName == "" {
 		for i, c := range containers {

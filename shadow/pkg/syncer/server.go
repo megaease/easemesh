@@ -26,8 +26,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/megaease/easemesh/mesh-shadow/pkg/common/client"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
+	emctlclient "github.com/megaease/easemeshctl/cmd/common/client"
 	"github.com/pkg/errors"
 )
 
@@ -48,7 +48,7 @@ type Server struct {
 }
 
 func (server *Server) List(ctx context.Context, kind string) ([]object.ShadowService, error) {
-	jsonClient := client.NewHTTPJSON()
+	jsonClient := emctlclient.NewHTTPJSON()
 	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjectsURL, kind)
 	result, err := jsonClient.
 		GetByContext(ctx, url, nil, nil).

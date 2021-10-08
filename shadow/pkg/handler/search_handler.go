@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package handler
 
 import (
@@ -39,7 +38,7 @@ type Searcher interface {
 }
 
 type ShadowServiceDeploySearcher struct {
-	KubeClient    *kubernetes.Clientset
+	KubeClient    kubernetes.Interface
 	RunTimeClient *runTimeClient.Client
 	CRDClient     *rest.RESTClient
 	ResultChan    chan interface{}
@@ -91,7 +90,7 @@ func (searcher *ShadowServiceDeploySearcher) Search(obj interface{}) {
 			}
 		}
 	}
-	log.Printf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s, NameSpace: %s, " +
+	log.Printf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s, NameSpace: %s, "+
 		"ShadowService: %s", serviceName, namespace, shadowService.Name)
 }
 
