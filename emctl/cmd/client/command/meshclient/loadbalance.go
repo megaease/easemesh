@@ -1,4 +1,4 @@
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer loadBalance
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service
 /*
  * Copyright (c) 2017, MegaEase
  * All rights reserved.

@@ -30,7 +30,6 @@ type (
 	meshClientVisitor struct {
 		err          error
 		getterID     string
-		interfaceID  string
 		resourceType ResourceType
 		builder      interfaceMethodBuilder
 	}
@@ -53,7 +52,6 @@ func (m *meshClientVisitor) visitorBegin(imports []*ast.ImportSpec, spec *Interf
 	return nil
 }
 func (m *meshClientVisitor) visitorResourceGetterConcreatStruct(name string, spec *InterfaceFileSpec) error {
-	fmt.Printf("resourcegetter visitor\n")
 	spec.Buf.Type().Id(name).Struct(jen.Id("client").Qual("", "*meshClient"))
 	m.getterID = name
 	return nil
@@ -61,7 +59,6 @@ func (m *meshClientVisitor) visitorResourceGetterConcreatStruct(name string, spe
 func (m *meshClientVisitor) visitorInterfaceConcreatStruct(name string, spec *InterfaceFileSpec) error {
 	fmt.Printf("interface visitor\n")
 	spec.Buf.Type().Id(name).Struct(jen.Id("client").Qual("", "*meshClient"))
-	m.interfaceID = name
 	return nil
 }
 func (m *meshClientVisitor) visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
@@ -76,7 +73,8 @@ func (m *meshClientVisitor) visitorResourceGetterMethod(name string, method *ast
 	spec.Buf.Func().Params(
 		jen.Id(string(m.getterID[0])).Op("*").Id(m.getterID),
 	).Id(name).Params(arguments...).Params(results...).BlockFunc(func(grp *jen.Group) {
-		grp.Return(jen.Op("&").Id(m.interfaceID).Values(jen.Dict{
+		structName := strings.ToLower(name[0:1]) + name[1:] + "Interface"
+		grp.Return(jen.Op("&").Id(structName).Values(jen.Dict{
 			jen.Id("client"): jen.Id(strings.ToLower(name[0:1])).Dot("client"),
 		}))
 	})

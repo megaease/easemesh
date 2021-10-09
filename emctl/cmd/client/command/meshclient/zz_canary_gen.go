@@ -23,7 +23,7 @@ func (c *canaryGetter) Canary() CanaryInterface {
 	return &canaryInterface{client: c.client}
 }
 func (c *canaryInterface) Get(args_0 context.Context, args_1 string) (*resource.Canary, error) {
-	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"Canary", args_1)
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
 	r, err := client.NewHTTPJSON().GetByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get Canary %s", args_1)
@@ -44,7 +44,7 @@ func (c *canaryInterface) Get(args_0 context.Context, args_1 string) (*resource.
 	return r.(*resource.Canary), nil
 }
 func (c *canaryInterface) Patch(args_0 context.Context, args_1 *resource.Canary) error {
-	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"Canary", args_1)
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
 	object := args_1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args_0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
@@ -58,7 +58,7 @@ func (c *canaryInterface) Patch(args_0 context.Context, args_1 *resource.Canary)
 	return err
 }
 func (c *canaryInterface) Create(args_0 context.Context, args_1 *resource.Canary) error {
-	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"Canary", args_1)
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
 	_, err := client.NewHTTPJSON().PostByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Canary %s", args_1.Name())
@@ -71,7 +71,7 @@ func (c *canaryInterface) Create(args_0 context.Context, args_1 *resource.Canary
 	return err
 }
 func (c *canaryInterface) Delete(args_0 context.Context, args_1 string) error {
-	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"Canary", args_1)
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/services/%s/"+"canary", args_1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args_0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete Canary %s", args_1)

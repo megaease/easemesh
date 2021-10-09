@@ -1,4 +1,3 @@
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer tenant
 /*
  * Copyright (c) 2017, MegaEase
  * All rights reserved.
