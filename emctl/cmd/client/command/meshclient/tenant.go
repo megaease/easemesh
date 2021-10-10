@@ -1,4 +1,3 @@
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Global Ingress=ingress
 /*
  * Copyright (c) 2017, MegaEase
  * All rights reserved.
@@ -15,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Global Ingress=ingress
 
 package meshclient
 
