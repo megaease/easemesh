@@ -24,7 +24,7 @@ import (
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/common/client"
-	"sigs.k8s.io/yaml"
+	"gopkg.in/yaml.v2"
 
 	"github.com/pkg/errors"
 )
@@ -99,8 +99,6 @@ func (t *meshControllerInterface) Create(ctx context.Context, meshController *re
 	}
 
 	_, err = client.NewHTTPJSON().
-		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
-		// Current URL form should be corrected in the feature
 		PostByContext(ctx, url, create, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 			if statusCode == http.StatusConflict {

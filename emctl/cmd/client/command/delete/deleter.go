@@ -34,6 +34,8 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerDeleter{object: object.(*resource.MeshController), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindConsulServiceRegistry:
+		return &consulServiceRegistryDeleter{object: object.(*resource.ConsulServiceRegistry), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceDeleter{object: object.(*resource.Service), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindServiceInstance:
@@ -80,6 +82,17 @@ func (s *meshControllerDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
 	return s.client.V1Alpha1().MeshController().Delete(ctx, s.object.Name())
+}
+
+type consulServiceRegistryDeleter struct {
+	baseDeleter
+	object *resource.ConsulServiceRegistry
+}
+
+func (c *consulServiceRegistryDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
+	defer cancelFunc()
+	return c.client.V1Alpha1().ConsulServiceRegistry().Delete(ctx, c.object.Name())
 }
 
 type serviceDeleter struct {

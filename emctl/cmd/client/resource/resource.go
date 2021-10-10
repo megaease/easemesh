@@ -48,6 +48,9 @@ const (
 	// KindMeshController is mesh controller kind of the EaseMesh control plane.
 	KindMeshController = "MeshController"
 
+	// KindConsulServiceRegistry is consul service registry kind of EaseMesh control plane.
+	KindConsulServiceRegistry = "ConsulServiceRegistry"
+
 	// KindService is service kind of the EaseMesh resource
 	KindService = "Service"
 
@@ -116,6 +119,10 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 		return &MeshController{
 			MeshResource: NewMeshControllerResource(apiVersion, metaData.Name),
 		}, nil
+	case KindConsulServiceRegistry:
+		return &ConsulServiceRegistry{
+			MeshResource: NewConsulServiceRegistry(apiVersion, metaData.Name),
+		}, nil
 	case KindService:
 		return &Service{
 			MeshResource: NewServiceResource(apiVersion, metaData.Name),
@@ -170,6 +177,11 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 // NewMeshControllerResource returns a MeshResouce with the mesh controller kind.
 func NewMeshControllerResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindMeshController, name)
+}
+
+// NewConsulServiceRegistry returns a MeshResouce with the consul service registry kind.
+func NewConsulServiceRegistry(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindConsulServiceRegistry, name)
 }
 
 // NewIngressResource returns a MeshResource with the ingress kind
