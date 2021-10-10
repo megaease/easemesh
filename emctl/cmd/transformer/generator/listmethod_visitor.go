@@ -138,8 +138,23 @@ func serviceUnmarshalObject(resourceName, subResource string) (result []jen.Code
 	return
 }
 
-func globalUnmarshalObject(resourceName, subResource string) ([]jen.Code, error) {
-	return nil, nil
+func globalUnmarshalObject(resourceName, subResource string) (codes []jen.Code, err error) {
+	resourceVarName := strings.ToLower(resourceName[0:1]) + resourceName[1:]
+	def := jen.Id(resourceVarName).Op(":=").Op("[]").Qual(v1alpha1Pkg, resourceName).Op("{}")
+	codes = append(codes, def)
+
+	unmarshal := jen.Id("err").Op(":=").Qual("encoding/json", "Unmarshal").Call(
+		jen.Id("b"), jen.Op("&").Id(resourceVarName),
+	)
+
+	codes = append(codes, unmarshal)
+	judgeUnmarshal := jen.If(jen.Id("err").Op("!=").Nil()).Block(
+		jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
+			jen.Id("err"),
+			jen.Lit("unmarshal data to v1alpha1.")),
+		))
+	codes = append(codes, judgeUnmarshal)
+	return
 }
 
 func serviceResultAssign(resourceName, subResource string) (codes []jen.Code, err error) {
@@ -150,7 +165,7 @@ func serviceResultAssign(resourceName, subResource string) (codes []jen.Code, er
 
 	var stmtLoop jen.Code
 	if subResource != "" {
-		fields := strings.Split(subResource, resourceName)
+		fields := strings.Split(capResourceName, subResource)
 		if len(fields) != 2 {
 			err = errors.Errorf("resource %s must contain sub resource %s", capResourceName, subResource)
 			return
@@ -176,8 +191,16 @@ func serviceResultAssign(resourceName, subResource string) (codes []jen.Code, er
 	return
 }
 
-func globalResultAssign(resourceName, subResource string) ([]jen.Code, error) {
-	return nil, nil
+func globalResultAssign(resourceName, subResource string) (codes []jen.Code, err error) {
+	resourceVarName := strings.ToLower(resourceName[0:1]) + resourceName[1:]
+	def := jen.Id("results").Op(":=").Op("[]*").Qual(resourcePkg, resourceName).Block()
+	codes = append(codes, def)
+	forLoop := jen.For(jen.Id("_").Op(",").Id("item").Op(":=").Range().Id(resourceVarName)).Block(
+		jen.Id("copy").Op(":=").Id("item"),
+		jen.Id("results").Op("=").Append(jen.Id("results").Op(",").Qual(resourcePkg, "To"+resourceName).Call(jen.Op("&").Id("copy"))),
+	)
+	codes = append(codes, forLoop)
+	return
 }
 
 type statementBuilderFunc func(resourceName, subResource string) ([]jen.Code, error)

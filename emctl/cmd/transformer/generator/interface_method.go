@@ -239,9 +239,14 @@ func buildGetByContextHTTPCallStatement(info *buildInfo) func(string) (jen.Code,
 						jen.Lit("unmarshal data to v1alpha1."+resourceName)),
 					))
 
-				returnStmt := jen.Return(jen.Qual(resourcePkg, "To"+capResourceName).Call(
-					jen.Id("args_1"), jen.Id(resourceName),
-				).Op(",").Nil())
+				var returnStmt jen.Code
+				if info.resourceType == Global {
+					returnStmt = jen.Return(jen.Qual(resourcePkg, "To"+capResourceName).Call(jen.Id(resourceName)).Op(",").Nil())
+				} else {
+					returnStmt = jen.Return(jen.Qual(resourcePkg, "To"+capResourceName).Call(
+						jen.Id("args_1"), jen.Id(resourceName),
+					).Op(",").Nil())
+				}
 				g1.Add(stmt1)
 				g1.Add(stmt2)
 				g1.Add(stmt3)
@@ -410,7 +415,7 @@ func buildListByContextStatement(info *buildInfo) func(string) (jen.Code, error)
 				jen.Id("b").Op("[]").Byte(),
 				jen.Id("statusCode").Int(),
 			).Params(jen.Interface(), jen.Error()).BlockFunc(func(g1 *jen.Group) {
-				listMethodAcceptor(newListMethodVisitor(info.resourceType, resourceName, info.subResource, g1))
+				err = listMethodAcceptor(newListMethodVisitor(info.resourceType, resourceName, info.subResource, g1))
 			}),
 		)
 		if err != nil {
@@ -429,7 +434,6 @@ func buildListJudgeErrReturnStatement(info *buildInfo) func(string) (jen.Code, e
 	}
 }
 func buildListReturnStatement(info *buildInfo) func(string) (jen.Code, error) {
-
 	return func(resourceName string) (jen.Code, error) {
 		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
 		return jen.Return(jen.Id("result").Op(".").Parens(jen.Op("[]").Op("*").Qual(resourcePkg, capResourceName)), jen.Nil()), nil
@@ -495,7 +499,6 @@ func deleteMethodFetcher(interfaceStructName string) resourceFetcher {
 }
 
 func mappingURLFromResourceName(resourceName string, resource2UrlMapping map[string]string) string {
-
 	subURL := resourceName
 	if len(resource2UrlMapping) > 0 {
 		for k, v := range resource2UrlMapping {

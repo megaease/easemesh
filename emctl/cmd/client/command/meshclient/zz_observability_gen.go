@@ -109,6 +109,13 @@ func (o *observabilityOutputServerInterface) List(args_0 context.Context) ([]*re
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
+		results := []*resource.ObservabilityOutputServer{}
+		for _, service := range services {
+			if service.Observability != nil {
+				results = append(results, resource.ToObservabilityOutputServer(service.Name, service.Observability.OutputServer))
+			}
+		}
+		return results, nil
 	})
 	if err != nil {
 		return nil, err
@@ -190,6 +197,13 @@ func (o *observabilityMetricsInterface) List(args_0 context.Context) ([]*resourc
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
+		results := []*resource.ObservabilityMetrics{}
+		for _, service := range services {
+			if service.Observability != nil {
+				results = append(results, resource.ToObservabilityMetrics(service.Name, service.Observability.Metrics))
+			}
+		}
+		return results, nil
 	})
 	if err != nil {
 		return nil, err
@@ -271,6 +285,13 @@ func (o *observabilityTracingsInterface) List(args_0 context.Context) ([]*resour
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
+		results := []*resource.ObservabilityTracings{}
+		for _, service := range services {
+			if service.Observability != nil {
+				results = append(results, resource.ToObservabilityTracings(service.Name, service.Observability.Tracings))
+			}
+		}
+		return results, nil
 	})
 	if err != nil {
 		return nil, err
