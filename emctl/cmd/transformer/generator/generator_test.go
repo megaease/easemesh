@@ -22,7 +22,7 @@ func TestGenerator(t *testing.T) {
 	ext := filepath.Ext(spec.SourceFile)
 	baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
 	spec.GenerateFileName = baseFilename + "_gen.go"
-	spec.ResourceType = "canary"
+	spec.ResourceType = "Global"
 	err := New(spec).Accept(NewVisitor(spec.ResourceType))
 	if err != nil {
 		t.Fatalf("generate code error, %s", err)
