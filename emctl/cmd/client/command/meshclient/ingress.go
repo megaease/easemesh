@@ -15,142 +15,26 @@
  * limitations under the License.
  */
 
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Global Ingress=ingresses/%s
+
 package meshclient
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
-	"github.com/megaease/easemeshctl/cmd/common/client"
-	"github.com/pkg/errors"
 )
 
-type ingressGetter struct {
-	client *meshClient
+// IngressGetter represents an Ingress resource accessor
+type IngressGetter interface {
+	Ingress() IngressInterface
 }
 
-var _ IngressGetter = &ingressGetter{}
-
-func (i *ingressGetter) Ingress() IngressInterface {
-	return &ingressInterface{client: i.client}
-}
-
-type ingressInterface struct {
-	client *meshClient
-}
-
-func (i *ingressInterface) Get(ctx context.Context, ingressID string) (*resource.Ingress, error) {
-	url := fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingressID)
-	re, err := client.NewHTTPJSON().
-		GetByContext(ctx, url, nil, nil).
-		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
-			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "get ingress %s", ingressID)
-			}
-
-			if statusCode >= 300 {
-				return nil, errors.Errorf("call %s failed, return status code %d text %s", url, statusCode, string(b))
-			}
-			ingress := &v1alpha1.Ingress{}
-			err := json.Unmarshal(b, ingress)
-			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.Tanent")
-			}
-			return resource.ToIngress(ingress), nil
-		})
-	if err != nil {
-		return nil, err
-	}
-
-	return re.(*resource.Ingress), nil
-}
-
-func (i *ingressInterface) Patch(ctx context.Context, ingress *resource.Ingress) error {
-	jsonClient := client.NewHTTPJSON()
-	url := fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingress.Name())
-	update := ingress.ToV1Alpha1()
-	_, err := jsonClient.
-		PutByContext(ctx, url, update, nil).
-		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
-			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "patch ingress %s", ingress.Name())
-			}
-
-			if statusCode < 300 && statusCode >= 200 {
-				return nil, nil
-			}
-			return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %s", url, statusCode, string(b))
-		})
-	return err
-}
-
-func (i *ingressInterface) Create(ctx context.Context, ingress *resource.Ingress) error {
-	url := fmt.Sprintf("http://" + i.client.server + MeshIngressesURL)
-	created := ingress.ToV1Alpha1()
-	_, err := client.NewHTTPJSON().
-		PostByContext(ctx, url, created, nil).
-		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
-			if statusCode == http.StatusConflict {
-				return nil, errors.Wrapf(ConflictError, "create ingress %s", ingress.Name())
-			}
-
-			if statusCode < 300 && statusCode >= 200 {
-				return nil, nil
-			}
-			return nil, errors.Errorf("call Post %s failed, return statuscode %d text %s", url, statusCode, string(b))
-		})
-	return err
-}
-
-func (i *ingressInterface) Delete(ctx context.Context, ingressID string) error {
-	url := fmt.Sprintf("http://"+i.client.server+MeshIngressURL, ingressID)
-	_, err := client.NewHTTPJSON().
-		DeleteByContext(ctx, url, nil, nil).
-		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
-			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrapf(NotFoundError, "delete ingress %s", ingressID)
-			}
-
-			if statusCode < 300 && statusCode >= 200 {
-				return nil, nil
-			}
-			return nil, errors.Errorf("call DELETE %s failed, return statuscode %d text %s", url, statusCode, string(b))
-		})
-	return err
-}
-
-func (i *ingressInterface) List(ctx context.Context) ([]*resource.Ingress, error) {
-	url := "http://" + i.client.server + MeshIngressesURL
-	result, err := client.NewHTTPJSON().
-		GetByContext(ctx, url, nil, nil).
-		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
-			if statusCode == http.StatusNotFound {
-				return nil, errors.Wrap(NotFoundError, "list tanent")
-			}
-
-			if statusCode >= 300 || statusCode < 200 {
-				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
-			}
-
-			ingresses := []v1alpha1.Ingress{}
-			err := json.Unmarshal(b, &ingresses)
-			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal ingress result")
-			}
-
-			results := []*resource.Ingress{}
-			for _, ingress := range ingresses {
-				copy := ingress
-				results = append(results, resource.ToIngress(&copy))
-			}
-			return results, nil
-		})
-	if err != nil {
-		return nil, err
-	}
-	return result.([]*resource.Ingress), err
+// IngressInterface captures the set of operations for interacting with the EaseMesh REST apis of the ingress resource.
+type IngressInterface interface {
+	Get(context.Context, string) (*resource.Ingress, error)
+	Patch(context.Context, *resource.Ingress) error
+	Create(context.Context, *resource.Ingress) error
+	Delete(context.Context, string) error
+	List(context.Context) ([]*resource.Ingress, error)
 }

@@ -153,7 +153,7 @@ func (c *converter) funcIdens(fields []*ast.Field, withID bool) (codes []jen.Cod
 		if len(r.Names) != 0 {
 			statement = jen.Id(r.Names[0].Name)
 		} else if withID {
-			statement = jen.Id(fmt.Sprintf("args_%d", i))
+			statement = jen.Id(fmt.Sprintf("args%d", i))
 		}
 		parsed := false
 		for !parsed {

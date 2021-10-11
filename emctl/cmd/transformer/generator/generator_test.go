@@ -28,7 +28,7 @@ import (
 	utiltesting "k8s.io/client-go/util/testing"
 )
 
-func TestGenerator(t *testing.T) {
+func TestCanaryGenerator(t *testing.T) {
 	// for test
 	spec := &InterfaceFileSpec{}
 	// Get the package of the file with go:generate comment
@@ -39,6 +39,23 @@ func TestGenerator(t *testing.T) {
 	ext := filepath.Ext(spec.SourceFile)
 	baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
 	spec.GenerateFileName = baseFilename + "_gen.go"
+	spec.ResourceType = "Global"
+	err := New(spec).Accept(NewVisitor(spec.ResourceType))
+	if err != nil {
+		t.Fatalf("generate code error, %s", err)
+	}
+}
+
+func TestServiceInstanceGenerator(t *testing.T) {
+	spec := &InterfaceFileSpec{}
+	// Get the package of the file with go:generate comment
+	goPackage := "github.com/megaease/easemeshctl/cmd/client/command/meshclient"
+	spec.Buf = jen.NewFile(goPackage)
+	spec.SourceFile = "../../client/command/meshclient/serviceinstance.go"
+	spec.PkgName = goPackage
+	ext := filepath.Ext(spec.SourceFile)
+	baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
+	spec.GenerateFileName = "zz_" + baseFilename + "_gen.go"
 	spec.ResourceType = "Global"
 	err := New(spec).Accept(NewVisitor(spec.ResourceType))
 	if err != nil {
@@ -227,5 +244,27 @@ type ObservabilityOutputServerInterface interface {
 	Create(context.Context, *resource.ObservabilityOutputServer) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.ObservabilityOutputServer, error)
+}
+`
+
+var serviceInstance = `
+package meshclient
+
+import (
+	"context"
+
+	"github.com/megaease/easemeshctl/cmd/client/resource"
+)
+
+// ServiceInstanceGetter represents a Service resource accessor
+type ServiceInstanceGetter interface {
+	ServiceInstance() ServiceInstanceInterface
+}
+
+// ServiceInstanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service instance resource.
+type ServiceInstanceInterface interface {
+	Get(ctx context.Context, serviceName, instanceID string) (*resource.ServiceInstance, error)
+	Delete(ctx context.Context, serviceName, instanceID string) error
+	List(context.Context) ([]*resource.ServiceInstance, error)
 }
 `

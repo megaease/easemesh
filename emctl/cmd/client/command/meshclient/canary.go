@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service Canary=canary
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service Canary=services/%s/canary
 
 package meshclient
 

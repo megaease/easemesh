@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service LoadBalance=services/%s/loadbalance
 
 package meshclient
 

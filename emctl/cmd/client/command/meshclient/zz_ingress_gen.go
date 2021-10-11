@@ -28,43 +28,43 @@ import (
 	"net/http"
 )
 
-type tenantGetter struct {
+type ingressGetter struct {
 	client *meshClient
 }
-type tenantInterface struct {
+type ingressInterface struct {
 	client *meshClient
 }
 
-func (t *tenantGetter) Tenant() TenantInterface {
-	return &tenantInterface{client: t.client}
+func (i *ingressGetter) Ingress() IngressInterface {
+	return &ingressInterface{client: i.client}
 }
-func (t *tenantInterface) Get(args0 context.Context, args1 string) (*resource.Tenant, error) {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (i *ingressInterface) Get(args0 context.Context, args1 string) (*resource.Ingress, error) {
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "get Tenant %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "get Ingress %s", args1)
 		}
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, buff)
 		}
-		Tenant := &v1alpha1.Tenant{}
-		err := json.Unmarshal(buff, Tenant)
+		Ingress := &v1alpha1.Ingress{}
+		err := json.Unmarshal(buff, Ingress)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Tenant")
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Ingress")
 		}
-		return resource.ToTenant(Tenant), nil
+		return resource.ToIngress(Ingress), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return r0.(*resource.Tenant), nil
+	return r0.(*resource.Ingress), nil
 }
-func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (i *ingressInterface) Patch(args0 context.Context, args1 *resource.Ingress) error {
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1)
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "patch Tenant %s", args1.Name())
+			return nil, errors.Wrapf(NotFoundError, "patch Ingress %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -73,11 +73,11 @@ func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) e
 	})
 	return err
 }
-func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (i *ingressInterface) Create(args0 context.Context, args1 *resource.Ingress) error {
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1)
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
-			return nil, errors.Wrapf(ConflictError, "create Tenant %s", args1.Name())
+			return nil, errors.Wrapf(ConflictError, "create Ingress %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -86,11 +86,11 @@ func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) 
 	})
 	return err
 }
-func (t *tenantInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (i *ingressInterface) Delete(args0 context.Context, args1 string) error {
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "Delete Tenant %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "Delete Ingress %s", args1)
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -99,8 +99,8 @@ func (t *tenantInterface) Delete(args0 context.Context, args1 string) error {
 	})
 	return err
 }
-func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error) {
-	url := "http://" + t.client.server + apiURL + "/mesh/"
+func (i *ingressInterface) List(args0 context.Context) ([]*resource.Ingress, error) {
+	url := "http://" + i.client.server + apiURL + "/mesh/"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
@@ -108,20 +108,20 @@ func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		tenant := []v1alpha1.Tenant{}
-		err := json.Unmarshal(b, &tenant)
+		ingress := []v1alpha1.Ingress{}
+		err := json.Unmarshal(b, &ingress)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
-		results := []*resource.Tenant{}
-		for _, item := range tenant {
+		results := []*resource.Ingress{}
+		for _, item := range ingress {
 			copy := item
-			results = append(results, resource.ToTenant(&copy))
+			results = append(results, resource.ToIngress(&copy))
 		}
 		return results, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.Tenant), nil
+	return result.([]*resource.Ingress), nil
 }

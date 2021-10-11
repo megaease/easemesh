@@ -190,48 +190,48 @@ func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(
 			jen.Lit("http://").Op("+").
 				Id(resourceFirstName).Dot("client").Dot("server").
-				Op("+").Id("apiURL").Op("+").Lit("/mesh/services/%s/").Op("+").Lit(subURL),
-			jen.Id("args_1"),
+				Op("+").Id("apiURL").Op("+").Lit("/mesh/").Op("+").Lit(subURL),
+			jen.Id("args1"),
 		), nil
 	}
 }
 func buildResourceToObjectStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
-		return jen.Id("object").Op(":=").Id("args_1").Dot("ToV1Alpha1").Call(), nil
+		return jen.Id("object").Op(":=").Id("args1").Dot("ToV1Alpha1").Call(), nil
 	}
 }
 
 func buildGetByContextHTTPCallStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
-		return jen.Id("r").Op(",").Id("err").Op(":=").
+		return jen.Id("r0").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("GetByContext").Call(
-			jen.Id("args_0"),
+			jen.Id("args0"),
 			jen.Id("url"),
 			jen.Nil(),
 			jen.Nil(),
 		).Dot("HandleResponse").Call(
 			jen.Func().Params(
-				jen.Id("b").Op("[]").Byte(),
+				jen.Id("buff").Op("[]").Byte(),
 				jen.Id("statusCode").Int(),
 			).Params(jen.Interface(), jen.Error()).BlockFunc(func(g1 *jen.Group) {
 				stmt1 := jen.If(jen.Id("statusCode").Op("==").Qual("net/http", "StatusNotFound")).Block(
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 						jen.Id("NotFoundError"),
 						jen.Lit("get "+resourceName+" %s"),
-						jen.Id("args_1"),
+						jen.Id("args1"),
 					)))
 
 				stmt2 := jen.If(jen.Id("statusCode").Op(">=").Lit(300)).Block(
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Errorf").Call(
 						jen.Lit("call %s failed, return status code %d text %+v"),
-						jen.Id("url"), jen.Id("statusCode"), jen.Id("b"),
+						jen.Id("url"), jen.Id("statusCode"), jen.Id("buff"),
 					)),
 				)
 				stmt3 := jen.Id(resourceName).Op(":=").Op("&").Qual(v1alpha1Pkg, capResourceName).Block()
 				stmt4 := jen.Id("err").Op(":=").Qual("encoding/json", "Unmarshal").Call(
-					jen.Id("b"), jen.Id(resourceName),
+					jen.Id("buff"), jen.Id(resourceName),
 				)
 				stmt5 := jen.If(jen.Id("err").Op("!=").Nil()).Block(
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
@@ -244,7 +244,7 @@ func buildGetByContextHTTPCallStatement(info *buildInfo) func(string) (jen.Code,
 					returnStmt = jen.Return(jen.Qual(resourcePkg, "To"+capResourceName).Call(jen.Id(resourceName)).Op(",").Nil())
 				} else {
 					returnStmt = jen.Return(jen.Qual(resourcePkg, "To"+capResourceName).Call(
-						jen.Id("args_1"), jen.Id(resourceName),
+						jen.Id("args1"), jen.Id(resourceName),
 					).Op(",").Nil())
 				}
 				g1.Add(stmt1)
@@ -269,7 +269,7 @@ func buildJudgeResponseStatement(info *buildInfo) func(string) (jen.Code, error)
 func buildReturnStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]
-		return jen.Return(jen.Id("r").Op(".").Parens(jen.Op("*").Qual(resourcePkg, capResourceName)).Op(",").Nil()), nil
+		return jen.Return(jen.Id("r0").Op(".").Parens(jen.Op("*").Qual(resourcePkg, capResourceName)).Op(",").Nil()), nil
 	}
 }
 
@@ -279,7 +279,7 @@ func buildPutByContextStatement(info *buildInfo) func(string) (jen.Code, error) 
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("PutByContext").Call(
-			jen.Id("args_0"),
+			jen.Id("args0"),
 			jen.Id("url"),
 			jen.Id("object"),
 			jen.Nil(),
@@ -292,7 +292,7 @@ func buildPutByContextStatement(info *buildInfo) func(string) (jen.Code, error) 
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 						jen.Id("NotFoundError"),
 						jen.Lit("patch "+resourceName+" %s"),
-						jen.Id("args_1").Dot("Name").Call(),
+						jen.Id("args1").Dot("Name").Call(),
 					)))
 
 				stmt2 := jen.If(jen.Id("statusCode").Op("<").Lit(300)).Op("&&").Id("statusCode").Op(">=").Lit(200).Block(
@@ -323,7 +323,7 @@ func buildDeleteByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("DeleteByContext").Call(
-			jen.Id("args_0"),
+			jen.Id("args0"),
 			jen.Id("url"),
 			jen.Nil(),
 			jen.Nil(),
@@ -336,7 +336,7 @@ func buildDeleteByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 						jen.Id("NotFoundError"),
 						jen.Lit("Delete "+resourceName+" %s"),
-						jen.Id("args_1"),
+						jen.Id("args1"),
 					)))
 
 				stmt2 := jen.If(jen.Id("statusCode").Op("<").Lit(300)).Op("&&").Id("statusCode").Op(">=").Lit(200).Block(
@@ -360,7 +360,7 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("PostByContext").Call(
-			jen.Id("args_0"),
+			jen.Id("args0"),
 			jen.Id("url"),
 			jen.Nil(),
 			jen.Nil(),
@@ -373,7 +373,7 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 						jen.Id("ConflictError"),
 						jen.Lit("create "+resourceName+" %s"),
-						jen.Id("args_1").Dot("Name").Call(),
+						jen.Id("args1").Dot("Name").Call(),
 					)))
 
 				stmt2 := jen.If(jen.Id("statusCode").Op("<").Lit(300)).Op("&&").Id("statusCode").Op(">=").Lit(200).Block(
@@ -397,7 +397,7 @@ func buildListURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 		resourceFirstName := strings.ToLower(resourceName[0:1])
 		return jen.Id("url").Op(":=").Lit("http://").Op("+").
 			Id(resourceFirstName).Dot("client").Dot("server").
-			Op("+").Id("apiURL").Op("+").Lit("/mesh/services"), nil
+			Op("+").Id("apiURL").Op("+").Lit("/mesh/"), nil
 	}
 }
 func buildListByContextStatement(info *buildInfo) func(string) (jen.Code, error) {
@@ -406,7 +406,7 @@ func buildListByContextStatement(info *buildInfo) func(string) (jen.Code, error)
 		code := jen.Id("result").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
 			Dot("GetByContext").Call(
-			jen.Id("args_0"),
+			jen.Id("args0"),
 			jen.Id("url"),
 			jen.Nil(),
 			jen.Nil(),

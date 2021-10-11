@@ -28,43 +28,43 @@ import (
 	"net/http"
 )
 
-type tenantGetter struct {
+type resilienceGetter struct {
 	client *meshClient
 }
-type tenantInterface struct {
+type resilienceInterface struct {
 	client *meshClient
 }
 
-func (t *tenantGetter) Tenant() TenantInterface {
-	return &tenantInterface{client: t.client}
+func (r *resilienceGetter) Resilience() ResilienceInterface {
+	return &resilienceInterface{client: r.client}
 }
-func (t *tenantInterface) Get(args0 context.Context, args1 string) (*resource.Tenant, error) {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (r *resilienceInterface) Get(args0 context.Context, args1 string) (*resource.Resilience, error) {
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "get Tenant %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "get Resilience %s", args1)
 		}
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, buff)
 		}
-		Tenant := &v1alpha1.Tenant{}
-		err := json.Unmarshal(buff, Tenant)
+		Resilience := &v1alpha1.Resilience{}
+		err := json.Unmarshal(buff, Resilience)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Tenant")
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Resilience")
 		}
-		return resource.ToTenant(Tenant), nil
+		return resource.ToResilience(args1, Resilience), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return r0.(*resource.Tenant), nil
+	return r0.(*resource.Resilience), nil
 }
-func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resilience) error {
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "patch Tenant %s", args1.Name())
+			return nil, errors.Wrapf(NotFoundError, "patch Resilience %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -73,11 +73,11 @@ func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) e
 	})
 	return err
 }
-func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resilience) error {
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
-			return nil, errors.Wrapf(ConflictError, "create Tenant %s", args1.Name())
+			return nil, errors.Wrapf(ConflictError, "create Resilience %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -86,11 +86,11 @@ func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) 
 	})
 	return err
 }
-func (t *tenantInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (r *resilienceInterface) Delete(args0 context.Context, args1 string) error {
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "Delete Tenant %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "Delete Resilience %s", args1)
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -99,8 +99,8 @@ func (t *tenantInterface) Delete(args0 context.Context, args1 string) error {
 	})
 	return err
 }
-func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error) {
-	url := "http://" + t.client.server + apiURL + "/mesh/"
+func (r *resilienceInterface) List(args0 context.Context) ([]*resource.Resilience, error) {
+	url := "http://" + r.client.server + apiURL + "/mesh/"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
@@ -108,20 +108,21 @@ func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		tenant := []v1alpha1.Tenant{}
-		err := json.Unmarshal(b, &tenant)
+		services := []v1alpha1.Service{}
+		err := json.Unmarshal(b, &services)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
-		results := []*resource.Tenant{}
-		for _, item := range tenant {
-			copy := item
-			results = append(results, resource.ToTenant(&copy))
+		results := []*resource.Resilience{}
+		for _, service := range services {
+			if service.Resilience != nil {
+				results = append(results, resource.ToResilience(service.Name, service.Resilience))
+			}
 		}
 		return results, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.Tenant), nil
+	return result.([]*resource.Resilience), nil
 }
