@@ -28,9 +28,6 @@ import (
 	"net/http"
 )
 
-type observabilityGetter struct {
-	client *meshClient
-}
 type observabilityOutputServerInterface struct {
 	client *meshClient
 }
@@ -38,6 +35,9 @@ type observabilityMetricsInterface struct {
 	client *meshClient
 }
 type observabilityTracingsInterface struct {
+	client *meshClient
+}
+type observabilityGetter struct {
 	client *meshClient
 }
 

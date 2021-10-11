@@ -48,11 +48,6 @@ type MeshControllerGetter interface {
 	MeshController() MeshControllerInterface
 }
 
-// ServiceGetter represents a Service resource accessor
-type ServiceGetter interface {
-	Service() ServiceInterface
-}
-
 // CustomResourceKindGetter represents an CustomResourceKind accessor
 type CustomResourceKindGetter interface {
 	CustomResourceKind() CustomResourceKindInterface
@@ -70,15 +65,6 @@ type MeshControllerInterface interface {
 	Create(context.Context, *resource.MeshController) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.MeshController, error)
-}
-
-// ServiceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service resource.
-type ServiceInterface interface {
-	Get(context.Context, string) (*resource.Service, error)
-	Patch(context.Context, *resource.Service) error
-	Create(context.Context, *resource.Service) error
-	Delete(context.Context, string) error
-	List(context.Context) ([]*resource.Service, error)
 }
 
 // CustomResourceKindInterface captures the set of operations for interacting with the EaseMesh REST apis of the custom resource kind.
