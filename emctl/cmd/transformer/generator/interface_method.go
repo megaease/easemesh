@@ -19,6 +19,7 @@ package generator
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"strings"
 
@@ -186,13 +187,19 @@ func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 
 	return func(resourceName string) (jen.Code, error) {
 		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
+		argCount := strings.Count(subURL, "%s")
+
 		resourceFirstName := strings.ToLower(resourceName[0:1])
-		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(
-			jen.Lit("http://").Op("+").
-				Id(resourceFirstName).Dot("client").Dot("server").
-				Op("+").Id("apiURL").Op("+").Lit("/mesh/").Op("+").Lit(subURL),
-			jen.Id("args1"),
-		), nil
+		var args []jen.Code
+
+		arg1 := jen.Lit("http://").Op("+").
+			Id(resourceFirstName).Dot("client").Dot("server").
+			Op("+").Id("apiURL").Op("+").Lit("/mesh/").Op("+").Lit(subURL)
+		args = append(args, arg1)
+		for i := 0; i < argCount; i++ {
+			args = append(args, jen.Id(fmt.Sprintf("args%d", i)))
+		}
+		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(args...), nil
 	}
 }
 func buildResourceToObjectStatement(info *buildInfo) func(string) (jen.Code, error) {
@@ -394,10 +401,17 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 
 func buildListURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
+
+		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
+		// triming characters after /%s
+		pos := strings.Index(subURL, "/%s")
+		if pos != -1 && pos != 0 {
+			subURL = subURL[:pos]
+		}
 		resourceFirstName := strings.ToLower(resourceName[0:1])
 		return jen.Id("url").Op(":=").Lit("http://").Op("+").
 			Id(resourceFirstName).Dot("client").Dot("server").
-			Op("+").Id("apiURL").Op("+").Lit("/mesh/"), nil
+			Op("+").Id("apiURL").Op("+").Lit("/mesh/" + subURL), nil
 	}
 }
 func buildListByContextStatement(info *buildInfo) func(string) (jen.Code, error) {

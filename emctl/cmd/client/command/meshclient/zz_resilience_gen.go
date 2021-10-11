@@ -39,7 +39,7 @@ func (r *resilienceGetter) Resilience() ResilienceInterface {
 	return &resilienceInterface{client: r.client}
 }
 func (r *resilienceInterface) Get(args0 context.Context, args1 string) (*resource.Resilience, error) {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args0)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get Resilience %s", args1)
@@ -60,7 +60,7 @@ func (r *resilienceInterface) Get(args0 context.Context, args1 string) (*resourc
 	return r0.(*resource.Resilience), nil
 }
 func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resilience) error {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args0)
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
@@ -74,7 +74,7 @@ func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resil
 	return err
 }
 func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resilience) error {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args0)
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Resilience %s", args1.Name())
@@ -87,7 +87,7 @@ func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resi
 	return err
 }
 func (r *resilienceInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args0)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete Resilience %s", args1)
@@ -100,7 +100,7 @@ func (r *resilienceInterface) Delete(args0 context.Context, args1 string) error 
 	return err
 }
 func (r *resilienceInterface) List(args0 context.Context) ([]*resource.Resilience, error) {
-	url := "http://" + r.client.server + apiURL + "/mesh/"
+	url := "http://" + r.client.server + apiURL + "/mesh/services"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
