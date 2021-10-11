@@ -246,25 +246,3 @@ type ObservabilityOutputServerInterface interface {
 	List(context.Context) ([]*resource.ObservabilityOutputServer, error)
 }
 `
-
-var serviceInstance = `
-package meshclient
-
-import (
-	"context"
-
-	"github.com/megaease/easemeshctl/cmd/client/resource"
-)
-
-// ServiceInstanceGetter represents a Service resource accessor
-type ServiceInstanceGetter interface {
-	ServiceInstance() ServiceInstanceInterface
-}
-
-// ServiceInstanceInterface captures the set of operations for interacting with the EaseMesh REST apis of the service instance resource.
-type ServiceInstanceInterface interface {
-	Get(ctx context.Context, serviceName, instanceID string) (*resource.ServiceInstance, error)
-	Delete(ctx context.Context, serviceName, instanceID string) error
-	List(context.Context) ([]*resource.ServiceInstance, error)
-}
-`
