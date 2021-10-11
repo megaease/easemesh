@@ -47,7 +47,6 @@ func main() {
 		r := strings.Split(resourceType, ".")
 		resourceType = r[0]
 		subResource = r[1]
-
 	}
 
 	spec := initialSpec(generator.ResourceType(resourceType), subResource, resourceMappings)
@@ -55,6 +54,7 @@ func main() {
 	if err != nil {
 		common.ExitWithError(err)
 	}
+
 	err = spec.Buf.Save(spec.GenerateFileName)
 	if err != nil {
 		common.ExitWithError(err)
