@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type loadbalanceGetter struct {
+type loadBalanceInterface struct {
 	client *meshClient
 }
-type loadBalanceInterface struct {
+type loadbalanceGetter struct {
 	client *meshClient
 }
 

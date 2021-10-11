@@ -29,37 +29,37 @@ import (
 )
 
 func TestCanaryGenerator(t *testing.T) {
-	// for test
-	spec := &InterfaceFileSpec{}
-	// Get the package of the file with go:generate comment
-	goPackage := "github.com/megaease/easemeshctl/cmd/client/command/meshclient"
-	spec.Buf = jen.NewFile(goPackage)
-	spec.SourceFile = "../../client/command/meshclient/canary.go"
-	spec.PkgName = goPackage
-	ext := filepath.Ext(spec.SourceFile)
-	baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
-	spec.GenerateFileName = baseFilename + "_gen.go"
-	spec.ResourceType = "Global"
-	err := New(spec).Accept(NewVisitor(spec.ResourceType))
-	if err != nil {
-		t.Fatalf("generate code error, %s", err)
-	}
-}
 
-func TestServiceInstanceGenerator(t *testing.T) {
-	spec := &InterfaceFileSpec{}
-	// Get the package of the file with go:generate comment
-	goPackage := "github.com/megaease/easemeshctl/cmd/client/command/meshclient"
-	spec.Buf = jen.NewFile(goPackage)
-	spec.SourceFile = "../../client/command/meshclient/serviceinstance.go"
-	spec.PkgName = goPackage
-	ext := filepath.Ext(spec.SourceFile)
-	baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
-	spec.GenerateFileName = "zz_" + baseFilename + "_gen.go"
-	spec.ResourceType = "Global"
-	err := New(spec).Accept(NewVisitor(spec.ResourceType))
-	if err != nil {
-		t.Fatalf("generate code error, %s", err)
+	testData := []struct {
+		goPackage    string
+		sourceFile   string
+		resourceType ResourceType
+	}{
+		{goPackage: "github.com/megaease/easemeshctl/cmd/client/command/meshclient", sourceFile: "../../client/command/meshclient/canary.go", resourceType: "Global"},
+		{goPackage: "github.com/megaease/easemeshctl/cmd/client/command/meshclient", sourceFile: "../../client/command/meshclient/serviceinstance.go", resourceType: "Global"},
+		{goPackage: "github.com/megaease/easemeshctl/cmd/client/command/meshclient", sourceFile: "../../client/command/meshclient/resilience.go", resourceType: "Service"},
+	}
+
+	var specs []*InterfaceFileSpec
+	for _, data := range testData {
+		// for test
+		spec := &InterfaceFileSpec{}
+		// Get the package of the file with go:generate comment
+		goPackage := data.goPackage
+		spec.Buf = jen.NewFile(goPackage)
+		spec.SourceFile = data.sourceFile
+		spec.PkgName = goPackage
+		ext := filepath.Ext(spec.SourceFile)
+		baseFilename := spec.SourceFile[0 : len(spec.SourceFile)-len(ext)]
+		spec.GenerateFileName = baseFilename + "_gen.go"
+		spec.ResourceType = data.resourceType
+		specs = append(specs, spec)
+	}
+	for _, spec := range specs {
+		err := New(spec).Accept(NewVisitor(spec.ResourceType))
+		if err != nil {
+			t.Fatalf("generate code for %s error, %s", spec.SourceFile, err)
+		}
 	}
 }
 

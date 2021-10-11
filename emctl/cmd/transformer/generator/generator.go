@@ -172,18 +172,6 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 	return nil
 }
 
-func (g *generator) acceptInterfaceMethod() {
-	for _, typeSpec := range g.finder.types() {
-		if strings.HasSuffix(typeSpec.Name.Name, "Interface") {
-			if interType, ok := typeSpec.Type.(*ast.InterfaceType); ok {
-				for _, method := range interType.Methods.List {
-					fmt.Printf("interface: %+v, %+v\n", *interType, *method)
-				}
-			}
-		}
-	}
-}
-
 func lowerFirstChar(str string) string {
 	return string(unicode.ToLower(rune(str[0]))) + str[1:]
 }
