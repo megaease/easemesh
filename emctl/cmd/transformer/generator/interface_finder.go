@@ -18,7 +18,6 @@
 package generator
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -54,8 +53,6 @@ func (i *interfaceFinder) parseFile() error {
 		if _, ok := ts.Type.(*ast.InterfaceType); !ok {
 			return true
 		}
-
-		fmt.Printf("ts.Name.Name is %s\n", ts.Name.Name)
 
 		i.typeNames[ts.Name.Name] = ts.Name.Name
 

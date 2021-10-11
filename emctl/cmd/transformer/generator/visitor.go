@@ -74,7 +74,6 @@ func (m *meshClientVisitor) visitorResourceGetterConcreatStruct(name string, spe
 	return nil
 }
 func (m *meshClientVisitor) visitorInterfaceConcreatStruct(name string, spec *InterfaceFileSpec) error {
-	fmt.Printf("interface visitor\n")
 	spec.Buf.Type().Id(name).Struct(jen.Id("client").Qual("", "*meshClient"))
 	return nil
 }
@@ -86,7 +85,6 @@ func (m *meshClientVisitor) visitorResourceGetterMethod(name string, method *ast
 		return errors.Wrapf(err, "extract arguments and result from method error")
 	}
 
-	fmt.Printf("param is %+v, results %+v\n", arguments, results)
 	spec.Buf.Func().Params(
 		jen.Id(string(m.getterID[0])).Op("*").Id(m.getterID),
 	).Id(name).Params(arguments...).Params(results...).BlockFunc(func(grp *jen.Group) {

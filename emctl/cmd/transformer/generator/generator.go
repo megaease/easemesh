@@ -18,7 +18,6 @@
 package generator
 
 import (
-	"fmt"
 	"go/ast"
 	"io"
 	"strings"
@@ -101,8 +100,6 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 	if visitor == nil {
 		return errors.Errorf("illegal argument(s): visitor is required")
 	}
-
-	fmt.Printf("visitor: %+v\n", visitor)
 
 	err := g.finder.parseFile()
 	if err != nil {
