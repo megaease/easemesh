@@ -87,7 +87,7 @@ func (i *interfaceBuilder) buildGetMethod(info *buildInfo) (err error) {
 
 func (i *interfaceBuilder) buildPatchMethod(info *buildInfo) (err error) {
 	factories := []genCodeFactory{
-		buildURLStatement(info),
+		buildPatchURLStatement(info),
 		buildResourceToObjectStatement(info),
 		buildPutByContextStatement(info),
 		buildReturnErrStatement(info),
@@ -102,7 +102,8 @@ func (i *interfaceBuilder) buildPatchMethod(info *buildInfo) (err error) {
 func (i *interfaceBuilder) buildCreateMethod(info *buildInfo) (err error) {
 
 	factories := []genCodeFactory{
-		buildURLStatement(info),
+		buildPluralResourceURLStatement(info),
+		buildResourceToObjectStatement(info),
 		buildCreateByContextStatement(info),
 		buildReturnErrStatement(info),
 	}
@@ -132,7 +133,7 @@ func (i *interfaceBuilder) buildDeleteMethod(info *buildInfo) (err error) {
 
 func (i *interfaceBuilder) buildListMethod(info *buildInfo) error {
 	factories := []genCodeFactory{
-		buildListURLStatement(info),
+		buildPluralResourceURLStatement(info),
 		buildListByContextStatement(info),
 		buildListJudgeErrReturnStatement(info),
 		buildListReturnStatement(info),
@@ -183,6 +184,22 @@ func (i *interfaceBuilder) buildMethodBody(resourceName string, factories []genC
 	}
 	return nil
 }
+func buildPatchURLStatement(info *buildInfo) func(string) (jen.Code, error) {
+	return func(resourceName string) (jen.Code, error) {
+		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
+
+		resourceFirstName := strings.ToLower(resourceName[0:1])
+		var args []jen.Code
+		stmt1 := jen.Lit("http://").Op("+").
+			Id(resourceFirstName).Dot("client").Dot("server").
+			Op("+").Id("apiURL").Op("+").Lit("/mesh/").Op("+").Lit(subURL)
+		args = append(args, stmt1)
+		stmt2 := jen.Id("args1").Dot("Name").Call()
+		args = append(args, stmt2)
+		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(args...), nil
+	}
+}
+
 func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 
 	return func(resourceName string) (jen.Code, error) {
@@ -197,7 +214,7 @@ func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 			Op("+").Id("apiURL").Op("+").Lit("/mesh/").Op("+").Lit(subURL)
 		args = append(args, arg1)
 		for i := 0; i < argCount; i++ {
-			args = append(args, jen.Id(fmt.Sprintf("args%d", i)))
+			args = append(args, jen.Id(fmt.Sprintf("args%d", i+1)))
 		}
 		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(args...), nil
 	}
@@ -233,7 +250,7 @@ func buildGetByContextHTTPCallStatement(info *buildInfo) func(string) (jen.Code,
 				stmt2 := jen.If(jen.Id("statusCode").Op(">=").Lit(300)).Block(
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Errorf").Call(
 						jen.Lit("call %s failed, return status code %d text %+v"),
-						jen.Id("url"), jen.Id("statusCode"), jen.Id("buff"),
+						jen.Id("url"), jen.Id("statusCode"), jen.String().Call(jen.Id("buff")),
 					)),
 				)
 				stmt3 := jen.Id(resourceName).Op(":=").Op("&").Qual(v1alpha1Pkg, capResourceName).Block()
@@ -308,7 +325,7 @@ func buildPutByContextStatement(info *buildInfo) func(string) (jen.Code, error) 
 				returnStmt := jen.Return(jen.Nil(),
 					jen.Qual(errorsPkg, "Errorf").Call(
 						jen.Lit("call PUT %s failed, return statuscode %d text %+v"),
-						jen.Id("url"), jen.Id("statusCode"), jen.Id("b"),
+						jen.Id("url"), jen.Id("statusCode"), jen.String().Call(jen.Id("b")),
 					),
 				)
 				g1.Add(stmt1)
@@ -352,7 +369,7 @@ func buildDeleteByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 				returnStmt := jen.Return(jen.Nil(),
 					jen.Qual(errorsPkg, "Errorf").Call(
 						jen.Lit("call Delete %s failed, return statuscode %d text %+v"),
-						jen.Id("url"), jen.Id("statusCode"), jen.Id("b"),
+						jen.Id("url"), jen.Id("statusCode"), jen.String().Call(jen.Id("b")),
 					),
 				)
 				g1.Add(stmt1)
@@ -369,7 +386,7 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 			Dot("PostByContext").Call(
 			jen.Id("args0"),
 			jen.Id("url"),
-			jen.Nil(),
+			jen.Id("object"),
 			jen.Nil(),
 		).Dot("HandleResponse").Call(
 			jen.Func().Params(
@@ -389,7 +406,7 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 				returnStmt := jen.Return(jen.Nil(),
 					jen.Qual(errorsPkg, "Errorf").Call(
 						jen.Lit("call Post %s failed, return statuscode %d text %+v"),
-						jen.Id("url"), jen.Id("statusCode"), jen.Id("b"),
+						jen.Id("url"), jen.Id("statusCode"), jen.String().Call(jen.Id("b")),
 					),
 				)
 				g1.Add(stmt1)
@@ -399,7 +416,7 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 	}
 }
 
-func buildListURLStatement(info *buildInfo) func(string) (jen.Code, error) {
+func buildPluralResourceURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 
 		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)

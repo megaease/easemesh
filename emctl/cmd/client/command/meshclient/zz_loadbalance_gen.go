@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type loadBalanceInterface struct {
+type loadbalanceGetter struct {
 	client *meshClient
 }
-type loadbalanceGetter struct {
+type loadBalanceInterface struct {
 	client *meshClient
 }
 
@@ -39,13 +39,13 @@ func (l *loadbalanceGetter) LoadBalance() LoadBalanceInterface {
 	return &loadBalanceInterface{client: l.client}
 }
 func (l *loadBalanceInterface) Get(args0 context.Context, args1 string) (*resource.LoadBalance, error) {
-	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args0)
+	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get LoadBalance %s", args1)
 		}
 		if statusCode >= 300 {
-			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, buff)
+			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
 		LoadBalance := &v1alpha1.LoadBalance{}
 		err := json.Unmarshal(buff, LoadBalance)
@@ -60,7 +60,7 @@ func (l *loadBalanceInterface) Get(args0 context.Context, args1 string) (*resour
 	return r0.(*resource.LoadBalance), nil
 }
 func (l *loadBalanceInterface) Patch(args0 context.Context, args1 *resource.LoadBalance) error {
-	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args0)
+	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
@@ -69,25 +69,26 @@ func (l *loadBalanceInterface) Patch(args0 context.Context, args1 *resource.Load
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
 		}
-		return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %+v", url, statusCode, b)
+		return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %+v", url, statusCode, string(b))
 	})
 	return err
 }
 func (l *loadBalanceInterface) Create(args0 context.Context, args1 *resource.LoadBalance) error {
-	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args0)
-	_, err := client.NewHTTPJSON().PostByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+	url := "http://" + l.client.server + apiURL + "/mesh/services"
+	object := args1.ToV1Alpha1()
+	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create LoadBalance %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
 		}
-		return nil, errors.Errorf("call Post %s failed, return statuscode %d text %+v", url, statusCode, b)
+		return nil, errors.Errorf("call Post %s failed, return statuscode %d text %+v", url, statusCode, string(b))
 	})
 	return err
 }
 func (l *loadBalanceInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args0)
+	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete LoadBalance %s", args1)
@@ -95,7 +96,7 @@ func (l *loadBalanceInterface) Delete(args0 context.Context, args1 string) error
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
 		}
-		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, b)
+		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, string(b))
 	})
 	return err
 }

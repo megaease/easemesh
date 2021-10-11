@@ -39,13 +39,13 @@ func (i *ingressGetter) Ingress() IngressInterface {
 	return &ingressInterface{client: i.client}
 }
 func (i *ingressInterface) Get(args0 context.Context, args1 string) (*resource.Ingress, error) {
-	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args0)
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get Ingress %s", args1)
 		}
 		if statusCode >= 300 {
-			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, buff)
+			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
 		Ingress := &v1alpha1.Ingress{}
 		err := json.Unmarshal(buff, Ingress)
@@ -60,7 +60,7 @@ func (i *ingressInterface) Get(args0 context.Context, args1 string) (*resource.I
 	return r0.(*resource.Ingress), nil
 }
 func (i *ingressInterface) Patch(args0 context.Context, args1 *resource.Ingress) error {
-	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args0)
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
@@ -69,25 +69,26 @@ func (i *ingressInterface) Patch(args0 context.Context, args1 *resource.Ingress)
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
 		}
-		return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %+v", url, statusCode, b)
+		return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %+v", url, statusCode, string(b))
 	})
 	return err
 }
 func (i *ingressInterface) Create(args0 context.Context, args1 *resource.Ingress) error {
-	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args0)
-	_, err := client.NewHTTPJSON().PostByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+	url := "http://" + i.client.server + apiURL + "/mesh/ingresses"
+	object := args1.ToV1Alpha1()
+	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Ingress %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
 		}
-		return nil, errors.Errorf("call Post %s failed, return statuscode %d text %+v", url, statusCode, b)
+		return nil, errors.Errorf("call Post %s failed, return statuscode %d text %+v", url, statusCode, string(b))
 	})
 	return err
 }
 func (i *ingressInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args0)
+	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete Ingress %s", args1)
@@ -95,7 +96,7 @@ func (i *ingressInterface) Delete(args0 context.Context, args1 string) error {
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
 		}
-		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, b)
+		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, string(b))
 	})
 	return err
 }

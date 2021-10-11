@@ -55,7 +55,6 @@ func main() {
 	if err != nil {
 		common.ExitWithError(err)
 	}
-	spec.Buf.Render(os.Stdout)
 	err = spec.Buf.Save(spec.GenerateFileName)
 	if err != nil {
 		common.ExitWithError(err)
