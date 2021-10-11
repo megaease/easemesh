@@ -74,7 +74,7 @@ func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resil
 	return err
 }
 func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resilience) error {
-	url := "http://" + r.client.server + apiURL + "/mesh/services"
+	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {

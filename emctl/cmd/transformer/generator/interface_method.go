@@ -100,9 +100,15 @@ func (i *interfaceBuilder) buildPatchMethod(info *buildInfo) (err error) {
 }
 
 func (i *interfaceBuilder) buildCreateMethod(info *buildInfo) (err error) {
+	var urlFunc genCodeFactory
+	if info.resourceType == Service {
+		urlFunc = buildServiceTypePostURLStatement(info)
+	} else {
+		urlFunc = buildPluralResourceURLStatement(info)
+	}
 
 	factories := []genCodeFactory{
-		buildPluralResourceURLStatement(info),
+		urlFunc,
 		buildResourceToObjectStatement(info),
 		buildCreateByContextStatement(info),
 		buildReturnErrStatement(info),
@@ -201,7 +207,6 @@ func buildPatchURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 }
 
 func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
-
 	return func(resourceName string) (jen.Code, error) {
 		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
 		argCount := strings.Count(subURL, "%s")
@@ -219,6 +224,18 @@ func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(args...), nil
 	}
 }
+func buildServiceTypePostURLStatement(info *buildInfo) func(string) (jen.Code, error) {
+	return func(resourceName string) (jen.Code, error) {
+		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
+		resourceFirstName := strings.ToLower(resourceName[0:1])
+		arg1 := jen.Lit("http://").Op("+").
+			Id(resourceFirstName).Dot("client").Dot("server").
+			Op("+").Id("apiURL").Op("+").Lit("/mesh/").Op("+").Lit(subURL)
+		arg2 := jen.Id("args1").Dot("Name").Call()
+		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(arg1, arg2), nil
+	}
+}
+
 func buildResourceToObjectStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		return jen.Id("object").Op(":=").Id("args1").Dot("ToV1Alpha1").Call(), nil

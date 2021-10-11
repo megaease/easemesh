@@ -74,7 +74,7 @@ func (l *loadBalanceInterface) Patch(args0 context.Context, args1 *resource.Load
 	return err
 }
 func (l *loadBalanceInterface) Create(args0 context.Context, args1 *resource.LoadBalance) error {
-	url := "http://" + l.client.server + apiURL + "/mesh/services"
+	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {

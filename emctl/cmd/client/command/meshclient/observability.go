@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service.Observability ObservabilityTracings=services/%s/tracings ObservabilityMetrics=services/%s/metrics ObservabilityOutputServer=service/%s/outputserver
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service.Observability ObservabilityTracings=services/%s/tracings ObservabilityMetrics=services/%s/metrics ObservabilityOutputServer=services/%s/outputserver
 
 package meshclient
 

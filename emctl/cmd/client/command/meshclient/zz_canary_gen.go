@@ -74,7 +74,7 @@ func (c *canaryInterface) Patch(args0 context.Context, args1 *resource.Canary) e
 	return err
 }
 func (c *canaryInterface) Create(args0 context.Context, args1 *resource.Canary) error {
-	url := "http://" + c.client.server + apiURL + "/mesh/services"
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/"+"services/%s/canary", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {

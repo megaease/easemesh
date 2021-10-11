@@ -51,7 +51,7 @@ func (o *observabilityGetter) ObservabilityOutputServer() ObservabilityOutputSer
 	return &observabilityOutputServerInterface{client: o.client}
 }
 func (o *observabilityOutputServerInterface) Get(args0 context.Context, args1 string) (*resource.ObservabilityOutputServer, error) {
-	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"service/%s/outputserver", args1)
+	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"services/%s/outputserver", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get ObservabilityOutputServer %s", args1)
@@ -72,7 +72,7 @@ func (o *observabilityOutputServerInterface) Get(args0 context.Context, args1 st
 	return r0.(*resource.ObservabilityOutputServer), nil
 }
 func (o *observabilityOutputServerInterface) Patch(args0 context.Context, args1 *resource.ObservabilityOutputServer) error {
-	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"service/%s/outputserver", args1.Name())
+	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"services/%s/outputserver", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
@@ -86,7 +86,7 @@ func (o *observabilityOutputServerInterface) Patch(args0 context.Context, args1 
 	return err
 }
 func (o *observabilityOutputServerInterface) Create(args0 context.Context, args1 *resource.ObservabilityOutputServer) error {
-	url := "http://" + o.client.server + apiURL + "/mesh/service"
+	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"services/%s/outputserver", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
@@ -100,7 +100,7 @@ func (o *observabilityOutputServerInterface) Create(args0 context.Context, args1
 	return err
 }
 func (o *observabilityOutputServerInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"service/%s/outputserver", args1)
+	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"services/%s/outputserver", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete ObservabilityOutputServer %s", args1)
@@ -113,7 +113,7 @@ func (o *observabilityOutputServerInterface) Delete(args0 context.Context, args1
 	return err
 }
 func (o *observabilityOutputServerInterface) List(args0 context.Context) ([]*resource.ObservabilityOutputServer, error) {
-	url := "http://" + o.client.server + apiURL + "/mesh/service"
+	url := "http://" + o.client.server + apiURL + "/mesh/services"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
@@ -175,7 +175,7 @@ func (o *observabilityMetricsInterface) Patch(args0 context.Context, args1 *reso
 	return err
 }
 func (o *observabilityMetricsInterface) Create(args0 context.Context, args1 *resource.ObservabilityMetrics) error {
-	url := "http://" + o.client.server + apiURL + "/mesh/services"
+	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"services/%s/metrics", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
@@ -264,7 +264,7 @@ func (o *observabilityTracingsInterface) Patch(args0 context.Context, args1 *res
 	return err
 }
 func (o *observabilityTracingsInterface) Create(args0 context.Context, args1 *resource.ObservabilityTracings) error {
-	url := "http://" + o.client.server + apiURL + "/mesh/services"
+	url := fmt.Sprintf("http://"+o.client.server+apiURL+"/mesh/"+"services/%s/tracings", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
