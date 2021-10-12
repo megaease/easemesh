@@ -33,12 +33,15 @@ The ports used by EaseMesh sidecar+agnet system
 ``` mermaid
 sequenceDiagram
     JavaAPP ->> +coreDNS : asking the domain analysis
-    coreDNS -->> coreDNS : checking the Mesh Etcd, if found, return local sidecar
-    coreDNS ->>  -JavaAPP : return the local sidecar
-    JavaAPP ->> +local_sidecar : RESTful request
-    local_sidecar ->> +target_sidecar : routing to read handler
-    target_sidecar ->> -local_sidecar: return the result
-    local_sidecar ->> -JavaAPP : return the ressult
+    coreDNS ->> +Etcd : checking whether it's a mesh service or not
+    Etcd ->> -coreDNS : return local sidecar addr if exits
+    coreDNS ->>  -JavaAPP : return the local sidecar addr
+    JavaAPP ->> +localSidecar : RESTful request
+    localSidecar ->> +targetSidecar : routing to target server's sidecar
+    targetSidecar ->> +targetJavaAPP: routing to the real handler
+    targetJavaAPP ->> -targetSidecar: return the result
+    targetSidecar ->> -localSidecar: return the result
+    localSidecar ->> -JavaAPP : return the ressult
 
 ```
 
