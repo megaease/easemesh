@@ -1,4 +1,4 @@
-Background
+## Background
 
 * EaseMesh uses Easegress-based sidecar inside Kubernetes Pod for **traffic hosting** and  EaseAgent for metrics reporting and RESTful-API-based RPC enhancement. 
 * EaseMesh only supports Java SpringCloud ecosystem's application natively currently.
