@@ -48,7 +48,7 @@ sequenceDiagram
 * To support non-registry-discovery dependent on Java spring boot application, EaseMesh enhances Kubernetes' coreDNS with add a plugin for finding services inside EaseMesh's Etcd. We can reuse this method for none-Java-based programs. 
 * EaseAgent uses Java Byte Buddy-based technology for collecting several application metrics. This requires a JVM-liked software architecture. This observability will be sacrificed for the none-Java-spring-cloud-based RESTful-API application.
 
-### Protocol Design
+### Protocol
 
 To support the none-Java-spring-cloud-based RESTful-API application, regardless of which programming is used. The application must follow the protocol below
 
