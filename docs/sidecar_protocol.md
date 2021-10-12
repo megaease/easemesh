@@ -1,4 +1,4 @@
-## Background
+Background
 
 * EaseMesh uses Easegress-based sidecar inside Kubernetes Pod for **traffic hosting** and  EaseAgent for metrics reporting and RESTful-API-based RPC enhancement. 
 * EaseMesh only supports Java SpringCloud ecosystem's application natively currently.
@@ -13,12 +13,12 @@ There are three types of traffic that are managed by EaseMesh.
 
 The ports used by EaseMesh sidecar+agnet system
 
-| Role    | Port  | Description                                                  |
-| ------- | ----- | ------------------------------------------------------------ |
-| Sidecar | 13001 | The default Ingress port listened by sidecar for handing over traffic to local Java application |
-| Sidecar | 13002 | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application |
+| Role    | Port  | Description                                                                                                                 |
+| ------- | ----- | --------------------------------------------------------------------------------------------------------------------------- |
+| Sidecar | 13001 | The default Ingress port listened by sidecar for handing over traffic to local Java application                             |
+| Sidecar | 13002 | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application     |
 | Sidecar | 13009 | The default registry and discovery port listened by sidecar, for handling local Java application's Eureka/Conslu/Nacos APIs |
-| Agent   | 9000  | The default health port listened by Agent queried by sidecar for checking the liveness of Java application |
+| Agent   | 9000  | The default health port listened by Agent queried by sidecar for checking the liveness of Java application                  |
 
 
 
@@ -30,20 +30,7 @@ The ports used by EaseMesh sidecar+agnet system
 
 * To support the none-Java-spring-cloud-based RESTful-API application, we had demoed a DNS-enhancement way for supporting Java spring boot application. Can we reuse this way to support Golang-based or RUST-based  RESTful-API applications? 
 
-``` mermaid
-sequenceDiagram
-    JavaAPP ->> +coreDNS : asking the domain analysis
-    coreDNS ->> +Etcd : checking whether it's a mesh service or not
-    Etcd ->> -coreDNS : return local sidecar addr if exits
-    coreDNS ->>  -JavaAPP : return the local sidecar addr
-    JavaAPP ->> +localSidecar : RESTful request
-    localSidecar ->> +targetSidecar : routing to target server's sidecar
-    targetSidecar ->> +targetJavaAPP: routing to the real handler
-    targetJavaAPP ->> -targetSidecar: return the result
-    targetSidecar ->> -localSidecar: return the result
-    localSidecar ->> -JavaAPP : return the ressult
-
-```
+[![](https://mermaid.ink/img/eyJjb2RlIjoic2VxdWVuY2VEaWFncmFtXG4gICAgSmF2YUFQUCAtPj4gK2NvcmVETlMgOiBhc2tpbmcgdGhlIGRvbWFpbiBhbmFseXNpc1xuICAgIGNvcmVETlMgLT4-ICtFdGNkIDogY2hlY2tpbmcgd2hldGhlciBpdCdzIGEgbWVzaCBzZXJ2aWNlIG9yIG5vdFxuICAgIEV0Y2QgLT4-IC1jb3JlRE5TIDogcmV0dXJuIGxvY2FsIHNpZGVjYXIgYWRkciBpZiBleGl0c1xuICAgIGNvcmVETlMgLT4-ICAtSmF2YUFQUCA6IHJldHVybiB0aGUgbG9jYWwgc2lkZWNhciBhZGRyXG4gICAgSmF2YUFQUCAtPj4gK2xvY2FsU2lkZWNhciA6IFJFU1RmdWwgcmVxdWVzdFxuICAgIGxvY2FsU2lkZWNhciAtPj4gK3RhcmdldFNpZGVjYXIgOiByb3V0aW5nIHRvIHRhcmdldCBzZXJ2ZXIncyBzaWRlY2FyXG4gICAgdGFyZ2V0U2lkZWNhciAtPj4gK3RhcmdldEphdmFBUFA6IHJvdXRpbmcgdG8gdGhlIHJlYWwgaGFuZGxlclxuICAgIHRhcmdldEphdmFBUFAgLT4-IC10YXJnZXRTaWRlY2FyOiByZXR1cm4gdGhlIHJlc3VsdFxuICAgIHRhcmdldFNpZGVjYXIgLT4-IC1sb2NhbFNpZGVjYXI6IHJldHVybiB0aGUgcmVzdWx0XG4gICAgbG9jYWxTaWRlY2FyIC0-PiAtSmF2YUFQUCA6IHJldHVybiB0aGUgcmVzc3VsdCIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2UsImF1dG9TeW5jIjp0cnVlLCJ1cGRhdGVEaWFncmFtIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/edit/#eyJjb2RlIjoic2VxdWVuY2VEaWFncmFtXG4gICAgSmF2YUFQUCAtPj4gK2NvcmVETlMgOiBhc2tpbmcgdGhlIGRvbWFpbiBhbmFseXNpc1xuICAgIGNvcmVETlMgLT4-ICtFdGNkIDogY2hlY2tpbmcgd2hldGhlciBpdCdzIGEgbWVzaCBzZXJ2aWNlIG9yIG5vdFxuICAgIEV0Y2QgLT4-IC1jb3JlRE5TIDogcmV0dXJuIGxvY2FsIHNpZGVjYXIgYWRkciBpZiBleGl0c1xuICAgIGNvcmVETlMgLT4-ICAtSmF2YUFQUCA6IHJldHVybiB0aGUgbG9jYWwgc2lkZWNhciBhZGRyXG4gICAgSmF2YUFQUCAtPj4gK2xvY2FsU2lkZWNhciA6IFJFU1RmdWwgcmVxdWVzdFxuICAgIGxvY2FsU2lkZWNhciAtPj4gK3RhcmdldFNpZGVjYXIgOiByb3V0aW5nIHRvIHRhcmdldCBzZXJ2ZXIncyBzaWRlY2FyXG4gICAgdGFyZ2V0U2lkZWNhciAtPj4gK3RhcmdldEphdmFBUFA6IHJvdXRpbmcgdG8gdGhlIHJlYWwgaGFuZGxlclxuICAgIHRhcmdldEphdmFBUFAgLT4-IC10YXJnZXRTaWRlY2FyOiByZXR1cm4gdGhlIHJlc3VsdFxuICAgIHRhcmdldFNpZGVjYXIgLT4-IC1sb2NhbFNpZGVjYXI6IHJldHVybiB0aGUgcmVzdWx0XG4gICAgbG9jYWxTaWRlY2FyIC0-PiAtSmF2YUFQUCA6IHJldHVybiB0aGUgcmVzc3VsdCIsIm1lcm1haWQiOiJ7XG4gIFwidGhlbWVcIjogXCJkZWZhdWx0XCJcbn0iLCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9)
 
 * To support non-registry-discovery dependent on Java spring boot application, EaseMesh enhances Kubernetes' coreDNS with add a plugin for finding services inside EaseMesh's Etcd. We can reuse this method for none-Java-based programs. 
 * EaseAgent uses Java Byte Buddy-based technology for collecting several application metrics. This requires a JVM-liked software architecture. This observability will be sacrificed for the none-Java-spring-cloud-based RESTful-API application.
@@ -61,14 +48,14 @@ To support the none-Java-spring-cloud-based RESTful-API application, regardless 
    >
    > 2: regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
    >
-   > //  e.g.  _tcp.vet-services.easemesh.svc.cluster.local
+   > ​    e.g.  _tcp.vet-services.easemesh.svc.cluster.local
    >
-   > //          vet-services.easemesh.svc.cluster.local
+   > ​             vet-services.easemesh.svc.cluster.local
    >
-   > //          _zip._tcp.vet-services.easemesh.svc.com
+   > ​             _zip._tcp.vet-services.easemesh.svc.com
 
 3. It must serve the `http://localhost:9000/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
 
-4. It must reserve ports `13001` and `13002` for local sidecar usage. 
+4. It must reserve ports `13001` , `13002` and `13009` for local sidecar usage.
 
 If an application obeys the protocol above, then EaseMesh can run it inside with sacrificed observability regardless of the implements programming language.
