@@ -46,7 +46,12 @@ To support the none-Java-spring-cloud-based RESTful-API application, regardless 
 ```
 Requirement:
 1. Use coreDNS with easemesh specific plugin
-2. Allowed domain format
+2. Valid domain formats:
+  - Service name, e.g. `vet-services`
+  - Service name with more subdomains, e.g. 
+    - `_tcp.vet-services.easemesh.svc.cluster.local`
+    - `vet-services.easemesh.svc.cluster.local`
+    - `_zip._tcp.vet-services.easemesh.svc.com`
       service name, e.g. vet-services
       regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
           e.g.  _tcp.vet-services.easemesh.svc.cluster.local
