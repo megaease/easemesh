@@ -43,13 +43,16 @@ To support the none-Java-spring-cloud-based RESTful-API application, regardless 
 1. It must serve as standard RESTful-API for handling requesting or invoking RPC. 
 
 2. It must use a domain for discovering in RESTful-API RPC.
-   > Requirement: use coreDNS with easemesh specific plugin
-   >              allowed domain format
-   >                1: only service name
-   >                2: regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
-   > ​                 e.g.  _tcp.vet-services.easemesh.svc.cluster.local
-   > ​                       vet-services.easemesh.svc.cluster.local
-   > ​                       _zip._tcp.vet-services.easemesh.svc.com
+```
+Requirement:
+1. Use coreDNS with easemesh specific plugin
+2. Allowed domain format
+      service name, e.g. vet-services
+      regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
+          e.g.  _tcp.vet-services.easemesh.svc.cluster.local
+                vet-services.easemesh.svc.cluster.local
+                _zip._tcp.vet-services.easemesh.svc.com
+```
 
 3. It must serve the `http://localhost:9000/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
 
