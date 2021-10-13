@@ -39,20 +39,17 @@ The ports used by EaseMesh sidecar+agnet system
 
 To support the none-Java-spring-cloud-based RESTful-API application, regardless of which programming is used. The application must follow the protocol below
 
+
 1. It must serve as standard RESTful-API for handling requesting or invoking RPC. 
 
 2. It must use a domain for discovering in RESTful-API RPC.
-
-   > the domain can be two formats,
-   > 1: only service name
-   >
-   > 2: regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
-   >
-   > ​    e.g.  _tcp.vet-services.easemesh.svc.cluster.local
-   >
-   > ​             vet-services.easemesh.svc.cluster.local
-   >
-   > ​             _zip._tcp.vet-services.easemesh.svc.com
+   > Requirement: use coreDNS with easemesh specific plugin
+   >              allowed domain format
+   >                1: only service name
+   >                2: regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
+   > ​                 e.g.  _tcp.vet-services.easemesh.svc.cluster.local
+   > ​                       vet-services.easemesh.svc.cluster.local
+   > ​                       _zip._tcp.vet-services.easemesh.svc.com
 
 3. It must serve the `http://localhost:9000/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
 
