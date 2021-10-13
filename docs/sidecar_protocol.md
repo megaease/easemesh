@@ -52,11 +52,7 @@ Requirement:
     - `_tcp.vet-services.easemesh.svc.cluster.local`
     - `vet-services.easemesh.svc.cluster.local`
     - `_zip._tcp.vet-services.easemesh.svc.com`
-      service name, e.g. vet-services
-      regex rule:  ^(|(\w+\.)+)vet-services\.(\w+)\.svc\..+$
-          e.g.  _tcp.vet-services.easemesh.svc.cluster.local
-                vet-services.easemesh.svc.cluster.local
-                _zip._tcp.vet-services.easemesh.svc.com
+
 ```
 
 3. It must serve the `http://localhost:9000/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
