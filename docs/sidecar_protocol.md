@@ -13,13 +13,13 @@ There are three types of traffic that are managed by EaseMesh.
 
 The ports inside EaseMesh Pod
 
-| Role        | Port       | Description                                                                                                                 |
-| ----------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Sidecar     | 13001      | The default Ingress port listened by sidecar for handing over traffic to local Java application                             |
-| Sidecar     | 13002      | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application     |
-| Sidecar     | 13009      | The default registry and discovery port listened by sidecar, for handling local Java application's Eureka/Conslu/Nacos APIs |
-| Agent       | 9000       | The default health port listened by Agent queried by sidecar for checking the liveness of Java application                  |
-| Application | customized | The port listened by Java application. Sidecar will use it for routing ingress traffic                                      |
+| Role        | Port       | Description                                                                                                                    |
+| ----------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Sidecar     | 13001      | The default Ingress port listened by the sidecar for accepting traffic and routing to the local application                    |
+| Sidecar     | 13002      | The default egress port listened by the sidecar for routing local application's RPC request to another application             |
+| Sidecar     | 13009      | The default registry and discovery port listened by the sidecar, for handling local application's Eureka/Conslu/Nacos requests |
+| Agent       | 9000       | The default health port listened by the agent, and queried by the sidecar for checking the liveness of the local application   |
+| Application | customized | The port listened by the local application. The sidecar will use it for routing the ingress traffic                            |
 
 
 
