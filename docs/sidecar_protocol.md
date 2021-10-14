@@ -59,6 +59,6 @@ Requirement:
 
 4. It **must** reserve ports `13001` , `13002` and `13009` for local sidecar usage.
 
-5. It **should** specify the application port in Kubernetes deployment's `mesh.megaease.com/application-port` annotation for sidecar routing the ingress traffic. (If it is omitted, the port in deployment's first container's will be regarded as the application port)
+5. It **should** specify the application port in Kubernetes deployment's `mesh.megaease.com/application-port` annotation for sidecar routing the ingress traffic. (If it is omitted, the first port of the first container will be regarded as the application port)
 
 If an application obeys the protocol above, then EaseMesh can run it inside with sacrificed observability regardless of the implements programming language.
