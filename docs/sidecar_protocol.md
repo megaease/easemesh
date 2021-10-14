@@ -40,9 +40,9 @@ The ports used by EaseMesh sidecar+agnet system
 To support the none-Java-spring-cloud-based RESTful-API application, regardless of which programming is used. The application must follow the protocol below
 
 
-1. It must serve as standard RESTful-API for handling requesting or invoking RPC. 
+1. It **must** serve as standard RESTful-API for handling requesting or invoking RPC. 
 
-2. It must use a domain for discovering in RESTful-API RPC.
+2. It **must** use a domain for discovering in RESTful-API RPC.
 ```
 Requirement:
 1. Use coreDNS with easemesh specific plugin
@@ -55,8 +55,10 @@ Requirement:
 
 ```
 
-3. It must serve the `http://localhost:9000/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
+3. It **must** serve the `http://localhost:9000/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
 
-4. It must reserve ports `13001` , `13002` and `13009` for local sidecar usage.
+4. It **must** reserve ports `13001` , `13002` and `13009` for local sidecar usage.
+
+5. It **should** specify the application port in Kubernetes deployment's `mesh.megaease.com/application-port` annotation for sidecar routing the ingress traffic. (If it is omitted, the port in deployment's first container's will be regarded as the application port)
 
 If an application obeys the protocol above, then EaseMesh can run it inside with sacrificed observability regardless of the implements programming language.
