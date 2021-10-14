@@ -11,14 +11,15 @@ There are three types of traffic that are managed by EaseMesh.
 * Second, the **Health-checking HTTP traffic**. This traffic is sent from the sidecar to the Java application's additional port opened by EaseAgent.  The complete URI is `http://localhost:9000/health` by default. This `9000` port is opened by EaseAgent, sidecar will query this URI period for checking the liveness of the Java application. After successfully deployed, sidecar will registry this instance into EaseMesh automatically after confirming the HTTP 200 success return by this URI.
 * Third, the **Service-discovery traffic**. This traffic is invoked by the Java spring cloud application's RPC framework. During the lifetime of the Java application, sidecar will work as the Java application's service registry and discovery center. EaseMesh sidecar implements Eureka/Consul/Naocs APIs for hosting the Java application's registry and discovery requests. To make the sidecar server the registry and discovery center, value it with `http://localhost:13009` inside the Java application's  XML. The port `13009` is listened by sidecar for handling Eureka/Consul/Nacos APIs. 
 
-The ports used by EaseMesh sidecar+agnet system
+The ports inside EaseMesh Pod
 
-| Role    | Port  | Description                                                                                                                 |
-| ------- | ----- | --------------------------------------------------------------------------------------------------------------------------- |
-| Sidecar | 13001 | The default Ingress port listened by sidecar for handing over traffic to local Java application                             |
-| Sidecar | 13002 | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application     |
-| Sidecar | 13009 | The default registry and discovery port listened by sidecar, for handling local Java application's Eureka/Conslu/Nacos APIs |
-| Agent   | 9000  | The default health port listened by Agent queried by sidecar for checking the liveness of Java application                  |
+| Role        | Port       | Description                                                                                                                 |
+| ----------- | ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Sidecar     | 13001      | The default Ingress port listened by sidecar for handing over traffic to local Java application                             |
+| Sidecar     | 13002      | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application     |
+| Sidecar     | 13009      | The default registry and discovery port listened by sidecar, for handling local Java application's Eureka/Conslu/Nacos APIs |
+| Agent       | 9000       | The default health port listened by Agent queried by sidecar for checking the liveness of Java application                  |
+| Application | customized | The port listened by Java application. Sidecar will use it for routing ingress traffic                                      |
 
 
 
