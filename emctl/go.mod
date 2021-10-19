@@ -12,7 +12,7 @@ require (
 	github.com/googleapis/gnostic v0.5.1 // indirect
 	github.com/json-iterator/go v1.1.12
 	github.com/kr/text v0.2.0 // indirect
-	github.com/megaease/easemesh-api v1.3.1
+	github.com/megaease/easemesh-api v1.3.2
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4
@@ -23,6 +23,7 @@ require (
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	golang.org/x/text v0.3.6
 	google.golang.org/appengine v1.6.6 // indirect
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.20.1
