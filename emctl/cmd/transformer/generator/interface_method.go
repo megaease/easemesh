@@ -549,10 +549,8 @@ func deleteMethodFetcher(interfaceStructName string) resourceFetcher {
 func mappingURLFromResourceName(resourceName string, resource2UrlMapping map[string]string) string {
 	subURL := resourceName
 	if len(resource2UrlMapping) > 0 {
-		for k, v := range resource2UrlMapping {
-			if k == resourceName {
-				subURL = v
-			}
+		if v, ok := resource2UrlMapping[resourceName]; ok {
+			subURL = v
 		}
 	}
 	return subURL
