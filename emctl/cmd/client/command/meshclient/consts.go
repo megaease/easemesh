@@ -26,6 +26,12 @@ const (
 	// MeshControllerURL is the mesh controller path.
 	MeshControllerURL = apiURL + "/objects/%s"
 
+	// ConsulServiceRegistrysURL is the consul service registry path.
+	ConsulServiceRegistrysURL = apiURL + "/objects"
+
+	// ConsulServiceRegistryURL is the consul service registry path.
+	ConsulServiceRegistryURL = apiURL + "/objects/%s"
+
 	// MeshTenantsURL is the mesh tenant prefix.
 	MeshTenantsURL = apiURL + "/mesh/tenants"
 

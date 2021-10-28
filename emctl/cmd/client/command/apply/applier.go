@@ -46,6 +46,8 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerApplier{object: object.(*resource.MeshController), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindConsulServiceRegistry:
+		return &consulServiceRegistryApplier{object: object.(*resource.ConsulServiceRegistry), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindService:
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindServiceInstance:
@@ -98,6 +100,36 @@ func (mc *meshControllerApplier) Apply() error {
 			}
 		default:
 			return errors.Wrapf(err, "apply meshController %s", mc.object.Name())
+		}
+
+	}
+}
+
+type consulServiceRegistryApplier struct {
+	baseApplier
+	object *resource.ConsulServiceRegistry
+}
+
+func (c *consulServiceRegistryApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
+	defer cancelFunc()
+	err := c.client.V1Alpha1().ConsulServiceRegistry().Create(ctx, c.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = c.client.V1Alpha1().ConsulServiceRegistry().Patch(ctx, c.object)
+			if err != nil {
+				return errors.Wrapf(err, "update consulServiceRegistry %s", c.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = c.client.V1Alpha1().ConsulServiceRegistry().Create(ctx, c.object)
+			if err != nil {
+				return errors.Wrapf(err, "create consulServiceRegistry %s", c.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply consulServiceRegistry %s", c.object.Name())
 		}
 
 	}

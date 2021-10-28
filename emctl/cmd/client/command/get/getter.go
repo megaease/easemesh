@@ -38,6 +38,8 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerGetter{object: object.(*resource.MeshController), baseGetter: base}
+	case resource.KindConsulServiceRegistry:
+		return &consulServiceRegistryGetter{object: object.(*resource.ConsulServiceRegistry), baseGetter: base}
 	case resource.KindService:
 		return &serviceGetter{object: object.(*resource.Service), baseGetter: base}
 	case resource.KindServiceInstance:
@@ -103,6 +105,37 @@ func (s *meshControllerGetter) Get() ([]meta.MeshObject, error) {
 	objects := make([]meta.MeshObject, len(meshControllers))
 	for i := range meshControllers {
 		objects[i] = meshControllers[i]
+	}
+
+	return objects, nil
+}
+
+type consulServiceRegistryGetter struct {
+	baseGetter
+	object *resource.ConsulServiceRegistry
+}
+
+func (s *consulServiceRegistryGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
+	defer cancelFunc()
+
+	if s.object.Name() != "" {
+		consulServiceRegistry, err := s.client.V1Alpha1().ConsulServiceRegistry().Get(ctx, s.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{consulServiceRegistry}, nil
+	}
+
+	consulServiceRegistrys, err := s.client.V1Alpha1().ConsulServiceRegistry().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(consulServiceRegistrys))
+	for i := range consulServiceRegistrys {
+		objects[i] = consulServiceRegistrys[i]
 	}
 
 	return objects, nil

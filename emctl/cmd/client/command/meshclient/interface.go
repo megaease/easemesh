@@ -31,6 +31,7 @@ type MeshClient interface {
 // V1Alpha1Interface is an interface that aggregates all resources accessor for the EaseMesh
 type V1Alpha1Interface interface {
 	MeshControllerGetter
+	ConsulServiceRegistryGetter
 	TenantGetter
 	ServiceGetter
 	ServiceInstanceGetter
@@ -46,6 +47,11 @@ type V1Alpha1Interface interface {
 // MeshControllerGetter represents a mesh controller resource accessor
 type MeshControllerGetter interface {
 	MeshController() MeshControllerInterface
+}
+
+// ConsulServiceRegistryGetter represents a consul service registry resource accessor
+type ConsulServiceRegistryGetter interface {
+	ConsulServiceRegistry() ConsulServiceRegistryInterface
 }
 
 // TenantGetter represents a Tenant resource accessor
@@ -107,6 +113,15 @@ type MeshControllerInterface interface {
 	Create(context.Context, *resource.MeshController) error
 	Delete(context.Context, string) error
 	List(context.Context) ([]*resource.MeshController, error)
+}
+
+// ConsulServiceRegistryInterface captures the set of operations for interacting with the EaseMesh REST apis of the mesh controller resource.
+type ConsulServiceRegistryInterface interface {
+	Get(context.Context, string) (*resource.ConsulServiceRegistry, error)
+	Patch(context.Context, *resource.ConsulServiceRegistry) error
+	Create(context.Context, *resource.ConsulServiceRegistry) error
+	Delete(context.Context, string) error
+	List(context.Context) ([]*resource.ConsulServiceRegistry, error)
 }
 
 // TenantInterface captures the set of operations for interacting with the EaseMesh REST apis of the tenant resource.
