@@ -18,6 +18,7 @@
 package controller
 
 import (
+	"sync"
 	"time"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/handler"
@@ -37,7 +38,7 @@ const (
 type (
 	// ShadowServiceExecutor is executor which orchestrator cloner and deployer for run shadow service.
 	ShadowServiceExecutor interface {
-		Do()
+		Do(stopChan <-chan struct{})
 	}
 
 	ShadowServiceController struct {
@@ -105,25 +106,33 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 }
 
 // Do start shadow service sync and clone.
-func (s *ShadowServiceController) Do() <-chan struct{} {
-	result := make(chan struct{})
-	customObjectsChan, _ := s.syncer.Sync(ShadowServiceKind)
+func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{}) {
+	shadowServiceChan, _ := s.syncer.Sync(ShadowServiceKind)
+
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for {
 			select {
-			case obj := <-customObjectsChan:
+			case <-stopChan:
+				s.syncer.Close()
+				return
+			case obj := <-shadowServiceChan:
 				s.searcher.Search(obj)
 			}
 		}
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for {
 			select {
+			case <-stopChan:
+				return
 			case obj := <-s.cloneChan:
 				s.cloner.Clone(obj)
 			}
 		}
 	}()
-	return result
 }

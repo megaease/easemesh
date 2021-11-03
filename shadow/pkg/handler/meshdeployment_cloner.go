@@ -28,10 +28,11 @@ import (
 
 type CloneMeshDeploymentFunc func() error
 
-type cloneMeshDeploymentSpecFunc func(ourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment
+// type cloneMeshDeploymentSpecFunc func(ourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment
 
 func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) CloneMeshDeploymentFunc {
-	shadowMeshDeployment := cloner.shadowMeshDeploymentBaseSpec(cloner.shadowMeshDeploymentInitialize(nil))(sourceMeshDeployment, shadowService)
+	// shadowMeshDeployment := cloner.generateShadowMeshDeployment(sourceMeshDeployment, shadowService)
+	shadowMeshDeployment := cloner.decorateShadowMeshDeployment(sourceMeshDeployment, shadowService)
 	return func() error {
 		err := utils.DeployMesheployment(shadowMeshDeployment.Namespace, shadowMeshDeployment, cloner.CRDClient)
 		if err != nil {
@@ -41,49 +42,45 @@ func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1b
 	}
 }
 
-func (cloner *ShadowServiceCloner) shadowMeshDeploymentInitialize(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
-	return func(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
-		return &v1beta1.MeshDeployment{
-			TypeMeta: sourceMeshDeployment.TypeMeta,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        shadowName(sourceMeshDeployment.Name),
-				Namespace:   sourceMeshDeployment.Namespace,
-				Labels:      sourceMeshDeployment.Labels,
-				Annotations: sourceMeshDeployment.Annotations,
-			},
-		}
+func (cloner *ShadowServiceCloner) generateShadowMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment) *v1beta1.MeshDeployment {
+	return &v1beta1.MeshDeployment{
+		TypeMeta: sourceMeshDeployment.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        shadowName(sourceMeshDeployment.Name),
+			Namespace:   sourceMeshDeployment.Namespace,
+			Labels:      sourceMeshDeployment.Labels,
+			Annotations: sourceMeshDeployment.Annotations,
+		},
 	}
 }
 
-func (cloner *ShadowServiceCloner) shadowMeshDeploymentBaseSpec(fn cloneMeshDeploymentSpecFunc) cloneMeshDeploymentSpecFunc {
-	return func(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
-		meshDeployment := fn(sourceMeshDeployment, shadowService)
-		meshDeployment.Spec.Service = sourceMeshDeployment.Spec.Service
+func (cloner *ShadowServiceCloner) decorateShadowMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
+	shadowMeshDeployment := cloner.generateShadowMeshDeployment(sourceMeshDeployment)
+	shadowMeshDeployment.Spec.Service = sourceMeshDeployment.Spec.Service
 
-		labels := meshDeployment.Labels
-		if labels == nil {
-			labels = make(map[string]string)
-		}
-
-		shadowServiceLabels := shadowServiceLabels()
-		for k, v := range shadowServiceLabels {
-			labels[k] = v
-		}
-		meshDeployment.Labels = labels
-
-		deployment := &appsV1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      sourceMeshDeployment.Name,
-				Namespace: sourceMeshDeployment.Namespace,
-			},
-			Spec: sourceMeshDeployment.Spec.Deploy.DeploymentSpec,
-		}
-		if sourceMeshDeployment.Spec.Service.AppContainerName != "" {
-			deployment.Annotations[shadowAppContainerNameKey] = sourceMeshDeployment.Spec.Service.AppContainerName
-		}
-		shadowDeployment := cloner.cloneDeploymentSpec(deployment, shadowService)
-		meshDeployment.Spec.Deploy.DeploymentSpec = shadowDeployment.Spec
-
-		return meshDeployment
+	labels := shadowMeshDeployment.Labels
+	if labels == nil {
+		labels = make(map[string]string)
 	}
+
+	shadowServiceLabels := shadowServiceLabels()
+	for k, v := range shadowServiceLabels {
+		labels[k] = v
+	}
+	shadowMeshDeployment.Labels = labels
+
+	deployment := &appsV1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      sourceMeshDeployment.Name,
+			Namespace: sourceMeshDeployment.Namespace,
+		},
+		Spec: sourceMeshDeployment.Spec.Deploy.DeploymentSpec,
+	}
+	if sourceMeshDeployment.Spec.Service.AppContainerName != "" {
+		deployment.Annotations[shadowAppContainerNameKey] = sourceMeshDeployment.Spec.Service.AppContainerName
+	}
+	shadowDeployment := cloner.cloneDeploymentSpec(deployment, shadowService)
+	shadowMeshDeployment.Spec.Deploy.DeploymentSpec = shadowDeployment.Spec
+
+	return shadowMeshDeployment
 }

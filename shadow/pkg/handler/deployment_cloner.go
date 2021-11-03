@@ -32,8 +32,6 @@ import (
 // ShadowDeploymentFunc type ShadowFunc func(ctx *object.CloneContext) error
 type ShadowDeploymentFunc func() error
 
-type cloneDeploymentSpecFunc func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment
-
 func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
 	shadowDeployment := cloner.cloneDeploymentSpec(sourceDeployment, shadowService)
 	return func() error {
@@ -46,37 +44,10 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsV1.Depl
 }
 
 func (cloner *ShadowServiceCloner) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-	shadowDeployment := cloner.injectShadowConfiguration(
-		cloner.shadowDeploymentBaseSpec(
-			cloner.shadowDeploymentInitialize(nil)))(sourceDeployment, shadowService)
+	shadowDeployment := cloner.generateShadowDeployment(sourceDeployment)
+	cloner.decorateShadowDeploymentBaseSpec(shadowDeployment, sourceDeployment)
+	cloner.decorateShadowConfiguration(shadowDeployment, sourceDeployment, shadowService)
 	return shadowDeployment
-}
-
-func (cloner *ShadowServiceCloner) injectShadowConfiguration(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
-	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-		deployment := fn(sourceDeployment, shadowService)
-
-		shadowConfigs := make(map[string]interface{})
-		shadowConfigs[databaseShadowConfigEnv] = shadowService.MySQL
-		shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
-		shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
-		shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
-		shadowConfigs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
-
-		newEnvs := make([]corev1.EnvVar, 0)
-		for k, v := range shadowConfigs {
-			env := generateShadowConfigEnv(k, v)
-			if env != nil {
-				newEnvs = append(newEnvs, *env)
-			}
-		}
-
-		appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
-		appContainer, _ := findContainer(sourceDeployment.Spec.Template.Spec.Containers, appContainerName)
-		appContainer.Env = injectEnvVars(appContainer.Env, newEnvs...)
-		deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
-		return deployment
-	}
 }
 
 // findContainer returns the copy of the container,
@@ -151,55 +122,73 @@ func generateShadowConfigEnv(envName string, config interface{}) *corev1.EnvVar 
 
 }
 
-func (cloner *ShadowServiceCloner) shadowDeploymentInitialize(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
-	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-		return &appsV1.Deployment{
-			TypeMeta: sourceDeployment.TypeMeta,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        shadowName(sourceDeployment.Name),
-				Namespace:   sourceDeployment.Namespace,
-				Labels:      sourceDeployment.Labels,
-				Annotations: sourceDeployment.Annotations,
-			},
-		}
-
+func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *appsV1.Deployment) *appsV1.Deployment {
+	return &appsV1.Deployment{
+		TypeMeta: sourceDeployment.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        shadowName(sourceDeployment.Name),
+			Namespace:   sourceDeployment.Namespace,
+			Labels:      sourceDeployment.Labels,
+			Annotations: sourceDeployment.Annotations,
+		},
 	}
 }
 
-func (cloner *ShadowServiceCloner) shadowDeploymentBaseSpec(fn cloneDeploymentSpecFunc) cloneDeploymentSpecFunc {
-	return func(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-		deployment := fn(sourceDeployment, shadowService)
-		deployment.Spec = sourceDeployment.Spec
+func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *appsV1.Deployment, sourceDeployment *appsV1.Deployment) *appsV1.Deployment {
+	deployment.Spec = sourceDeployment.Spec
 
-		labels := deployment.Spec.Selector.MatchLabels
-		if labels == nil {
-			labels = map[string]string{}
-		}
-
-		shadowServiceLabels := shadowServiceLabels()
-		for k, v := range shadowServiceLabels {
-			labels[k] = v
-		}
-		deployment.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: labels,
-		}
-		deployment.Spec.Template.Labels = labels
-
-		containers := deployment.Spec.Template.Spec.Containers
-		deployment.Spec.Template.Spec.Containers = shadowContainers(containers)
-
-		initContainers := deployment.Spec.Template.Spec.InitContainers
-		deployment.Spec.Template.Spec.InitContainers = shadowInitContainers(initContainers)
-
-		volumes := deployment.Spec.Template.Spec.Volumes
-		deployment.Spec.Template.Spec.Volumes = shadowVolumes(volumes)
-		return deployment
+	labels := deployment.Spec.Selector.MatchLabels
+	if labels == nil {
+		labels = map[string]string{}
 	}
+
+	shadowServiceLabels := shadowServiceLabels()
+	for k, v := range shadowServiceLabels {
+		labels[k] = v
+	}
+	deployment.Spec.Selector = &metav1.LabelSelector{
+		MatchLabels: labels,
+	}
+	deployment.Spec.Template.Labels = labels
+
+	containers := deployment.Spec.Template.Spec.Containers
+	deployment.Spec.Template.Spec.Containers = shadowContainers(containers)
+
+	initContainers := deployment.Spec.Template.Spec.InitContainers
+	deployment.Spec.Template.Spec.InitContainers = shadowInitContainers(initContainers)
+
+	volumes := deployment.Spec.Template.Spec.Volumes
+	deployment.Spec.Template.Spec.Volumes = shadowVolumes(volumes)
+	return deployment
+}
+
+func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV1.Deployment, sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
+	shadowConfigs := make(map[string]interface{})
+	shadowConfigs[databaseShadowConfigEnv] = shadowService.MySQL
+	shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
+	shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
+	shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
+	shadowConfigs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
+
+	newEnvs := make([]corev1.EnvVar, 0)
+	for k, v := range shadowConfigs {
+		env := generateShadowConfigEnv(k, v)
+		if env != nil {
+			newEnvs = append(newEnvs, *env)
+		}
+	}
+
+	appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
+	appContainer, _ := findContainer(sourceDeployment.Spec.Template.Spec.Containers, appContainerName)
+	appContainer.Env = injectEnvVars(appContainer.Env, newEnvs...)
+	deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
+	return deployment
 }
 
 func shadowName(name string) string {
 	return name + shadowDeploymentNameSuffix
 }
+
 func shadowServiceLabels() map[string]string {
 	selector := map[string]string{}
 	selector[shadowLabelKey] = "true"

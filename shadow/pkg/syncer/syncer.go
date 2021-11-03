@@ -35,6 +35,7 @@ import (
 type ShadowServiceSyncer struct {
 	server       *Server
 	pullInterval time.Duration
+	done         chan struct{}
 }
 
 func NewSyncer(meshServer string, requestTimeout time.Duration, pullInterval time.Duration) (*ShadowServiceSyncer, error) {
@@ -44,6 +45,7 @@ func NewSyncer(meshServer string, requestTimeout time.Duration, pullInterval tim
 			MeshServer:     meshServer,
 		},
 		pullInterval: pullInterval,
+		done:         make(chan struct{}),
 	}, nil
 }
 
@@ -66,6 +68,7 @@ func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowS
 		log.Printf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
 		return
 	}
+
 	go func() {
 		for {
 			line, e := reader.ReadBytes('\n')
@@ -103,6 +106,8 @@ func (s *ShadowServiceSyncer) run(kind string, send func(data []object.ShadowSer
 
 	for {
 		select {
+		case <-s.done:
+			return
 		case <-ticker.C:
 			pullAndSend()
 		}
@@ -125,4 +130,9 @@ func (s *ShadowServiceSyncer) Sync(kind string) (<-chan object.ShadowService, er
 		s.run(kind, fn)
 	}()
 	return ch, nil
+}
+
+// Close closes the syncer.
+func (s *ShadowServiceSyncer) Close() {
+	close(s.done)
 }

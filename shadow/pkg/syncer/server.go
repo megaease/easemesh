@@ -77,7 +77,6 @@ func (server *Server) Watch(kind string) (*bufio.Reader, error) {
 	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjetWatchURL, kind)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	httpResp, err := http.DefaultClient.Do(request)
-	fmt.Println(err)
 	if err != nil {
 		return nil, errors.Errorf("list %s objects failed,", kind)
 	}

@@ -20,6 +20,7 @@ package main
 import (
 	"flag"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/controller"
@@ -49,6 +50,10 @@ func main() {
 		log.Fatalf("new collector service error: %s", err)
 		return
 	}
+	stopChan := make(chan struct{})
+	defer close(stopChan)
 
-	<-controller.Do()
+	wg := &sync.WaitGroup{}
+	controller.Do(wg, stopChan)
+	wg.Wait()
 }
