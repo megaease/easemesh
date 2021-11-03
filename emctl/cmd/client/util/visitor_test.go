@@ -14,27 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service Canary=services/%s/canary
-
-package meshclient
+package util
 
 import (
-	"context"
+	"testing"
 
 	"github.com/megaease/easemeshctl/cmd/client/resource"
+	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
+	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
 )
 
-// CanaryGetter represents a Canary resource accessor
-type CanaryGetter interface {
-	Canary() CanaryInterface
+func TestFileVisitor(t *testing.T) {
+
+	types := meshtesting.GetAllResourceKinds()
+	types = append(types, meshtesting.ResourceTypeKind{Type: nil, Kind: resource.KindServiceInstance})
+	for i, tp := range types {
+		name := "resource"
+		if i == 0 {
+			name = ""
+
+		}
+		newCommandVisitor(tp.Kind, name).
+			Visit(func(mo meta.MeshObject, e error) error { return nil })
+	}
+
 }
 
-// CanaryInterface captures the set of operations for interacting with the EaseMesh REST apis of the canaray resource.
-type CanaryInterface interface {
-	Get(context.Context, string) (*resource.Canary, error)
-	Patch(context.Context, *resource.Canary) error
-	Create(context.Context, *resource.Canary) error
-	Delete(context.Context, string) error
-	List(context.Context) ([]*resource.Canary, error)
+func TestVisitorForSTDIN(t *testing.T) {
+	FileVisitorForSTDIN(newDefaultDecoder()).Visit(func(mo meta.MeshObject, e error) error { return nil })
 }

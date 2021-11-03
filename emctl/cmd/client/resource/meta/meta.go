@@ -44,6 +44,17 @@ type (
 		APIVersion() string
 		Labels() map[string]string
 	}
+	// TableColumn is the user-defined table column.
+	TableColumn struct {
+		Name  string
+		Value string
+	}
+
+	// TableObject is the object which wants to
+	// customize its own output in format table.
+	TableObject interface {
+		Columns() []*TableColumn
+	}
 )
 
 // Name returns name of the EaseMesh resource
