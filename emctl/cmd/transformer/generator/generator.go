@@ -21,6 +21,7 @@ import (
 	"go/ast"
 	"io"
 	"strings"
+	"unicode"
 
 	"github.com/dave/jennifer/jen"
 	"github.com/pkg/errors"
@@ -169,5 +170,12 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 }
 
 func lowerFirstChar(str string) string {
-	return strings.ToLower(str[0:1]) + str[1:]
+	first := true
+	return strings.Map(func(r rune) rune {
+		if !first {
+			return r
+		}
+		first = false
+		return unicode.ToLower(r)
+	}, str)
 }

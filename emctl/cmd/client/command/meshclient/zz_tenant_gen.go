@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type tenantInterface struct {
+type tenantGetter struct {
 	client *meshClient
 }
-type tenantGetter struct {
+type tenantInterface struct {
 	client *meshClient
 }
 

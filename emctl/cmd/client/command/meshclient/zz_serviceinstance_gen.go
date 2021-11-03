@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type serviceInstanceGetter struct {
+type serviceInstanceInterface struct {
 	client *meshClient
 }
-type serviceInstanceInterface struct {
+type serviceInstanceGetter struct {
 	client *meshClient
 }
 
