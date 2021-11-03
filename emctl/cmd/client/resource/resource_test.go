@@ -57,7 +57,7 @@ func TestObjectCreator(t *testing.T) {
 			r.Spec = &v1alpha1.Canary{}
 			ToCanary("new", r.ToV1Alpha1())
 		case *CustomResourceKind:
-			ToCustomResourceKind(r.ToV1Alpha1()).Columns()
+			ToCustomResourceKind(r.ToV1Alpha1())
 		case *ObservabilityMetrics:
 			ToObservabilityMetrics("new", r.ToV1Alpha1())
 		case *ObservabilityOutputServer:

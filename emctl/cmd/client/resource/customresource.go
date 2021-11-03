@@ -41,20 +41,6 @@ type (
 	}
 )
 
-// Columns returns the columns of CustomResourceKind.
-func (k *CustomResourceKind) Columns() []*meta.TableColumn {
-	if k.Spec == nil {
-		return nil
-	}
-
-	return []*meta.TableColumn{
-		{
-			Name:  "JSONSchema",
-			Value: k.Spec.JSONSchema,
-		},
-	}
-}
-
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (k *CustomResourceKind) ToV1Alpha1() *v1alpha1.CustomResourceKind {
 	result := &v1alpha1.CustomResourceKind{}
