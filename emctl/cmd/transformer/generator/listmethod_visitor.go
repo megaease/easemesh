@@ -46,6 +46,8 @@ type (
 		unmarshalStatementMappings   map[ResourceType]statementBuilder
 		resultAssignStatementMapping map[ResourceType]statementBuilder
 	}
+
+	statementBuilderFunc func(resourceName, subResource string) ([]jen.Code, error)
 )
 
 func newListMethodVisitor(resourceType ResourceType, resourceName string,
@@ -66,6 +68,7 @@ func newListMethodVisitor(resourceType ResourceType, resourceName string,
 		},
 	}
 }
+
 func (s *baseListMethodVisitor) visitorStatusCodeJudgement1() error {
 	s.group.Add(
 		jen.If(jen.Id("statusCode").Op("==").Qual("net/http", "StatusNotFound")).Block(
@@ -77,6 +80,7 @@ func (s *baseListMethodVisitor) visitorStatusCodeJudgement1() error {
 
 	return nil
 }
+
 func (s *baseListMethodVisitor) visitorStatusCodeJudgement2() error {
 	s.group.Add(
 		jen.If(jen.Id("statusCode").Op(">=").Lit(300)).Op("&&").Id("statusCode").Op("<").Lit(200).Block(
@@ -90,6 +94,7 @@ func (s *baseListMethodVisitor) visitorStatusCodeJudgement2() error {
 	)
 	return nil
 }
+
 func (s *baseListMethodVisitor) visitorReturn() error {
 	s.group.Add(jen.Return(jen.Id("results"), jen.Nil()))
 	return nil
@@ -202,8 +207,6 @@ func globalResultAssign(resourceName, subResource string) (codes []jen.Code, err
 	codes = append(codes, forLoop)
 	return
 }
-
-type statementBuilderFunc func(resourceName, subResource string) ([]jen.Code, error)
 
 func (s statementBuilderFunc) build(resourceName, subResource string) ([]jen.Code, error) {
 	if s == nil {

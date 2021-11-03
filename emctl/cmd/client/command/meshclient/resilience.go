@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 //go:generate go run github.com/megaease/easemeshctl/cmd/transformer Service Resilience=services/%s/resilience
 
 package meshclient

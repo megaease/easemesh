@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type canaryGetter struct {
+type canaryInterface struct {
 	client *meshClient
 }
-type canaryInterface struct {
+type canaryGetter struct {
 	client *meshClient
 }
 

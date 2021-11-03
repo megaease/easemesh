@@ -167,7 +167,7 @@ type (
 
 		SpecFile string
 
-		WaitControlPlaneTimeOutInSeconds int
+		WaitControlPlaneTimeoutInSeconds int
 	}
 
 	// Reset holds the option for the EaseMesh resest sub command
@@ -254,7 +254,7 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&i.EaseMeshOperatorReplicas, "easemesh-operator-replicas", DefaultMeshOperatorReplicas, "Mesh operator controller replicas")
 	cmd.Flags().StringVarP(&i.SpecFile, "file", "f", "", "A yaml file specifying the install params")
 	cmd.Flags().BoolVar(&i.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")
-	cmd.Flags().IntVar(&i.WaitControlPlaneTimeOutInSeconds, "wait-control-plane-seconds", DefaultWaitControlPlaneSeconds, "Wait control plane ready timeout in seconds")
+	cmd.Flags().IntVar(&i.WaitControlPlaneTimeoutInSeconds, "wait-control-plane-seconds", DefaultWaitControlPlaneSeconds, "Wait control plane ready timeout in seconds")
 }
 
 // AttachCmd attaches options for reset sub command

@@ -44,7 +44,7 @@ func prepareContext() (*installbase.StageContext, *fake.Clientset, *extensionfak
 
 func TestDeploy(t *testing.T) {
 	ctx, client, _ := prepareContext()
-	ctx.Flags.WaitControlPlaneTimeOutInSeconds = 1
+	ctx.Flags.WaitControlPlaneTimeoutInSeconds = 1
 
 	client.PrependReactor("create", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, nil, nil
@@ -81,7 +81,7 @@ func TestDeploy(t *testing.T) {
 		}, nil
 	})
 
-	ctx.Flags.WaitControlPlaneTimeOutInSeconds = 1
+	ctx.Flags.WaitControlPlaneTimeoutInSeconds = 1
 	ctx.Flags.MeshControlPlaneCheckHealthzMaxTime = 1
 	Deploy(ctx)
 
