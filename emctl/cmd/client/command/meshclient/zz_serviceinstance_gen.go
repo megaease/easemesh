@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017, MegaEase
+Copyright (c) 2021, MegaEase
 All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type serviceInstanceInterface struct {
+type serviceInstanceGetter struct {
 	client *meshClient
 }
-type serviceInstanceGetter struct {
+type serviceInstanceInterface struct {
 	client *meshClient
 }
 
