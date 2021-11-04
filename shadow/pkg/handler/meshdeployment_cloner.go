@@ -28,10 +28,7 @@ import (
 
 type CloneMeshDeploymentFunc func() error
 
-// type cloneMeshDeploymentSpecFunc func(ourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment
-
 func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) CloneMeshDeploymentFunc {
-	// shadowMeshDeployment := cloner.generateShadowMeshDeployment(sourceMeshDeployment, shadowService)
 	shadowMeshDeployment := cloner.decorateShadowMeshDeployment(sourceMeshDeployment, shadowService)
 	return func() error {
 		err := utils.DeployMesheployment(shadowMeshDeployment.Namespace, shadowMeshDeployment, cloner.CRDClient)
