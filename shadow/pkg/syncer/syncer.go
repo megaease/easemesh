@@ -62,34 +62,41 @@ func (s *ShadowServiceSyncer) pull(kind string) ([]object.ShadowService, error) 
 	return result, nil
 }
 
-func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowService)) {
-	reader, err := s.server.Watch(kind)
-	if err != nil {
-		log.Printf("Watch response from MeshServer error: %s. Stop watch.", err.Error())
-		return
-	}
-
+func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowService)) chan struct{} {
+	watchChan := make(chan struct{})
 	go func() {
+		reader, err := s.server.Watch(kind)
+		if err != nil {
+			log.Printf("Watch response from MeshServer error: %s. Retry ...", err.Error())
+			watchChan <- struct{}{}
+			return
+		}
 		for {
 			line, e := reader.ReadBytes('\n')
 			if e != nil {
-				log.Printf("Watch response from MeshServer error: %s. Stop watch.", e.Error())
+				log.Printf("Watch response from MeshServer error: %s. Retry ...", e.Error())
+				watchChan <- struct{}{}
 				return
 			} else {
-				var objects []object.ShadowService
-				e = json.Unmarshal(line, &objects)
-				if e != nil {
-					log.Printf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, e.Error())
-					continue
+				if json.Valid(line) {
+					var objects []object.ShadowService
+					e = json.Unmarshal(line, &objects)
+					if e != nil {
+						log.Printf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, e.Error())
+						continue
+					}
+					log.Printf("Shadowservice update, applying...")
+					send(objects)
 				}
-				send(objects)
 			}
 		}
 	}()
+	return watchChan
 }
 
 func (s *ShadowServiceSyncer) run(kind string, send func(data []object.ShadowService)) {
-	s.watch(kind, send)
+	watchChan := s.watch(kind, send)
+	defer close(watchChan)
 
 	ticker := time.NewTicker(s.pullInterval)
 	defer ticker.Stop()
@@ -110,6 +117,9 @@ func (s *ShadowServiceSyncer) run(kind string, send func(data []object.ShadowSer
 			return
 		case <-ticker.C:
 			pullAndSend()
+		case <-watchChan:
+			close(watchChan)
+			watchChan = s.watch(kind, send)
 		}
 	}
 }
