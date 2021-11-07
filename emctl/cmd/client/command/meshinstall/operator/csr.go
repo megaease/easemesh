@@ -19,14 +19,14 @@ package operator
 
 import (
 	"context"
-	"fmt"
 
-	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
-
+	"github.com/pkg/errors"
 	certv1 "k8s.io/api/certificates/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 )
 
 // deployCSR deploys a new CertificateSigningRequest with approval action.
@@ -58,7 +58,7 @@ func deployCSR(ctx *installbase.StageContext, csrPem, keyPem []byte) (CertPem []
 	_, err = ctx.Client.CertificatesV1().CertificateSigningRequests().Create(context.TODO(),
 		csr, metav1.CreateOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("create CertificateSigningRequest failed: %v", err)
+		return nil, errors.Wrapf(err, "create CertificateSigningRequest failed")
 	}
 
 	for i := 0; ; i++ {
@@ -79,7 +79,7 @@ func deployCSR(ctx *installbase.StageContext, csrPem, keyPem []byte) (CertPem []
 
 		csr, err = ctx.Client.CertificatesV1().CertificateSigningRequests().UpdateApproval(context.TODO(),
 			csr.Name, csr, metav1.UpdateOptions{})
-		if errors.IsConflict(err) && i < 10 {
+		if k8serrors.IsConflict(err) && i < 10 {
 			if csr != nil && len(csr.Status.Certificate) != 0 {
 				return csr.Status.Certificate, nil
 			}
@@ -95,7 +95,7 @@ func approveCSR(csr *certv1.CertificateSigningRequest) (*certv1.CertificateSigni
 	var alreadyHasCondition bool
 	for _, c := range csr.Status.Conditions {
 		if c.Type == certv1.CertificateDenied {
-			return nil, fmt.Errorf("certificate signing request %q is already %s", csr.Name, c.Type)
+			return nil, errors.Errorf("certificate signing request %q is already %s", csr.Name, c.Type)
 		}
 		if c.Type == certv1.CertificateApproved {
 			alreadyHasCondition = true
