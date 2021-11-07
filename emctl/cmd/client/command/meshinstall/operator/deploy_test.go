@@ -26,7 +26,7 @@ import (
 
 	"github.com/spf13/cobra"
 	appsV1 "k8s.io/api/apps/v1"
-	certv1beta1 "k8s.io/api/certificates/v1beta1"
+	certv1 "k8s.io/api/certificates/v1"
 	v1 "k8s.io/api/core/v1"
 	extensionfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -86,24 +86,25 @@ func TestDeploy(t *testing.T) {
 		}, "na")
 	})
 	client.PrependReactor("get", "certificatesigningrequests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
-		return true, &certv1beta1.CertificateSigningRequest{
+		return true, &certv1.CertificateSigningRequest{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "CertificateSigningRequest",
-				APIVersion: "certificates.k8s.io/v1beta1",
+				APIVersion: "certificates.k8s.io/v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      installbase.DefaultMeshOperatorCSRName,
 				Namespace: ctx.Flags.MeshNamespace,
 			},
-			Spec: certv1beta1.CertificateSigningRequestSpec{
-				Groups: []string{"system:authenticated"},
+			Spec: certv1.CertificateSigningRequestSpec{
+				SignerName: "kubernetes.io/kubelet-serving",
+				Groups:     []string{"system:authenticated"},
 				// NOTE: []byte will be automatically encoded as a base64-encoded string.
 				// Reference: https://golang.org/pkg/encoding/json/#Marshal
 				Request: []byte(helloWorld),
-				Usages: []certv1beta1.KeyUsage{
-					certv1beta1.UsageDigitalSignature,
-					certv1beta1.UsageKeyEncipherment,
-					certv1beta1.UsageServerAuth,
+				Usages: []certv1.KeyUsage{
+					certv1.UsageKeyEncipherment,
+					certv1.UsageDigitalSignature,
+					certv1.UsageServerAuth,
 				},
 			},
 		}, nil
