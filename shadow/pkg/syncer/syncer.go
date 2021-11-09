@@ -85,7 +85,6 @@ func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowS
 						log.Printf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, e.Error())
 						continue
 					}
-					log.Printf("Shadowservice update, applying...")
 					send(objects)
 				}
 			}
@@ -125,16 +124,13 @@ func (s *ShadowServiceSyncer) run(kind string, send func(data []object.ShadowSer
 }
 
 // Sync syncs a given EaseMesh kind's value through the returned channel.
-func (s *ShadowServiceSyncer) Sync(kind string) (<-chan object.ShadowService, error) {
-	ch := make(chan object.ShadowService, 10)
+func (s *ShadowServiceSyncer) Sync(kind string) (<-chan []object.ShadowService, error) {
+	ch := make(chan []object.ShadowService)
 	fn := func(data []object.ShadowService) {
-		if data != nil && len(data) > 0 {
-			for _, obj := range data {
-				ch <- obj
-			}
+		if data != nil {
+			ch <- data
 		}
 	}
-
 	go func() {
 		defer close(ch)
 		s.run(kind, fn)

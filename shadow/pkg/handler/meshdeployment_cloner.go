@@ -31,7 +31,7 @@ type CloneMeshDeploymentFunc func() error
 func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) CloneMeshDeploymentFunc {
 	shadowMeshDeployment := cloner.decorateShadowMeshDeployment(sourceMeshDeployment, shadowService)
 	return func() error {
-		err := utils.DeployMesheployment(shadowMeshDeployment.Namespace, shadowMeshDeployment, cloner.CRDClient)
+		err := utils.DeployMesheployment(cloner.CRDClient, shadowMeshDeployment.Namespace, shadowMeshDeployment)
 		if err != nil {
 			return errors.Wrapf(err, "Clone mesh deployment %s for service %s failed", sourceMeshDeployment.Name, shadowService.ServiceName)
 		}
@@ -39,7 +39,16 @@ func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1b
 	}
 }
 
-func (cloner *ShadowServiceCloner) generateShadowMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment) *v1beta1.MeshDeployment {
+func (cloner *ShadowServiceCloner) generateShadowMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
+	if sourceMeshDeployment.Labels == nil {
+		sourceMeshDeployment.Labels = map[string]string{}
+	}
+	injectShadowLabels(sourceMeshDeployment.Labels)
+
+	if sourceMeshDeployment.Annotations == nil {
+		sourceMeshDeployment.Annotations = map[string]string{}
+	}
+	injectShadowAnnotation(sourceMeshDeployment.Annotations, shadowService)
 	return &v1beta1.MeshDeployment{
 		TypeMeta: sourceMeshDeployment.TypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
@@ -52,7 +61,7 @@ func (cloner *ShadowServiceCloner) generateShadowMeshDeployment(sourceMeshDeploy
 }
 
 func (cloner *ShadowServiceCloner) decorateShadowMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) *v1beta1.MeshDeployment {
-	shadowMeshDeployment := cloner.generateShadowMeshDeployment(sourceMeshDeployment)
+	shadowMeshDeployment := cloner.generateShadowMeshDeployment(sourceMeshDeployment, shadowService)
 	shadowMeshDeployment.Spec.Service = sourceMeshDeployment.Spec.Service
 
 	labels := shadowMeshDeployment.Labels

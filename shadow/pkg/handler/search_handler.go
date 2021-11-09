@@ -49,49 +49,67 @@ type ServiceCloneBlock struct {
 	deployObj interface{}
 }
 
-func (searcher *ShadowServiceDeploySearcher) Search(obj interface{}) {
-	shadowService := obj.(object.ShadowService)
-	namespace := shadowService.Namespace
-	serviceName := shadowService.ServiceName
-
-	meshDeploymentList, err := utils.ListMeshDeployment(namespace, searcher.CRDClient, metav1.ListOptions{})
-	if err != nil {
-		log.Printf("Query MeshDeployment for shadow service error. %s", err)
+func (searcher *ShadowServiceDeploySearcher) Search(objs interface{}) {
+	shadowServices := objs.([]object.ShadowService)
+	if len(shadowServices) == 0 {
+		return
 	}
-	for _, meshDeployment := range meshDeploymentList.Items {
-		if isShadowDeployment(meshDeployment.Spec.Deploy.DeploymentSpec) {
-			continue
+
+	shadowServicesNamespacesMap := make(map[string][]object.ShadowService)
+	for _, shadowService := range shadowServices {
+		if _, ok := shadowServicesNamespacesMap[shadowService.Namespace]; ok {
+			shadowServicesNamespacesMap[shadowService.Namespace] = append(shadowServicesNamespacesMap[shadowService.Namespace], shadowService)
+		} else {
+			shadowServicesNamespacesMap[shadowService.Namespace] = []object.ShadowService{shadowService}
 		}
-		if meshDeployment.Spec.Service.Name == serviceName {
-			searcher.ResultChan <- ServiceCloneBlock{
-				shadowService,
-				meshDeployment,
+	}
+
+	for namespace, shadowServiceList := range shadowServicesNamespacesMap {
+
+		shadowServiceNameMap := make(map[string]object.ShadowService)
+		for _, ss := range shadowServiceList {
+			shadowServiceNameMap[ss.ServiceName] = ss
+		}
+
+		meshDeploymentList, err := utils.ListMeshDeployment(searcher.CRDClient, namespace, metav1.ListOptions{})
+		if err != nil {
+			log.Printf("Query MeshDeployment for shadow service error. %s", err)
+		}
+		for _, meshDeployment := range meshDeploymentList.Items {
+			if isShadowDeployment(meshDeployment.Spec.Deploy.DeploymentSpec) {
+				continue
 			}
-			return
-		}
-	}
-
-	deployments, err := utils.ListDeployments(namespace, searcher.KubeClient, metav1.ListOptions{})
-	if err != nil {
-		log.Printf("Query Deployment for shadow service error. %s", err)
-	}
-	for _, deployment := range deployments {
-		if isShadowDeployment(deployment.Spec) {
-			continue
-		}
-		annotations := deployment.Annotations
-		if _, ok := annotations[MeshServiceAnnotation]; ok {
-			if serviceName == annotations[MeshServiceAnnotation] {
+			if ss, ok := shadowServiceNameMap[meshDeployment.Spec.Service.Name]; ok {
 				searcher.ResultChan <- ServiceCloneBlock{
-					shadowService,
-					deployment,
+					ss,
+					meshDeployment,
 				}
 				return
 			}
+
+		}
+
+		deployments, err := utils.ListDeployments(namespace, searcher.KubeClient, metav1.ListOptions{})
+		if err != nil {
+			log.Printf("Query Deployment for shadow service error. %s", err)
+		}
+		for _, deployment := range deployments {
+			if isShadowDeployment(deployment.Spec) {
+				continue
+			}
+			annotations := deployment.Annotations
+			if serviceName, ok := annotations[MeshServiceAnnotation]; ok {
+				if ss, ok := shadowServiceNameMap[serviceName]; ok {
+					searcher.ResultChan <- ServiceCloneBlock{
+						ss,
+						deployment,
+					}
+					return
+				}
+
+			}
 		}
 	}
-	log.Printf("The service doesn't have MeshDeployment or Deployment for run it. Service: %s, NameSpace: %s, "+
-		"ShadowService: %s", serviceName, namespace, shadowService.Name)
 }
 
 func isShadowDeployment(spec appsV1.DeploymentSpec) bool {

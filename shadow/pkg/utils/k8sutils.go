@@ -21,6 +21,7 @@ import (
 	"context"
 
 	appsV1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,7 +84,7 @@ func NewCRDRestClient() (*rest.RESTClient, error) {
 
 }
 
-func ListMeshDeployment(namespace string, client *rest.RESTClient, options metav1.ListOptions) (*v1beta1.MeshDeploymentList, error) {
+func ListMeshDeployment(client rest.Interface, namespace string, options metav1.ListOptions) (*v1beta1.MeshDeploymentList, error) {
 	result := v1beta1.MeshDeploymentList{}
 	err := client.
 		Get().
@@ -96,7 +97,7 @@ func ListMeshDeployment(namespace string, client *rest.RESTClient, options metav
 	return &result, err
 }
 
-func GetMeshDeployment(namespace string, name string, client *rest.RESTClient, options metav1.GetOptions) (*v1beta1.MeshDeployment, error) {
+func GetMeshDeployment(client rest.Interface, namespace string, name string, options metav1.GetOptions) (*v1beta1.MeshDeployment, error) {
 	result := v1beta1.MeshDeployment{}
 	err := client.
 		Get().
@@ -108,7 +109,7 @@ func GetMeshDeployment(namespace string, name string, client *rest.RESTClient, o
 	return &result, err
 }
 
-func CreateMeshDeployment(namespace string, meshDeployment v1beta1.MeshDeployment, client *rest.RESTClient) (*v1beta1.MeshDeployment, error) {
+func CreateMeshDeployment(client rest.Interface, namespace string, meshDeployment v1beta1.MeshDeployment) (*v1beta1.MeshDeployment, error) {
 	result := v1beta1.MeshDeployment{}
 	err := client.
 		Post().
@@ -122,7 +123,7 @@ func CreateMeshDeployment(namespace string, meshDeployment v1beta1.MeshDeploymen
 	return &result, err
 }
 
-func UpdateMeshDeployment(namespace string, meshDeployment v1beta1.MeshDeployment, client *rest.RESTClient) (*v1beta1.MeshDeployment, error) {
+func UpdateMeshDeployment(client rest.Interface, namespace string, meshDeployment v1beta1.MeshDeployment) (*v1beta1.MeshDeployment, error) {
 	result := v1beta1.MeshDeployment{}
 	err := client.
 		Put().
@@ -144,6 +145,29 @@ func ListDeployments(namespace string, clientSet kubernetes.Interface, options m
 	return deploymentList.Items, nil
 }
 
+// DeleteDeployment delete Deployment.
+func DeleteDeployment(namespace string, name string, clientSet kubernetes.Interface, options metav1.DeleteOptions) error {
+	return clientSet.AppsV1().Deployments(namespace).Delete(context.TODO(), name, options)
+}
+
+// ListNameSpaces lists namespaces.
+func ListNameSpaces(clientSet kubernetes.Interface) ([]corev1.Namespace, error) {
+	namespaceList, err := clientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return namespaceList.Items, nil
+}
+
+func DeleteMeshDeployment(client rest.Interface, namespace string, meshDeployment v1beta1.MeshDeployment) error {
+	return client.
+		Delete().
+		Namespace(namespace).
+		Name(meshDeployment.Name).
+		Resource("meshdeployments").
+		Do(context.TODO()).Error()
+}
+
 func applyResource(createFunc func() error, updateFunc func() error) error {
 	err := createFunc()
 	if err != nil && errors.IsAlreadyExists(err) {
@@ -152,19 +176,19 @@ func applyResource(createFunc func() error, updateFunc func() error) error {
 	return err
 }
 
-func DeployMesheployment(namespace string, deployment *v1beta1.MeshDeployment, client *rest.RESTClient) error {
+func DeployMesheployment(client rest.Interface, namespace string, deployment *v1beta1.MeshDeployment) error {
 	return applyResource(
 		func() error {
-			_, err := CreateMeshDeployment(namespace, *deployment, client)
+			_, err := CreateMeshDeployment(client, namespace, *deployment)
 			return err
 		},
 		func() error {
-			meshDeployment, err := GetMeshDeployment(namespace, deployment.Name, client, metav1.GetOptions{})
+			meshDeployment, err := GetMeshDeployment(client, namespace, deployment.Name, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 			deployment.ResourceVersion = meshDeployment.ResourceVersion
-			_, err = UpdateMeshDeployment(namespace, *deployment, client)
+			_, err = UpdateMeshDeployment(client, namespace, *deployment)
 			return err
 		})
 }

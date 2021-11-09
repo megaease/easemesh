@@ -44,13 +44,15 @@ type (
 	ShadowServiceController struct {
 		kubeClient    kubernetes.Interface
 		runTimeClient *client.Client
-		crdClient     *rest.RESTClient
+		crdClient     rest.Interface
 
 		syncer   *syncer.ShadowServiceSyncer
 		cloner   handler.Cloner
 		searcher handler.Searcher
+		deleter  handler.Deleter
 
-		cloneChan chan interface{}
+		cloneChan  chan interface{}
+		deleteChan chan interface{}
 	}
 
 	// Config holds configuration of ShadowServiceController.
@@ -85,14 +87,14 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 		return nil, errors.Wrapf(err, "new Resst client error")
 	}
 
-	cloneChan := make(chan interface{})
-
 	shadowServiceCloner := handler.ShadowServiceCloner{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
 		CRDClient:     crdRestClient,
 	}
 
+	cloneChan := make(chan interface{})
+	deleteChan := make(chan interface{})
 	shadowServiceSearcher := handler.ShadowServiceDeploySearcher{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
@@ -100,14 +102,21 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 		ResultChan:    cloneChan,
 	}
 
-	shadowServiceSyncer, err := syncer.NewSyncer(config.MeshServer, config.RequestTimeout, config.PullInterval)
+	shadowServiceSearcherDeleter := handler.ShadowServiceDeleter{
+		KubeClient:    kubernetesClient,
+		RunTimeClient: &runtimeClient,
+		CRDClient:     crdRestClient,
+		DeleteChan:    deleteChan,
+	}
 
-	return &ShadowServiceController{kubernetesClient, &runtimeClient, crdRestClient, shadowServiceSyncer, &shadowServiceCloner, &shadowServiceSearcher, cloneChan}, nil
+	shadowServiceSyncer, err := syncer.NewSyncer(config.MeshServer, config.RequestTimeout, config.PullInterval)
+	return &ShadowServiceController{kubernetesClient, &runtimeClient, crdRestClient, shadowServiceSyncer,
+		&shadowServiceCloner, &shadowServiceSearcher, &shadowServiceSearcherDeleter, cloneChan, deleteChan}, nil
 }
 
 // Do start shadow service sync and clone.
 func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{}) {
-	shadowServiceChan, _ := s.syncer.Sync(ShadowServiceKind)
+	shadowServicesChan, _ := s.syncer.Sync(ShadowServiceKind)
 
 	wg.Add(1)
 	go func() {
@@ -117,8 +126,9 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 			case <-stopChan:
 				s.syncer.Close()
 				return
-			case obj := <-shadowServiceChan:
-				s.searcher.Search(obj)
+			case services := <-shadowServicesChan:
+				s.searcher.Search(services)
+				s.deleter.FindDeletableObjs(services)
 			}
 		}
 	}()
@@ -135,4 +145,18 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 			}
 		}
 	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stopChan:
+				return
+			case obj := <-s.deleteChan:
+				s.deleter.Delete(obj)
+			}
+		}
+	}()
+
 }

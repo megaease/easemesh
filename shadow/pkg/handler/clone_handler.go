@@ -38,8 +38,9 @@ const (
 	// Sidecar container stuff.
 	sidecarContainerName = "easemesh-sidecar"
 
-	shadowLabelKey            = "mesh.megaease.com/shadow-service"
-	shadowAppContainerNameKey = "mesh.megaease.com/app-container-name"
+	shadowServiceNameAnnotationKey = "mesh.megaease.com/shadow-service-name"
+	shadowLabelKey                 = "mesh.megaease.com/shadow-service"
+	shadowAppContainerNameKey      = "mesh.megaease.com/app-container-name"
 
 	shadowDeploymentNameSuffix = "-shadow"
 
@@ -73,6 +74,8 @@ func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
 		err = cloner.cloneMeshDeployment(&meshDeployment, &block.service)()
 	}
 	if err != nil {
-		log.Printf("Create shadow service failed. service: %s error: %s", block.service.ServiceName, err)
+		log.Printf("Clone shadow service failed. service name: %s error: %s", block.service.ServiceName, err)
+	} else {
+		log.Printf("Clone shadow service success. service name: %s error: %s", block.service.ServiceName, err)
 	}
 }

@@ -44,7 +44,7 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsV1.Depl
 }
 
 func (cloner *ShadowServiceCloner) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-	shadowDeployment := cloner.generateShadowDeployment(sourceDeployment)
+	shadowDeployment := cloner.generateShadowDeployment(sourceDeployment, shadowService)
 	cloner.decorateShadowDeploymentBaseSpec(shadowDeployment, sourceDeployment)
 	cloner.decorateShadowConfiguration(shadowDeployment, sourceDeployment, shadowService)
 	return shadowDeployment
@@ -122,7 +122,16 @@ func generateShadowConfigEnv(envName string, config interface{}) *corev1.EnvVar 
 
 }
 
-func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *appsV1.Deployment) *appsV1.Deployment {
+func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
+	if sourceDeployment.Labels == nil {
+		sourceDeployment.Labels = map[string]string{}
+	}
+	injectShadowLabels(sourceDeployment.Labels)
+
+	if sourceDeployment.Annotations == nil {
+		sourceDeployment.Annotations = map[string]string{}
+	}
+	injectShadowAnnotation(sourceDeployment.Annotations, shadowService)
 	return &appsV1.Deployment{
 		TypeMeta: sourceDeployment.TypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
@@ -137,19 +146,21 @@ func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *ap
 func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *appsV1.Deployment, sourceDeployment *appsV1.Deployment) *appsV1.Deployment {
 	deployment.Spec = sourceDeployment.Spec
 
-	labels := deployment.Spec.Selector.MatchLabels
-	if labels == nil {
-		labels = map[string]string{}
+	matchLabels := deployment.Spec.Selector.MatchLabels
+	if matchLabels == nil {
+		matchLabels = map[string]string{}
 	}
 
-	shadowServiceLabels := shadowServiceLabels()
-	for k, v := range shadowServiceLabels {
-		labels[k] = v
-	}
+	injectShadowLabels(matchLabels)
 	deployment.Spec.Selector = &metav1.LabelSelector{
-		MatchLabels: labels,
+		MatchLabels: matchLabels,
 	}
-	deployment.Spec.Template.Labels = labels
+
+	sourceLabels := deployment.Spec.Template.Labels
+	for k, v := range matchLabels {
+		sourceLabels[k] = v
+	}
+	deployment.Spec.Template.Labels = sourceLabels
 
 	containers := deployment.Spec.Template.Spec.Containers
 	deployment.Spec.Template.Spec.Containers = shadowContainers(containers)
@@ -190,9 +201,17 @@ func shadowName(name string) string {
 }
 
 func shadowServiceLabels() map[string]string {
-	selector := map[string]string{}
-	selector[shadowLabelKey] = "true"
-	return selector
+	labels := map[string]string{}
+	labels[shadowLabelKey] = "true"
+	return labels
+}
+
+func injectShadowLabels(labels map[string]string) {
+	labels[shadowLabelKey] = "true"
+}
+
+func injectShadowAnnotation(annotations map[string]string, service *object.ShadowService) {
+	annotations[shadowServiceNameAnnotationKey] = service.Name
 }
 
 func shadowContainers(containers []corev1.Container) []corev1.Container {
