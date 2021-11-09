@@ -67,14 +67,15 @@ func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowS
 	go func() {
 		reader, err := s.server.Watch(kind)
 		if err != nil {
-			log.Printf("Watch response from MeshServer error: %s. Retry ...", err.Error())
+			log.Printf("Watch response from MeshServer error: %s. Retrying ...", err.Error())
+			time.Sleep(5 * time.Second)
 			watchChan <- struct{}{}
 			return
 		}
 		for {
 			line, e := reader.ReadBytes('\n')
 			if e != nil {
-				log.Printf("Watch response from MeshServer error: %s. Retry ...", e.Error())
+				log.Printf("Watch response from MeshServer error: %s. Retrying ...", e.Error())
 				watchChan <- struct{}{}
 				return
 			} else {
