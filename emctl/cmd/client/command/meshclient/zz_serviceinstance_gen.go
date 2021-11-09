@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type serviceInstanceInterface struct {
+type serviceInstanceGetter struct {
 	client *meshClient
 }
-type serviceInstanceGetter struct {
+type serviceInstanceInterface struct {
 	client *meshClient
 }
 
@@ -39,7 +39,7 @@ func (s *serviceInstanceGetter) ServiceInstance() ServiceInstanceInterface {
 	return &serviceInstanceInterface{client: s.client}
 }
 func (s *serviceInstanceInterface) Get(args0 context.Context, args1 string, args2 string) (*resource.ServiceInstance, error) {
-	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"servicesinstances/%s/%s", args1, args2)
+	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"serviceinstances/%s/%s", args1, args2)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get ServiceInstance %s", args1)
@@ -60,7 +60,7 @@ func (s *serviceInstanceInterface) Get(args0 context.Context, args1 string, args
 	return r0.(*resource.ServiceInstance), nil
 }
 func (s *serviceInstanceInterface) Delete(args0 context.Context, args1 string, args2 string) error {
-	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"servicesinstances/%s/%s", args1, args2)
+	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"serviceinstances/%s/%s", args1, args2)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete ServiceInstance %s", args1)
@@ -73,7 +73,7 @@ func (s *serviceInstanceInterface) Delete(args0 context.Context, args1 string, a
 	return err
 }
 func (s *serviceInstanceInterface) List(args0 context.Context) ([]*resource.ServiceInstance, error) {
-	url := "http://" + s.client.server + apiURL + "/mesh/servicesinstances"
+	url := "http://" + s.client.server + apiURL + "/mesh/serviceinstances"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
