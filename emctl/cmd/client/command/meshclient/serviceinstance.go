@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Global ServiceInstance=servicesinstances/%s/%s
+//go:generate go run github.com/megaease/easemeshctl/cmd/transformer Global ServiceInstance=serviceinstances/%s/%s
 
 package meshclient
 
