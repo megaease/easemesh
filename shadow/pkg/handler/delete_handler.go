@@ -71,9 +71,9 @@ func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
 
 func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 	shadowServiceList := obj.([]object.ShadowService)
-	shadowServiceNameMap := make(map[string]int)
+	shadowServiceNameMap := make(map[string]object.ShadowService)
 	for _, ss := range shadowServiceList {
-		shadowServiceNameMap[namespacedName(ss.Namespace, ss.Name)] = 1
+		shadowServiceNameMap[namespacedName(ss.Namespace, ss.Name)] = ss
 	}
 
 	namespaces, err := utils.ListNameSpaces(deleter.KubeClient)
@@ -81,36 +81,83 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 		log.Printf("List namespaces failed. error: %s", err)
 	}
 
-	listOptions := metav1.ListOptions{
+	shadowListOptions := metav1.ListOptions{
 		LabelSelector: shadowLabelKey + "=true",
 	}
+
 	for _, namespace := range namespaces {
-		meshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, listOptions)
+		allMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, metav1.ListOptions{})
+		allMeshDeploymentMap := make(map[string]int)
 		if err != nil {
 			log.Printf("List MeshDeployment failed. error: %s", err)
+		} else {
+			allMeshDeploymentMap := make(map[string]int)
+			if allMeshDeployments != nil {
+				for _, meshDeployment := range allMeshDeployments.Items {
+					allMeshDeploymentMap[meshDeployment.Name] = 1
+				}
+			}
 		}
-		if meshDeployments != nil {
-			for _, meshDeployment := range meshDeployments.Items {
+
+		allDeployments, err := utils.ListDeployments(namespace.Name, deleter.KubeClient, metav1.ListOptions{})
+		allDeploymentsMap := make(map[string]int)
+		if err != nil {
+			log.Printf("List Deployment failed. error: %s", err)
+		} else {
+			for _, deployment := range allDeployments {
+				allDeploymentsMap[deployment.Name] = 1
+			}
+		}
+
+		// If ShadowService is deleted, the shadow deployment need to be deleted.
+		shadowServiceExists := func(namespacedName string) bool {
+			_, ok := shadowServiceNameMap[namespacedName]
+			return ok
+		}
+
+		// If source MeshDeployment/Deployment is deleted, the shadow deployment need to be deleted.
+		sourceMeshDeploymentExists := func(name string) bool {
+			_, ok := allMeshDeploymentMap[name]
+			return ok
+		}
+
+		sourceDeploymentExists := func(name string) bool {
+			_, ok := allDeploymentsMap[name]
+			return ok
+		}
+
+		shadowMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, shadowListOptions)
+		if err != nil {
+			log.Printf("List MeshDeployment failed. error: %s", err)
+		} else if shadowMeshDeployments != nil {
+			for _, meshDeployment := range shadowMeshDeployments.Items {
 				if shadowServiceName, ok := meshDeployment.Annotations[shadowServiceNameAnnotationKey]; ok {
-					if _, ok = shadowServiceNameMap[namespacedName(namespace.Name, shadowServiceName)]; ok {
-						continue
-					} else {
+					if !shadowServiceExists(namespacedName(namespace.Name, shadowServiceName)) {
 						deleter.DeleteChan <- meshDeployment
+						continue
+					}
+					if !sourceMeshDeploymentExists(sourceName(meshDeployment.Name)) {
+						deleter.DeleteChan <- meshDeployment
+						continue
 					}
 				}
 			}
 		}
 
-		deployments, err := utils.ListDeployments(namespace.Name, deleter.KubeClient, listOptions)
+		shadowDeployments, err := utils.ListDeployments(namespace.Name, deleter.KubeClient, shadowListOptions)
 		if err != nil {
 			log.Printf("List Deployment failed. error: %s", err)
-		}
-		for _, deployment := range deployments {
-			if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
-				if _, ok = shadowServiceNameMap[namespacedName(namespace.Name, shadowServiceName)]; ok {
-					continue
-				} else {
-					deleter.DeleteChan <- deployment
+		} else {
+			for _, deployment := range shadowDeployments {
+				if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
+					if !shadowServiceExists(namespacedName(namespace.Name, shadowServiceName)) {
+						deleter.DeleteChan <- deployment
+						continue
+					}
+					if !sourceDeploymentExists(sourceName(deployment.Name)) {
+						deleter.DeleteChan <- deployment
+						continue
+					}
 				}
 			}
 		}

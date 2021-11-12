@@ -20,6 +20,7 @@ package handler
 import (
 	"encoding/json"
 	"reflect"
+	"strings"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
@@ -198,6 +199,10 @@ func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV
 
 func shadowName(name string) string {
 	return name + shadowDeploymentNameSuffix
+}
+
+func sourceName(name string) string {
+	return strings.TrimSuffix(name, shadowDeploymentNameSuffix)
 }
 
 func shadowServiceLabels() map[string]string {
