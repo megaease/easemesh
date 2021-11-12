@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -140,17 +140,21 @@ func checkOperatorStatus(client kubernetes.Interface, installFlags *flags.Instal
 	for {
 		time.Sleep(time.Millisecond * 100)
 		i++
-		if i > 600 {
-			return errors.Errorf("easemesh operator deploy failed, mesh operator (EG deployment) not ready")
-		}
 		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
 			installbase.DefaultMeshOperatorName,
 			installbase.DeploymentReadyPredict)
+
+		if err != nil {
+			return err
+		}
+
 		if ready {
 			return nil
 		}
-		if err != nil {
-			return err
+
+		// Not ready, retry
+		if i > 600 {
+			return errors.Errorf("easemesh operator deploy failed, mesh operator (EG deployment) not ready")
 		}
 	}
 }

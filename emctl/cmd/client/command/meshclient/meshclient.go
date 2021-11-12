@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,23 @@
  */
 
 package meshclient
+
+import (
+	"os"
+	"strings"
+
+	"github.com/megaease/easemeshctl/cmd/client/command/meshclient/fake"
+)
+
+var isTest bool
+
+func init() {
+	// For test, if the code detect it run in test, could set isTest to true
+	if strings.Contains(os.Args[0], "/_test/") ||
+		strings.Contains(os.Args[0], ".test") {
+		isTest = true
+	}
+}
 
 type meshClient struct {
 	server   string
@@ -44,6 +61,14 @@ var _ V1Alpha1Interface = &v1alpha1Interface{}
 
 // New initials a new MeshClient
 func New(server string) MeshClient {
+
+	if isTest {
+		// This is for test, in the unit test we will create a mock MeshClient
+		if fake.ResourceReactorForType(server) != nil {
+			return &fakeMeshClient{reactorType: server}
+		}
+	}
+
 	client := &meshClient{server: server}
 	alpha1 := v1alpha1Interface{
 		meshControllerGetter:     meshControllerGetter{client: client},

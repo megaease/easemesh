@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package resource
 import (
 	"fmt"
 
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -58,13 +57,13 @@ type (
 	}
 )
 
-var _ printer.TableObject = &MeshController{}
+var _ meta.TableObject = &MeshController{}
 
 // Columns returns the columns of MeshController.
-func (mc *MeshController) Columns() []*printer.TableColumn {
+func (mc *MeshController) Columns() []*meta.TableColumn {
 	ports := fmt.Sprintf("%d/API,%d/Ingress", mc.APIPort, mc.IngressPort)
 
-	return []*printer.TableColumn{
+	return []*meta.TableColumn{
 		{
 			Name:  "Heartbeat",
 			Value: mc.HeartbeatInterval,

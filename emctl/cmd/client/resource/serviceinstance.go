@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/megaease/easemesh-api/v1alpha1"
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -34,7 +33,7 @@ type (
 	}
 )
 
-var _ printer.TableObject = &ServiceInstance{}
+var _ meta.TableObject = &ServiceInstance{}
 
 // ParseName parses the name of service instance to service name and instance id.
 func (si *ServiceInstance) ParseName() (serviceName, instanceID string, err error) {
@@ -48,12 +47,12 @@ func (si *ServiceInstance) ParseName() (serviceName, instanceID string, err erro
 }
 
 // Columns returns the columns of ServiceInstance.
-func (si *ServiceInstance) Columns() []*printer.TableColumn {
+func (si *ServiceInstance) Columns() []*meta.TableColumn {
 	if si.Spec == nil {
 		return nil
 	}
 
-	return []*printer.TableColumn{
+	return []*meta.TableColumn{
 		{
 			Name:  "RegistryName",
 			Value: si.Spec.RegistryName,

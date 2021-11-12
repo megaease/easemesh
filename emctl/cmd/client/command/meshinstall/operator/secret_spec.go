@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,17 +50,18 @@ func secretSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 			fmt.Printf("\nsecret %s existed, won't create it again\n\n", secret.Name)
 			return nil
 		} else if !errors.IsNotFound(err) {
-			return err
+			return fmt.Errorf("deploy secret %s/%s failed: %v",
+				ctx.Flags.MeshNamespace, secret.Name, err)
 		}
 
 		csrPem, keyPem, err := generateCsrAndKeyPem(ctx.Flags.MeshNamespace)
 		if err != nil {
-			return err
+			return fmt.Errorf("generate csr and key failed: %v", err)
 		}
 
 		certPem, err := deployCSR(ctx, csrPem, keyPem)
 		if err != nil {
-			return err
+			return fmt.Errorf("deploy CertificateSigningRequest failed: %v", err)
 		}
 
 		// NOTE: []byte will be automatically encoded as a base64-encoded string.
@@ -85,7 +86,8 @@ func generateCsrAndKeyPem(namespace string) ([]byte, []byte, error) {
 
 	template := x509.CertificateRequest{
 		Subject: pkix.Name{
-			Organization: []string{"MegaEase"},
+			Organization: []string{"system:nodes"},
+			CommonName:   "system:node:MegaEase",
 		},
 
 		DNSNames: []string{

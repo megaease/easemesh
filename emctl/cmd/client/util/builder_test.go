@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package util
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -163,4 +164,21 @@ func TestBuilderVisitor(t *testing.T) {
 
 		})
 	}
+}
+
+func TestURLVisitorBuilder(t *testing.T) {
+	vs, _ := NewVisitorBuilder().
+		Stdin().
+		URL(0, &url.URL{}).
+		HTTPAttemptCount(1).
+		CommandParam(&CommandOptions{Kind: resource.KindCanary, Name: "name"}).
+		Command().
+		Do()
+
+	if vs != nil {
+		for _, v := range vs {
+			v.Visit(func(mo meta.MeshObject, e error) error { return nil })
+		}
+	}
+
 }

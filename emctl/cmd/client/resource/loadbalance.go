@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ package resource
 
 import (
 	"github.com/megaease/easemesh-api/v1alpha1"
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -31,15 +30,15 @@ type (
 	}
 )
 
-var _ printer.TableObject = &LoadBalance{}
+var _ meta.TableObject = &LoadBalance{}
 
 // Columns returns the columns of LoadBalance.
-func (l *LoadBalance) Columns() []*printer.TableColumn {
+func (l *LoadBalance) Columns() []*meta.TableColumn {
 	if l.Spec == nil {
 		return nil
 	}
 
-	return []*printer.TableColumn{
+	return []*meta.TableColumn{
 		{
 			Name:  "Policy",
 			Value: l.Spec.Policy,

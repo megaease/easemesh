@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@ package resource
 
 import (
 	"github.com/megaease/easemesh-api/v1alpha1"
-	"github.com/megaease/easemeshctl/cmd/client/command/printer"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -42,15 +41,15 @@ type (
 	}
 )
 
-var _ printer.TableObject = &Service{}
+var _ meta.TableObject = &Service{}
 
 // Columns returns the columns of Service.
-func (s *Service) Columns() []*printer.TableColumn {
+func (s *Service) Columns() []*meta.TableColumn {
 	if s.Spec == nil {
 		return nil
 	}
 
-	return []*printer.TableColumn{
+	return []*meta.TableColumn{
 		{
 			Name:  "Tenant",
 			Value: s.Spec.RegisterTenant,

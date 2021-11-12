@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,7 +151,7 @@ func checkPVAccessModes(accessModel v1.PersistentVolumeAccessMode, volume *v1.Pe
 func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 
 	// Wait a fix time for the Easegress cluster to start
-	time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * time.Duration(ctx.Flags.WaitControlPlaneTimeoutInSeconds))
 
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
 		installbase.DefaultMeshControlPlanePlubicServiceName,

@@ -1,7 +1,7 @@
 
 SHELL:=/bin/bash
 .PHONY: build fmt vet clean \
-		mod_update vendor_from_mod vendor_clean test
+		mod_update vendor_from_mod vendor_clean test generate
 
 # Path Related
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -22,6 +22,9 @@ GO_LD_FLAGS= "-s -w -X github.com/megaease/easemeshctl/pkg/version.RELEASE=${REL
 TARGET=${MKFILE_DIR}bin/emctl
 
 all: build
+
+generate:
+	go generate ./...
 
 test:
 	go test ./... ${TEST_FLAGS}
@@ -45,7 +48,7 @@ vendor_clean:
 mod_update:
 	cd ${MKFILE_DIR} && go get -u
 
-${TARGET}: ${ALL_FILES}
+${TARGET}: generate ${ALL_FILES}
 	@echo "build emctl "
 	cd ${MKFILE_DIR} && \
 	CGO_ENABLED=0 go build -v -ldflags ${GO_LD_FLAGS} \
