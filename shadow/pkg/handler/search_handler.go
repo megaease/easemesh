@@ -84,7 +84,6 @@ func (searcher *ShadowServiceDeploySearcher) Search(objs interface{}) {
 					ss,
 					meshDeployment,
 				}
-				return
 			}
 
 		}
@@ -104,7 +103,6 @@ func (searcher *ShadowServiceDeploySearcher) Search(objs interface{}) {
 						ss,
 						deployment,
 					}
-					return
 				}
 
 			}
