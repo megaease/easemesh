@@ -91,7 +91,6 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 		if err != nil {
 			log.Printf("List MeshDeployment failed. error: %s", err)
 		} else {
-			allMeshDeploymentMap := make(map[string]int)
 			if allMeshDeployments != nil {
 				for _, meshDeployment := range allMeshDeployments.Items {
 					allMeshDeploymentMap[meshDeployment.Name] = 1

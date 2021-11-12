@@ -6,11 +6,10 @@ require (
 	github.com/megaease/easemesh/mesh-operator v1.2.0
 	github.com/megaease/easemeshctl v1.2.0
 	github.com/pkg/errors v0.9.1
-	k8s.io/api v0.20.9
-	k8s.io/apiextensions-apiserver v0.20.7 // indirect
-	k8s.io/apimachinery v0.20.9
-	k8s.io/client-go v0.20.9
-	sigs.k8s.io/controller-runtime v0.7.2
+	k8s.io/api v0.22.3
+	k8s.io/apimachinery v0.22.3
+	k8s.io/client-go v0.22.3
+	sigs.k8s.io/controller-runtime v0.10.3
 )
 
 replace github.com/megaease/easemeshctl => ../emctl/

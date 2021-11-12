@@ -158,6 +158,9 @@ func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *
 	}
 
 	sourceLabels := deployment.Spec.Template.Labels
+	if sourceLabels == nil{
+		sourceLabels = make(map[string]string)
+	}
 	for k, v := range matchLabels {
 		sourceLabels[k] = v
 	}
