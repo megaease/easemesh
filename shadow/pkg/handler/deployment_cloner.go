@@ -20,6 +20,7 @@ package handler
 import (
 	"encoding/json"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
@@ -178,15 +179,11 @@ func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *
 }
 
 func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV1.Deployment, sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-	shadowConfigs := make(map[string]interface{})
-	shadowConfigs[databaseShadowConfigEnv] = shadowService.MySQL
-	shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
-	shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
-	shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
-	shadowConfigs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
-
+	configurationMap := shadowConfigurationMap(shadowService)
+	keys := shadowConfigurationKeys()
 	newEnvs := make([]corev1.EnvVar, 0)
-	for k, v := range shadowConfigs {
+	for _, k:= range keys {
+		v := configurationMap[k]
 		env := generateShadowConfigEnv(k, v)
 		if env != nil {
 			newEnvs = append(newEnvs, *env)
@@ -202,6 +199,22 @@ func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV
 
 func shadowName(name string) string {
 	return name + shadowDeploymentNameSuffix
+}
+
+func shadowConfigurationMap(shadowService *object.ShadowService) map[string]interface{} {
+	shadowConfigs := make(map[string]interface{})
+	shadowConfigs[databaseShadowConfigEnv] = shadowService.MySQL
+	shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
+	shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
+	shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
+	shadowConfigs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
+	return shadowConfigs
+}
+
+func shadowConfigurationKeys() []string {
+	configKeys := []string{databaseShadowConfigEnv, elasticsearchShadowConfigEnv, redisShadowConfigEnv, kafkaShadowConfigEnv, rabbitmqShadowConfigEnv}
+	sort.Strings(configKeys)
+	return configKeys
 }
 
 func sourceName(name string) string {
