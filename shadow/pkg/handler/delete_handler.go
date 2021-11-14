@@ -87,24 +87,24 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 
 	for _, namespace := range namespaces {
 		allMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, metav1.ListOptions{})
-		allMeshDeploymentMap := make(map[string]int)
+		allMeshDeploymentMap := make(map[string]v1beta1.MeshDeployment)
 		if err != nil {
 			log.Printf("List MeshDeployment failed. error: %s", err)
 		} else {
 			if allMeshDeployments != nil {
 				for _, meshDeployment := range allMeshDeployments.Items {
-					allMeshDeploymentMap[meshDeployment.Name] = 1
+					allMeshDeploymentMap[meshDeployment.Name] = meshDeployment
 				}
 			}
 		}
 
 		allDeployments, err := utils.ListDeployments(namespace.Name, deleter.KubeClient, metav1.ListOptions{})
-		allDeploymentsMap := make(map[string]int)
+		allDeploymentsMap := make(map[string]appv1.Deployment)
 		if err != nil {
 			log.Printf("List Deployment failed. error: %s", err)
 		} else {
 			for _, deployment := range allDeployments {
-				allDeploymentsMap[deployment.Name] = 1
+				allDeploymentsMap[deployment.Name] = deployment
 			}
 		}
 
@@ -115,14 +115,25 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 		}
 
 		// If source MeshDeployment/Deployment is deleted, the shadow deployment need to be deleted.
-		sourceMeshDeploymentExists := func(name string) bool {
-			_, ok := allMeshDeploymentMap[name]
-			return ok
+		sourceMeshDeploymentExists := func(name string, serviceName string) bool {
+			md, ok := allMeshDeploymentMap[name]
+			if ok && md.Spec.Service.Name == serviceName {
+				return true
+			}
+			return false
 		}
 
-		sourceDeploymentExists := func(name string) bool {
-			_, ok := allDeploymentsMap[name]
-			return ok
+		sourceDeploymentExists := func(name string, serviceName string) bool {
+			deploy, ok := allDeploymentsMap[name]
+			if !ok {
+				return false
+			}
+
+			sourceServiceName, ok := deploy.Annotations[MeshServiceAnnotation]
+			if ok && sourceServiceName == serviceName {
+				return true
+			}
+			return false
 		}
 
 		shadowMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, shadowListOptions)
@@ -135,7 +146,8 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 						deleter.DeleteChan <- meshDeployment
 						continue
 					}
-					if !sourceMeshDeploymentExists(sourceName(meshDeployment.Name)) {
+					shadowService, _ := shadowServiceNameMap[namespacedName(namespace.Name, shadowServiceName)]
+					if !sourceMeshDeploymentExists(sourceName(meshDeployment.Name), shadowService.ServiceName) {
 						deleter.DeleteChan <- meshDeployment
 						continue
 					}
@@ -153,7 +165,8 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 						deleter.DeleteChan <- deployment
 						continue
 					}
-					if !sourceDeploymentExists(sourceName(deployment.Name)) {
+					shadowService, _ := shadowServiceNameMap[namespacedName(namespace.Name, shadowServiceName)]
+					if !sourceDeploymentExists(sourceName(deployment.Name), shadowService.ServiceName) {
 						deleter.DeleteChan <- deployment
 						continue
 					}
