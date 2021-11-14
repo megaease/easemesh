@@ -159,7 +159,7 @@ func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *
 	}
 
 	sourceLabels := deployment.Spec.Template.Labels
-	if sourceLabels == nil{
+	if sourceLabels == nil {
 		sourceLabels = make(map[string]string)
 	}
 	for k, v := range matchLabels {
@@ -182,7 +182,7 @@ func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV
 	configurationMap := shadowConfigurationMap(shadowService)
 	keys := shadowConfigurationKeys()
 	newEnvs := make([]corev1.EnvVar, 0)
-	for _, k:= range keys {
+	for _, k := range keys {
 		v := configurationMap[k]
 		env := generateShadowConfigEnv(k, v)
 		if env != nil {
