@@ -81,100 +81,112 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 		log.Printf("List namespaces failed. error: %s", err)
 	}
 
-	shadowListOptions := metav1.ListOptions{
+	for _, namespace := range namespaces {
+
+		deleter.findDeletableDeployments(namespace.Name, shadowServiceNameMap)
+	}
+
+}
+
+func shadowListOptions() metav1.ListOptions {
+	return metav1.ListOptions{
 		LabelSelector: shadowLabelKey + "=true",
 	}
+}
 
-	for _, namespace := range namespaces {
-		allMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, metav1.ListOptions{})
-		allMeshDeploymentMap := make(map[string]v1beta1.MeshDeployment)
-		if err != nil {
-			log.Printf("List MeshDeployment failed. error: %s", err)
-		} else {
-			if allMeshDeployments != nil {
-				for _, meshDeployment := range allMeshDeployments.Items {
-					allMeshDeploymentMap[meshDeployment.Name] = meshDeployment
-				}
-			}
+func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, shadowServiceNameMap map[string]object.ShadowService) {
+	allDeployments, err := utils.ListDeployments(namespace, deleter.KubeClient, metav1.ListOptions{})
+	allDeploymentsMap := make(map[string]appv1.Deployment)
+	if err != nil {
+		log.Printf("List Deployment failed. error: %s", err)
+		return
+	} else {
+		for _, deployment := range allDeployments {
+			allDeploymentsMap[deployment.Name] = deployment
 		}
+	}
 
-		allDeployments, err := utils.ListDeployments(namespace.Name, deleter.KubeClient, metav1.ListOptions{})
-		allDeploymentsMap := make(map[string]appv1.Deployment)
-		if err != nil {
-			log.Printf("List Deployment failed. error: %s", err)
-		} else {
-			for _, deployment := range allDeployments {
-				allDeploymentsMap[deployment.Name] = deployment
-			}
-		}
-
-		// If ShadowService is deleted, the shadow deployment need to be deleted.
-		shadowServiceExists := func(namespacedName string) bool {
-			_, ok := shadowServiceNameMap[namespacedName]
-			return ok
-		}
-
-		// If source MeshDeployment/Deployment is deleted, the shadow deployment need to be deleted.
-		sourceMeshDeploymentExists := func(name string, serviceName string) bool {
-			md, ok := allMeshDeploymentMap[name]
-			if ok && md.Spec.Service.Name == serviceName {
-				return true
-			}
+	sourceDeploymentExistsFn := func(name string, serviceName string) bool {
+		deploy, ok := allDeploymentsMap[name]
+		if !ok {
 			return false
 		}
 
-		sourceDeploymentExists := func(name string, serviceName string) bool {
-			deploy, ok := allDeploymentsMap[name]
-			if !ok {
-				return false
-			}
-
-			sourceServiceName, ok := deploy.Annotations[MeshServiceAnnotation]
-			if ok && sourceServiceName == serviceName {
-				return true
-			}
-			return false
+		sourceServiceName, ok := deploy.Annotations[MeshServiceAnnotation]
+		if ok && sourceServiceName == serviceName {
+			return true
 		}
+		return false
+	}
 
-		shadowMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace.Name, shadowListOptions)
-		if err != nil {
-			log.Printf("List MeshDeployment failed. error: %s", err)
-		} else if shadowMeshDeployments != nil {
-			for _, meshDeployment := range shadowMeshDeployments.Items {
-				if shadowServiceName, ok := meshDeployment.Annotations[shadowServiceNameAnnotationKey]; ok {
-					if !shadowServiceExists(namespacedName(namespace.Name, shadowServiceName)) {
-						deleter.DeleteChan <- meshDeployment
-						continue
-					}
-					shadowService, _ := shadowServiceNameMap[namespacedName(namespace.Name, shadowServiceName)]
-					if !sourceMeshDeploymentExists(sourceName(meshDeployment.Name), shadowService.ServiceName) {
-						deleter.DeleteChan <- meshDeployment
-						continue
-					}
+	shadowDeployments, err := utils.ListDeployments(namespace, deleter.KubeClient, shadowListOptions())
+	if err != nil {
+		log.Printf("List Deployment failed. error: %s", err)
+		return
+	} else {
+		for _, deployment := range shadowDeployments {
+			if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
+				if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
+					deleter.DeleteChan <- deployment
+					continue
 				}
-			}
-		}
-
-		shadowDeployments, err := utils.ListDeployments(namespace.Name, deleter.KubeClient, shadowListOptions)
-		if err != nil {
-			log.Printf("List Deployment failed. error: %s", err)
-		} else {
-			for _, deployment := range shadowDeployments {
-				if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
-					if !shadowServiceExists(namespacedName(namespace.Name, shadowServiceName)) {
-						deleter.DeleteChan <- deployment
-						continue
-					}
-					shadowService, _ := shadowServiceNameMap[namespacedName(namespace.Name, shadowServiceName)]
-					if !sourceDeploymentExists(sourceName(deployment.Name), shadowService.ServiceName) {
-						deleter.DeleteChan <- deployment
-						continue
-					}
+				shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
+				if !sourceDeploymentExistsFn(sourceName(deployment.Name), shadowService.ServiceName) {
+					deleter.DeleteChan <- deployment
+					continue
 				}
 			}
 		}
 	}
+}
 
+// Deprecated. EaseMesh will abandon MeshDeployment in the future, the method will be removed.
+func (deleter *ShadowServiceDeleter) findDeletableMeshDeployments(namespace string, shadowServiceNameMap map[string]object.ShadowService) {
+	allMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace, metav1.ListOptions{})
+	allMeshDeploymentMap := make(map[string]v1beta1.MeshDeployment)
+	if err != nil {
+		log.Printf("List MeshDeployment failed. error: %s", err)
+		return
+	} else {
+		if allMeshDeployments != nil {
+			for _, meshDeployment := range allMeshDeployments.Items {
+				allMeshDeploymentMap[meshDeployment.Name] = meshDeployment
+			}
+		}
+	}
+
+	sourceMeshDeploymentExistsFn := func(name string, serviceName string) bool {
+		md, ok := allMeshDeploymentMap[name]
+		if ok && md.Spec.Service.Name == serviceName {
+			return true
+		}
+		return false
+	}
+
+	shadowMeshDeployments, err := utils.ListMeshDeployment(deleter.CRDClient, namespace, shadowListOptions())
+	if err != nil {
+		log.Printf("List MeshDeployment failed. error: %s", err)
+	} else if shadowMeshDeployments != nil {
+		for _, meshDeployment := range shadowMeshDeployments.Items {
+			if shadowServiceName, ok := meshDeployment.Annotations[shadowServiceNameAnnotationKey]; ok {
+				if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
+					deleter.DeleteChan <- meshDeployment
+					continue
+				}
+				shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
+				if !sourceMeshDeploymentExistsFn(sourceName(meshDeployment.Name), shadowService.ServiceName) {
+					deleter.DeleteChan <- meshDeployment
+					continue
+				}
+			}
+		}
+	}
+}
+
+// If ShadowService is deleted, the shadow deployment need to be deleted.
+func shadowServiceExists(namespacedName string, shadowServiceNameMap map[string]object.ShadowService) bool {
+	_, ok := shadowServiceNameMap[namespacedName]
+	return ok
 }
 
 func namespacedName(namespace string, name string) string {

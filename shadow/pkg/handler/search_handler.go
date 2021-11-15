@@ -70,42 +70,47 @@ func (searcher *ShadowServiceDeploySearcher) Search(objs interface{}) {
 		for _, ss := range shadowServiceList {
 			shadowServiceNameMap[ss.ServiceName] = ss
 		}
+		searcher.searchDeployment(namespace, shadowServiceNameMap)
+	}
+}
 
-		meshDeploymentList, err := utils.ListMeshDeployment(searcher.CRDClient, namespace, metav1.ListOptions{})
-		if err != nil {
-			log.Printf("Query MeshDeployment for shadow service error. %s", err)
+// Deprecated. EaseMesh will abandon MeshDeployment in the future, the method will be removed.
+func (searcher *ShadowServiceDeploySearcher) searchMeshDeployment(namespace string, shadowServiceNameMap map[string]object.ShadowService) {
+	meshDeploymentList, err := utils.ListMeshDeployment(searcher.CRDClient, namespace, metav1.ListOptions{})
+	if err != nil {
+		log.Printf("Query MeshDeployment for shadow service error. %s", err)
+	}
+	for _, meshDeployment := range meshDeploymentList.Items {
+		if isShadowDeployment(meshDeployment.Spec.Deploy.DeploymentSpec) {
+			continue
 		}
-		for _, meshDeployment := range meshDeploymentList.Items {
-			if isShadowDeployment(meshDeployment.Spec.Deploy.DeploymentSpec) {
-				continue
+		if ss, ok := shadowServiceNameMap[meshDeployment.Spec.Service.Name]; ok {
+			searcher.ResultChan <- ServiceCloneBlock{
+				ss,
+				meshDeployment,
 			}
-			if ss, ok := shadowServiceNameMap[meshDeployment.Spec.Service.Name]; ok {
+		}
+	}
+}
+
+func (searcher *ShadowServiceDeploySearcher) searchDeployment(namespace string, shadowServiceNameMap map[string]object.ShadowService) {
+	deployments, err := utils.ListDeployments(namespace, searcher.KubeClient, metav1.ListOptions{})
+	if err != nil {
+		log.Printf("Query Deployment for shadow service error. %s", err)
+	}
+	for _, deployment := range deployments {
+		if isShadowDeployment(deployment.Spec) {
+			continue
+		}
+		annotations := deployment.Annotations
+		if serviceName, ok := annotations[MeshServiceAnnotation]; ok {
+			if ss, ok := shadowServiceNameMap[serviceName]; ok {
 				searcher.ResultChan <- ServiceCloneBlock{
 					ss,
-					meshDeployment,
+					deployment,
 				}
 			}
 
-		}
-
-		deployments, err := utils.ListDeployments(namespace, searcher.KubeClient, metav1.ListOptions{})
-		if err != nil {
-			log.Printf("Query Deployment for shadow service error. %s", err)
-		}
-		for _, deployment := range deployments {
-			if isShadowDeployment(deployment.Spec) {
-				continue
-			}
-			annotations := deployment.Annotations
-			if serviceName, ok := annotations[MeshServiceAnnotation]; ok {
-				if ss, ok := shadowServiceNameMap[serviceName]; ok {
-					searcher.ResultChan <- ServiceCloneBlock{
-						ss,
-						deployment,
-					}
-				}
-
-			}
 		}
 	}
 }

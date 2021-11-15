@@ -28,6 +28,7 @@ import (
 
 type CloneMeshDeploymentFunc func() error
 
+// Deprecated. EaseMesh will abandon MeshDeployment in the future, the method will be removed.
 func (cloner *ShadowServiceCloner) cloneMeshDeployment(sourceMeshDeployment *v1beta1.MeshDeployment, shadowService *object.ShadowService) CloneMeshDeploymentFunc {
 	shadowMeshDeployment := cloner.decorateShadowMeshDeployment(sourceMeshDeployment, shadowService)
 	return func() error {
