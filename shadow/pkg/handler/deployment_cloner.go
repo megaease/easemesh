@@ -191,7 +191,7 @@ func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV
 	}
 
 	appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
-	appContainer, _ := findContainer(sourceDeployment.Spec.Template.Spec.Containers, appContainerName)
+	appContainer, _ := findContainer(deployment.Spec.Template.Spec.Containers, appContainerName)
 	appContainer.Env = injectEnvVars(appContainer.Env, newEnvs...)
 	deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
 	return deployment
@@ -219,12 +219,6 @@ func shadowConfigurationKeys() []string {
 
 func sourceName(name string) string {
 	return strings.TrimSuffix(name, shadowDeploymentNameSuffix)
-}
-
-func shadowServiceLabels() map[string]string {
-	labels := map[string]string{}
-	labels[shadowLabelKey] = "true"
-	return labels
 }
 
 func injectShadowLabels(labels map[string]string) {

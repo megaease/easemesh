@@ -20,7 +20,6 @@ package handler
 import (
 	"log"
 
-	"github.com/megaease/easemesh/mesh-operator/pkg/api/v1beta1"
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -69,9 +68,6 @@ func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
 	case appv1.Deployment:
 		deployment := block.deployObj.(appv1.Deployment)
 		err = cloner.cloneDeployment(&deployment, &block.service)()
-	case v1beta1.MeshDeployment:
-		meshDeployment := block.deployObj.(v1beta1.MeshDeployment)
-		err = cloner.cloneMeshDeployment(&meshDeployment, &block.service)()
 	}
 	if err != nil {
 		log.Printf("Clone shadow service failed. service name: %s error: %s", block.service.ServiceName, err)
