@@ -2,11 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    deployment.kubernetes.io/revision: "1"
     mesh.megaease.com/service-name: visits-service
   name: visits-service
   namespace: spring-petclinic
-
 spec:
   replicas: 1
   selector:
@@ -28,9 +26,6 @@ spec:
         - java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom  org.springframework.boot.loader.JarLauncher
         command:
         - /bin/sh
-        env:
-        - name: JAVA_TOOL_OPTIONS
-          value: ' -javaagent:/agent-volume/easeagent.jar -Deaseagent.log.conf=/agent-volume/log4j2.xml '
         image: megaease/spring-petclinic-visits-service:latest
         imagePullPolicy: Always
         lifecycle:
@@ -55,59 +50,11 @@ spec:
         - mountPath: /application/application-sit.yml
           name: configmap-volume-0
           subPath: application-sit.yml
-        - mountPath: /agent-volume
-          name: agent-volume
-      - command:
-        - /bin/sh
-        - -c
-        - /opt/easegress/bin/easegress-server -f /sidecar-volume/sidecar-config.yaml
-        env:
-        - name: APPLICATION_IP
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: status.podIP
-        image: 172.20.2.189:5001/megaease/easegress:server-sidecar
-        imagePullPolicy: IfNotPresent
-        name: easemesh-sidecar
-        ports:
-        - containerPort: 13001
-          name: sidecar-ingress
-          protocol: TCP
-        - containerPort: 13002
-          name: sidecar-egress
-          protocol: TCP
-        - containerPort: 13009
-          name: sidecar-eureka
-          protocol: TCP
-        volumeMounts:
-        - mountPath: /sidecar-volume
-          name: sidecar-volume
-      initContainers:
-      - command:
-        - sh
-        - -c
-        - "set -e\ncp -r /easeagent-volume/* /agent-volume\n\necho 'name: visits-service\ncluster-join-urls:
-          http://easemesh-controlplane-svc.easemesh:2380\ncluster-request-timeout:
-          10s\ncluster-role: reader\ncluster-name: easemesh-control-plane\nlabels:\n
-          \ alive-probe: http://localhost:9900/health\n  application-port: 8080\n
-          \ mesh-service-labels: \n  mesh-servicename: visits-service\n' > /sidecar-volume/sidecar-config.yaml"
-        image: 172.20.2.189:5001/megaease/easeagent-initializer:latest
-        imagePullPolicy: IfNotPresent
-        name: initializer
-        volumeMounts:
-        - mountPath: /agent-volume
-          name: agent-volume
-        - mountPath: /sidecar-volume
-          name: sidecar-volume
       volumes:
       - configMap:
+          defaultMode: 420
           items:
           - key: application-sit-yml
             path: application-sit.yml
           name: visits-service
         name: configmap-volume-0
-      - emptyDir: {}
-        name: agent-volume
-      - emptyDir: {}
-        name: sidecar-volume

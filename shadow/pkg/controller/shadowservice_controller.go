@@ -27,7 +27,6 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -44,7 +43,7 @@ type (
 	ShadowServiceController struct {
 		kubeClient    kubernetes.Interface
 		runTimeClient *client.Client
-		crdClient     rest.Interface
+		// crdClient     rest.Interface
 
 		syncer   *syncer.ShadowServiceSyncer
 		cloner   handler.Cloner
@@ -82,15 +81,15 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "new Controller Runtime client error")
 	}
-	crdRestClient, err := utils.NewCRDRestClient()
-	if err != nil {
-		return nil, errors.Wrapf(err, "new Resst client error")
-	}
+	// crdRestClient, err := utils.NewCRDRestClient()
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "new Resst client error")
+	// }
 
 	shadowServiceCloner := handler.ShadowServiceCloner{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
-		CRDClient:     crdRestClient,
+		// CRDClient:     crdRestClient,
 	}
 
 	cloneChan := make(chan interface{})
@@ -98,19 +97,19 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	shadowServiceSearcher := handler.ShadowServiceDeploySearcher{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
-		CRDClient:     crdRestClient,
+		// CRDClient:     crdRestClient,
 		ResultChan:    cloneChan,
 	}
 
 	shadowServiceSearcherDeleter := handler.ShadowServiceDeleter{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
-		CRDClient:     crdRestClient,
+		// CRDClient:     crdRestClient,
 		DeleteChan:    deleteChan,
 	}
 
 	shadowServiceSyncer, err := syncer.NewSyncer(config.MeshServer, config.RequestTimeout, config.PullInterval)
-	return &ShadowServiceController{kubernetesClient, &runtimeClient, crdRestClient, shadowServiceSyncer,
+	return &ShadowServiceController{kubernetesClient, &runtimeClient, shadowServiceSyncer,
 		&shadowServiceCloner, &shadowServiceSearcher, &shadowServiceSearcherDeleter, cloneChan, deleteChan}, nil
 }
 

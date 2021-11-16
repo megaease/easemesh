@@ -1,59 +1,65 @@
-apiVersion: mesh.megaease.com/v1beta1
-kind: MeshDeployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   annotations:
-    kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"mesh.megaease.com/v1beta1","kind":"MeshDeployment","metadata":{"annotations":{},"name":"visits-service-meshdeployment","namespace":"spring-petclinic"},"spec":{"deploy":{"replicas":1,"selector":{"matchLabels":{"app":"visits-service-meshdeployment"}},"template":{"metadata":{"labels":{"app":"visits-service-meshdeployment"}},"spec":{"containers":[{"args":["-c","java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom  org.springframework.boot.loader.JarLauncher"],"command":["/bin/sh"],"image":"megaease/spring-petclinic-visits-service:latest","imagePullPolicy":"Always","lifecycle":{"preStop":{"exec":{"command":["sh","-c","sleep 12"]}}},"name":"visits-service","ports":[{"containerPort":8080}],"resources":{"limits":{"cpu":"2000m","memory":"1Gi"},"requests":{"cpu":"200m","memory":"256Mi"}},"volumeMounts":[{"mountPath":"/application/application-sit.yml","name":"configmap-volume-0","subPath":"application-sit.yml"}]}],"restartPolicy":"Always","volumes":[{"configMap":{"defaultMode":420,"items":[{"key":"application-sit-yml","path":"application-sit.yml"}],"name":"visits-service"},"name":"configmap-volume-0"}]}}},"service":{"labels":{},"name":"visits-service"}}}
-  name: visits-service-meshdeployment
+    mesh.megaease.com/service-name: visits-service
+    mesh.megaease.com/shadow-service-name: visits-shadow-service
+  labels:
+    mesh.megaease.com/shadow-service: "true"
+  name: visits-service-shadow
   namespace: spring-petclinic
 spec:
-  deploy:
-    replicas: 1
-    selector:
-      matchLabels:
-        app: visits-service-meshdeployment
-    template:
-      metadata: {}
-      spec:
-        containers:
-        - args:
-          - -c
-          - java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom  org.springframework.boot.loader.JarLauncher
-          command:
-          - /bin/sh
-          image: megaease/spring-petclinic-visits-service:latest
-          imagePullPolicy: Always
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                - sh
-                - -c
-                - sleep 12
-          name: visits-service
-          ports:
-          - containerPort: 8080
-            protocol: TCP
-          resources:
-            limits:
-              cpu: 2000m
-              memory: 1Gi
-            requests:
-              cpu: 200m
-              memory: 256Mi
-          volumeMounts:
-          - mountPath: /application/application-sit.yml
-            name: configmap-volume-0
-            subPath: application-sit.yml
-        restartPolicy: Always
-        volumes:
-        - configMap:
-            defaultMode: 420
-            items:
-            - key: application-sit-yml
-              path: application-sit.yml
-            name: visits-service
+  selector:
+    matchLabels:
+      app: visits-service
+      mesh.megaease.com/shadow-service: "true"
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: visits-service
+        mesh.megaease.com/shadow-service: "true"
+    spec:
+      containers:
+      - args:
+        - -c
+        - java -server -Xmx1024m -Xms1024m -Dspring.profiles.active=sit -Djava.security.egd=file:/dev/./urandom  org.springframework.boot.loader.JarLauncher
+        command:
+        - /bin/sh
+        image: megaease/spring-petclinic-visits-service:latest
+        imagePullPolicy: Always
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - sh
+              - -c
+              - sleep 10
+        name: visits-service
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "2"
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /application/application-sit.yml
           name: configmap-volume-0
-  service:
-    labels: {}
-    name: visits-service
+          subPath: application-sit.yml
+      volumes:
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: application-sit-yml
+            path: application-sit.yml
+          name: visits-service
+        name: configmap-volume-0

@@ -1,6 +1,10 @@
 package handler
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
+)
 
 func Test_namespacedName(t *testing.T) {
 	type args struct {
@@ -12,7 +16,14 @@ func Test_namespacedName(t *testing.T) {
 		args args
 		want string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				name:      "test1",
+				namespace: "testns",
+			},
+			want: "testns" + "/" + "test1",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -33,7 +44,19 @@ func Test_shadowServiceExists(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				namespacedName: "testns/test1",
+				shadowServiceNameMap: map[string]object.ShadowService{
+					"testns/test1": object.ShadowService{
+						Name:      "test1",
+						Namespace: "testns",
+					},
+				},
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
