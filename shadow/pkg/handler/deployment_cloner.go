@@ -227,6 +227,7 @@ func injectShadowLabels(labels map[string]string) {
 
 func injectShadowAnnotation(annotations map[string]string, service *object.ShadowService) {
 	annotations[shadowServiceNameAnnotationKey] = service.Name
+	annotations[shadowServiceVersionLabelAnnotationKey] = shadowServiceVersionLabelAnnotationValue
 }
 
 func shadowContainers(containers []corev1.Container) []corev1.Container {

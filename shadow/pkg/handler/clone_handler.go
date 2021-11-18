@@ -37,6 +37,9 @@ const (
 	sidecarContainerName = "easemesh-sidecar"
 
 	shadowServiceNameAnnotationKey = "mesh.megaease.com/shadow-service-name"
+
+	shadowServiceVersionLabelAnnotationKey = " mesh.megaease.com/service-labels"
+	shadowServiceVersionLabelAnnotationValue = "version=shadow"
 	shadowLabelKey                 = "mesh.megaease.com/shadow-service"
 	shadowAppContainerNameKey      = "mesh.megaease.com/app-container-name"
 
