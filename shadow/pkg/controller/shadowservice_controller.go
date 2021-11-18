@@ -43,7 +43,6 @@ type (
 	ShadowServiceController struct {
 		kubeClient    kubernetes.Interface
 		runTimeClient *client.Client
-		// crdClient     rest.Interface
 
 		syncer   *syncer.ShadowServiceSyncer
 		cloner   handler.Cloner
@@ -89,7 +88,6 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	shadowServiceCloner := handler.ShadowServiceCloner{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
-		// CRDClient:     crdRestClient,
 	}
 
 	cloneChan := make(chan interface{})
@@ -97,14 +95,12 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	shadowServiceSearcher := handler.ShadowServiceDeploySearcher{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
-		// CRDClient:     crdRestClient,
 		ResultChan:    cloneChan,
 	}
 
 	shadowServiceSearcherDeleter := handler.ShadowServiceDeleter{
 		KubeClient:    kubernetesClient,
 		RunTimeClient: &runtimeClient,
-		// CRDClient:     crdRestClient,
 		DeleteChan:    deleteChan,
 	}
 

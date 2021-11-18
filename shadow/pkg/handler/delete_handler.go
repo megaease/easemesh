@@ -25,7 +25,6 @@ import (
 	appv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,7 +40,6 @@ type Deleter interface {
 type ShadowServiceDeleter struct {
 	KubeClient    kubernetes.Interface
 	RunTimeClient *runTimeClient.Client
-	CRDClient     rest.Interface
 	DeleteChan    chan interface{}
 }
 
@@ -72,7 +70,6 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 	}
 
 	for _, namespace := range namespaces {
-
 		deleter.findDeletableDeployments(namespace.Name, shadowServiceNameMap)
 	}
 

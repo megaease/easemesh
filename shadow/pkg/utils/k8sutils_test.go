@@ -14,9 +14,6 @@ import (
 
 func TestNewKubernetesClient(t *testing.T) {
 	NewKubernetesClient()
-}
-
-func TestNewRuntimeClient(t *testing.T)  {
 	NewRuntimeClient()
 }
 
@@ -48,7 +45,6 @@ func prepareClientForTest() kubernetes.Interface {
 	return client
 
 }
-
 
 func TestDeleteDeployment(t *testing.T) {
 	client := prepareClientForTest()
