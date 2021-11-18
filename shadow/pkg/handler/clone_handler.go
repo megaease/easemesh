@@ -38,10 +38,10 @@ const (
 
 	shadowServiceNameAnnotationKey = "mesh.megaease.com/shadow-service-name"
 
-	shadowServiceVersionLabelAnnotationKey = " mesh.megaease.com/service-labels"
+	shadowServiceVersionLabelAnnotationKey   = "mesh.megaease.com/service-labels"
 	shadowServiceVersionLabelAnnotationValue = "version=shadow"
-	shadowLabelKey                 = "mesh.megaease.com/shadow-service"
-	shadowAppContainerNameKey      = "mesh.megaease.com/app-container-name"
+	shadowLabelKey                           = "mesh.megaease.com/shadow-service"
+	shadowAppContainerNameKey                = "mesh.megaease.com/app-container-name"
 
 	shadowDeploymentNameSuffix = "-shadow"
 
