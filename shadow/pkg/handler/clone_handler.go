@@ -22,7 +22,6 @@ import (
 
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -57,7 +56,6 @@ type Cloner interface {
 type ShadowServiceCloner struct {
 	KubeClient    kubernetes.Interface
 	RunTimeClient *client.Client
-	CRDClient     *rest.RESTClient
 }
 
 func (cloner *ShadowServiceCloner) Clone(obj interface{}) {

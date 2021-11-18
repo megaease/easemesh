@@ -25,7 +25,6 @@ import (
 	appsV1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -40,7 +39,6 @@ type Searcher interface {
 type ShadowServiceDeploySearcher struct {
 	KubeClient    kubernetes.Interface
 	RunTimeClient *runTimeClient.Client
-	CRDClient     *rest.RESTClient
 	ResultChan    chan interface{}
 }
 
