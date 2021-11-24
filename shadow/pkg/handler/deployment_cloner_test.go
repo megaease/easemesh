@@ -31,15 +31,15 @@ func fakeNameSpace() *corev1.Namespace {
 	return ns1
 }
 
-func fakeDeployment() *appsV1.Deployment {
+func fakeSourceDeployment() *appsV1.Deployment {
 	decoder := k8Yaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(sourceDeploymentYaml)), 1000)
 	sourceDeployment := &appsV1.Deployment{}
 	_ = decoder.Decode(sourceDeployment)
 	return sourceDeployment
 }
 
-func fakeClonedDeployment() *appsV1.Deployment {
-	decoder := k8Yaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(clonedDeploymentYaml)), 1000)
+func fakeShadowDeployment() *appsV1.Deployment {
+	decoder := k8Yaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(shadowDeploymentYaml)), 1000)
 	clonedDeployment := &appsV1.Deployment{}
 	_ = decoder.Decode(clonedDeployment)
 	return clonedDeployment
@@ -51,9 +51,9 @@ func TestShadowServiceCloner_cloneDeploymentSpec(t *testing.T) {
 		RunTimeClient *client.Client
 	}
 
-	deployment := fakeDeployment()
+	deployment := fakeSourceDeployment()
 	shadowService := fakeShadowService()
-	clonedDeployment := fakeClonedDeployment()
+	clonedDeployment := fakeShadowDeployment()
 	type args struct {
 		sourceDeployment *appsV1.Deployment
 		shadowService    *object.ShadowService
@@ -202,11 +202,12 @@ spec:
         name: sidecar-volume
 `
 
-const clonedDeploymentYaml = `
+const shadowDeploymentYaml = `
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
+    mesh.megaease.com/service-labels: version=shadow
     mesh.megaease.com/service-name: visits-service
     mesh.megaease.com/shadow-service-name: shadow-visits-service
   labels:

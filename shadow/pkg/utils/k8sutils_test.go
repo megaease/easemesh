@@ -14,6 +14,9 @@ import (
 
 func TestNewKubernetesClient(t *testing.T) {
 	NewKubernetesClient()
+}
+
+func TestNewRuntimeClient(t *testing.T) {
 	NewRuntimeClient()
 }
 

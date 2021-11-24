@@ -5,17 +5,18 @@ import (
 )
 
 func TestShadowServiceCloner_Clone(t *testing.T) {
+
+	cloner := &ShadowServiceCloner{
+		KubeClient:    prepareClientForTest(),
+		RunTimeClient: nil,
+	}
+
 	shadowService := fakeShadowService()
-	deployment := fakeDeployment()
+	sourceDeployment := fakeSourceDeployment()
 
 	serviceCloneBlock := ServiceCloneBlock{
 		service:   shadowService,
-		deployObj: deployment,
-	}
-
-	cloner := &ShadowServiceCloner{
-		KubeClient:    nil,
-		RunTimeClient: nil,
+		deployObj: sourceDeployment,
 	}
 	cloner.Clone(serviceCloneBlock)
 }

@@ -1,14 +1,17 @@
 package handler
 
 import (
+	"reflect"
+	"sync"
 	"testing"
 
+	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	appsV1 "k8s.io/api/apps/v1"
 )
 
 func Test_isShadowDeployment(t *testing.T) {
-	deployment1 := fakeDeployment()
-	deployment2 := fakeClonedDeployment()
+	deployment1 := fakeSourceDeployment()
+	deployment2 := fakeShadowDeployment()
 
 	type args struct {
 		spec appsV1.DeploymentSpec
@@ -227,3 +230,35 @@ spec:
           name: visits-service
         name: configmap-volume-0
 `
+
+func TestShadowServiceDeploySearcher_Search(t *testing.T) {
+	searchChan := make(chan interface{})
+	defer close(searchChan)
+
+	searcher := &ShadowServiceDeploySearcher{
+		KubeClient:    prepareClientForTest(),
+		RunTimeClient: nil,
+		ResultChan:    searchChan,
+	}
+
+	sourceDeployment := fakeSourceDeployment()
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case obj := <-searcher.ResultChan:
+				if !reflect.DeepEqual(obj.(ServiceCloneBlock).deployObj, *sourceDeployment) {
+					t.Errorf("Search Deployment Error, Searcher.Search() = %v, \n want %v", obj, sourceDeployment)
+				}
+				return
+			}
+		}
+	}()
+
+	shadowService := fakeShadowService()
+	objs := []object.ShadowService{shadowService}
+	searcher.Search(objs)
+	wg.Wait()
+}

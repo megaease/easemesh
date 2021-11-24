@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
@@ -15,8 +17,8 @@ import (
 func prepareClientForTest() kubernetes.Interface {
 	var result runtime.Object
 	namespace := fakeNameSpace()
-	deployment := fakeDeployment()
-	shadowDeployment := fakeClonedDeployment()
+	deployment := fakeSourceDeployment()
+	shadowDeployment := fakeShadowDeployment()
 
 	client := fake.NewSimpleClientset(
 		namespace,
@@ -105,14 +107,37 @@ func Test_shadowServiceExists(t *testing.T) {
 	}
 }
 
-func TestShadowServiceDeleter_FindDeletableObjs(t *testing.T) {
+func TestShadowServiceDeleter_Delete(t *testing.T) {
+
+	deleteChan := make(chan interface{})
+	defer close(deleteChan)
+
 	deleter := &ShadowServiceDeleter{
 		KubeClient:    prepareClientForTest(),
 		RunTimeClient: nil,
-		DeleteChan:    nil,
+		DeleteChan:    deleteChan,
 	}
 
-	shadowService := fakeShadowService()
-	objs := []object.ShadowService{shadowService}
+	clonedDeployment := fakeShadowDeployment()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case obj := <-deleter.DeleteChan:
+				if !reflect.DeepEqual(obj, *clonedDeployment) {
+					t.Errorf("FindDeletableObjs() = %v, \n want %v", obj, clonedDeployment)
+				}
+				deleter.Delete(obj)
+				return
+			}
+		}
+	}()
+
+	var objs []object.ShadowService
 	deleter.FindDeletableObjs(objs)
+	wg.Wait()
+
 }
