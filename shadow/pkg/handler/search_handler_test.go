@@ -236,9 +236,8 @@ func TestShadowServiceDeploySearcher_Search(t *testing.T) {
 	defer close(searchChan)
 
 	searcher := &ShadowServiceDeploySearcher{
-		KubeClient:    prepareClientForTest(),
-		RunTimeClient: nil,
-		ResultChan:    searchChan,
+		KubeClient: prepareClientForTest(),
+		ResultChan: searchChan,
 	}
 
 	sourceDeployment := fakeSourceDeployment()

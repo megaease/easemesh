@@ -61,11 +61,13 @@ type Cloner interface {
 	Clone(obj interface{})
 }
 
+// ShadowServiceCloner clone Deployment according to ShadowService.
 type ShadowServiceCloner struct {
 	KubeClient    kubernetes.Interface
 	RunTimeClient *client.Client
 }
 
+// Clone execute clone operation if there has ShadowService object.
 func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
 
 	var err error

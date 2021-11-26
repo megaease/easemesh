@@ -38,6 +38,7 @@ type ShadowServiceDeleter struct {
 	DeleteChan chan interface{}
 }
 
+// Delete execute delete operation.
 func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
 	var err error
 	switch obj.(type) {
@@ -52,6 +53,7 @@ func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
 	}
 }
 
+// FindDeletableObjs finds objects that can be deleted and send it for deletion.
 func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 	shadowServiceList := obj.([]object.ShadowService)
 	shadowServiceNameMap := make(map[string]object.ShadowService)
@@ -82,10 +84,10 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 	if err != nil {
 		log.Printf("List Deployment failed. error: %s", err)
 		return
-	} else {
-		for _, deployment := range allDeployments {
-			allDeploymentsMap[deployment.Name] = deployment
-		}
+	}
+
+	for _, deployment := range allDeployments {
+		allDeploymentsMap[deployment.Name] = deployment
 	}
 
 	sourceDeploymentExistsFn := func(name string, serviceName string) bool {
@@ -105,18 +107,18 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 	if err != nil {
 		log.Printf("List Deployment failed. error: %s", err)
 		return
-	} else {
-		for _, deployment := range shadowDeployments {
-			if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
-				if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
-					deleter.DeleteChan <- deployment
-					continue
-				}
-				shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
-				if !sourceDeploymentExistsFn(sourceName(deployment.Name), shadowService.ServiceName) {
-					deleter.DeleteChan <- deployment
-					continue
-				}
+	}
+
+	for _, deployment := range shadowDeployments {
+		if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
+			if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
+				deleter.DeleteChan <- deployment
+				continue
+			}
+			shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
+			if !sourceDeploymentExistsFn(sourceName(deployment.Name), shadowService.ServiceName) {
+				deleter.DeleteChan <- deployment
+				continue
 			}
 		}
 	}

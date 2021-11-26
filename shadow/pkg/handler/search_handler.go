@@ -32,16 +32,19 @@ type Searcher interface {
 	Search(obj interface{})
 }
 
+// ShadowServiceDeploySearcher search objects from Kubernetes according to ShadowService.
 type ShadowServiceDeploySearcher struct {
 	KubeClient kubernetes.Interface
 	ResultChan chan interface{}
 }
 
+// ServiceCloneBlock is passed by searcher to cloner to perform clone operation.
 type ServiceCloneBlock struct {
 	service   object.ShadowService
 	deployObj interface{}
 }
 
+// Search finds objects from kubernetes based on ShadowService and sends them to cloner.
 func (searcher *ShadowServiceDeploySearcher) Search(objs interface{}) {
 	shadowServices := objs.([]object.ShadowService)
 	if len(shadowServices) == 0 {
