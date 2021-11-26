@@ -55,7 +55,6 @@ func (cloner *ShadowServiceCloner) cloneDeploymentSpec(sourceDeployment *appsV1.
 // findContainer returns the copy of the container,
 // which means it won't change the original container when changing the result.
 func findContainer(containers []corev1.Container, containerName string) (*corev1.Container, bool) {
-
 	if containerName == "" {
 		for i, c := range containers {
 			if c.Name == sidecarContainerName {

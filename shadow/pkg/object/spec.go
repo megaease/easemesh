@@ -52,8 +52,8 @@ type (
 		Namespace     string         `yaml:"namespace" jsonschema:"required"`
 		MySQL         *MySQL         `yaml:"mysql" jsonschema:"omitempty"`
 		Kafka         *Kafka         `yaml:"kafka" jsonschema:"omitempty"`
-		Redis         *Redis         `ymal:"redis" jsonschema:"omitempty"`
-		RabbitMQ      *RabbitMQ      `ymal:"rabbitMq" jsonschema:"omitempty"`
+		Redis         *Redis         `yaml:"redis" jsonschema:"omitempty"`
+		RabbitMQ      *RabbitMQ      `yaml:"rabbitMq" jsonschema:"omitempty"`
 		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
 	}
 )

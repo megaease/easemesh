@@ -80,10 +80,6 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "new Controller Runtime client error")
 	}
-	// crdRestClient, err := utils.NewCRDRestClient()
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "new Resst client error")
-	// }
 
 	shadowServiceCloner := handler.ShadowServiceCloner{
 		KubeClient:    kubernetesClient,
@@ -109,7 +105,7 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 		&shadowServiceCloner, &shadowServiceSearcher, &shadowServiceSearcherDeleter, cloneChan, deleteChan}, nil
 }
 
-// Do start shadow service sync and clone.
+// Do start to synchronizing and cloning the ShadowService.
 func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{}) {
 	shadowServicesChan, _ := s.syncer.Sync(ShadowServiceKind)
 
