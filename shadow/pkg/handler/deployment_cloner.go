@@ -111,14 +111,14 @@ func generateShadowConfigEnv(envName string, config interface{}) *corev1.EnvVar 
 		return nil
 	}
 
-	configJson, err := json.Marshal(config)
+	configJSON, err := json.Marshal(config)
 	if err != nil {
 		return nil
 	}
 
 	env := &corev1.EnvVar{}
 	env.Name = envName
-	env.Value = string(configJson)
+	env.Value = string(configJSON)
 	return env
 
 }

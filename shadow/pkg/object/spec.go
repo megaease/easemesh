@@ -18,34 +18,40 @@
 package object
 
 type (
+	// MySQL configures the MySQL configuration of the shadow service.
 	MySQL struct {
 		Uris     string `yaml:"uris" json:"uris" jsonschema:"required"`
 		UserName string `yaml:"userName" json:"userName" jsonschema:"required"`
 		Password string `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
+	// Kafka configures the Kafka configuration of the shadow service.
 	Kafka struct {
 		Uris string `yaml:"uris" json:"uris" jsonschema:"required"`
 	}
 
+	// Redis configures the Redis configuration of the shadow service.
 	Redis struct {
 		Uris     string `yaml:"uris" json:"uris" jsonschema:"required"`
 		UserName string `yaml:"userName" json:"userName" jsonschema:"required"`
 		Password string `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
+	// RabbitMQ configures the RabbitMQ configuration of the shadow service.
 	RabbitMQ struct {
 		Uris     string `yaml:"uris" json:"uris" jsonschema:"required"`
 		UserName string `yaml:"userName" json:"userName" jsonschema:"required"`
 		Password string `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
+	// ElasticSearch configures the ElasticSearch configuration of the shadow service.
 	ElasticSearch struct {
 		Uris     string `yaml:"uris" json:"uris" jsonschema:"required"`
 		UserName string `yaml:"userName" json:"userName" jsonschema:"required"`
 		Password string `yaml:"password" json:"password" jsonschema:"required"`
 	}
 
+	// ShadowService is used to create a shadow service of an existing service.
 	ShadowService struct {
 		Name          string         `yaml:"name" jsonschema:"required"`
 		ServiceName   string         `yaml:"serviceName" jsonschema:"required"`

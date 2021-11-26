@@ -28,10 +28,7 @@ import (
 	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	MeshServiceAnnotation = "mesh.megaease.com/service-name"
-)
-
+// Searcher is used to search existing objects for cloning.
 type Searcher interface {
 	Search(obj interface{})
 }
@@ -82,7 +79,7 @@ func (searcher *ShadowServiceDeploySearcher) searchDeployment(namespace string, 
 			continue
 		}
 		annotations := deployment.Annotations
-		if serviceName, ok := annotations[MeshServiceAnnotation]; ok {
+		if serviceName, ok := annotations[meshServiceAnnotation]; ok {
 			if ss, ok := shadowServiceNameMap[serviceName]; ok {
 				searcher.ResultChan <- ServiceCloneBlock{
 					ss,

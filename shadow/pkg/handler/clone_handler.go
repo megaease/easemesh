@@ -50,8 +50,13 @@ const (
 	rabbitmqShadowConfigEnv      = "EASE_RESOURCE_RABBITMQ"
 	redisShadowConfigEnv         = "EASE_RESOURCE_REDIS"
 	elasticsearchShadowConfigEnv = "EASE_RESOURCE_ELASTICSEARCH"
+
+	meshServiceAnnotation = "mesh.megaease.com/service-name"
+
+	separator = '/'
 )
 
+// Cloner is used to clone existed object.
 type Cloner interface {
 	Clone(obj interface{})
 }

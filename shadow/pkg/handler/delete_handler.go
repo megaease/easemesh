@@ -28,10 +28,7 @@ import (
 	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const (
-	Separator = '/'
-)
-
+// Deleter is used to find and delete useless Objs.
 type Deleter interface {
 	Delete(obj interface{})
 	FindDeletableObjs(obj interface{})
@@ -99,7 +96,7 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 			return false
 		}
 
-		sourceServiceName, ok := deploy.Annotations[MeshServiceAnnotation]
+		sourceServiceName, ok := deploy.Annotations[meshServiceAnnotation]
 		if ok && sourceServiceName == serviceName {
 			return true
 		}
@@ -134,5 +131,5 @@ func shadowServiceExists(namespacedName string, shadowServiceNameMap map[string]
 }
 
 func namespacedName(namespace string, name string) string {
-	return namespace + string(Separator) + name
+	return namespace + string(separator) + name
 }

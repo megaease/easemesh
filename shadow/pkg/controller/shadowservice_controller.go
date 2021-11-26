@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	ShadowServiceKind = "ShadowService"
+	shadowServiceKind = "ShadowService"
 )
 
 type (
@@ -107,7 +107,7 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 
 // Do start to synchronizing and cloning the ShadowService.
 func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{}) {
-	shadowServicesChan, _ := s.syncer.Sync(ShadowServiceKind)
+	shadowServicesChan, _ := s.syncer.Sync(shadowServiceKind)
 
 	wg.Add(1)
 	go func() {
