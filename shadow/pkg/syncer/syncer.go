@@ -37,6 +37,7 @@ type ShadowServiceSyncer struct {
 	done         chan struct{}
 }
 
+// NewSyncer create ShadowServiceSyncer for sync objects.
 func NewSyncer(meshServer string, requestTimeout time.Duration, pullInterval time.Duration) (*ShadowServiceSyncer, error) {
 	return &ShadowServiceSyncer{
 		server: &Server{
@@ -77,16 +78,15 @@ func (s *ShadowServiceSyncer) watch(kind string, send func(data []object.ShadowS
 				log.Printf("Watch response from MeshServer error: %s. Retrying ...", e.Error())
 				watchChan <- struct{}{}
 				return
-			} else {
-				if json.Valid(line) {
-					var objects []object.ShadowService
-					e = json.Unmarshal(line, &objects)
-					if e != nil {
-						log.Printf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, e.Error())
-						continue
-					}
-					send(objects)
+			}
+			if json.Valid(line) {
+				var objects []object.ShadowService
+				e = json.Unmarshal(line, &objects)
+				if e != nil {
+					log.Printf("MeshServer returns invalid json: %s, error: %s. Skipped.", line, e.Error())
+					continue
 				}
+				send(objects)
 			}
 		}
 	}()
