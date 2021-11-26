@@ -37,3 +37,6 @@ image: rootfs/Dockerfile vet ${ALL_FILES}
 	docker build -t megaease/easemesh-shadowservice-controller:1.0-alpine \
      -f ${MKFILE_DIR}/rootfs/Dockerfile ${MKFILE_DIR} --build-arg COMMITID=${COMMIT} --build-arg BUILDDATE=${BUILDDATE}
 
+test:
+	go test ./... ${TEST_FLAGS}
+

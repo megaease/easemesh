@@ -11,6 +11,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.10.3
 )
 
-replace github.com/megaease/easemeshctl => ../emctl/
+replace github.com/megaease/easemeshctl => ../../emctl/
 
-replace github.com/megaease/easemesh/mesh-operator => ../operator/
+replace github.com/megaease/easemesh/mesh-operator => ../../operator/
