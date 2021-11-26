@@ -29,6 +29,7 @@ import (
 )
 
 const (
+	// DefaultMeshServer is the default access address of the easemesh control plane
 	DefaultMeshServer = "easemesh-controlplane-svc.easemesh:2381"
 )
 

@@ -31,9 +31,11 @@ import (
 )
 
 const (
-	apiURL                  = "/apis/v1"
+	apiURL = "/apis/v1"
+	// MeshCustomObjetWatchURL is the mesh custom resource watching path.
 	MeshCustomObjetWatchURL = apiURL + "/mesh/watchcustomresources/%s"
-	MeshCustomObjectsURL    = apiURL + "/mesh/customresources/%s"
+	// MeshCustomObjectsURL is the mesh custom resource list path.
+	MeshCustomObjectsURL = apiURL + "/mesh/customresources/%s"
 )
 
 var (
@@ -41,11 +43,13 @@ var (
 	NotFoundError = errors.Errorf("resource not found")
 )
 
+// Server represents the server of the easemesh control plane.
 type Server struct {
 	RequestTimeout time.Duration
 	MeshServer     string
 }
 
+// List query MeshCustomObject list from Server according to kind.
 func (server *Server) List(ctx context.Context, kind string) ([]object.ShadowService, error) {
 	jsonClient := emctlclient.NewHTTPJSON()
 	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjectsURL, kind)
@@ -73,6 +77,7 @@ func (server *Server) List(ctx context.Context, kind string) ([]object.ShadowSer
 	return result.([]object.ShadowService), err
 }
 
+// Watch listens to the custom objects of the server according to kind.
 func (server *Server) Watch(kind string) (*bufio.Reader, error) {
 	url := fmt.Sprintf("http://"+server.MeshServer+MeshCustomObjetWatchURL, kind)
 	request, err := http.NewRequest(http.MethodGet, url, nil)

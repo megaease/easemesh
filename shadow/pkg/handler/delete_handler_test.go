@@ -113,9 +113,8 @@ func TestShadowServiceDeleter_Delete(t *testing.T) {
 	defer close(deleteChan)
 
 	deleter := &ShadowServiceDeleter{
-		KubeClient:    prepareClientForTest(),
-		RunTimeClient: nil,
-		DeleteChan:    deleteChan,
+		KubeClient: prepareClientForTest(),
+		DeleteChan: deleteChan,
 	}
 
 	clonedDeployment := fakeShadowDeployment()

@@ -7,8 +7,7 @@ import (
 func TestShadowServiceCloner_Clone(t *testing.T) {
 
 	cloner := &ShadowServiceCloner{
-		KubeClient:    prepareClientForTest(),
-		RunTimeClient: nil,
+		KubeClient: prepareClientForTest(),
 	}
 
 	shadowService := fakeShadowService()

@@ -27,7 +27,6 @@ import (
 
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -40,9 +39,9 @@ type (
 		Do(stopChan <-chan struct{})
 	}
 
+	// ShadowServiceController performs search, deletion and clone of shadow services
 	ShadowServiceController struct {
-		kubeClient    kubernetes.Interface
-		runTimeClient *client.Client
+		kubeClient kubernetes.Interface
 
 		syncer   *syncer.ShadowServiceSyncer
 		cloner   handler.Cloner
@@ -76,32 +75,25 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "new kubernetes clientSet error")
 	}
-	runtimeClient, err := utils.NewRuntimeClient()
-	if err != nil {
-		return nil, errors.Wrapf(err, "new Controller Runtime client error")
-	}
 
 	shadowServiceCloner := handler.ShadowServiceCloner{
-		KubeClient:    kubernetesClient,
-		RunTimeClient: &runtimeClient,
+		KubeClient: kubernetesClient,
 	}
 
 	cloneChan := make(chan interface{})
 	deleteChan := make(chan interface{})
 	shadowServiceSearcher := handler.ShadowServiceDeploySearcher{
-		KubeClient:    kubernetesClient,
-		RunTimeClient: &runtimeClient,
-		ResultChan:    cloneChan,
+		KubeClient: kubernetesClient,
+		ResultChan: cloneChan,
 	}
 
 	shadowServiceSearcherDeleter := handler.ShadowServiceDeleter{
-		KubeClient:    kubernetesClient,
-		RunTimeClient: &runtimeClient,
-		DeleteChan:    deleteChan,
+		KubeClient: kubernetesClient,
+		DeleteChan: deleteChan,
 	}
 
 	shadowServiceSyncer, err := syncer.NewSyncer(config.MeshServer, config.RequestTimeout, config.PullInterval)
-	return &ShadowServiceController{kubernetesClient, &runtimeClient, shadowServiceSyncer,
+	return &ShadowServiceController{kubernetesClient, shadowServiceSyncer,
 		&shadowServiceCloner, &shadowServiceSearcher, &shadowServiceSearcherDeleter, cloneChan, deleteChan}, nil
 }
 

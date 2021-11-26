@@ -25,7 +25,6 @@ import (
 	appv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Deleter is used to find and delete useless Objs.
@@ -35,9 +34,8 @@ type Deleter interface {
 }
 
 type ShadowServiceDeleter struct {
-	KubeClient    kubernetes.Interface
-	RunTimeClient *runTimeClient.Client
-	DeleteChan    chan interface{}
+	KubeClient kubernetes.Interface
+	DeleteChan chan interface{}
 }
 
 func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {

@@ -25,7 +25,6 @@ import (
 	appsV1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	runTimeClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Searcher is used to search existing objects for cloning.
@@ -34,9 +33,8 @@ type Searcher interface {
 }
 
 type ShadowServiceDeploySearcher struct {
-	KubeClient    kubernetes.Interface
-	RunTimeClient *runTimeClient.Client
-	ResultChan    chan interface{}
+	KubeClient kubernetes.Interface
+	ResultChan chan interface{}
 }
 
 type ServiceCloneBlock struct {

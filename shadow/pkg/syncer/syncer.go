@@ -26,12 +26,11 @@ import (
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 )
 
-// Syncer syncs data from EaseMesh control plane, it uses a watcher to receive ShadowService object.
+// ShadowServiceSyncer syncs data from EaseMesh control plane, it uses a watcher to receive ShadowService object.
 // It sends out the full data copy when ShadowService object is received from the watcher.
 // The syncer also pulls full data from EaseMesh control plane at a configurable pull interval, this
 // is to ensure data consistency, as EaseMesh control plane watcher may be cancelled if it cannot catch
 // up with the ShadowService object.
-
 type ShadowServiceSyncer struct {
 	server       *Server
 	pullInterval time.Duration

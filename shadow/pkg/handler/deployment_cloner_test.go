@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8Yaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func fakeShadowService() object.ShadowService {
@@ -47,8 +46,7 @@ func fakeShadowDeployment() *appsV1.Deployment {
 
 func TestShadowServiceCloner_cloneDeploymentSpec(t *testing.T) {
 	type fields struct {
-		KubeClient    kubernetes.Interface
-		RunTimeClient *client.Client
+		KubeClient kubernetes.Interface
 	}
 
 	deployment := fakeSourceDeployment()
@@ -77,8 +75,7 @@ func TestShadowServiceCloner_cloneDeploymentSpec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cloner := &ShadowServiceCloner{
-				KubeClient:    tt.fields.KubeClient,
-				RunTimeClient: tt.fields.RunTimeClient,
+				KubeClient: tt.fields.KubeClient,
 			}
 			got := cloner.cloneDeploymentSpec(tt.args.sourceDeployment, tt.args.shadowService)
 			if !reflect.DeepEqual(got, tt.want) {

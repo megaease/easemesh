@@ -23,14 +23,12 @@ import (
 	appsV1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
+// NewKubernetesClient creates Kubernetes client set.
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	kubeConfig, err := ctrl.GetConfig()
 	if err != nil {
@@ -44,18 +42,7 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	return kubeClient, nil
 }
 
-func NewRuntimeClient() (client.Client, error) {
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: runtime.NewScheme(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	runTimeClient := mgr.GetClient()
-	return runTimeClient, err
-}
-
+// ListDeployments list Deployment.
 func ListDeployments(namespace string, clientSet kubernetes.Interface, options metav1.ListOptions) ([]appsV1.Deployment, error) {
 	deploymentList, err := clientSet.AppsV1().Deployments(namespace).List(context.TODO(), options)
 	if err != nil {

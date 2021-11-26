@@ -16,10 +16,6 @@ func TestNewKubernetesClient(t *testing.T) {
 	NewKubernetesClient()
 }
 
-func TestNewRuntimeClient(t *testing.T) {
-	NewRuntimeClient()
-}
-
 func prepareClientForTest() kubernetes.Interface {
 
 	var result runtime.Object
