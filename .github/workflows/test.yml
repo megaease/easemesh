@@ -45,6 +45,11 @@ jobs:
         run: |
           cd operator && make test TEST_FLAGS="-race -coverprofile=coverage.operator.txt -covermode=atomic"
 
+      - name: Test shadow-service
+        shell: bash
+        run: |
+          cd add-ons/shadow && make test TEST_FLAGS="-race -coverprofile=coverage.operator.txt -covermode=atomic"
+
       - name: Upload coverage to Codecov 
         uses: codecov/codecov-action@v2.1.0
         with:
