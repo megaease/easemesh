@@ -33,6 +33,7 @@ type Deleter interface {
 	FindDeletableObjs(obj interface{})
 }
 
+// ShadowServiceDeleter find and delete useless ShadowService's Deployment.
 type ShadowServiceDeleter struct {
 	KubeClient kubernetes.Interface
 	DeleteChan chan interface{}
