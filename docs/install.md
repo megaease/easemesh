@@ -90,7 +90,7 @@ git clone https://github.com/megaease/easemesh
 2. build emctl executables
 
 ```bash
-cd easemesh/emctl && make
+cd easemesh/ctl && make
 ```
 
 3. If no errors occurred, the target was built in `bin/` directory, named with `emctl`
