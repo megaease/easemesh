@@ -12,7 +12,7 @@ require (
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/json-iterator/go v1.1.12
 	github.com/kr/text v0.2.0 // indirect
-	github.com/megaease/easemesh-api v1.3.2
+	github.com/megaease/easemesh-api v1.3.3
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4
@@ -20,8 +20,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.7
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
@@ -32,3 +31,5 @@ require (
 	k8s.io/client-go v0.22.3
 	sigs.k8s.io/yaml v1.2.0
 )
+
+replace github.com/megaease/easemesh-api => /Users/longyun/code/easemesh-api

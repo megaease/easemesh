@@ -53,6 +53,7 @@ type v1alpha1Interface struct {
 	tenantGetter
 	observabilityGetter
 	ingressGetter
+	serviceCanaryGetter
 	customResourceKindGetter
 	customResourceGetter
 }
@@ -80,6 +81,7 @@ func New(server string) MeshClient {
 		serviceGetter:            serviceGetter{client: client},
 		serviceInstanceGetter:    serviceInstanceGetter{client: client},
 		ingressGetter:            ingressGetter{client: client},
+		serviceCanaryGetter:      serviceCanaryGetter{client: client},
 		customResourceKindGetter: customResourceKindGetter{client: client},
 		customResourceGetter:     customResourceGetter{client: client},
 	}

@@ -80,6 +80,9 @@ const (
 
 	// KindCustomResourceKind is the kind of 'custom resource kind' of the EaseMesh resource
 	KindCustomResourceKind = "CustomResourceKind"
+
+	// KindServiceCanary is service canary kind of the EaseMesh resource.
+	KindServiceCanary = "ServiceCanary"
 )
 
 type (
@@ -156,6 +159,10 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 		return &Ingress{
 			MeshResource: NewIngressResource(apiVersion, metaData.Name),
 		}, nil
+	case KindServiceCanary:
+		return &ServiceCanary{
+			MeshResource: NewServiceCanaryResource(apiVersion, metaData.Name),
+		}, nil
 	case KindCustomResourceKind:
 		return &CustomResourceKind{
 			MeshResource: NewCustomResourceKindResource(apiVersion, metaData.Name),
@@ -225,6 +232,11 @@ func NewTenantResource(apiVersion, name string) meta.MeshResource {
 // NewCustomResourceKindResource returns a MeshResource with the custom resource kind
 func NewCustomResourceKindResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindCustomResourceKind, name)
+}
+
+// NewServiceCanaryResource returns a MeshResource with the service canary kind.
+func NewServiceCanaryResource(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindServiceCanary, name)
 }
 
 // NewMeshResource returns a generic MeshResource
