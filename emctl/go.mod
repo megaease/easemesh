@@ -31,5 +31,3 @@ require (
 	k8s.io/client-go v0.22.3
 	sigs.k8s.io/yaml v1.2.0
 )
-
-replace github.com/megaease/easemesh-api => /Users/longyun/code/easemesh-api
