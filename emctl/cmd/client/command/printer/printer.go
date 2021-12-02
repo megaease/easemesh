@@ -114,7 +114,6 @@ func (p *printer) printTable(objects []meta.MeshObject) {
 }
 
 func (p *printer) printYAML(objects []meta.MeshObject) {
-	
 	yamlBuff, err := yaml.Marshal(objects)
 	if err != nil {
 		common.ExitWithErrorf("marshal %#v to yaml failed: %v", objects, err)
