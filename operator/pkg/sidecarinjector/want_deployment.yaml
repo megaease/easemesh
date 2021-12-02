@@ -89,7 +89,7 @@ spec:
           labels:
             alive-probe: http://localhost:9000/health
             application-port: 9000
-            mesh-service-labels: app=vets-service&version=beta
+            mesh-service-labels: app=vets-service,version=beta
             mesh-servicename: vets-service
           ' > /sidecar-volume/sidecar-config.yaml
         image: megaease/easeagent-initializer:latest
