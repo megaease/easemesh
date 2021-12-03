@@ -568,7 +568,6 @@ func GetMeshControlPlaneEndpoints(client kubernetes.Interface, namespace, resour
 	for _, n := range nodes.Items {
 		for _, i := range n.Status.Addresses {
 			if i.Type == v1.NodeInternalIP {
-				i.Address = "127.0.0.1"
 				entrypoints = append(entrypoints, "http://"+i.Address+":"+strconv.Itoa(int(nodePort)))
 			}
 		}
