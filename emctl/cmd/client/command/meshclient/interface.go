@@ -39,6 +39,7 @@ type V1Alpha1Interface interface {
 	ObservabilityGetter
 	ResilienceGetter
 	IngressGetter
+	ServiceCanaryGetter
 	CustomResourceKindGetter
 	CustomResourceGetter
 }

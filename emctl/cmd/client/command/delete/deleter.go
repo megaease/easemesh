@@ -54,6 +54,8 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsDeleter{object: object.(*resource.ObservabilityTracings), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressDeleter{object: object.(*resource.Ingress), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindServiceCanary:
+		return &serviceCanaryDeleter{object: object.(*resource.ServiceCanary), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindCustomResourceKind:
 		return &customResourceKindDeleter{object: object.(*resource.CustomResourceKind), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	default:
@@ -242,6 +244,23 @@ func (i *ingressDeleter) Delete() error {
 	err := i.client.V1Alpha1().Ingress().Delete(ctx, i.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete ingress %s", i.object.Name())
+	}
+
+	return err
+}
+
+type serviceCanaryDeleter struct {
+	baseDeleter
+	object *resource.ServiceCanary
+}
+
+func (sc *serviceCanaryDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), sc.timeout)
+	defer cancelFunc()
+
+	err := sc.client.V1Alpha1().ServiceCanary().Delete(ctx, sc.object.Name())
+	if meshclient.IsNotFoundError(err) {
+		return errors.Wrapf(err, "delete serviceCanary %s", sc.object.Name())
 	}
 
 	return err

@@ -160,6 +160,8 @@ func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 		return errors.Wrap(err, "get mesh control plane entrypoint failed")
 	}
 
+	fmt.Printf("control plane endpoints: %+v\n", entrypoints)
+
 	timeOutPerTry := ctx.Flags.MeshControlPlaneCheckHealthzMaxTime / len(entrypoints)
 
 	for i := 0; i < len(entrypoints); i++ {

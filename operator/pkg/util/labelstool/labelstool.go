@@ -33,8 +33,7 @@ func Marshal(labels map[string]string) string {
 	// NOTE: It might cause unit test failure if the result is inconsistent.
 	sort.Strings(labelsSlice)
 
-	// FIXME: Replace & with , in all in the future.
-	return strings.Join(labelsSlice, "&")
+	return strings.Join(labelsSlice, ",")
 }
 
 // Unmarshal transforms labels in type string to map.

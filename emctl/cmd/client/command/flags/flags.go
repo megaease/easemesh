@@ -73,7 +73,7 @@ const (
 	DefaultMeshIngressServicePort = 19527
 
 	// DefaultWaitControlPlaneSeconds is the default wait control plane ready elapse, in seconds (intall command)
-	DefaultWaitControlPlaneSeconds = 10
+	DefaultWaitControlPlaneSeconds = 3
 
 	// MeshControlPlanePVNameHelpStr is a text described name of persistent volume
 	MeshControlPlanePVNameHelpStr = "The name of PersistentVolume for EaseMesh control plane storage"

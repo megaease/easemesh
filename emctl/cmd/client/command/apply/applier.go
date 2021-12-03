@@ -66,6 +66,8 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindServiceCanary:
+		return &serviceCanaryApplier{object: object.(*resource.ServiceCanary), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCustomResourceKind:
 		return &customResourceKindApplier{object: object.(*resource.CustomResourceKind), baseApplier: baseApplier{client: client, timeout: timeout}}
 	default:
@@ -365,15 +367,44 @@ func (i *ingressApplier) Apply() error {
 		case meshclient.IsConflictError(err):
 			err = i.client.V1Alpha1().Ingress().Patch(ctx, i.object)
 			if err != nil && meshclient.IsConflictError(err) {
-				return errors.Wrapf(err, "update resilience %s", i.object.Name())
+				return errors.Wrapf(err, "update ingress %s", i.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
 			err = i.client.V1Alpha1().Ingress().Create(ctx, i.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
-				return errors.Wrapf(err, "create resilience %s", i.object.Name())
+				return errors.Wrapf(err, "create ingress %s", i.object.Name())
 			}
 		default:
-			return errors.Wrapf(err, "apply resilience %s", i.object.Name())
+			return errors.Wrapf(err, "apply ingress %s", i.object.Name())
+		}
+	}
+}
+
+type serviceCanaryApplier struct {
+	baseApplier
+	object *resource.ServiceCanary
+}
+
+func (sc *serviceCanaryApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), sc.timeout)
+	defer cancelFunc()
+	err := sc.client.V1Alpha1().ServiceCanary().Create(ctx, sc.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = sc.client.V1Alpha1().ServiceCanary().Patch(ctx, sc.object)
+			if err != nil && meshclient.IsConflictError(err) {
+				return errors.Wrapf(err, "update serviceCanary %s", sc.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = sc.client.V1Alpha1().ServiceCanary().Create(ctx, sc.object)
+			if err != nil && meshclient.IsNotFoundError(err) {
+				return errors.Wrapf(err, "create serviceCanary %s", sc.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply serviceCanary %s", sc.object.Name())
 		}
 	}
 }

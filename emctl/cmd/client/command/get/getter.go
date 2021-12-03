@@ -60,6 +60,8 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
 	case resource.KindCustomResourceKind:
 		return &customResourceKindGetter{object: object.(*resource.CustomResourceKind), baseGetter: base}
+	case resource.KindServiceCanary:
+		return &serviceCanaryGetter{object: object.(*resource.ServiceCanary), baseGetter: base}
 	default:
 		return &customResourceGetter{object: object.(*resource.CustomResource), baseGetter: base}
 	}
@@ -419,6 +421,37 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	objects := make([]meta.MeshObject, len(ingresses))
 	for i := range ingresses {
 		objects[i] = ingresses[i]
+	}
+
+	return objects, nil
+}
+
+type serviceCanaryGetter struct {
+	baseGetter
+	object *resource.ServiceCanary
+}
+
+func (i *serviceCanaryGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), i.timeout)
+	defer cancelFunc()
+
+	if i.object.Name() != "" {
+		ingress, err := i.client.V1Alpha1().ServiceCanary().Get(ctx, i.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{ingress}, nil
+	}
+
+	serviceCanaries, err := i.client.V1Alpha1().ServiceCanary().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(serviceCanaries))
+	for i := range serviceCanaries {
+		objects[i] = serviceCanaries[i]
 	}
 
 	return objects, nil

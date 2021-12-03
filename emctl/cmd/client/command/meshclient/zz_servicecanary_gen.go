@@ -28,43 +28,43 @@ import (
 	"net/http"
 )
 
-type resilienceGetter struct {
+type serviceCanaryInterface struct {
 	client *meshClient
 }
-type resilienceInterface struct {
+type serviceCanaryGetter struct {
 	client *meshClient
 }
 
-func (r *resilienceGetter) Resilience() ResilienceInterface {
-	return &resilienceInterface{client: r.client}
+func (s *serviceCanaryGetter) ServiceCanary() ServiceCanaryInterface {
+	return &serviceCanaryInterface{client: s.client}
 }
-func (r *resilienceInterface) Get(args0 context.Context, args1 string) (*resource.Resilience, error) {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
+func (s *serviceCanaryInterface) Get(args0 context.Context, args1 string) (*resource.ServiceCanary, error) {
+	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"servicecanaries/%s", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "get Resilience %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "get ServiceCanary %s", args1)
 		}
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Resilience := &v1alpha1.Resilience{}
-		err := json.Unmarshal(buff, Resilience)
+		ServiceCanary := &v1alpha1.ServiceCanary{}
+		err := json.Unmarshal(buff, ServiceCanary)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Resilience")
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.ServiceCanary")
 		}
-		return resource.ToResilience(args1, Resilience), nil
+		return resource.ToServiceCanary(ServiceCanary), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return r0.(*resource.Resilience), nil
+	return r0.(*resource.ServiceCanary), nil
 }
-func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resilience) error {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1.Name())
+func (s *serviceCanaryInterface) Patch(args0 context.Context, args1 *resource.ServiceCanary) error {
+	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"servicecanaries/%s", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "patch Resilience %s", args1.Name())
+			return nil, errors.Wrapf(NotFoundError, "patch ServiceCanary %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -73,12 +73,12 @@ func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resil
 	})
 	return err
 }
-func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resilience) error {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1.Name())
+func (s *serviceCanaryInterface) Create(args0 context.Context, args1 *resource.ServiceCanary) error {
+	url := "http://" + s.client.server + apiURL + "/mesh/servicecanaries"
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
-			return nil, errors.Wrapf(ConflictError, "create Resilience %s", args1.Name())
+			return nil, errors.Wrapf(ConflictError, "create ServiceCanary %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -87,11 +87,11 @@ func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resi
 	})
 	return err
 }
-func (r *resilienceInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1)
+func (s *serviceCanaryInterface) Delete(args0 context.Context, args1 string) error {
+	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"servicecanaries/%s", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "Delete Resilience %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "Delete ServiceCanary %s", args1)
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -100,8 +100,8 @@ func (r *resilienceInterface) Delete(args0 context.Context, args1 string) error 
 	})
 	return err
 }
-func (r *resilienceInterface) List(args0 context.Context) ([]*resource.Resilience, error) {
-	url := "http://" + r.client.server + apiURL + "/mesh/services"
+func (s *serviceCanaryInterface) List(args0 context.Context) ([]*resource.ServiceCanary, error) {
+	url := "http://" + s.client.server + apiURL + "/mesh/servicecanaries"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
@@ -109,21 +109,20 @@ func (r *resilienceInterface) List(args0 context.Context) ([]*resource.Resilienc
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		services := []v1alpha1.Service{}
-		err := json.Unmarshal(b, &services)
+		serviceCanary := []v1alpha1.ServiceCanary{}
+		err := json.Unmarshal(b, &serviceCanary)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
-		results := []*resource.Resilience{}
-		for _, service := range services {
-			if service.Resilience != nil {
-				results = append(results, resource.ToResilience(service.Name, service.Resilience))
-			}
+		results := []*resource.ServiceCanary{}
+		for _, item := range serviceCanary {
+			copy := item
+			results = append(results, resource.ToServiceCanary(&copy))
 		}
 		return results, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.Resilience), nil
+	return result.([]*resource.ServiceCanary), nil
 }

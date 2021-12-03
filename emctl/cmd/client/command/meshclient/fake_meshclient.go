@@ -75,6 +75,10 @@ type (
 		baseGetter
 	}
 
+	fakeServiceCanaryGetter struct {
+		baseGetter
+	}
+
 	fakeCustomResourceKindGetter struct {
 		baseGetter
 	}
@@ -147,6 +151,15 @@ func (f *fakeV1alpha1) Resilience() ResilienceInterface {
 func (f *fakeV1alpha1) Ingress() IngressInterface {
 	return &fakeIngressGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
 		kind: resource.KindTenant}}
+}
+
+func (f *fakeV1alpha1) ServiceCanary() ServiceCanaryInterface {
+	return &fakeServiceCanaryGetter{
+		baseGetter: baseGetter{
+			resourceReactor: f.resourceReactor,
+			kind:            resource.KindServiceCanary,
+		},
+	}
 }
 
 func (f *fakeV1alpha1) CustomResourceKind() CustomResourceKindInterface {
@@ -656,6 +669,51 @@ func (f *fakeIngressGetter) List(ctx context.Context) ([]*resource.Ingress, erro
 	result := []*resource.Ingress{}
 	for _, m := range o {
 		c := m.(*resource.Ingress)
+		if c != nil {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+func (f *fakeServiceCanaryGetter) Get(ctx context.Context, name string) (*resource.ServiceCanary, error) {
+	o, err := f.resourceReactor.DoRequest("get", resource.KindServiceCanary, name, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result, ok := o[0].(*resource.ServiceCanary)
+	if !ok {
+		return nil, errors.Errorf("get an unknown MeshObject %+v", o)
+	}
+	return result, nil
+}
+
+func (f *fakeServiceCanaryGetter) Patch(ctx context.Context, t *resource.ServiceCanary) error {
+	return f.doModifyRequest(resource.KindServiceCanary, t.Name(), t)
+}
+
+func (f *fakeServiceCanaryGetter) Create(ctx context.Context, t *resource.ServiceCanary) error {
+	return f.doModifyRequest(resource.KindServiceCanary, t.Name(), t)
+}
+
+func (f *fakeServiceCanaryGetter) Delete(ctx context.Context, name string) error {
+	return f.doModifyRequest(resource.KindServiceCanary, name, nil)
+}
+
+func (f *fakeServiceCanaryGetter) List(ctx context.Context) ([]*resource.ServiceCanary, error) {
+	o, err := f.resourceReactor.DoRequest("list", resource.KindServiceCanary, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result := []*resource.ServiceCanary{}
+	for _, m := range o {
+		c := m.(*resource.ServiceCanary)
 		if c != nil {
 			result = append(result, c)
 		}
