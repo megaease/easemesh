@@ -36,6 +36,9 @@ const (
 	// DefaultMeshIngressReplicas is default number of the mesh ingress service's replicas
 	DefaultMeshIngressReplicas = 1
 
+	// DefaultShadowServiceControllerReplicas is default number of the shadow service controller's replicas
+	DefaultShadowServiceControllerReplicas = 1
+
 	// DefaultMeshOperatorReplicas is default number of the operator's  replicas
 	DefaultMeshOperatorReplicas = 1
 
@@ -119,6 +122,8 @@ spec:
 	DefaultEasegressImage = "megaease/easegress:latest"
 	// DefaultEaseMeshOperatorImage is default name of the operator docker image
 	DefaultEaseMeshOperatorImage = "megaease/easemesh-operator:latest"
+	// DefaultShadowServiceControllerImage is default name of the shadow service docker image
+	DefaultShadowServiceControllerImage = "megaease/easemesh-shadowservice-controller:latest"
 	// DefaultImageRegistryURL is default registry url
 	DefaultImageRegistryURL = "docker.io"
 )
@@ -156,6 +161,11 @@ type (
 
 		MeshIngressReplicas    int
 		MeshIngressServicePort int32
+
+		OnlyAddOn                       bool
+		AddOns                          []string
+		ShadowServiceControllerImage    string
+		ShadowServiceControllerReplicas int
 
 		// EaseMesh Controller  params
 		EaseMeshRegistryType string
@@ -251,6 +261,10 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 
 	cmd.Flags().IntVar(&i.EasegressControlPlaneReplicas, "easemesh-control-plane-replicas", DefaultMeshControlPlaneReplicas, "Mesh control plane replicas")
 	cmd.Flags().IntVar(&i.MeshIngressReplicas, "easemesh-ingress-replicas", DefaultMeshIngressReplicas, "Mesh ingress controller replicas")
+	cmd.Flags().BoolVar(&i.OnlyAddOn, "only-add-on", false, "Only install add-ons")
+	cmd.Flags().StringArrayVar(&i.AddOns, "add-ons", []string{}, "Names of add-ons to be installed")
+	cmd.Flags().StringVar(&i.ShadowServiceControllerImage, "shadowservice-controller-image", DefaultShadowServiceControllerImage, "Shadow service controller image name")
+	cmd.Flags().IntVar(&i.ShadowServiceControllerReplicas, "shadowservice-controller-replicas", DefaultShadowServiceControllerReplicas, "Shadow service controller replicas")
 	cmd.Flags().IntVar(&i.EaseMeshOperatorReplicas, "easemesh-operator-replicas", DefaultMeshOperatorReplicas, "Mesh operator controller replicas")
 	cmd.Flags().StringVarP(&i.SpecFile, "file", "f", "", "A yaml file specifying the install params")
 	cmd.Flags().BoolVar(&i.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")

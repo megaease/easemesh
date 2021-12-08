@@ -30,9 +30,14 @@ type (
 		Spec              *CustomResourceKindSpec `yaml:"spec" jsonschema:"required"`
 	}
 
+	// DynamicObject defines a dynamic object which is a map of string to interface{}.
+	// The value of this map could also be a dynamic object, but in this case, its type
+	// must be `map[string]interface{}`, and should not be `map[interface{}]interface{}`.
+	DynamicObject map[string]interface{}
+
 	// CustomResourceKindSpec describes the spec of a custom resource kind
 	CustomResourceKindSpec struct {
-		JSONSchema map[string]interface{} `yaml:"jsonSchema" jsonschema:"omitempty"`
+		JSONSchema DynamicObject `yaml:"jsonSchema" jsonschema:"omitempty"`
 	}
 
 	// CustomResource describes custom resource of the EaseMesh
@@ -41,6 +46,43 @@ type (
 		Spec              map[string]interface{} `yaml:"spec" jsonschema:"required"`
 	}
 )
+
+// UnmarshalYAML implements yaml.Unmarshaler
+// the type of a DynamicObject field could be `map[interface{}]interface{}` if it is
+// unmarshaled from yaml, but some packages, like the standard json package could not
+// handle this type, so it must be converted to `map[string]interface{}`.
+func (do *DynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	m := map[string]interface{}{}
+	if err := unmarshal(&m); err != nil {
+		return err
+	}
+
+	var convert func(interface{}) interface{}
+	convert = func(src interface{}) interface{} {
+		switch x := src.(type) {
+		case map[interface{}]interface{}:
+			x2 := map[string]interface{}{}
+			for k, v := range x {
+				x2[k.(string)] = convert(v)
+			}
+			return x2
+		case []interface{}:
+			x2 := make([]interface{}, len(x))
+			for i, v := range x {
+				x2[i] = convert(v)
+			}
+			return x2
+		}
+		return src
+	}
+
+	for k, v := range m {
+		m[k] = convert(v)
+	}
+	*do = m
+
+	return nil
+}
 
 // ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
 func (k *CustomResourceKind) ToV1Alpha1() *v1alpha1.CustomResourceKind {

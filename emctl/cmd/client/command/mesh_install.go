@@ -21,6 +21,7 @@ import (
 	stdcontext "context"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
@@ -29,6 +30,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/shadowservice"
 	"github.com/megaease/easemeshctl/cmd/client/command/rcfile"
 	"github.com/megaease/easemeshctl/cmd/common"
 
@@ -88,12 +90,37 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 		APIExtensionsClient: apiExtensionClient,
 	}
 
-	install := installation.New(
-		installation.Wrap(crd.PreCheck, crd.Deploy, crd.Clear, crd.DescribePhase),
-		installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
-		installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
-		installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
-	)
+	// TODO: currently, we install add-ons in the 'emctl instll' command, but we need to use a seperated
+	// command for add-ons for better add-on management
+	var stages []installation.InstallStage
+	if !flags.OnlyAddOn {
+		stages = append(stages,
+			installation.Wrap(crd.PreCheck, crd.Deploy, crd.Clear, crd.DescribePhase),
+			installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
+			installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
+			installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
+		)
+	}
+
+	addons := make(map[string]bool)
+	for _, addon := range flags.AddOns {
+		addon = strings.ToLower(addon)
+		if addons[addon] {
+			continue
+		}
+		addons[addon] = true
+		switch addon {
+		case "shadowservice":
+			stages = append(stages, installation.Wrap(shadowservice.PreCheck, shadowservice.Deploy, shadowservice.Clear, shadowservice.DescribePhase))
+		default:
+			common.ExitWithErrorf("unknown add-on name: %s", addon)
+		}
+	}
+	if flags.OnlyAddOn && len(stages) == 0 {
+		common.ExitWithErrorf("nothing to install")
+	}
+
+	install := installation.New(stages...)
 
 	err = install.DoInstallStage(context)
 	if err != nil {

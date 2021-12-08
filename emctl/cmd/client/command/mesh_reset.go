@@ -25,6 +25,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/shadowservice"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/spf13/cobra"
@@ -42,6 +43,7 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 	}
 
 	clearFuncs := []installation.ClearFunc{
+		shadowservice.Clear,
 		meshingress.Clear,
 		operator.Clear,
 		controlpanel.Clear,
@@ -62,7 +64,6 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 			common.OutputErrorf("ignored a reseting resource error %s", err)
 		}
 	}
-
 }
 
 // ResetCmd invoke reset sub command entrypoint
