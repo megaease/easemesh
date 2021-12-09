@@ -9,6 +9,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 )
 
+// ShadowServiceCanaryHandler  added or deleted according to the creation and deletion of ShadowService.
 type ShadowServiceCanaryHandler struct {
 	Server *syncer.Server
 }
