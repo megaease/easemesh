@@ -37,9 +37,6 @@ func (handler *ShadowServiceCanaryHandler) DeleteServiceCanary(obj interface{}) 
 func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(shadowService *object.ShadowService) error {
 	serviceCanary := createShadowServiceCanary(shadowService)
 	canary, err := handler.Server.GetServiceCanary(shadowService.Name)
-	if err != nil {
-		return err
-	}
 	if canary != nil {
 		err = handler.Server.PatchServiceCanary(serviceCanary)
 	} else {

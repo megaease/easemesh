@@ -116,7 +116,9 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 			shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
 			if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
 				deleter.DeleteChan <- ShadowServiceBlock{
-					service:   shadowService,
+					service: object.ShadowService{
+						Name: shadowServiceName,
+					},
 					deployObj: deployment,
 				}
 				continue
