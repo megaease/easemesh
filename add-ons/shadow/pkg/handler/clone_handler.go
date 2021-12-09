@@ -43,7 +43,7 @@ const (
 
 	shadowServiceCanaryLabelKey        = "version"
 	shadowServiceCanaryLabelValue      = "shadow"
-	shadowServiceCanaryHeader          = "X-Mesh-Canary"
+	shadowServiceCanaryHeader          = "X-Mesh-Shadow"
 	shadowServiceCanaryHeaderValue     = "shadow"
 	shadowServiceCanaryDefaultPriority = 5
 

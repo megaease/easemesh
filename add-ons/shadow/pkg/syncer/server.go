@@ -44,7 +44,7 @@ const (
 	MeshServiceCanaryPrefix = "/mesh/servicecanaries"
 
 	// MeshServiceCanaryPath is the service canary path.
-	MeshServiceCanaryPath = "/mesh/servicecanaries/%S"
+	MeshServiceCanaryPath = "/mesh/servicecanaries/%s"
 )
 
 var (
@@ -142,7 +142,7 @@ func (s *Server) PatchServiceCanary(serviceCanary *resource.ServiceCanary) error
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
 	defer cancelFunc()
 
-	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, serviceCanary)
+	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, serviceCanary.Name())
 	object := serviceCanary.ToV1Alpha1()
 	_, err := emctlclient.NewHTTPJSON().PutByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
