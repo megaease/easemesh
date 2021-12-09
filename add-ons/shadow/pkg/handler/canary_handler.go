@@ -17,10 +17,9 @@ type ShadowServiceCanaryHandler struct {
 func (handler *ShadowServiceCanaryHandler) CreateServiceCanary(obj interface{}) {
 	block := obj.(ShadowServiceBlock)
 	shadowService := block.service
-	serviceCanary := createShadowServiceCanary(&shadowService)
-	err := handler.Server.CreateServiceCanary(serviceCanary)
+	err := handler.applyShadowServiceCanary(&shadowService)
 	if err != nil {
-		log.Printf("Create ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
+		log.Printf("Apply ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
 	}
 }
 
@@ -31,6 +30,17 @@ func (handler *ShadowServiceCanaryHandler) DeleteServiceCanary(obj interface{}) 
 	if err != nil {
 		log.Printf("Delete ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
 	}
+}
+
+func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(shadowService *object.ShadowService) error {
+	serviceCanary := createShadowServiceCanary(shadowService)
+	canary, err := handler.Server.GetServiceCanary(shadowService.ServiceName)
+	if canary != nil {
+		err = handler.Server.PatchServiceCanary(serviceCanary)
+	} else {
+		err = handler.Server.CreateServiceCanary(serviceCanary)
+	}
+	return err
 }
 
 func createShadowServiceCanary(obj *object.ShadowService) *resource.ServiceCanary {
