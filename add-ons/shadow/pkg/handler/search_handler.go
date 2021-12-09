@@ -38,8 +38,8 @@ type ShadowServiceDeploySearcher struct {
 	ResultChan chan interface{}
 }
 
-// ServiceCloneBlock is passed by searcher to cloner to perform clone operation.
-type ServiceCloneBlock struct {
+// ShadowServiceBlock is passed by searcher to cloner to perform clone operation.
+type ShadowServiceBlock struct {
 	service   object.ShadowService
 	deployObj interface{}
 }
@@ -81,8 +81,8 @@ func (searcher *ShadowServiceDeploySearcher) searchDeployment(namespace string, 
 		}
 		annotations := deployment.Annotations
 		if serviceName, ok := annotations[meshServiceAnnotation]; ok {
-			if ss, ok := shadowServiceNameMap[serviceName]; ok {
-				searcher.ResultChan <- ServiceCloneBlock{
+			if ss, existed := shadowServiceNameMap[serviceName]; existed {
+				searcher.ResultChan <- ShadowServiceBlock{
 					ss,
 					deployment,
 				}

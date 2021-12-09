@@ -48,8 +48,11 @@ type (
 		searcher handler.Searcher
 		deleter  handler.Deleter
 
-		cloneChan  chan interface{}
-		deleteChan chan interface{}
+		cloneChan        chan interface{}
+		deleteChan       chan interface{}
+		canaryHandler    handler.ShadowServiceCanaryHandler
+		canaryCreateChan chan interface{}
+		canaryDeleteChan chan interface{}
 	}
 
 	// Config holds configuration of ShadowServiceController.
@@ -92,9 +95,25 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 		DeleteChan: deleteChan,
 	}
 
-	shadowServiceSyncer, err := syncer.NewSyncer(config.MeshServer, config.RequestTimeout, config.PullInterval)
-	return &ShadowServiceController{kubernetesClient, shadowServiceSyncer,
-		&shadowServiceCloner, &shadowServiceSearcher, &shadowServiceSearcherDeleter, cloneChan, deleteChan}, nil
+	server := syncer.NewServer(config.RequestTimeout, config.MeshServer)
+
+	shadowServiceCanaryHandler := handler.ShadowServiceCanaryHandler{
+		Server: server,
+	}
+	shadowServiceSyncer, err := syncer.NewSyncer(server, config.PullInterval)
+	return &ShadowServiceController{
+		kubeClient: kubernetesClient,
+		syncer:     shadowServiceSyncer,
+
+		cloner:    &shadowServiceCloner,
+		cloneChan: cloneChan,
+
+		searcher:   &shadowServiceSearcher,
+		deleter:    &shadowServiceSearcherDeleter,
+		deleteChan: deleteChan,
+
+		canaryHandler: shadowServiceCanaryHandler,
+	}, nil
 }
 
 // Do start to synchronizing and cloning the ShadowService.
@@ -125,6 +144,7 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 				return
 			case obj := <-s.cloneChan:
 				s.cloner.Clone(obj)
+				s.canaryHandler.CreateServiceCanary(obj)
 			}
 		}
 	}()
@@ -138,6 +158,32 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 				return
 			case obj := <-s.deleteChan:
 				s.deleter.Delete(obj)
+				s.canaryHandler.DeleteServiceCanary(obj)
+			}
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stopChan:
+				return
+			case obj := <-s.canaryCreateChan:
+				s.canaryHandler.CreateServiceCanary(obj)
+			}
+		}
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-stopChan:
+				return
+			case obj := <-s.canaryDeleteChan:
+				s.canaryHandler.DeleteServiceCanary(obj)
 			}
 		}
 	}()

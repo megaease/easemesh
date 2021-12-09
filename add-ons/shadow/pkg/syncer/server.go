@@ -25,7 +25,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/megaease/easemesh-api/v1alpha1"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
+	"github.com/megaease/easemeshctl/cmd/client/resource"
 	emctlclient "github.com/megaease/easemeshctl/cmd/common/client"
 	"github.com/pkg/errors"
 )
@@ -36,6 +39,12 @@ const (
 	MeshCustomObjetWatchURL = apiURL + "/mesh/watchcustomresources/%s"
 	// MeshCustomObjectsURL is the mesh custom resource list path.
 	MeshCustomObjectsURL = apiURL + "/mesh/customresources/%s"
+
+	// MeshServiceCanaryPrefix is the service canary prefix.
+	MeshServiceCanaryPrefix = "/mesh/servicecanaries"
+
+	// MeshServiceCanaryPath is the service canary path.
+	MeshServiceCanaryPath = "/mesh/servicecanaries/%S"
 )
 
 var (
@@ -47,6 +56,13 @@ var (
 type Server struct {
 	RequestTimeout time.Duration
 	MeshServer     string
+}
+
+func NewServer(requestTimeout time.Duration, meshServer string) *Server {
+	return &Server{
+		RequestTimeout: requestTimeout,
+		MeshServer:     meshServer,
+	}
 }
 
 // List query MeshCustomObject list from Server according to kind.
@@ -96,4 +112,79 @@ func (server *Server) Watch(kind string) (*bufio.Reader, error) {
 
 	reader := bufio.NewReader(httpResp.Body)
 	return reader, nil
+}
+
+func (s *Server) GetServiceCanary(name string) (*resource.ServiceCanary, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+	defer cancelFunc()
+
+	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, name)
+	r0, err := emctlclient.NewHTTPJSON().GetByContext(ctx, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "get ServiceCanary %s", name)
+		}
+		if statusCode >= 300 {
+			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
+		}
+		ServiceCanary := &v1alpha1.ServiceCanary{}
+		err := json.Unmarshal(buff, ServiceCanary)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.ServiceCanary")
+		}
+		return resource.ToServiceCanary(ServiceCanary), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r0.(*resource.ServiceCanary), nil
+}
+func (s *Server) PatchServiceCanary(serviceCanary *resource.ServiceCanary) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+	defer cancelFunc()
+
+	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, serviceCanary)
+	object := serviceCanary.ToV1Alpha1()
+	_, err := emctlclient.NewHTTPJSON().PutByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "patch ServiceCanary %s", serviceCanary.Name())
+		}
+		if statusCode < 300 && statusCode >= 200 {
+			return nil, nil
+		}
+		return nil, errors.Errorf("call PUT %s failed, return statuscode %d text %+v", url, statusCode, string(b))
+	})
+	return err
+}
+func (s *Server) CreateServiceCanary(args1 *resource.ServiceCanary) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+	defer cancelFunc()
+
+	url := "http://" + s.MeshServer + apiURL + "/mesh/servicecanaries"
+	object := args1.ToV1Alpha1()
+	_, err := emctlclient.NewHTTPJSON().PostByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusConflict {
+			return nil, errors.Wrapf(meshclient.ConflictError, "create ServiceCanary %s", args1.Name())
+		}
+		if statusCode < 300 && statusCode >= 200 {
+			return nil, nil
+		}
+		return nil, errors.Errorf("call Post %s failed, return statuscode %d text %+v", url, statusCode, string(b))
+	})
+	return err
+}
+func (s *Server) DeleteServiceCanary(name string) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+	defer cancelFunc()
+
+	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+"/mesh/"+"servicecanaries/%s", name)
+	_, err := emctlclient.NewHTTPJSON().DeleteByContext(ctx, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+		if statusCode == http.StatusNotFound {
+			return nil, errors.Wrapf(NotFoundError, "Delete ServiceCanary %s", name)
+		}
+		if statusCode < 300 && statusCode >= 200 {
+			return nil, nil
+		}
+		return nil, errors.Errorf("call Delete %s failed, return statuscode %d text %+v", url, statusCode, string(b))
+	})
+	return err
 }
