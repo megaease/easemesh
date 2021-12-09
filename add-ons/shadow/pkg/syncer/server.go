@@ -58,6 +58,7 @@ type Server struct {
 	MeshServer     string
 }
 
+// NewServer create Server to access EaseMesh control plane.
 func NewServer(requestTimeout time.Duration, meshServer string) *Server {
 	return &Server{
 		RequestTimeout: requestTimeout,
@@ -114,11 +115,12 @@ func (server *Server) Watch(kind string) (*bufio.Reader, error) {
 	return reader, nil
 }
 
-func (s *Server) GetServiceCanary(name string) (*resource.ServiceCanary, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+// GetServiceCanary query ServiceCanary by name from EaseMesh control plane.
+func (server *Server) GetServiceCanary(name string) (*resource.ServiceCanary, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), server.RequestTimeout)
 	defer cancelFunc()
 
-	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, name)
+	url := fmt.Sprintf("http://"+server.MeshServer+apiURL+MeshServiceCanaryPath, name)
 	r0, err := emctlclient.NewHTTPJSON().GetByContext(ctx, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "get ServiceCanary %s", name)
@@ -138,13 +140,15 @@ func (s *Server) GetServiceCanary(name string) (*resource.ServiceCanary, error) 
 	}
 	return r0.(*resource.ServiceCanary), nil
 }
-func (s *Server) PatchServiceCanary(serviceCanary *resource.ServiceCanary) error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+
+// PatchServiceCanary update ServiceCanary by name.
+func (server *Server) PatchServiceCanary(serviceCanary *resource.ServiceCanary) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), server.RequestTimeout)
 	defer cancelFunc()
 
-	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, serviceCanary.Name())
-	object := serviceCanary.ToV1Alpha1()
-	_, err := emctlclient.NewHTTPJSON().PutByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
+	url := fmt.Sprintf("http://"+server.MeshServer+apiURL+MeshServiceCanaryPath, serviceCanary.Name())
+	alpha1 := serviceCanary.ToV1Alpha1()
+	_, err := emctlclient.NewHTTPJSON().PutByContext(ctx, url, alpha1, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch ServiceCanary %s", serviceCanary.Name())
 		}
@@ -155,11 +159,13 @@ func (s *Server) PatchServiceCanary(serviceCanary *resource.ServiceCanary) error
 	})
 	return err
 }
-func (s *Server) CreateServiceCanary(args1 *resource.ServiceCanary) error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+
+// CreateServiceCanary create a new ServiceCanary.
+func (server *Server) CreateServiceCanary(args1 *resource.ServiceCanary) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), server.RequestTimeout)
 	defer cancelFunc()
 
-	url := "http://" + s.MeshServer + apiURL + MeshServiceCanaryPrefix
+	url := "http://" + server.MeshServer + apiURL + MeshServiceCanaryPrefix
 	object := args1.ToV1Alpha1()
 	_, err := emctlclient.NewHTTPJSON().PostByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
@@ -172,11 +178,13 @@ func (s *Server) CreateServiceCanary(args1 *resource.ServiceCanary) error {
 	})
 	return err
 }
-func (s *Server) DeleteServiceCanary(name string) error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
+
+// DeleteServiceCanary delete ServiceCanary by name.
+func (server *Server) DeleteServiceCanary(name string) error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), server.RequestTimeout)
 	defer cancelFunc()
 
-	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, name)
+	url := fmt.Sprintf("http://"+server.MeshServer+apiURL+MeshServiceCanaryPath, name)
 	_, err := emctlclient.NewHTTPJSON().DeleteByContext(ctx, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete ServiceCanary %s", name)

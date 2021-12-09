@@ -60,7 +60,7 @@ func createShadowServiceCanary(obj *object.ShadowService) *resource.ServiceCanar
 			},
 			TrafficRules: &v1alpha1.TrafficRules{
 				Headers: map[string]*v1alpha1.StringMatch{
-					shadowServiceCanaryHeader: &v1alpha1.StringMatch{
+					shadowServiceCanaryHeader: {
 						Exact: shadowServiceCanaryHeaderValue,
 					},
 				},

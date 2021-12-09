@@ -89,7 +89,7 @@ func Test_shadowServiceExists(t *testing.T) {
 			args: args{
 				namespacedName: "testns/test1",
 				shadowServiceNameMap: map[string]object.ShadowService{
-					"testns/test1": object.ShadowService{
+					"testns/test1": {
 						Name:      "test1",
 						Namespace: "testns",
 					},

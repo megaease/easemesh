@@ -46,7 +46,7 @@ func easemeshOption(config *controller.Config) error {
 
 func main() {
 	flag.Parse()
-	controller, err := controller.NewShadowServiceController(easemeshOption)
+	c, err := controller.NewShadowServiceController(easemeshOption)
 	if err != nil {
 		log.Fatalf("new collector service error: %s", err)
 		return
@@ -55,6 +55,6 @@ func main() {
 	defer close(stopChan)
 
 	wg := &sync.WaitGroup{}
-	controller.Do(wg, stopChan)
+	c.Do(wg, stopChan)
 	wg.Wait()
 }
