@@ -159,7 +159,7 @@ func (s *Server) CreateServiceCanary(args1 *resource.ServiceCanary) error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
 	defer cancelFunc()
 
-	url := "http://" + s.MeshServer + apiURL + "/mesh/servicecanaries"
+	url := "http://" + s.MeshServer + apiURL + MeshServiceCanaryPrefix
 	object := args1.ToV1Alpha1()
 	_, err := emctlclient.NewHTTPJSON().PostByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
@@ -176,7 +176,7 @@ func (s *Server) DeleteServiceCanary(name string) error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.RequestTimeout)
 	defer cancelFunc()
 
-	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+"/mesh/"+"servicecanaries/%s", name)
+	url := fmt.Sprintf("http://"+s.MeshServer+apiURL+MeshServiceCanaryPath, name)
 	_, err := emctlclient.NewHTTPJSON().DeleteByContext(ctx, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "Delete ServiceCanary %s", name)

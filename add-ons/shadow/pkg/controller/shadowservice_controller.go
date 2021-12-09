@@ -48,11 +48,9 @@ type (
 		searcher handler.Searcher
 		deleter  handler.Deleter
 
-		cloneChan        chan interface{}
-		deleteChan       chan interface{}
-		canaryHandler    handler.ShadowServiceCanaryHandler
-		canaryCreateChan chan interface{}
-		canaryDeleteChan chan interface{}
+		cloneChan     chan interface{}
+		deleteChan    chan interface{}
+		canaryHandler handler.ShadowServiceCanaryHandler
 	}
 
 	// Config holds configuration of ShadowServiceController.
@@ -158,31 +156,6 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 				return
 			case obj := <-s.deleteChan:
 				s.deleter.Delete(obj)
-				s.canaryHandler.DeleteServiceCanary(obj)
-			}
-		}
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-stopChan:
-				return
-			case obj := <-s.canaryCreateChan:
-				s.canaryHandler.CreateServiceCanary(obj)
-			}
-		}
-	}()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-stopChan:
-				return
-			case obj := <-s.canaryDeleteChan:
 				s.canaryHandler.DeleteServiceCanary(obj)
 			}
 		}

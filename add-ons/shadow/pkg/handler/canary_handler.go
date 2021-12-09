@@ -25,7 +25,9 @@ func (handler *ShadowServiceCanaryHandler) CreateServiceCanary(obj interface{}) 
 
 // DeleteServiceCanary delete ServiceCanary when ShadowService is deleted.
 func (handler *ShadowServiceCanaryHandler) DeleteServiceCanary(obj interface{}) {
-	shadowService := obj.(object.ShadowService)
+
+	block := obj.(ShadowServiceBlock)
+	shadowService := block.service
 	err := handler.Server.DeleteServiceCanary(shadowService.Name)
 	if err != nil {
 		log.Printf("Delete ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
@@ -35,6 +37,9 @@ func (handler *ShadowServiceCanaryHandler) DeleteServiceCanary(obj interface{}) 
 func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(shadowService *object.ShadowService) error {
 	serviceCanary := createShadowServiceCanary(shadowService)
 	canary, err := handler.Server.GetServiceCanary(shadowService.ServiceName)
+	if err != nil {
+		return err
+	}
 	if canary != nil {
 		err = handler.Server.PatchServiceCanary(serviceCanary)
 	} else {
