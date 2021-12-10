@@ -13,6 +13,7 @@
       - [Persistent Volume](#persistent-volume)
   - [Installation](#installation)
     - [Install EaseMesh](#install-easemesh)
+    - [Install Add-ons](#install-add-ons)
     - [Reset environment](#reset-environment)
   - [Trouble Shooting](#trouble-shooting)
 
@@ -230,10 +231,23 @@ more arguments can be discovered via :
 emctl install --help
 ```
 
+### Install Add-ons
+
+Add-on features could be installed at the same time of EaseMesh installation with an additional command line flag `-add-ons={addon1,addon2,...}`. For example, to install the shadow service feature:
+
+```bash
+emctl install -add-ons=ShadowService
+```
+
+If EaseMesh infrastructure has already been installed, the add-on features could installed by the `-only-add-on` flag in the `emctl install` command line:
+
+```bash
+emctl install -only-add-on -add-ons=ShadowService
+```
 
 ### Reset environment
 
-if you want to remove the EaseMesh, just run the command:
+If you want to remove the EaseMesh, just run the command:
 
 ```
 emctl reset
@@ -241,6 +255,11 @@ emctl reset
 
 > PVC and PV resources will not be reclaimed by default. you need to delete them manually.
 
+To only uninstall an add-on, run the command:
+
+```
+emctl reset --only-add-on -add-ons={addon1,addon2,...}
+```
 
 ## Trouble Shooting
 

@@ -1,0 +1,107 @@
+# Shadow Service User Manual
+
+Shadow service is an add-on feature of EaseMesh, it replicate existing services to a shadow copy, and then, test traffic could be sent to the shadow services for the test.
+
+## Installation
+
+As an add-on feature, shadow service could be installed at the same time of EaseMesh installation with an additional command line flag `-add-ons=ShadowService`, like below:
+
+```bash
+emctl install -add-ons=ShadowService
+```
+
+Or, if EaseMesh infrastructure has already been installed, the shadow service feature could installed with command:
+
+```bash
+emctl install -only-add-on -add-ons=ShadowService
+```
+
+## Quick Start
+
+Based on the [Spring Pet Clinic](../README.md#71-start-petclinic-in-easemesh) example, we will create shadow services as show in below diagram.
+
+![shadow-service](./../imgs/shadow-service.png)
+
+1. **Create Shadow Services**
+
+Apply below YAML spec to EaseMesh with `emctl apply` command, it creates shadow services for all services in the Pet Clinic example.
+
+```yaml
+kind: ShadowService
+apiVersion: mesh.megaease.com/v1alpla1
+metadata:
+  name: shadow-api-gateway
+spec:
+  serviceName: api-gateway
+  namespace: spring-petclinic
+
+---
+
+kind: ShadowService
+apiVersion: mesh.megaease.com/v1alpla1
+metadata:
+  name: shadow-customers-service
+spec:
+  serviceName: customers-service
+  namespace: spring-petclinic
+
+---
+
+kind: ShadowService
+apiVersion: mesh.megaease.com/v1alpla1
+metadata:
+  name: shadow-visits-service
+spec:
+  serviceName: visits-service
+  namespace: spring-petclinic
+
+---
+
+kind: ShadowService
+apiVersion: mesh.megaease.com/v1alpla1
+metadata:
+  name: shadow-vets-service
+spec:
+  serviceName: vets-service
+  namespace: spring-petclinic
+```
+
+2. **Send Colored Traffic**
+
+Install the [ModHeader Extension](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) to your Chrome browser, and then set header `X-Mesh-Shadow` with value `shadow`.
+
+![plugin](../imgs/shadow-canary.png)
+
+Access the Pet Clinic website, make some changes, then turn off the `X-Mesh-Shadow` header and refresh the page, we can find the changes we just made disappears; turn on the `X-Mesh-Shadow` header, we can see the changes again.
+
+## Override Middleware Configuration
+
+By default, the Pet Clinic application uses an in-memory database, that's when we create a shadow copy of the services, a new database copy is created at the same time, so changes made from the shadow services is invisible from the original services.
+
+But if Pet Clinic was configured to use an external MySQL database, changes made from both service copies will be written into the same database, and because shadow services are created for testing purpose, this is not what we want.
+
+Shadow service provide a way to override the database connection configuration. For example, we can direct the `shadow-customers-service` to use another database as below:
+
+```yaml
+kind: ShadowService
+apiVersion: mesh.megaease.com/v1alpla1
+metadata:
+  name: shadow-customers-service
+spec:
+  serviceName: customers-service
+  namespace: spring-petclinic
+  mysql: # +
+    uris: "jdbc:mysql://172.20.2.216:3306/shadow_db?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC&verifyServerCertificate=false" # +
+    userName: "megaease" # +
+    password: "megaease" # +
+```
+
+Beside MySQL, shadow service support overriding configuration for the following middlewares: Kafka, Redis, RabbitMQ and Elastic Search.
+
+## Delete a Shadow Service
+
+To delete a shadow service instance, use the `emctl delete ShadowService` command, for example:
+
+```
+emctl delete ShadowService shadow-customers-service
+```
