@@ -130,7 +130,7 @@ kustomize:
 SETUP_ENVTEST = ${MKFILE_DIR}/bin/setup-envtest
 setup_envtest:
 	$(call go-get-tool,$(SETUP_ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
-	$(SETUP_ENVTEST) use -p path ${K8S_VER}
+	$(SETUP_ENVTEST) use --arch=amd64 -p path ${K8S_VER}
 	echo ""
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
