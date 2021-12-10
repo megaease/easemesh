@@ -21,7 +21,6 @@ $ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-demo/main
 $ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-demo/main/deploy/mesh/k8s_order.yaml
 $ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-demo/main/deploy/mesh/k8s_restaurant.yaml
 $ kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-demo/main/deploy/mesh/k8s_delivery.yaml
-
 ```
 
 2. Try primary traffic
