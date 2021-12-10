@@ -30,6 +30,8 @@ import (
 // Deploy deploy resources of shadow service controller
 func Deploy(ctx *installbase.StageContext) error {
 	err := installbase.BatchDeployResources(ctx, []installbase.InstallFunc{
+		clusterRoleSpec(ctx),
+		clusterRoleBindingSpec(ctx),
 		deploymentSpec(ctx),
 		shadowServiceKindSpec(ctx),
 	})
