@@ -42,12 +42,28 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}
 
-	clearFuncs := []installation.ClearFunc{
-		shadowservice.Clear,
-		meshingress.Clear,
-		operator.Clear,
-		controlpanel.Clear,
-		crd.Clear,
+	var clearFuncs []installation.ClearFunc
+	if resetFlags.OnlyAddOn {
+		for _, addon := range uniqueAddOn(resetFlags.AddOns) {
+			switch addon {
+			case "shadowservice":
+				clearFuncs = append(clearFuncs, shadowservice.Clear)
+			default:
+				common.ExitWithErrorf("unknown add-on name: %s", addon)
+			}
+		}
+		if len(clearFuncs) == 0 {
+			common.ExitWithErrorf("nothing to reset")
+		}
+	} else {
+		// clear everything
+		clearFuncs = []installation.ClearFunc{
+			shadowservice.Clear,
+			meshingress.Clear,
+			operator.Clear,
+			controlpanel.Clear,
+			crd.Clear,
+		}
 	}
 
 	stageContext := installbase.StageContext{

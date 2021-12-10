@@ -183,6 +183,8 @@ type (
 	// Reset holds the option for the EaseMesh resest sub command
 	Reset struct {
 		*OperationGlobal
+		OnlyAddOn bool
+		AddOns    []string
 	}
 
 	// AdminGlobal holds the option for all the EaseMesh admin command
@@ -275,6 +277,8 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 func (r *Reset) AttachCmd(cmd *cobra.Command) {
 	r.OperationGlobal = &OperationGlobal{}
 	r.OperationGlobal.AttachCmd(cmd)
+	cmd.Flags().BoolVar(&r.OnlyAddOn, "only-add-on", false, "Only reset add-ons")
+	cmd.Flags().StringArrayVar(&r.AddOns, "add-ons", []string{}, "Names of add-ons to be reset")
 }
 
 // AttachCmd attaches options globally

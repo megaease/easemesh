@@ -71,6 +71,21 @@ func InstallCmd() *cobra.Command {
 	return cmd
 }
 
+// uniqueAddOn removes duplicated add-on names and convert all the names to lower case
+func uniqueAddOn(addOns []string) []string {
+	m := make(map[string]bool)
+	result := []string{}
+	for _, addon := range addOns {
+		addon = strings.ToLower(addon)
+		if m[addon] {
+			continue
+		}
+		m[addon] = true
+		result = append(result, addon)
+	}
+	return result
+}
+
 func install(cmd *cobra.Command, flags *flags.Install) {
 	var err error
 	kubeClient, err := installbase.NewKubernetesClient()
@@ -102,13 +117,7 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 		)
 	}
 
-	addons := make(map[string]bool)
-	for _, addon := range flags.AddOns {
-		addon = strings.ToLower(addon)
-		if addons[addon] {
-			continue
-		}
-		addons[addon] = true
+	for _, addon := range uniqueAddOn(flags.AddOns) {
 		switch addon {
 		case "shadowservice":
 			stages = append(stages, installation.Wrap(shadowservice.PreCheck, shadowservice.Deploy, shadowservice.Clear, shadowservice.DescribePhase))
