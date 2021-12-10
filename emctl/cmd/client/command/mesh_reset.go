@@ -25,6 +25,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/shadowservice"
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/spf13/cobra"
@@ -41,11 +42,28 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}
 
-	clearFuncs := []installation.ClearFunc{
-		meshingress.Clear,
-		operator.Clear,
-		controlpanel.Clear,
-		crd.Clear,
+	var clearFuncs []installation.ClearFunc
+	if resetFlags.OnlyAddOn {
+		for _, addon := range uniqueAddOn(resetFlags.AddOns) {
+			switch addon {
+			case "shadowservice":
+				clearFuncs = append(clearFuncs, shadowservice.Clear)
+			default:
+				common.ExitWithErrorf("unknown add-on name: %s", addon)
+			}
+		}
+		if len(clearFuncs) == 0 {
+			common.ExitWithErrorf("nothing to reset")
+		}
+	} else {
+		// clear everything
+		clearFuncs = []installation.ClearFunc{
+			shadowservice.Clear,
+			meshingress.Clear,
+			operator.Clear,
+			controlpanel.Clear,
+			crd.Clear,
+		}
 	}
 
 	stageContext := installbase.StageContext{
@@ -62,7 +80,6 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 			common.OutputErrorf("ignored a reseting resource error %s", err)
 		}
 	}
-
 }
 
 // ResetCmd invoke reset sub command entrypoint

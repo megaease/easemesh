@@ -119,6 +119,8 @@ spec:
 	DefaultEasegressImage = "megaease/easegress:latest"
 	// DefaultEaseMeshOperatorImage is default name of the operator docker image
 	DefaultEaseMeshOperatorImage = "megaease/easemesh-operator:latest"
+	// DefaultShadowServiceControllerImage is default name of the shadow service docker image
+	DefaultShadowServiceControllerImage = "megaease/easemesh-shadowservice-controller:latest"
 	// DefaultImageRegistryURL is default registry url
 	DefaultImageRegistryURL = "docker.io"
 )
@@ -157,6 +159,10 @@ type (
 		MeshIngressReplicas    int
 		MeshIngressServicePort int32
 
+		OnlyAddOn                    bool
+		AddOns                       []string
+		ShadowServiceControllerImage string
+
 		// EaseMesh Controller  params
 		EaseMeshRegistryType string
 		HeartbeatInterval    int
@@ -173,6 +179,8 @@ type (
 	// Reset holds the option for the EaseMesh resest sub command
 	Reset struct {
 		*OperationGlobal
+		OnlyAddOn bool
+		AddOns    []string
 	}
 
 	// AdminGlobal holds the option for all the EaseMesh admin command
@@ -251,6 +259,9 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 
 	cmd.Flags().IntVar(&i.EasegressControlPlaneReplicas, "easemesh-control-plane-replicas", DefaultMeshControlPlaneReplicas, "Mesh control plane replicas")
 	cmd.Flags().IntVar(&i.MeshIngressReplicas, "easemesh-ingress-replicas", DefaultMeshIngressReplicas, "Mesh ingress controller replicas")
+	cmd.Flags().BoolVar(&i.OnlyAddOn, "only-add-on", false, "Only install add-ons")
+	cmd.Flags().StringArrayVar(&i.AddOns, "add-ons", []string{}, "Names of add-ons to be installed")
+	cmd.Flags().StringVar(&i.ShadowServiceControllerImage, "shadowservice-controller-image", DefaultShadowServiceControllerImage, "Shadow service controller image name")
 	cmd.Flags().IntVar(&i.EaseMeshOperatorReplicas, "easemesh-operator-replicas", DefaultMeshOperatorReplicas, "Mesh operator controller replicas")
 	cmd.Flags().StringVarP(&i.SpecFile, "file", "f", "", "A yaml file specifying the install params")
 	cmd.Flags().BoolVar(&i.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")
@@ -261,6 +272,8 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 func (r *Reset) AttachCmd(cmd *cobra.Command) {
 	r.OperationGlobal = &OperationGlobal{}
 	r.OperationGlobal.AttachCmd(cmd)
+	cmd.Flags().BoolVar(&r.OnlyAddOn, "only-add-on", false, "Only reset add-ons")
+	cmd.Flags().StringArrayVar(&r.AddOns, "add-ons", []string{}, "Names of add-ons to be reset")
 }
 
 // AttachCmd attaches options globally

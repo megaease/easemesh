@@ -62,6 +62,7 @@ var _ V1Alpha1Interface = &v1alpha1Interface{}
 
 // New initials a new MeshClient
 func New(server string) MeshClient {
+	server = strings.TrimPrefix(server, "http://")
 
 	if isTest {
 		// This is for test, in the unit test we will create a mock MeshClient

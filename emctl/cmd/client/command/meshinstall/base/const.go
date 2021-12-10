@@ -92,6 +92,8 @@ const (
 	DefaultMeshIngressService = "easemesh-ingress-service"
 	//DefaultMeshIngressControllerName is the default deployment name of the meshingress.
 	DefaultMeshIngressControllerName = "easemesh-ingress-easegress"
+	//DefaultShadowServiceControllerName is the default deployment name of the shadow service controller.
+	DefaultShadowServiceControllerName = "easemesh-shadowservice-controller"
 
 	// DefaultKubeDir represents default kubernetes client configuration directory.
 	DefaultKubeDir = ".kube"

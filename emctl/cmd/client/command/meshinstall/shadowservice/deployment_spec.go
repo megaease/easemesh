@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-package meshingress
+package shadowservice
 
 import (
+	"fmt"
+
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
@@ -29,17 +31,16 @@ import (
 
 type deploymentSpecFunc func(*flags.Install) *appsV1.Deployment
 
-func meshIngressLabel() map[string]string {
+func shadowServiceLabel() map[string]string {
 	selector := map[string]string{}
-	selector["app"] = "Easegress-ingress"
+	selector["app"] = "easemesh-shadowservice-controller"
 	return selector
 }
 
 func deploymentSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	deployment := deploymentConfigVolumeSpec(
-		deploymentContainerSpec(
-			deploymentBaseSpec(
-				deploymentInitialize(nil))))(ctx.Flags)
+	deployment := deploymentContainerSpec(
+		deploymentBaseSpec(
+			deploymentInitialize(nil)))(ctx.Flags)
 
 	return func(ctx *installbase.StageContext) error {
 		err := installbase.DeployDeployment(deployment, ctx.Client, ctx.Flags.MeshNamespace)
@@ -59,50 +60,27 @@ func deploymentInitialize(fn deploymentSpecFunc) deploymentSpecFunc {
 func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 		spec := fn(installFlags)
-		spec.Name = installbase.DefaultMeshIngressControllerName
+		spec.Name = installbase.DefaultShadowServiceControllerName
 		spec.Spec.Selector = &metav1.LabelSelector{
-			MatchLabels: meshIngressLabel(),
+			MatchLabels: shadowServiceLabel(),
 		}
 
-		var replicas = int32(installFlags.MeshIngressReplicas)
-		spec.Spec.Replicas = &replicas
-		spec.Spec.Template.Labels = meshIngressLabel()
+		spec.Spec.Template.Labels = shadowServiceLabel()
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
 		return spec
 	}
 }
 
 func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 
 		spec := fn(installFlags)
-		container, _ := installbase.AcceptContainerVisitor("easegress-ingress",
-			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
+		container, _ := installbase.AcceptContainerVisitor("shadowservice-controller",
+			installFlags.ImageRegistryURL+"/"+installFlags.ShadowServiceControllerImage,
 			v1.PullIfNotPresent,
 			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
-		return spec
-	}
-}
-
-func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-
-	return func(installFlags *flags.Install) *appsV1.Deployment {
-		spec := fn(installFlags)
-		spec.Spec.Template.Spec.Volumes = []v1.Volume{
-			{
-				Name: "eg-ingress-config",
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{
-							Name: installbase.DefaultMeshIngressConfig,
-						},
-					},
-				},
-			},
-		}
 		return spec
 	}
 }
@@ -116,66 +94,33 @@ func newVisitor(installFlags *flags.Install) installbase.ContainerVisitor {
 }
 
 func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
-
-	return []string{"/bin/sh"},
-		[]string{"-c", "/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-ingress.yaml"}
+	cmds := []string{"/bin/sh"}
+	meshServer := fmt.Sprintf("%s.%s:%d", v.installFlags.EgServiceName, v.installFlags.MeshNamespace, v.installFlags.EgAdminPort)
+	args := []string{
+		"-c",
+		"/opt/easemesh-shadowservice/bin/easemesh-shadowservice-controller -mesh-server " + meshServer,
+	}
+	return cmds, args
 }
 
 func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
-
-	return []v1.ContainerPort{
-		{
-			Name:          installbase.DefaultMeshAdminPortName,
-			ContainerPort: flags.DefaultMeshAdminPort,
-		},
-		{
-			Name:          installbase.DefaultMeshClientPortName,
-			ContainerPort: flags.DefaultMeshClientPort,
-		},
-		{
-			Name:          installbase.DefaultMeshPeerPortName,
-			ContainerPort: flags.DefaultMeshPeerPort,
-		},
-	}, nil
+	return []v1.ContainerPort{}, nil
 }
 
 func (v *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
-	return []v1.EnvVar{
-		{
-			Name: "HOSTNAME",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
-					FieldPath: "metadata.name",
-				},
-			},
-		},
-		{
-			Name: "APPLICATION_IP",
-			ValueFrom: &v1.EnvVarSource{
-				FieldRef: &v1.ObjectFieldSelector{
-					FieldPath: "status.podIP",
-				},
-			},
-		},
-	}, nil
+	return nil, nil
 }
+
 func (v *containerVisitor) VisitorEnvFrom(c *v1.Container) ([]v1.EnvFromSource, error) {
-
 	return nil, nil
 }
+
 func (v *containerVisitor) VisitorResourceRequirements(c *v1.Container) (*v1.ResourceRequirements, error) {
-
 	return nil, nil
 }
-func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
 
-	return []v1.VolumeMount{
-		{
-			Name:      "eg-ingress-config",
-			MountPath: "/opt/eg-config/eg-ingress.yaml",
-			SubPath:   "eg-ingress.yaml",
-		},
-	}, nil
+func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
+	return []v1.VolumeMount{}, nil
 }
 
 func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDevice, error) {
@@ -183,21 +128,6 @@ func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDev
 }
 
 func (v *containerVisitor) VisitorLivenessProbe(c *v1.Container) (*v1.Probe, error) {
-
-	/* FIXME: K8s probe report connection reset, but the port can be accessed via localhost/127.0.0.1
-	maybe the default admin API port should listen on all interface instead of loopback address.
-
-	return &v1.Probe{
-		Handler: v1.Handler{
-			HTTPGet: &v1.HTTPGetAction{
-				Host: "localhost",
-				Port: intstr.FromInt(installbase.DefaultMeshAdminPort),
-				Path: "/apis/v1/healthz",
-			},
-		},
-		InitialDelaySeconds: 50,
-	}, nil
-	*/
 	return nil, nil
 }
 
@@ -206,7 +136,6 @@ func (v *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, er
 }
 
 func (v *containerVisitor) VisitorLifeCycle(c *v1.Container) (*v1.Lifecycle, error) {
-
 	return nil, nil
 }
 
