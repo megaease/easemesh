@@ -45,6 +45,37 @@ func Test_isShadowDeployment(t *testing.T) {
 	}
 }
 
+func TestShadowServiceDeploySearcher_Search(t *testing.T) {
+	searchChan := make(chan interface{})
+	defer close(searchChan)
+
+	searcher := &ShadowServiceDeploySearcher{
+		KubeClient: prepareClientForTest(),
+		ResultChan: searchChan,
+	}
+
+	sourceDeployment := fakeSourceDeployment()
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case obj := <-searcher.ResultChan:
+				if !reflect.DeepEqual(obj.(ShadowServiceBlock).deployObj, *sourceDeployment) {
+					t.Errorf("Search Deployment Error, Searcher.Search() = %v, \n want %v", obj, sourceDeployment)
+				}
+				return
+			}
+		}
+	}()
+
+	shadowService := fakeShadowService()
+	objs := []object.ShadowService{shadowService}
+	searcher.Search(objs)
+	wg.Wait()
+}
+
 const deploymentYaml01 = `
 apiVersion: apps/v1
 kind: Deployment
@@ -230,34 +261,3 @@ spec:
           name: visits-service
         name: configmap-volume-0
 `
-
-func TestShadowServiceDeploySearcher_Search(t *testing.T) {
-	searchChan := make(chan interface{})
-	defer close(searchChan)
-
-	searcher := &ShadowServiceDeploySearcher{
-		KubeClient: prepareClientForTest(),
-		ResultChan: searchChan,
-	}
-
-	sourceDeployment := fakeSourceDeployment()
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case obj := <-searcher.ResultChan:
-				if !reflect.DeepEqual(obj.(ServiceCloneBlock).deployObj, *sourceDeployment) {
-					t.Errorf("Search Deployment Error, Searcher.Search() = %v, \n want %v", obj, sourceDeployment)
-				}
-				return
-			}
-		}
-	}()
-
-	shadowService := fakeShadowService()
-	objs := []object.ShadowService{shadowService}
-	searcher.Search(objs)
-	wg.Wait()
-}

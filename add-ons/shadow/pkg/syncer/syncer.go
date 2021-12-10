@@ -38,12 +38,9 @@ type ShadowServiceSyncer struct {
 }
 
 // NewSyncer create ShadowServiceSyncer for sync objects.
-func NewSyncer(meshServer string, requestTimeout time.Duration, pullInterval time.Duration) (*ShadowServiceSyncer, error) {
+func NewSyncer(server *Server, pullInterval time.Duration) (*ShadowServiceSyncer, error) {
 	return &ShadowServiceSyncer{
-		server: &Server{
-			RequestTimeout: requestTimeout,
-			MeshServer:     meshServer,
-		},
+		server:       server,
 		pullInterval: pullInterval,
 		done:         make(chan struct{}),
 	}, nil

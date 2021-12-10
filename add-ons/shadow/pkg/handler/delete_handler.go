@@ -41,10 +41,11 @@ type ShadowServiceDeleter struct {
 
 // Delete execute delete operation.
 func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
+	block := obj.(ShadowServiceBlock)
 	var err error
-	switch obj.(type) {
+	switch block.deployObj.(type) {
 	case appv1.Deployment:
-		deployment := obj.(appv1.Deployment)
+		deployment := block.deployObj.(appv1.Deployment)
 		err = utils.DeleteDeployment(deployment.Namespace, deployment.Name, deleter.KubeClient, metav1.DeleteOptions{})
 		if err != nil {
 			log.Printf("Delete ShadowService's Deployment failed. NameSpace: %s, Name: %s. error: %s", deployment.Namespace, deployment.Name, err)
@@ -112,13 +113,22 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 
 	for _, deployment := range shadowDeployments {
 		if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
+			shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
 			if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
-				deleter.DeleteChan <- deployment
+				deleter.DeleteChan <- ShadowServiceBlock{
+					service: object.ShadowService{
+						Name: shadowServiceName,
+					},
+					deployObj: deployment,
+				}
 				continue
 			}
-			shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
+
 			if !sourceDeploymentExistsFn(sourceName(deployment.Name), shadowService.ServiceName) {
-				deleter.DeleteChan <- deployment
+				deleter.DeleteChan <- ShadowServiceBlock{
+					service:   shadowService,
+					deployObj: deployment,
+				}
 				continue
 			}
 		}

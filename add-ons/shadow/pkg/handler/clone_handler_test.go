@@ -13,7 +13,7 @@ func TestShadowServiceCloner_Clone(t *testing.T) {
 	shadowService := fakeShadowService()
 	sourceDeployment := fakeSourceDeployment()
 
-	serviceCloneBlock := ServiceCloneBlock{
+	serviceCloneBlock := ShadowServiceBlock{
 		service:   shadowService,
 		deployObj: sourceDeployment,
 	}

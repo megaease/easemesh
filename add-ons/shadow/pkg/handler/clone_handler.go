@@ -40,8 +40,15 @@ const (
 
 	shadowServiceVersionLabelAnnotationKey   = "mesh.megaease.com/service-labels"
 	shadowServiceVersionLabelAnnotationValue = "version=shadow"
-	shadowLabelKey                           = "mesh.megaease.com/shadow-service"
-	shadowAppContainerNameKey                = "mesh.megaease.com/app-container-name"
+
+	shadowServiceCanaryLabelKey        = "version"
+	shadowServiceCanaryLabelValue      = "shadow"
+	shadowServiceCanaryHeader          = "X-Mesh-Shadow"
+	shadowServiceCanaryHeaderValue     = "shadow"
+	shadowServiceCanaryDefaultPriority = 5
+
+	shadowLabelKey            = "mesh.megaease.com/shadow-service"
+	shadowAppContainerNameKey = "mesh.megaease.com/app-container-name"
 
 	shadowDeploymentNameSuffix = "-shadow"
 
@@ -71,7 +78,7 @@ type ShadowServiceCloner struct {
 func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
 
 	var err error
-	block := obj.(ServiceCloneBlock)
+	block := obj.(ShadowServiceBlock)
 	switch block.deployObj.(type) {
 	case appv1.Deployment:
 		deployment := block.deployObj.(appv1.Deployment)
