@@ -38,6 +38,6 @@ spec:
     matchInstanceLabels: {version: shadow}
   trafficRules:
     headers:
-      X-Mesh-Canary:
+      X-Mesh-Shadow:
         exact: shadow
 `
