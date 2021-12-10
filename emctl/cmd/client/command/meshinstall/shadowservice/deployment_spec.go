@@ -65,8 +65,6 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 			MatchLabels: shadowServiceLabel(),
 		}
 
-		var replicas = int32(installFlags.ShadowServiceControllerReplicas)
-		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = shadowServiceLabel()
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
 		return spec
