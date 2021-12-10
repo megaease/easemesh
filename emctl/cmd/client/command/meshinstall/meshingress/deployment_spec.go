@@ -140,8 +140,24 @@ func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.Containe
 }
 
 func (v *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
-
-	return nil, nil
+	return []v1.EnvVar{
+		{
+			Name: "HOSTNAME",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
+		{
+			Name: "APPLICATION_IP",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					FieldPath: "status.podIP",
+				},
+			},
+		},
+	}, nil
 }
 func (v *containerVisitor) VisitorEnvFrom(c *v1.Container) ([]v1.EnvFromSource, error) {
 
