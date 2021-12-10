@@ -116,7 +116,7 @@ spec:
     type: "DirectoryOrCreate"`
 
 	// DefaultEasegressImage is default name of Easegress docker image
-	DefaultEasegressImage = "megaease/easegress:latest"
+	DefaultEasegressImage = "megaease/easegress:easemesh"
 	// DefaultEaseMeshOperatorImage is default name of the operator docker image
 	DefaultEaseMeshOperatorImage = "megaease/easemesh-operator:latest"
 	// DefaultShadowServiceControllerImage is default name of the shadow service docker image

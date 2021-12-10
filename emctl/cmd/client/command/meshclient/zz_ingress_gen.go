@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type ingressGetter struct {
+type ingressInterface struct {
 	client *meshClient
 }
-type ingressInterface struct {
+type ingressGetter struct {
 	client *meshClient
 }
 

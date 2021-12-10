@@ -444,7 +444,7 @@ spec:
         fieldRef:
           apiVersion: v1
           fieldPath: metadata.namespace
-    image: megaease/easegress:latest
+    image: megaease/easegress:easemesh
     imagePullPolicy: Always
     name: easestack-ingress-controller
     resources: {}
