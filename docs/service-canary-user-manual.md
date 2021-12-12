@@ -1,5 +1,12 @@
 # Service Canary User Manual
 
+- [Service Canary User Manual](#service-canary-user-manual)
+  - [Quick Start](#quick-start)
+  - [Config Explained](#config-explained)
+  - [Another Service Canary](#another-service-canary)
+  - [Service Canary Across Multiple Services](#service-canary-across-multiple-services)
+  - [Safety](#safety)
+
 EaseMesh uses service canary to define rules of [canary release](https://martinfowler.com/bliki/CanaryRelease.html) for mesh services.
 
 ## Quick Start

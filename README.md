@@ -401,4 +401,4 @@ EaseMesh is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for 
 
 ## 11. User Manual
 
-See [EaseMesh User Manual](./docs/user_manual.md) for details.
+See [EaseMesh User Manual](./docs/user-manual.md) for details.
