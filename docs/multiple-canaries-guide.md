@@ -12,7 +12,7 @@
 
 ## Background
 
-Canary deployment normally aims to test new features of services with a specific part of the traffic in the production environment. And the feature will be evaluated in multi-dimensions such as technical errors, performance or business feedback from users, etc.
+Canary deployment normally aims to test new features of services with a specific part of the traffic in the production environment. And the feature will be evaluated in multi-dimensions such as online errors, performance or business feedback from users, etc.
 
 In the concept, the canary sounds simple, but in the real world, we often need to handle more complicated things, for example:
 
@@ -48,16 +48,22 @@ As the evolution shows, we can tell it’s unsafe that local canaries share some
 
 ## Global Canary
 
-Based on local canary, the term global canary is pretty clear, it is for the feature that needs multiple services to respectively deploy one release to support one canary. Along with the local canary example, we evolve it with global canary:
+Based on local canary, the term global canary is pretty clear, it is for the feature that needs multiple services to respectively deploy one release to support one canary. So we need global canary to:
+
+- Test a feature involving multiple services.
+- Transfer traffic through service instances which belongs to the same global canary.
+
+Along with the local canary example, we evolve it with global canary:
 
 ![image](imgs/multiple-canaries-guide-05.png)
 
 The principles of global canary evolved from local canary is almost the same: It can’t share traffic with other local or global canaries. But as a global canary, it needs one more principle: It needs to call the same global release of another service if there is, otherwise the primary release can be just the choice. If the traffic choice violates the principles, it can’t get the whole part of the feature, or even it could get unsafe behavior.
 
-When we reach here, we can tell clearly: **Local canary is just a special case of global canary**. So we can conclude 2 core principles here for multiple canary deployments:
+When we reach here, we can tell clearly: **Local canary is just a special case of global canary**. So we can conclude 3 core principles here for multiple canary deployments:
 
 1. The traffic rules of choosing the canary are explicitly exclusive.
-2. The complete chain of a request only goes to zero or only one canary.
+2. The complete chain of a request goes one canary at most.
+3. Normal traffic not matching canary rules must go through primary deployments.
 
 ## Practical Guide
 

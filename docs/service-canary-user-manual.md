@@ -161,6 +161,8 @@ spec:
         exact: Android
 ```
 
+The details about the config refer to [service canary](https://github.com/megaease/easemesh-api/blob/main/v1alpha1/meshmodel.md#easemesh.v1alpha1.ServiceCanary).
+
 ## Safety
 
 We formulate some rules to guarantee the safety and clarity of service canary:
