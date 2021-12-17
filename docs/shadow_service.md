@@ -6,6 +6,8 @@ Microservices allow developers to develop and deploy changes faster, but also br
 
 Shadow service makes this possible, with a simple configuration, it replicates existing services to a shadow copy, and the shadow copy is identical to the origin copy by default. A canary rule is deployed at the same time to ensure that production traffic is sent to the original copies and test traffic is sent to the shadow copies. This guarantees the consistency of the shadow copies and the original copies to the greatest extent, and developer could send test traffic to the shadow copies without impact the production system.
 
+Shadow service also enables full-link stress test. To keep system being high available, developers usually run performance test on test environment for the whole system, or on the production environment for a single service. However, test environment is very different from the production environment, and we can not get the desired result for the whole system from a single service. With the help of shadow service, we could replicate the whole production environment to a shadow copy, and run the stress against it to get the most authentic data.
+
 ## Installation
 
 As an add-on feature, shadow service could be installed at the same time of EaseMesh installation with an additional command line flag `-add-ons=ShadowService`, like below:
