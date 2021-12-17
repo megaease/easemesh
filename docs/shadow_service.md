@@ -2,6 +2,10 @@
 
 Shadow service is an add-on feature of EaseMesh, it replicate existing services to a shadow copy, and then, test traffic could be sent to the shadow services for the test.
 
+Microservices allow developers to develop and deploy changes faster, but also bring more complexity and difficulty to the troubleshooting process. At most of time when something is wrong in a microservices based system, developers don't understand which microservice is the root cause at the beginning, so it will be great help if they are allowed to send test traffic to the whole system for debugging. But very often, this is not possible in a production system.
+
+Shadow service makes this possible, with a simple configuration, it replicates existing services to a shadow copy, and the shadow copy is identical to the origin copy by default. A canary rule is deployed at the same time to ensure that production traffic is sent to the original copies and test traffic is sent to the shadow copies. This guarantees the consistency of the shadow copies and the original copies to the greatest extent, and developer could send test traffic to the shadow copies without impact the production system.
+
 ## Installation
 
 As an add-on feature, shadow service could be installed at the same time of EaseMesh installation with an additional command line flag `-add-ons=ShadowService`, like below:
