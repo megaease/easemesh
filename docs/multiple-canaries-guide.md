@@ -103,11 +103,11 @@ if canary != “” {
 
 And the complete examples of the alogorithm `chooseCanary` could be like:
 
-|             Traffic             | Delivery Canary Table  (Priority, Traffic Rules, Color)       |      Decision       |                   Strategy                   |
-| :-----------------------------: | ------------------------------------------------------------- | :-----------------: | :------------------------------------------: |
-|             Beijing             | 1, Beijing, Green 2, Beijing, Blue                            |        Green        |               Base on Priority               |
-| Beijing&Android Beijing Android | 1, Beijing, Green 2, Android, Yellow                          | Green Green Yellow  | Base on Priority Base on Rules Base on Rules |
-| Beijing&Android Beijing Android | 1, Android, Yellow 2, Beijing&Android, Blue 3, Beijing, Green | Yellow Green Yellow | Base on Priority Base on Rules Base on Rules |
+|                Traffic                | Delivery Canary Table <br>(Priority, Traffic Rules, Color)          |         Decision          |                      Strategy                      |
+| :-----------------------------------: | ------------------------------------------------------------------- | :-----------------------: | :------------------------------------------------: |
+|                Beijing                | 1, Beijing, Green<br>2, Beijing, Blue                               |           Green           |                  Base on Priority                  |
+| Beijing&Android<br>Beijing<br>Android | 1, Beijing, Green<br>2, Android, Yellow                             | Green<br>Green<br>Yellow  | Base on Priority<br>Base on Rules<br>Base on Rules |
+| Beijing&Android<br>Beijing<br>Android | 1, Android, Yellow<br>2, Beijing&Android, Blue<br>3, Beijing, Green | Yellow<br>Green<br>Yellow | Base on Priority<br>Base on Rules<br>Base on Rules |
 
 finnally please notice the performance cost in selecting canary while it has many canaries. The administration had better set a limitation number for canaries, such as 5.
 
