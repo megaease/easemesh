@@ -52,6 +52,15 @@ var (
 	NotFoundError = errors.Errorf("resource not found")
 )
 
+type MeshControlPlane interface {
+	List(ctx context.Context, kind string) ([]object.ShadowService, error)
+	Watch(kind string) (*bufio.Reader, error)
+	GetServiceCanary(name string) (*resource.ServiceCanary, error)
+	CreateServiceCanary(args1 *resource.ServiceCanary) error
+	PatchServiceCanary(serviceCanary *resource.ServiceCanary) error
+	DeleteServiceCanary(name string) error
+}
+
 // Server represents the server of the easemesh control plane.
 type Server struct {
 	RequestTimeout time.Duration

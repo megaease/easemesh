@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	shadowfake "github.com/megaease/easemesh/mesh-shadow/pkg/handler/fake"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,9 +17,9 @@ import (
 
 func prepareClientForTest() kubernetes.Interface {
 	var result runtime.Object
-	namespace := fakeNameSpace()
-	deployment := fakeSourceDeployment()
-	shadowDeployment := fakeShadowDeployment()
+	namespace := shadowfake.NewNameSpace()
+	deployment := shadowfake.NewSourceDeployment()
+	shadowDeployment := shadowfake.NewShadowDeployment()
 
 	client := fake.NewSimpleClientset(
 		namespace,
@@ -117,7 +118,7 @@ func TestShadowServiceDeleter_Delete(t *testing.T) {
 		DeleteChan: deleteChan,
 	}
 
-	clonedDeployment := fakeShadowDeployment()
+	clonedDeployment := shadowfake.NewShadowDeployment()
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)

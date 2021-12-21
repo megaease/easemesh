@@ -1,43 +1,47 @@
 package handler
 
 import (
-	"bytes"
 	"reflect"
 	"testing"
 
-	"github.com/megaease/easemeshctl/cmd/client/resource"
-	k8Yaml "k8s.io/apimachinery/pkg/util/yaml"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/handler/fake"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
+	"github.com/megaease/easemesh/mesh-shadow/pkg/syncer"
 )
 
-func fakeServiceCanary() *resource.ServiceCanary {
-	decoder := k8Yaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(fakeCanaryYaml)), 1000)
-	serviceCanary := &resource.ServiceCanary{}
-	_ = decoder.Decode(serviceCanary)
-	return serviceCanary
-}
-
 func Test_createShadowServiceCanary(t *testing.T) {
-	shadowService := fakeShadowService()
-	fakeCanary := fakeServiceCanary()
-	newCanary := createShadowServiceCanary(&shadowService)
+	shadowService1 := fake.NewShadowService()
+	shadowService1.ServiceName = "service1"
 
+	shadowService2 := fake.NewShadowService()
+	shadowService2.ServiceName = "service2"
+
+	shadowService3 := fake.NewShadowService()
+	shadowService3.ServiceName = "service3"
+
+	fakeCanary := fake.NewServiceCanary()
+	ss := []object.ShadowService{
+		shadowService1,
+		shadowService2,
+		shadowService3,
+	}
+	newCanary := createShadowServiceCanary(ss)
 	if !reflect.DeepEqual(newCanary, fakeCanary) {
 		t.Errorf("createShadowServiceCanary() = %v, want %v", newCanary, fakeCanary)
 	}
 }
 
-const fakeCanaryYaml = `
-apiVersion: mesh.megaease.com/v1alpha1
-kind: ServiceCanary
-metadata:
-  name: shadow-visits-service
-spec:
-  priority: 5 
-  selector:
-    matchServices: [visits-service]
-    matchInstanceLabels: {version: shadow}
-  trafficRules:
-    headers:
-      X-Mesh-Shadow:
-        exact: shadow
-`
+func TestShadowServiceCanaryHandler_deleteShadowService(t *testing.T) {
+
+	handler := ShadowServiceCanaryHandler{
+		Server: syncer.NewMockServer(),
+	}
+	shadowService1 := fake.NewShadowService()
+	shadowService1.ServiceName = "service3"
+
+	newServiceCanary, _ := handler.deleteShadowService(shadowService1)
+	fakeServiceCanary := fake.NewDeletedServiceCanary()
+	if !reflect.DeepEqual(newServiceCanary, fakeServiceCanary) {
+		t.Errorf("handler.deleteShadowService() = %v, want %v", newServiceCanary, fakeServiceCanary)
+	}
+}

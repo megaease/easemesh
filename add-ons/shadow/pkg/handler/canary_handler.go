@@ -9,35 +9,40 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 )
 
+const (
+	shadowServiceCanaryName = "shadow-service-canary"
+)
+
 // ShadowServiceCanaryHandler  added or deleted according to the creation and deletion of ShadowService.
 type ShadowServiceCanaryHandler struct {
-	Server *syncer.Server
+	Server syncer.MeshControlPlane
 }
 
-// CreateServiceCanary create ServiceCanary when ShadowService is created.
-func (handler *ShadowServiceCanaryHandler) CreateServiceCanary(obj interface{}) {
-	block := obj.(ShadowServiceBlock)
-	shadowService := block.service
-	err := handler.applyShadowServiceCanary(&shadowService)
+// GenerateServiceCanary create ServiceCanary for all ShadowService.
+func (handler *ShadowServiceCanaryHandler) GenerateServiceCanary(objs interface{}) {
+	shadowServices := objs.([]object.ShadowService)
+	if len(shadowServices) == 0 {
+		return
+	}
+	serviceCanary := createShadowServiceCanary(shadowServices)
+	err := handler.applyShadowServiceCanary(serviceCanary)
 	if err != nil {
-		log.Printf("Apply ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
+		log.Printf("Create ServiceCanary for ShadowService failed. error: %s", err)
 	}
 }
 
-// DeleteServiceCanary delete ServiceCanary when ShadowService is deleted.
-func (handler *ShadowServiceCanaryHandler) DeleteServiceCanary(obj interface{}) {
-
-	block := obj.(ShadowServiceBlock)
-	shadowService := block.service
-	err := handler.Server.DeleteServiceCanary(shadowService.Name)
+// DeleteShadowService delete service from ServiceCanary's selector when ShadowService is deleted.
+func (handler *ShadowServiceCanaryHandler) DeleteShadowService(obj interface{}) {
+	shadowService := obj.(ShadowServiceBlock).service
+	serviceCanary, err := handler.deleteShadowService(shadowService)
+	err = handler.applyShadowServiceCanary(serviceCanary)
 	if err != nil {
-		log.Printf("Delete ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
+		log.Printf("Update ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
 	}
 }
 
-func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(shadowService *object.ShadowService) error {
-	serviceCanary := createShadowServiceCanary(shadowService)
-	canary, err := handler.Server.GetServiceCanary(shadowService.Name)
+func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(serviceCanary *resource.ServiceCanary) error {
+	canary, err := handler.Server.GetServiceCanary(serviceCanary.Name())
 	if canary != nil {
 		err = handler.Server.PatchServiceCanary(serviceCanary)
 	} else {
@@ -46,15 +51,37 @@ func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(shadowServic
 	return err
 }
 
-func createShadowServiceCanary(obj *object.ShadowService) *resource.ServiceCanary {
-	return &resource.ServiceCanary{
+func (handler *ShadowServiceCanaryHandler) deleteShadowService(shadowService object.ShadowService) (*resource.ServiceCanary, error) {
+	canary, err := handler.Server.GetServiceCanary(shadowServiceCanaryName)
+	if canary == nil {
+		return nil, err
+	}
+	matchServices := canary.Spec.Selector.MatchServices
+	var newMatchServices []string
+	for _, serviceName := range matchServices {
+		if serviceName == shadowService.ServiceName {
+			continue
+		}
+		newMatchServices = append(newMatchServices, serviceName)
+	}
+	canary.Spec.Selector.MatchServices = newMatchServices
+	return canary, err
+}
+
+func createShadowServiceCanary(services []object.ShadowService) *resource.ServiceCanary {
+	var matchServices []string
+	for _, service := range services {
+		matchServices = append(matchServices, service.ServiceName)
+	}
+
+	serviceCanary := &resource.ServiceCanary{
 		MeshResource: resource.NewServiceCanaryResource(
-			resource.DefaultAPIVersion, obj.Name,
+			resource.DefaultAPIVersion, shadowServiceCanaryName,
 		),
 		Spec: &resource.ServiceCanarySpec{
 			Priority: shadowServiceCanaryDefaultPriority,
 			Selector: &v1alpha1.ServiceSelector{
-				MatchServices: []string{obj.ServiceName},
+				MatchServices: matchServices,
 				MatchInstanceLabels: map[string]string{
 					shadowServiceCanaryLabelKey: shadowServiceCanaryLabelValue,
 				},
@@ -68,4 +95,5 @@ func createShadowServiceCanary(obj *object.ShadowService) *resource.ServiceCanar
 			},
 		},
 	}
+	return serviceCanary
 }

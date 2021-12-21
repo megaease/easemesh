@@ -129,6 +129,7 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 			case services := <-shadowServicesChan:
 				s.searcher.Search(services)
 				s.deleter.FindDeletableObjs(services)
+				s.canaryHandler.GenerateServiceCanary(services)
 			}
 		}
 	}()
@@ -142,7 +143,6 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 				return
 			case obj := <-s.cloneChan:
 				s.cloner.Clone(obj)
-				s.canaryHandler.CreateServiceCanary(obj)
 			}
 		}
 	}()
@@ -156,7 +156,7 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 				return
 			case obj := <-s.deleteChan:
 				s.deleter.Delete(obj)
-				s.canaryHandler.DeleteServiceCanary(obj)
+				s.canaryHandler.DeleteShadowService(obj)
 			}
 		}
 	}()

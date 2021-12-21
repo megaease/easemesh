@@ -2,6 +2,8 @@ package handler
 
 import (
 	"testing"
+
+	shadowfake "github.com/megaease/easemesh/mesh-shadow/pkg/handler/fake"
 )
 
 func TestShadowServiceCloner_Clone(t *testing.T) {
@@ -10,8 +12,8 @@ func TestShadowServiceCloner_Clone(t *testing.T) {
 		KubeClient: prepareClientForTest(),
 	}
 
-	shadowService := fakeShadowService()
-	sourceDeployment := fakeSourceDeployment()
+	shadowService := shadowfake.NewShadowService()
+	sourceDeployment := shadowfake.NewSourceDeployment()
 
 	serviceCloneBlock := ShadowServiceBlock{
 		service:   shadowService,
