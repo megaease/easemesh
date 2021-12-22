@@ -27,11 +27,13 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 )
 
+// MockServer represents the server of the easemesh control plane for test.
 type MockServer struct {
 	RequestTimeout time.Duration
 	MeshServer     string
 }
 
+//NewMockServer create MockServer for test.
 func NewMockServer() *MockServer {
 	return &MockServer{
 		RequestTimeout: time.Second * 10,
@@ -39,6 +41,7 @@ func NewMockServer() *MockServer {
 	}
 }
 
+// GetServiceCanary query ServiceCanary by name from EaseMesh control plane.
 func (server *MockServer) GetServiceCanary(name string) (*resource.ServiceCanary, error) {
 	return fake.NewServiceCanary(), nil
 }

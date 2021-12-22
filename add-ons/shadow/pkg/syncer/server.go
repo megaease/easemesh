@@ -52,6 +52,7 @@ var (
 	NotFoundError = errors.Errorf("resource not found")
 )
 
+// MeshControlPlane captures the set of operations for interacting with the EaseMesh REST apis.
 type MeshControlPlane interface {
 	List(ctx context.Context, kind string) ([]object.ShadowService, error)
 	Watch(kind string) (*bufio.Reader, error)
