@@ -233,16 +233,16 @@ emctl install --help
 
 ### Install Add-ons
 
-Add-on features could be installed at the same time of EaseMesh installation with an additional command line flag `-add-ons={addon1,addon2,...}`. For example, to install the shadow service feature:
+Add-on features could be installed at the same time of EaseMesh installation with an additional command line flag `--add-ons={addon1,addon2,...}`. For example, to install the shadow service feature:
 
 ```bash
 emctl install -add-ons=ShadowService
 ```
 
-If EaseMesh infrastructure has already been installed, the add-on features could installed by the `-only-add-on` flag in the `emctl install` command line:
+If EaseMesh infrastructure has already been installed, the add-on features could installed by the `--only-add-on` flag in the `emctl install` command line:
 
 ```bash
-emctl install -only-add-on -add-ons=ShadowService
+emctl install --only-add-on --add-ons=ShadowService
 ```
 
 ### Reset environment
@@ -258,7 +258,7 @@ emctl reset
 To only uninstall an add-on, run the command:
 
 ```
-emctl reset --only-add-on -add-ons={addon1,addon2,...}
+emctl reset --only-add-on --add-ons={addon1,addon2,...}
 ```
 
 ## Trouble Shooting
