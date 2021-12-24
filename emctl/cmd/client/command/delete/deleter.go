@@ -46,6 +46,8 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 		return &tenantDeleter{object: object.(*resource.Tenant), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindResilience:
 		return &resilienceDeleter{object: object.(*resource.Resilience), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindMock:
+		return &mockDeleter{object: object.(*resource.Mock), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindObservabilityMetrics:
 		return &observabilityMetricsDeleter{object: object.(*resource.ObservabilityMetrics), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindObservabilityOutputServer:
@@ -54,6 +56,10 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsDeleter{object: object.(*resource.ObservabilityTracings), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressDeleter{object: object.(*resource.Ingress), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindHTTPRouteGroup:
+		return &httpRouteGroupDeleter{object: object.(*resource.HTTPRouteGroup), baseDeleter: baseDeleter{client: client, timeout: timeout}}
+	case resource.KindTrafficTarget:
+		return &trafficTargetDeleter{object: object.(*resource.TrafficTarget), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindServiceCanary:
 		return &serviceCanaryDeleter{object: object.(*resource.ServiceCanary), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindCustomResourceKind:
@@ -232,6 +238,23 @@ func (r *resilienceDeleter) Delete() error {
 	return err
 }
 
+type mockDeleter struct {
+	baseDeleter
+	object *resource.Mock
+}
+
+func (m *mockDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), m.timeout)
+	defer cancelFunc()
+
+	err := m.client.V1Alpha1().Mock().Delete(ctx, m.object.Name())
+	if meshclient.IsNotFoundError(err) {
+		return errors.Wrapf(err, "delete mock %s", m.object.Name())
+	}
+
+	return err
+}
+
 type ingressDeleter struct {
 	baseDeleter
 	object *resource.Ingress
@@ -244,6 +267,40 @@ func (i *ingressDeleter) Delete() error {
 	err := i.client.V1Alpha1().Ingress().Delete(ctx, i.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete ingress %s", i.object.Name())
+	}
+
+	return err
+}
+
+type httpRouteGroupDeleter struct {
+	baseDeleter
+	object *resource.HTTPRouteGroup
+}
+
+func (g *httpRouteGroupDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), g.timeout)
+	defer cancelFunc()
+
+	err := g.client.V1Alpha1().HTTPRouteGroup().Delete(ctx, g.object.Name())
+	if meshclient.IsNotFoundError(err) {
+		return errors.Wrapf(err, "delete http route group %s", g.object.Name())
+	}
+
+	return err
+}
+
+type trafficTargetDeleter struct {
+	baseDeleter
+	object *resource.TrafficTarget
+}
+
+func (tt *trafficTargetDeleter) Delete() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), tt.timeout)
+	defer cancelFunc()
+
+	err := tt.client.V1Alpha1().HTTPRouteGroup().Delete(ctx, tt.object.Name())
+	if meshclient.IsNotFoundError(err) {
+		return errors.Wrapf(err, "delete traffic target %s", tt.object.Name())
 	}
 
 	return err

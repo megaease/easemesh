@@ -51,9 +51,14 @@ func TestObjectCreator(t *testing.T) {
 		case *MeshController:
 			ToMeshController(r.ToV1Alpha1()).Columns()
 		case *Ingress:
-			ToIngress(r.ToV1Alpha1())
 			r.Spec = &IngressSpec{}
 			ToIngress(r.ToV1Alpha1())
+		case *HTTPRouteGroup:
+			r.Spec = &HTTPRouteGroupSpec{}
+			ToHTTPRouteGroup(r.ToV1Alpha1())
+		case *TrafficTarget:
+			r.Spec = &TrafficTargetSpec{}
+			ToTrafficTarget(r.ToV1Alpha1())
 		case *Canary:
 			r.Spec = &v1alpha1.Canary{}
 			ToCanary("new", r.ToV1Alpha1())
@@ -68,6 +73,9 @@ func TestObjectCreator(t *testing.T) {
 		case *Resilience:
 			r.Spec = &v1alpha1.Resilience{}
 			ToResilience("new", r.ToV1Alpha1())
+		case *Mock:
+			r.Spec = &v1alpha1.Mock{}
+			ToMock("new", r.ToV1Alpha1())
 		case *Service:
 			ToService(r.ToV1Alpha1()).Columns()
 			r.Spec = &ServiceSpec{}

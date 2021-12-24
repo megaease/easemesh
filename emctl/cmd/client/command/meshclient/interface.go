@@ -38,7 +38,10 @@ type V1Alpha1Interface interface {
 	CanaryGetter
 	ObservabilityGetter
 	ResilienceGetter
+	MockGetter
 	IngressGetter
+	HTTPRouteGroupGetter
+	TrafficTargetGetter
 	ServiceCanaryGetter
 	CustomResourceKindGetter
 	CustomResourceGetter

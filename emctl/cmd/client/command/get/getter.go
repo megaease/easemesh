@@ -50,6 +50,8 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &tenantGetter{object: object.(*resource.Tenant), baseGetter: base}
 	case resource.KindResilience:
 		return &resilienceGetter{object: object.(*resource.Resilience), baseGetter: base}
+	case resource.KindMock:
+		return &mockGetter{object: object.(*resource.Mock), baseGetter: base}
 	case resource.KindObservabilityMetrics:
 		return &observabilityMetricsGetter{object: object.(*resource.ObservabilityMetrics), baseGetter: base}
 	case resource.KindObservabilityOutputServer:
@@ -58,6 +60,10 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsGetter{object: object.(*resource.ObservabilityTracings), baseGetter: base}
 	case resource.KindIngress:
 		return &ingressGetter{object: object.(*resource.Ingress), baseGetter: base}
+	case resource.KindHTTPRouteGroup:
+		return &httpRouteGroupGetter{object: object.(*resource.HTTPRouteGroup), baseGetter: base}
+	case resource.KindTrafficTarget:
+		return &trafficTargetGetter{object: object.(*resource.TrafficTarget), baseGetter: base}
 	case resource.KindCustomResourceKind:
 		return &customResourceKindGetter{object: object.(*resource.CustomResourceKind), baseGetter: base}
 	case resource.KindServiceCanary:
@@ -395,6 +401,37 @@ func (r *resilienceGetter) Get() ([]meta.MeshObject, error) {
 	return objects, nil
 }
 
+type mockGetter struct {
+	baseGetter
+	object *resource.Mock
+}
+
+func (m *mockGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), m.timeout)
+	defer cancelFunc()
+
+	if m.object.Name() != "" {
+		mock, err := m.client.V1Alpha1().Mock().Get(ctx, m.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{mock}, nil
+	}
+
+	mocks, err := m.client.V1Alpha1().Mock().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(mocks))
+	for i := range mocks {
+		objects[i] = mocks[i]
+	}
+
+	return objects, nil
+}
+
 type ingressGetter struct {
 	baseGetter
 	object *resource.Ingress
@@ -421,6 +458,68 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	objects := make([]meta.MeshObject, len(ingresses))
 	for i := range ingresses {
 		objects[i] = ingresses[i]
+	}
+
+	return objects, nil
+}
+
+type httpRouteGroupGetter struct {
+	baseGetter
+	object *resource.HTTPRouteGroup
+}
+
+func (g *httpRouteGroupGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), g.timeout)
+	defer cancelFunc()
+
+	if g.object.Name() != "" {
+		httpRouteGroup, err := g.client.V1Alpha1().HTTPRouteGroup().Get(ctx, g.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{httpRouteGroup}, nil
+	}
+
+	httpRouteGroups, err := g.client.V1Alpha1().TrafficTarget().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(httpRouteGroups))
+	for i := range httpRouteGroups {
+		objects[i] = httpRouteGroups[i]
+	}
+
+	return objects, nil
+}
+
+type trafficTargetGetter struct {
+	baseGetter
+	object *resource.TrafficTarget
+}
+
+func (tt *trafficTargetGetter) Get() ([]meta.MeshObject, error) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), tt.timeout)
+	defer cancelFunc()
+
+	if tt.object.Name() != "" {
+		trafficTarget, err := tt.client.V1Alpha1().TrafficTarget().Get(ctx, tt.object.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		return []meta.MeshObject{trafficTarget}, nil
+	}
+
+	trafficTargets, err := tt.client.V1Alpha1().TrafficTarget().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]meta.MeshObject, len(trafficTargets))
+	for i := range trafficTargets {
+		objects[i] = trafficTargets[i]
 	}
 
 	return objects, nil

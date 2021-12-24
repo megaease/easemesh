@@ -28,43 +28,43 @@ import (
 	"net/http"
 )
 
-type tenantInterface struct {
+type trafficTargetGetter struct {
 	client *meshClient
 }
-type tenantGetter struct {
+type trafficTargetInterface struct {
 	client *meshClient
 }
 
-func (t *tenantGetter) Tenant() TenantInterface {
-	return &tenantInterface{client: t.client}
+func (t *trafficTargetGetter) TrafficTarget() TrafficTargetInterface {
+	return &trafficTargetInterface{client: t.client}
 }
-func (t *tenantInterface) Get(args0 context.Context, args1 string) (*resource.Tenant, error) {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (t *trafficTargetInterface) Get(args0 context.Context, args1 string) (*resource.TrafficTarget, error) {
+	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"traffictargets/%s", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "get Tenant %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "get TrafficTarget %s", args1)
 		}
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Tenant := &v1alpha1.Tenant{}
-		err := json.Unmarshal(buff, Tenant)
+		TrafficTarget := &v1alpha1.TrafficTarget{}
+		err := json.Unmarshal(buff, TrafficTarget)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Tenant")
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.TrafficTarget")
 		}
-		return resource.ToTenant(Tenant), nil
+		return resource.ToTrafficTarget(TrafficTarget), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return r0.(*resource.Tenant), nil
+	return r0.(*resource.TrafficTarget), nil
 }
-func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1.Name())
+func (t *trafficTargetInterface) Patch(args0 context.Context, args1 *resource.TrafficTarget) error {
+	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"traffictargets/%s", args1.Name())
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "patch Tenant %s", args1.Name())
+			return nil, errors.Wrapf(NotFoundError, "patch TrafficTarget %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -73,12 +73,12 @@ func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) e
 	})
 	return err
 }
-func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) error {
-	url := "http://" + t.client.server + apiURL + "/mesh/tenants"
+func (t *trafficTargetInterface) Create(args0 context.Context, args1 *resource.TrafficTarget) error {
+	url := "http://" + t.client.server + apiURL + "/mesh/traffictargets"
 	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
-			return nil, errors.Wrapf(ConflictError, "create Tenant %s", args1.Name())
+			return nil, errors.Wrapf(ConflictError, "create TrafficTarget %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -87,11 +87,11 @@ func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) 
 	})
 	return err
 }
-func (t *tenantInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1)
+func (t *trafficTargetInterface) Delete(args0 context.Context, args1 string) error {
+	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"traffictargets/%s", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "Delete Tenant %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "Delete TrafficTarget %s", args1)
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -100,8 +100,8 @@ func (t *tenantInterface) Delete(args0 context.Context, args1 string) error {
 	})
 	return err
 }
-func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error) {
-	url := "http://" + t.client.server + apiURL + "/mesh/tenants"
+func (t *trafficTargetInterface) List(args0 context.Context) ([]*resource.TrafficTarget, error) {
+	url := "http://" + t.client.server + apiURL + "/mesh/traffictargets"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
@@ -109,20 +109,20 @@ func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		tenant := []v1alpha1.Tenant{}
-		err := json.Unmarshal(b, &tenant)
+		trafficTarget := []v1alpha1.TrafficTarget{}
+		err := json.Unmarshal(b, &trafficTarget)
 		if err != nil {
 			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
-		results := []*resource.Tenant{}
-		for _, item := range tenant {
+		results := []*resource.TrafficTarget{}
+		for _, item := range trafficTarget {
 			copy := item
-			results = append(results, resource.ToTenant(&copy))
+			results = append(results, resource.ToTrafficTarget(&copy))
 		}
 		return results, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.Tenant), nil
+	return result.([]*resource.TrafficTarget), nil
 }

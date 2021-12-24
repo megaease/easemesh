@@ -43,16 +43,23 @@ func (m *meshClient) V1Alpha1() V1Alpha1Interface {
 	return m.v1Alpha1
 }
 
+// NOTE: This line is required because generator generates a wrong name for
+// httpRouteGroupGetter. Please remove it when the generator issue is fixed
+type httpRouteGroupGetter = hTTPRouteGroupGetter
+
 type v1alpha1Interface struct {
 	meshControllerGetter
 	loadbalanceGetter
 	canaryGetter
 	resilienceGetter
+	mockGetter
 	serviceGetter
 	serviceInstanceGetter
 	tenantGetter
 	observabilityGetter
 	ingressGetter
+	httpRouteGroupGetter
+	trafficTargetGetter
 	serviceCanaryGetter
 	customResourceKindGetter
 	customResourceGetter
@@ -77,11 +84,14 @@ func New(server string) MeshClient {
 		loadbalanceGetter:        loadbalanceGetter{client: client},
 		canaryGetter:             canaryGetter{client: client},
 		resilienceGetter:         resilienceGetter{client: client},
+		mockGetter:               mockGetter{client: client},
 		tenantGetter:             tenantGetter{client: client},
 		observabilityGetter:      observabilityGetter{client: client},
 		serviceGetter:            serviceGetter{client: client},
 		serviceInstanceGetter:    serviceInstanceGetter{client: client},
 		ingressGetter:            ingressGetter{client: client},
+		httpRouteGroupGetter:     httpRouteGroupGetter{client: client},
+		trafficTargetGetter:      trafficTargetGetter{client: client},
 		serviceCanaryGetter:      serviceCanaryGetter{client: client},
 		customResourceKindGetter: customResourceKindGetter{client: client},
 		customResourceGetter:     customResourceGetter{client: client},
