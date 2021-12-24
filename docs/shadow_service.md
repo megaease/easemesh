@@ -1,5 +1,12 @@
 # Shadow Service User Manual
 
+- [Shadow Service User Manual](#shadow-service-user-manual)
+  - [Background](#background)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+  - [Override Middleware Configuration](#override-middleware-configuration)
+  - [Delete a Shadow Service](#delete-a-shadow-service)
+
 ## Background
 
 Shadow service is an add-on feature of EaseMesh, it replicates existing services to a shadow copy, and then, test traffic could be sent to the shadow services for the test.
@@ -12,10 +19,10 @@ Shadow service also enables full-link stress tests. To keep the system being hig
 
 ## Installation
 
-As an add-on feature, shadow service could be installed at the same time as EaseMesh installation with an additional command line flag `-add-ons=ShadowService`, like below:
+As an add-on feature, shadow service could be installed at the same time as EaseMesh installation with an additional command line flag `--add-ons=ShadowService`, like below:
 
 ```bash
-emctl install -add-ons=ShadowService
+emctl install --add-ons=ShadowService
 ```
 
 Or, if EaseMesh infrastructure has already been installed, the shadow service feature could be installed with the command:
