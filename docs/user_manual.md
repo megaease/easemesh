@@ -7,10 +7,10 @@
   - [Mesh service](#mesh-service)
     - [Tenant Spec](#tenant-spec)
     - [MeshService Spec](#meshservice-spec)
-  - [MeshDeployment](#meshdeployment)
   - [Native Deployment](#native-deployment)
     - [Create a specific (interested) namespace](#create-a-specific-interested-namespace)
     - [Deploy an annotated deployment](#deploy-an-annotated-deployment)
+  - [MeshDeployment](#meshdeployment)
   - [Sidecar Traffic](#sidecar-traffic)
     - [Inbound](#inbound)
     - [Outbound](#outbound)
@@ -109,7 +109,73 @@ For service register/discovery, EaseMesh supports three mainstream solutions, Eu
 
 Communications between internal mesh services can be done through Spring Cloud's recommended clients, such as `WebClient`, `RestTemplate`, and `FeignClient`. The original HTTP domain-based RPC remains unchanged. Please notice, EaseMesh will host the Ease-West way traffic by its mesh service name, so it is necessary to keep the mesh service name the same as the original Spring Cloud application name for HTTP domain-based RPC.
 
+
+
+## Native Deployment
+
+Except for the custom resource [MeshDeployment](#meshdeployment), we support the native K8s deployment resource to automatically inject the JavaAgent and sidecar.
+
+If you want the EaseMesh to govern applications, you need to fulfill the following prerequisites:
+1. Create the namespace with the specified label.
+2. Annotated the deployment spec with specific annotations.
+3. Deploy applications via the K8s Deployments.
+
+### Create a specific (interested) namespace
+The EaseMesh only watches the create/update operation that occurred in the interested namespace. What's is the interested namespace, it's a namespace label with a specific key. So if you want the EaseMesh to automatically inject the sidecar and the JavaAgent for the Deployment in the namespace, you need to create the namespace with the label key: `mesh.megaease.com/mesh-service`
+
+For example:
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spring-petclinic
+  labels:
+    mesh.megaease.com/mesh-service: "true"
+```
+> No matter what's the value of the `mesh.megaease.com/mesh-service` is set, EaseMesh will regard the namespace as the interested namespace in which deployments create/updated will be instrumented.
+
+### Deploy an annotated deployment
+
+As mentioned before,  the EaseMesh will instrument the deployments create/update operation in the specified namespace, but the EaseMesh's injection will not be always applied on all deployments in the namespace, it will only influent the deployment annotated with specified annotation.
+
+The EaseMesh provides the following annotations to users which will help the EaseMesh efficiently manage users' applications:
+
+- `mesh.megaease.com/service-name`: *Required annotation*, it is the name of [MeshService](#mesh-service).
+- `mesh.megaease.com/service-labels`: *Optional annotation*, if you need a canary version of applications, you could specify it via a "key=value" form. These labels will be attached to instances registered in the service registry.
+- `mesh.megaease.com/app-container-name`: *Optional annotation*, If your deployments contain multiple containers, you need to specify what's container is your app container. If it is omitted, the EaseMesh assumes the first container is the application container.
+- `mesh.megaease.com/application-port`: *Optional annotation*, If the application container listens on multiple ports, you must specify a port as an application port from which services are provided. If it is omitted, the first port is regarded as an application port.
+- `mesh.megaease.com/alive-probe-url`: *Optional annotation*, The sidecar needs to know whether the application container is alive or dead. If it is omitted, the default is:`http://localhost:9900/health`, The JavaAgent will open the port to listen.
+- `mesh.megaease.com/init-container-image`: *Optional annotation*, the image name of the initContainer which contains the JavaAgent jar providing the observability to the service. if omitted, the default initContainer image  will use.
+- `mesh.megaease.com/sidecar-image`: *Optional annotation*, the sidecar image for controlling the service traffic. If omitted, the default sidecar image will be used.
+
+
+
+For example:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ${your-ns-name}
+  name: ${your_service-name}-canary
+  annotations:
+    mesh.megaease.com/service-name: ${your_service-name} 
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: app1    #Note! service name should remain the same with the origin mesh service
+  template:
+    metadata:
+      labels:
+        app: app1
+    spec:
+      containers:
+...
+```
+
 ## MeshDeployment 
+
+> It will deprecated in version 1.4.0. We do not encourage to use it. Prefer to using with native deployment with dedicated annotation, refer to [Native deployment](#native-deployment).
 
 EaseMesh relies on Kubernetes for managing service instances and the resources they require. For example, we can scale the number of instances with the help of Kubernetes. In fact, EaseMesh uses a mechanism called [Kubernetes  Custom Resource Define(CRD)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) to combine the service metadata used by EaseMesh and Kubernetes original deployment. MeshDeployment can be used not only to deploy and manage service instances, it can also help us implement the canary deployment.
 
@@ -137,66 +203,6 @@ spec:
           app: ${your-service-name}
       spec:
         containers:
-...
-```
-
-
-## Native Deployment
-
-Except for the custom resource `MeshDeployment`, we support the native K8s deployment resource to automatically inject the JavaAgent and sidecar.
-
-If you want the EaseMesh to govern applications, you need to fulfill the following prerequisites:
-1. Create the namespace with the specified label.
-2. Deploy applications via the K8s Deployments.
-3. Annotated the deployment with specific annotations.
-
-### Create a specific (interested) namespace
-The EaseMesh only watches the create/update operation that occurred in the interested namespace. What's is the interested namespace, it's a namespace label with a specific key. So if you want the EaseMesh to automatically inject the sidecar and the JavaAgent for the Deployment in the namespace, you need to create the namespace with the label key: `mesh.megaease.com/mesh-service`
-
-For example:
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: spring-petclinic
-  labels:
-    mesh.megaease.com/mesh-service: "true"
-```
-> No matter what's the value of the `mesh.megaease.com/mesh-service` is set, EaseMesh will regard the namespace as the interested namespace in which deployments create/updated will be instrumented.
-
-### Deploy an annotated deployment
-
-As mentioned before,  the EaseMesh will instrument the deployments create/update operation in the specified namespace, but the EaseMesh's injection will not be always applied on all deployments in the namespace, it will only influent the deployment annotated with specified annotation.
-
-The EaseMesh provides the following annotations to users which will help the EaseMesh efficiently manage users' applications:
-
-- `mesh.megaease.com/service-name`: *Required annotation*, it is the name of [MeshService](#mesh-service).
-- `mesh.megaease.com/service-labels`: *Optional annotation*, if you need a canary version of applications, you could specify it via a "key=value" form. These labels will be attached to instances registered in the service registry.
-- `mesh.megaease.com/app-container-name`: *Optional annotation*, If your deployments contain multiple containers, you need to specify what's container is your app container. If it is omitted, the EaseMesh assumes the first container is the application container.
-- `mesh.megaease.com/application-port`: *Optional annotation*, If the application container listens on multiple ports, you must specify a port as an application port from which services are provided. If it is omitted, the first port is regarded as an application port.
-- `mesh.megaease.com/alive-probe-url`: *Optional annotation*, The sidecar needs to know whether the application container is alive or dead. If it is omitted, the default is:`http://localhost:9900/health`, The JavaAgent will open the port to listen.
-
-
-For example:
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  namespace: ${your-ns-name}
-  name: ${your_service-name}-canary
-  annotations:
-    mesh.megaease.com/service-name: ${your_service-name} 
-spec:
-  replicas: 0
-  selector:
-    matchLabels:
-      app: app1    #Note! service name should remain the same with the origin mesh service
-  template:
-    metadata:
-      labels:
-        app: app1
-    spec:
-      containers:
 ...
 ```
 
