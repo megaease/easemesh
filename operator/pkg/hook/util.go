@@ -39,6 +39,8 @@ const (
 	annotationAppContainerNameKey = annotationPrefix + "app-container-name"
 	annotationApplicationPortKey  = annotationPrefix + "application-port"
 	annotationAliveProbeURLKey    = annotationPrefix + "alive-probe-url"
+	annotationInitContainerImage  = annotationPrefix + "init-container-image"
+	annotationSidecarImage        = annotationPrefix + "sidecar-image"
 
 	defaultAliveProbeURL = "http://localhost:9900/health"
 )
@@ -104,11 +106,13 @@ func (h *MutateHook) extractMeshService(baseObject *BaseObject) (*sidecarinjecto
 	}
 
 	return &sidecarinjector.MeshService{
-		Name:             name,
-		Labels:           labels,
-		AppContainerName: baseObject.Annotations[annotationAppContainerNameKey],
-		AliveProbeURL:    aliveProbeURL,
-		ApplicationPort:  applicationPort,
+		Name:               name,
+		Labels:             labels,
+		AppContainerName:   baseObject.Annotations[annotationAppContainerNameKey],
+		AliveProbeURL:      aliveProbeURL,
+		ApplicationPort:    applicationPort,
+		InitContainerImage: baseObject.Annotations[annotationInitContainerImage],
+		SidecarImage:       baseObject.Annotations[annotationSidecarImage],
 	}, nil
 }
 

@@ -20,6 +20,7 @@ package sidecarinjector
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 	"github.com/megaease/easemesh/mesh-operator/pkg/util/labelstool"
@@ -47,7 +48,11 @@ var (
 
 	// Init container stuff.
 	initContainerName      = "initializer"
-	initContainerImageName = func(br *base.Runtime) string {
+	initContainerImageName = func(customImage string, br *base.Runtime) string {
+		if customImage != "" {
+			return customImage
+		}
+
 		if br.AgentInitializerImageName != "" {
 			return br.AgentInitializerImageName
 		}
@@ -92,7 +97,10 @@ var (
 
 	// Sidecar container stuff.
 	sidecarContainerName      = "easemesh-sidecar"
-	sidecarContainerImageName = func(baseRuntime *base.Runtime) string {
+	sidecarContainerImageName = func(customImage string, baseRuntime *base.Runtime) string {
+		if customImage != "" {
+			return customImage
+		}
 		if baseRuntime.SidecarImageName != "" {
 			return baseRuntime.SidecarImageName
 		}
@@ -214,6 +222,12 @@ type (
 
 		// AliveProbeURL is optional.
 		AliveProbeURL string
+
+		// InitContainerImage could overlap the default image of the init container
+		InitContainerImage string
+
+		// SidecarImage could overlap the default image of the sidecar
+		SidecarImage string
 	}
 )
 
@@ -310,7 +324,7 @@ func (m *SidecarInjector) injectVolumes(volumes ...corev1.Volume) {
 func (m *SidecarInjector) injectInitContainer() {
 	initContainer := corev1.Container{
 		Name:            initContainerName,
-		Image:           m.completeImageURL(initContainerImageName(m.Runtime)),
+		Image:           m.completeImageURL(initContainerImageName(m.meshService.InitContainerImage, m.Runtime)),
 		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
 		Command:         initContainerCommand(m.meshService),
 		VolumeMounts:    initContainerVolumeMounts,
@@ -350,7 +364,7 @@ func (m *SidecarInjector) adaptAppContainerSpec() error {
 func (m *SidecarInjector) injectSidecarContainer() {
 	sidecarContainer := corev1.Container{
 		Name:            sidecarContainerName,
-		Image:           m.completeImageURL(sidecarContainerImageName(m.Runtime)),
+		Image:           m.completeImageURL(sidecarContainerImageName(m.SidecarImageName, m.Runtime)),
 		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
 		Command:         sidecarContainerCmd,
 		VolumeMounts:    sidecarContainerVolumeMounts,
@@ -362,6 +376,9 @@ func (m *SidecarInjector) injectSidecarContainer() {
 }
 
 func (m *SidecarInjector) completeImageURL(imageName string) string {
+	if strings.Contains(imageName, ".") { // imageName with repository name, we don't add prefix
+		return imageName
+	}
 	return filepath.Join(m.ImageRegistryURL, imageName)
 }
 
