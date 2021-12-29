@@ -32,11 +32,11 @@ As the basic example at (1), we have 3 services to represent backend services of
 
 ![image](imgs/multiple-canaries-guide-01.png)
 
-Then at (2), `team-delivery` deployed a local canary `delivery-beijing` to test a new feature for traffic from Beijing.
+Then at (2), `the delivery team` deployed a local canary `delivery-beijing` to test a new feature for traffic from Beijing.
 
 ![image](imgs/multiple-canaries-guide-02.png)
 
-And we go to (3), another team `team-restaurant` deployed another local canary `restaurant-beijing` to test another new feature. So if the two canaries handled some or all common traffic, the clients might get unexpected results. For example, `restaurant-beijing` returned a cook duration but `delivery-beijing` returned a delivery duration, where the sum of two separated durations is not consistent with the original total duration. This kind of confusing situation isn’t absolutely what we want to appear.
+And we go to (3), another team `the restaurant team` deployed another local canary `restaurant-beijing` to test another new feature. So if the two canaries handled some or all common traffic, the clients might get unexpected results. For example, `restaurant-beijing` returned a cook duration but `delivery-beijing` returned a delivery duration, where the sum of two separated durations is not consistent with the original total duration. This kind of confusing situation isn’t absolutely what we want to appear.
 
 ![image](imgs/multiple-canaries-guide-03.png)
 
