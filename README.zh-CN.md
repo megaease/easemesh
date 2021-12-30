@@ -1,5 +1,3 @@
-
-
 # EaseMesh
 
 - [EaseMesh](#easemesh)
@@ -404,4 +402,4 @@ EaseMesh采用Apache 2.0许可证。详情请见[LICENSE](./LICENSE)文件。
 
 ## 11. 用戶手冊
 
-详情请见[EaseMesh用戶手冊](./docs/user_manual.md)。
+详情请见[EaseMesh用戶手冊](./docs/user-manual.md)。

@@ -28,10 +28,10 @@ import (
 	"net/http"
 )
 
-type resilienceGetter struct {
+type resilienceInterface struct {
 	client *meshClient
 }
-type resilienceInterface struct {
+type resilienceGetter struct {
 	client *meshClient
 }
 

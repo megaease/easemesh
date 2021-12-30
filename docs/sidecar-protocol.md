@@ -7,7 +7,11 @@
 
 There are three types of traffic that are managed by EaseMesh.
 
-* First, the **RESTful-API HTTP traffic** for RPC inside the mesh. This traffic is invoked by Java applications with popular RPC frameworks, such as Feign, RestTemplate, and so on. EaseAgent will enhance this traffic by adding the target RPC server's name inside the HTTP header for telling the sidecar of the real handler.
+* First, the **RESTful-API HTTP traffic** for RPC inside the mesh. This traffic is invoked by Java applications with popular RPC frameworks, such as Feign, RestTemplate, and so on. EaseAgent will enhance this traffic by adding the target RPC server's name inside the HTTP header for telling the sidecar of the real handler. The traffic must satisfy at least one way of:
+
+1. Headers: `X-Mesh-Rpc-Service: {destination_service_name}`
+2. Headers: `Host: {destination_service_name}` or `Host: ^(\w+\.)*{destination_service_name}\.(\w+)\.svc\..+`
+
 * Second, the **Health-checking HTTP traffic**. This traffic is sent from the sidecar to the Java application's additional port opened by EaseAgent.  The complete URI is `http://localhost:9900/health` by default. This `9900` port is opened by EaseAgent, sidecar will query this URI period for checking the liveness of the Java application. After successfully deployed, sidecar will registry this instance into EaseMesh automatically after confirming the HTTP 200 success return by this URI.
 * Third, the **Service-discovery traffic**. This traffic is invoked by the Java spring cloud application's RPC framework. During the lifetime of the Java application, sidecar will work as the Java application's service registry and discovery center. EaseMesh sidecar implements Eureka/Consul/Naocs APIs for hosting the Java application's registry and discovery requests. To make the sidecar server the registry and discovery center, value it with `http://localhost:13009` inside the Java application's  XML. The port `13009` is listened by sidecar for handling Eureka/Consul/Nacos APIs.
 
@@ -39,11 +43,11 @@ The ports used by EaseMesh sidecar+agnet system
 
 To support the none-Java-spring-cloud-based RESTful-API application, regardless of which programming is used. The application must follow the protocol below
 
-
 1. It must serve as standard RESTful-API for handling requesting or invoking RPC.
 
 2. It must use a domain for discovering in RESTful-API RPC.
-```
+
+```plain
 Requirement:
 1. Use coreDNS with easemesh specific plugin
 2. Valid domain formats:
