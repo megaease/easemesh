@@ -255,8 +255,8 @@ func NewShadowService() object.ShadowService {
 	return shadowService
 }
 
-// NewNameSpace create fake NameSpace for test.
-func NewNameSpace() *corev1.Namespace {
+// NewNamespace create fake NameSpace for test.
+func NewNamespace() *corev1.Namespace {
 	ns1 := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "spring-petclinic",

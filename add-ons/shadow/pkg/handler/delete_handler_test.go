@@ -17,7 +17,7 @@ import (
 
 func prepareClientForTest() kubernetes.Interface {
 	var result runtime.Object
-	namespace := shadowfake.NewNameSpace()
+	namespace := shadowfake.NewNamespace()
 	deployment := shadowfake.NewSourceDeployment()
 	shadowDeployment := shadowfake.NewShadowDeployment()
 
