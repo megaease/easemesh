@@ -52,6 +52,7 @@ const (
 
 	shadowDeploymentNameSuffix = "-shadow"
 
+	easemeshTagsConfigEnv        = "EASEMESH_TAGS"
 	databaseShadowConfigEnv      = "EASE_RESOURCE_DATABASE"
 	kafkaShadowConfigEnv         = "EASE_RESOURCE_KAFKA"
 	rabbitmqShadowConfigEnv      = "EASE_RESOURCE_RABBITMQ"

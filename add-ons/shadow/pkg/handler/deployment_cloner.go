@@ -207,15 +207,29 @@ func shadowConfigurationMap(shadowService *object.ShadowService) map[string]inte
 	shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
 	shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
 	shadowConfigs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
+	shadowConfigs[easemeshTagsConfigEnv] = defaultEaseMeshTags()
 	return shadowConfigs
 }
 
 func shadowConfigurationKeys() []string {
-	configKeys := []string{databaseShadowConfigEnv, elasticsearchShadowConfigEnv, redisShadowConfigEnv, kafkaShadowConfigEnv, rabbitmqShadowConfigEnv}
+	configKeys := []string{
+		databaseShadowConfigEnv,
+		elasticsearchShadowConfigEnv,
+		redisShadowConfigEnv,
+		kafkaShadowConfigEnv,
+		rabbitmqShadowConfigEnv,
+		easemeshTagsConfigEnv,
+	}
 	sort.Strings(configKeys)
 	return configKeys
 }
 
+func defaultEaseMeshTags() map[string]string {
+	m := map[string]string{
+		"label.local": "shadow",
+	}
+	return m
+}
 func sourceName(name string) string {
 	return strings.TrimSuffix(name, shadowDeploymentNameSuffix)
 }
