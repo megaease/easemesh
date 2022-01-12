@@ -72,11 +72,20 @@ const (
 	// KindLoadBalance is loadbalance kind of the EaseMesh resource
 	KindLoadBalance = "LoadBalance"
 
+	// KindMock is mock kind of the EaseMesh resource
+	KindMock = "Mock"
+
 	// KindResilience is resilience kind of the EaseMesh resource
 	KindResilience = "Resilience"
 
 	// KindIngress is ingress kind of the EaseMesh resource
 	KindIngress = "Ingress"
+
+	// KindHTTPRouteGroup is HTTP Route Group kind of the EaseMesh resource
+	KindHTTPRouteGroup = "HTTPRouteGroup"
+
+	// KindTrafficTarget is TrafficTarget kind of the EaseMesh resource
+	KindTrafficTarget = "TrafficTarget"
 
 	// KindCustomResourceKind is the kind of 'custom resource kind' of the EaseMesh resource
 	KindCustomResourceKind = "CustomResourceKind"
@@ -155,9 +164,21 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 		return &Resilience{
 			MeshResource: NewResilienceResource(apiVersion, metaData.Name),
 		}, nil
+	case KindMock:
+		return &Mock{
+			MeshResource: NewMockResource(apiVersion, metaData.Name),
+		}, nil
 	case KindIngress:
 		return &Ingress{
 			MeshResource: NewIngressResource(apiVersion, metaData.Name),
+		}, nil
+	case KindHTTPRouteGroup:
+		return &HTTPRouteGroup{
+			MeshResource: NewHTTPRouteGroupResource(apiVersion, metaData.Name),
+		}, nil
+	case KindTrafficTarget:
+		return &TrafficTarget{
+			MeshResource: NewTrafficTargetResource(apiVersion, metaData.Name),
 		}, nil
 	case KindServiceCanary:
 		return &ServiceCanary{
@@ -184,6 +205,16 @@ func NewIngressResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindIngress, name)
 }
 
+// NewHTTPRouteGroupResource returns a MeshResource with the HTTP Route Group kind
+func NewHTTPRouteGroupResource(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindHTTPRouteGroup, name)
+}
+
+// NewTrafficTargetResource returns a MeshResource with the Traffic Target kind
+func NewTrafficTargetResource(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindTrafficTarget, name)
+}
+
 // NewServiceResource returns a MeshResource with the service kind
 func NewServiceResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindService, name)
@@ -207,6 +238,11 @@ func NewLoadBalanceResource(apiVersion, name string) meta.MeshResource {
 // NewResilienceResource returns a MeshResource with the resilience kind
 func NewResilienceResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindResilience, name)
+}
+
+// NewMockResource returns a MeshResource with the mock kind
+func NewMockResource(apiVersion, name string) meta.MeshResource {
+	return NewMeshResource(apiVersion, KindMock, name)
 }
 
 // NewObservabilityTracingsResource returns a MeshResource with the observability tracings kind

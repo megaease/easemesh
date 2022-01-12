@@ -58,6 +58,8 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 		return &tenantApplier{object: object.(*resource.Tenant), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindResilience:
 		return &resilienceApplier{object: object.(*resource.Resilience), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindMock:
+		return &mockApplier{object: object.(*resource.Mock), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindObservabilityMetrics:
 		return &observabilityMetricsApplier{object: object.(*resource.ObservabilityMetrics), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindObservabilityOutputServer:
@@ -66,6 +68,10 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 		return &observabilityTracingsApplier{object: object.(*resource.ObservabilityTracings), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindIngress:
 		return &ingressApplier{object: object.(*resource.Ingress), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindHTTPRouteGroup:
+		return &httpRouteGroupApplier{object: object.(*resource.HTTPRouteGroup), baseApplier: baseApplier{client: client, timeout: timeout}}
+	case resource.KindTrafficTarget:
+		return &trafficTargetApplier{object: object.(*resource.TrafficTarget), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindServiceCanary:
 		return &serviceCanaryApplier{object: object.(*resource.ServiceCanary), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindCustomResourceKind:
@@ -351,6 +357,35 @@ func (r *resilienceApplier) Apply() error {
 	}
 }
 
+type mockApplier struct {
+	baseApplier
+	object *resource.Mock
+}
+
+func (m *mockApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), m.timeout)
+	defer cancelFunc()
+	err := m.client.V1Alpha1().Mock().Create(ctx, m.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = m.client.V1Alpha1().Mock().Patch(ctx, m.object)
+			if err != nil && meshclient.IsConflictError(err) {
+				return errors.Wrapf(err, "update mock %s", m.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = m.client.V1Alpha1().Mock().Create(ctx, m.object)
+			if err != nil && meshclient.IsNotFoundError(err) {
+				return errors.Wrapf(err, "create mock %s", m.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply mock %s", m.object.Name())
+		}
+	}
+}
+
 type ingressApplier struct {
 	baseApplier
 	object *resource.Ingress
@@ -376,6 +411,64 @@ func (i *ingressApplier) Apply() error {
 			}
 		default:
 			return errors.Wrapf(err, "apply ingress %s", i.object.Name())
+		}
+	}
+}
+
+type httpRouteGroupApplier struct {
+	baseApplier
+	object *resource.HTTPRouteGroup
+}
+
+func (g *httpRouteGroupApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), g.timeout)
+	defer cancelFunc()
+	err := g.client.V1Alpha1().HTTPRouteGroup().Create(ctx, g.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = g.client.V1Alpha1().HTTPRouteGroup().Patch(ctx, g.object)
+			if err != nil && meshclient.IsConflictError(err) {
+				return errors.Wrapf(err, "update httpRouteGroup %s", g.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = g.client.V1Alpha1().HTTPRouteGroup().Create(ctx, g.object)
+			if err != nil && meshclient.IsNotFoundError(err) {
+				return errors.Wrapf(err, "create httpRouteGroup %s", g.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply httpRouteGroup %s", g.object.Name())
+		}
+	}
+}
+
+type trafficTargetApplier struct {
+	baseApplier
+	object *resource.TrafficTarget
+}
+
+func (tt *trafficTargetApplier) Apply() error {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), tt.timeout)
+	defer cancelFunc()
+	err := tt.client.V1Alpha1().TrafficTarget().Create(ctx, tt.object)
+	for {
+		switch {
+		case err == nil:
+			return nil
+		case meshclient.IsConflictError(err):
+			err = tt.client.V1Alpha1().TrafficTarget().Patch(ctx, tt.object)
+			if err != nil && meshclient.IsConflictError(err) {
+				return errors.Wrapf(err, "update trafficTarget %s", tt.object.Name())
+			}
+		case meshclient.IsNotFoundError(err):
+			err = tt.client.V1Alpha1().TrafficTarget().Create(ctx, tt.object)
+			if err != nil && meshclient.IsNotFoundError(err) {
+				return errors.Wrapf(err, "create trafficTarget %s", tt.object.Name())
+			}
+		default:
+			return errors.Wrapf(err, "apply trafficTarget %s", tt.object.Name())
 		}
 	}
 }

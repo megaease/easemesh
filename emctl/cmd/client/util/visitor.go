@@ -316,8 +316,14 @@ func adaptCommandKind(kind string) string {
 		return resource.KindObservabilityMetrics
 	case low(resource.KindResilience):
 		return resource.KindResilience
+	case low(resource.KindMock):
+		return resource.KindMock
 	case low(resource.KindIngress):
 		return resource.KindIngress
+	case low(resource.KindHTTPRouteGroup):
+		return resource.KindHTTPRouteGroup
+	case low(resource.KindTrafficTarget):
+		return resource.KindTrafficTarget
 	case low(resource.KindServiceCanary):
 		return resource.KindServiceCanary
 	case low(resource.KindCustomResourceKind):

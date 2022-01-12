@@ -59,6 +59,10 @@ type (
 		baseGetter
 	}
 
+	fakeMockGetter struct {
+		baseGetter
+	}
+
 	fakeCanaryGetter struct {
 		baseGetter
 	}
@@ -72,6 +76,14 @@ type (
 	}
 
 	fakeIngressGetter struct {
+		baseGetter
+	}
+
+	fakeHTTPRouteGroupGetter struct {
+		baseGetter
+	}
+
+	fakeTrafficTargetGetter struct {
 		baseGetter
 	}
 
@@ -114,43 +126,58 @@ func (f *fakeV1alpha1) Tenant() TenantInterface {
 }
 func (f *fakeV1alpha1) Service() ServiceInterface {
 	return &fakeServiceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindService}}
 }
 func (f *fakeV1alpha1) ServiceInstance() ServiceInstanceInterface {
 	return &fakeServiceInstanceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindServiceInstance}}
 }
 
 func (f *fakeV1alpha1) LoadBalance() LoadBalanceInterface {
 	return &fakeLoadbalanceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindLoadBalance}}
 }
 func (f *fakeV1alpha1) Canary() CanaryInterface {
 	return &fakeCanaryGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindCanary}}
 }
 func (f *fakeV1alpha1) ObservabilityTracings() ObservabilityTracingsInterface {
 	return &fakeObservabilityTracingGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindObservabilityTracings}}
 }
 
 func (f *fakeV1alpha1) ObservabilityMetrics() ObservabilityMetricsInterface {
 	return &fakeObservabilityMetricGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindObservabilityMetrics}}
 }
 func (f *fakeV1alpha1) ObservabilityOutputServer() ObservabilityOutputServerInterface {
 	return &fakeObservabilityOutputServerGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindObservabilityOutputServer}}
 }
 
 func (f *fakeV1alpha1) Resilience() ResilienceInterface {
 	return &fakeResilienceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindResilience}}
+}
+
+func (f *fakeV1alpha1) Mock() MockInterface {
+	return &fakeMockGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
+		kind: resource.KindMock}}
 }
 
 func (f *fakeV1alpha1) Ingress() IngressInterface {
 	return &fakeIngressGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindIngress}}
+}
+
+func (f *fakeV1alpha1) HTTPRouteGroup() HTTPRouteGroupInterface {
+	return &fakeHTTPRouteGroupGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
+		kind: resource.KindHTTPRouteGroup}}
+}
+
+func (f *fakeV1alpha1) TrafficTarget() TrafficTargetInterface {
+	return &fakeTrafficTargetGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
+		kind: resource.KindTrafficTarget}}
 }
 
 func (f *fakeV1alpha1) ServiceCanary() ServiceCanaryInterface {
@@ -164,12 +191,12 @@ func (f *fakeV1alpha1) ServiceCanary() ServiceCanaryInterface {
 
 func (f *fakeV1alpha1) CustomResourceKind() CustomResourceKindInterface {
 	return &fakeCustomResourceKindGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: resource.KindCustomResourceKind}}
 }
 
 func (f *fakeV1alpha1) CustomResource() CustomResourceInterface {
 	return &fakeCustomResourceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
+		kind: "-"}}
 }
 
 func (f *fakeV1alpha1) MeshController() MeshControllerInterface {
@@ -629,6 +656,53 @@ func (f *fakeResilienceGetter) List(ctx context.Context) ([]*resource.Resilience
 	return result, nil
 }
 
+// fakeMockGetter implementation
+
+func (f *fakeMockGetter) Get(ctx context.Context, name string) (*resource.Mock, error) {
+	o, err := f.resourceReactor.DoRequest("get", resource.KindMock, name, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result, ok := o[0].(*resource.Mock)
+	if !ok {
+		return nil, errors.Errorf("get an unknown MeshObject %+v", o)
+	}
+	return result, nil
+}
+
+func (f *fakeMockGetter) Patch(ctx context.Context, t *resource.Mock) error {
+	return f.doModifyRequest(resource.KindMock, t.Name(), t)
+}
+
+func (f *fakeMockGetter) Create(ctx context.Context, t *resource.Mock) error {
+	return f.doModifyRequest(resource.KindMock, t.Name(), t)
+}
+
+func (f *fakeMockGetter) Delete(ctx context.Context, name string) error {
+	return f.doModifyRequest(resource.KindMock, name, nil)
+}
+
+func (f *fakeMockGetter) List(ctx context.Context) ([]*resource.Mock, error) {
+	o, err := f.resourceReactor.DoRequest("list", resource.KindMock, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result := []*resource.Mock{}
+	for _, m := range o {
+		c := m.(*resource.Mock)
+		if c != nil {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
 // fakeIngressGetter implementation
 
 func (f *fakeIngressGetter) Get(ctx context.Context, name string) (*resource.Ingress, error) {
@@ -675,6 +749,102 @@ func (f *fakeIngressGetter) List(ctx context.Context) ([]*resource.Ingress, erro
 	}
 	return result, nil
 }
+
+// fakeHTTPRouteGroupGetter implementation
+
+func (f *fakeHTTPRouteGroupGetter) Get(ctx context.Context, name string) (*resource.HTTPRouteGroup, error) {
+	o, err := f.resourceReactor.DoRequest("get", resource.KindHTTPRouteGroup, name, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result, ok := o[0].(*resource.HTTPRouteGroup)
+	if !ok {
+		return nil, errors.Errorf("get an unknown MeshObject %+v", o)
+	}
+	return result, nil
+}
+
+func (f *fakeHTTPRouteGroupGetter) Patch(ctx context.Context, t *resource.HTTPRouteGroup) error {
+	return f.doModifyRequest(resource.KindHTTPRouteGroup, t.Name(), t)
+}
+
+func (f *fakeHTTPRouteGroupGetter) Create(ctx context.Context, t *resource.HTTPRouteGroup) error {
+	return f.doModifyRequest(resource.KindHTTPRouteGroup, t.Name(), t)
+}
+
+func (f *fakeHTTPRouteGroupGetter) Delete(ctx context.Context, name string) error {
+	return f.doModifyRequest(resource.KindHTTPRouteGroup, name, nil)
+}
+
+func (f *fakeHTTPRouteGroupGetter) List(ctx context.Context) ([]*resource.HTTPRouteGroup, error) {
+	o, err := f.resourceReactor.DoRequest("list", resource.KindHTTPRouteGroup, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result := []*resource.HTTPRouteGroup{}
+	for _, m := range o {
+		c := m.(*resource.HTTPRouteGroup)
+		if c != nil {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+// fakeTrafficTargetGetter implementation
+
+func (f *fakeTrafficTargetGetter) Get(ctx context.Context, name string) (*resource.TrafficTarget, error) {
+	o, err := f.resourceReactor.DoRequest("get", resource.KindTrafficTarget, name, nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result, ok := o[0].(*resource.TrafficTarget)
+	if !ok {
+		return nil, errors.Errorf("get an unknown MeshObject %+v", o)
+	}
+	return result, nil
+}
+
+func (f *fakeTrafficTargetGetter) Patch(ctx context.Context, t *resource.TrafficTarget) error {
+	return f.doModifyRequest(resource.KindTrafficTarget, t.Name(), t)
+}
+
+func (f *fakeTrafficTargetGetter) Create(ctx context.Context, t *resource.TrafficTarget) error {
+	return f.doModifyRequest(resource.KindTrafficTarget, t.Name(), t)
+}
+
+func (f *fakeTrafficTargetGetter) Delete(ctx context.Context, name string) error {
+	return f.doModifyRequest(resource.KindTrafficTarget, name, nil)
+}
+
+func (f *fakeTrafficTargetGetter) List(ctx context.Context) ([]*resource.TrafficTarget, error) {
+	o, err := f.resourceReactor.DoRequest("list", resource.KindTrafficTarget, "", nil)
+	if err != nil {
+		return nil, err
+	}
+	if len(o) == 0 {
+		return nil, NotFoundError
+	}
+	result := []*resource.TrafficTarget{}
+	for _, m := range o {
+		c := m.(*resource.TrafficTarget)
+		if c != nil {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+// fakeServiceCanaryGetter implementation
 
 func (f *fakeServiceCanaryGetter) Get(ctx context.Context, name string) (*resource.ServiceCanary, error) {
 	o, err := f.resourceReactor.DoRequest("get", resource.KindServiceCanary, name, nil)

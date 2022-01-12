@@ -34,6 +34,7 @@ type (
 		RegisterTenant string `yaml:"registerTenant" jsonschema:"required"`
 
 		Sidecar       *v1alpha1.Sidecar       `yaml:"sidecar" jsonschema:"required"`
+		Mock          *v1alpha1.Mock          `yaml:"mock" jsonschema:"omitempty"`
 		Resilience    *v1alpha1.Resilience    `yaml:"resilience" jsonschema:"omitempty"`
 		Canary        *v1alpha1.Canary        `yaml:"canary" jsonschema:"omitempty"`
 		LoadBalance   *v1alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
@@ -66,6 +67,7 @@ func (s *Service) ToV1Alpha1() *v1alpha1.Service {
 		result.Resilience = s.Spec.Resilience
 		result.Canary = s.Spec.Canary
 		result.LoadBalance = s.Spec.LoadBalance
+		result.Mock = s.Spec.Mock
 		result.Sidecar = s.Spec.Sidecar
 		result.Observability = s.Spec.Observability
 	}
@@ -82,6 +84,7 @@ func ToService(service *v1alpha1.Service) *Service {
 	result.Spec.Sidecar = service.Sidecar
 	result.Spec.Resilience = service.Resilience
 	result.Spec.Canary = service.Canary
+	result.Spec.Mock = service.Mock
 	result.Spec.LoadBalance = service.LoadBalance
 	result.Spec.Observability = service.Observability
 	return result

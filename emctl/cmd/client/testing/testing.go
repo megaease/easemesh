@@ -42,11 +42,12 @@ type ResourceTypeKind struct {
 
 // GetAllResourceKinds initials a default resource kind pair dimmention.
 func GetAllResourceKinds() []ResourceTypeKind {
-
 	return []ResourceTypeKind{
 		{Type: reflect.TypeOf(resource.Tenant{}), Kind: resource.KindTenant},
 		{Type: reflect.TypeOf(resource.MeshController{}), Kind: resource.KindMeshController},
 		{Type: reflect.TypeOf(resource.Ingress{}), Kind: resource.KindIngress},
+		{Type: reflect.TypeOf(resource.HTTPRouteGroup{}), Kind: resource.KindHTTPRouteGroup},
+		{Type: reflect.TypeOf(resource.TrafficTarget{}), Kind: resource.KindTrafficTarget},
 		{Type: reflect.TypeOf(resource.CustomResourceKind{}), Kind: resource.KindCustomResourceKind},
 		{Type: reflect.TypeOf(resource.CustomResource{}), Kind: "-"},
 		{Type: reflect.TypeOf(resource.LoadBalance{}), Kind: resource.KindLoadBalance},
@@ -56,6 +57,7 @@ func GetAllResourceKinds() []ResourceTypeKind {
 		{Type: reflect.TypeOf(resource.Canary{}), Kind: resource.KindCanary},
 		{Type: reflect.TypeOf(resource.Service{}), Kind: resource.KindService},
 		{Type: reflect.TypeOf(resource.Resilience{}), Kind: resource.KindResilience},
+		{Type: reflect.TypeOf(resource.Mock{}), Kind: resource.KindMock},
 	}
 }
 
