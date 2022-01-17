@@ -1,4 +1,4 @@
-# Full-stack Stress With Shadow Service
+# Full-stack Stress Test With Shadow Service
 
 With the increase of hardware performance, network bandwidth, and user data, traditional stand-alone applications are being replaced by software systems based on the network.
 
@@ -128,4 +128,4 @@ In addition to reliable results and not affecting the production environment, `S
 
 * Zero code change: everything is done via configuration, no need to modify any code and lower risks to create new bugs.
 * Low cost: when using cloud-based servers, the hardware resources used for testing can be applied just before the test and released immediately after the test, you only need to pay for what you need.
-*Secure: although production data is used during testing, the test environment and the production environment are in the same security domain, so it doesn't increase the risk of data leakage.
+* Secure: although production data is used during testing, the test environment and the production environment are in the same security domain, so it doesn't increase the risk of data leakage.
