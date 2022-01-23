@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package operator
+package coredns
 
 import (
 	"testing"
@@ -24,12 +24,12 @@ import (
 	testclient "k8s.io/client-go/kubernetes/fake"
 )
 
-func TestDeployOperatorConfigMap(t *testing.T) {
+func TestDeployCoreDNSConfigMap(t *testing.T) {
 	client := testclient.NewSimpleClientset()
 	stageContext := fake.NewStageContextForApply(client, nil)
 
 	err := configMapSpec(stageContext).Deploy(stageContext)
 	if err != nil {
-		t.Fatalf("deployment operator configmap err %s", err)
+		t.Fatalf("deployment coredns configmap failed: %s", err)
 	}
 }

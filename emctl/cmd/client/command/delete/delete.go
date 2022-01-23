@@ -32,7 +32,6 @@ import (
 
 // Run is the entrypoint of the emctl delete sub command
 func Run(cmd *cobra.Command, flag *flags.Delete) {
-
 	if flag.Server == "" {
 		flag.Server = flags.GetServerAddress()
 	}

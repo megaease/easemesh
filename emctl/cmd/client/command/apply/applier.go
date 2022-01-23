@@ -107,7 +107,6 @@ func (mc *meshControllerApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply meshController %s", mc.object.Name())
 		}
-
 	}
 }
 
@@ -137,7 +136,6 @@ func (s *serviceApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply service %s", s.object.Name())
 		}
-
 	}
 }
 
@@ -176,7 +174,6 @@ func (c *canaryApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply canary %s", c.object.Name())
 		}
-
 	}
 }
 
@@ -206,7 +203,6 @@ func (o *observabilityTracingsApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply observabilityTracings %s", o.object.Name())
 		}
-
 	}
 }
 
@@ -236,7 +232,6 @@ func (o *observabilityMetricsApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply observabilityMetrics %s", o.object.Name())
 		}
-
 	}
 }
 
@@ -266,7 +261,6 @@ func (o *observabilityOutputServerApplier) Apply() error {
 		default:
 			return errors.Wrapf(err, "apply observabilityOutputServer %s", o.object.Name())
 		}
-
 	}
 }
 

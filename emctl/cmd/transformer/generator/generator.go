@@ -87,7 +87,7 @@ const (
 	// Service indicates the resource is service resource.
 	Service ResourceType = "Service"
 
-	//CustomResource indicates the resource is the custom resource.
+	// CustomResource indicates the resource is the custom resource.
 	CustomResource ResourceType = "CustomResource"
 )
 
@@ -157,7 +157,6 @@ func (g *generator) Accept(visitor InterfaceVisitor) error {
 					}
 				}
 			}
-
 		}
 	}
 

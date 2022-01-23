@@ -99,6 +99,7 @@ type (
 		Cmd                 *cobra.Command
 		Client              kubernetes.Interface
 		Flags               *flags.Install
+		CoreDNSFlags        *flags.CoreDNS
 		APIExtensionsClient apiextensions.Interface
 		ClearFuncs          []func(*StageContext) error
 	}

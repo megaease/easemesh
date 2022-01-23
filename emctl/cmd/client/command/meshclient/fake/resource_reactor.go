@@ -59,7 +59,7 @@ type (
 		DoRequest(verb, kind, resource string, obj meta.MeshObject) ([]meta.MeshObject, error)
 	}
 
-	//ResourceReactorBuilder is a builder to build a ResourceReactor
+	// ResourceReactorBuilder is a builder to build a ResourceReactor
 	ResourceReactorBuilder struct {
 		reactorType string
 		reactors    []reactor

@@ -1,3 +1,4 @@
+
 # EaseMesh Installation
 
 - [EaseMesh Installation](#easemesh-installation)
@@ -14,13 +15,13 @@
   - [Installation](#installation)
     - [Install EaseMesh](#install-easemesh)
     - [Install Add-ons](#install-add-ons)
+    - [Install CoreDNS](#install-coredns)
     - [Reset environment](#reset-environment)
   - [Trouble Shooting](#trouble-shooting)
 
 This document gives the instructions to install all infrastructure components (except K8s) required by the EaseMesh.
 
 ## Prerequisites
-
 
 ### Infrastructure components of the EaseMesh
 
@@ -37,12 +38,12 @@ The EaseMesh severely depends on the K8s, all dependencies must be packaged as i
 The Easegress plays multiple roles in the EaseMesh, including:
 
 - Control plane manages services' registry, configurations for the Mesh.
-- Sidecar takes over all traffic in and out of the application container. 
+- Sidecar takes over all traffic in and out of the application container.
 - Ingress takes over all traffic entered the cluster of the K8s.
 
 You can found Easegress from [here](https://github.com/megaease/easegress/releases). The latest image has been uploaded by us. You can download it by `docker pull`.
 
-```
+```bash
 docker pull megaease/easegress
 ```
 
@@ -54,7 +55,7 @@ The EaseAgent is a JavaAgent whose responsibility is collecting metrics and trac
 
 The latest image has been uploaded by us. You can download it by `docker pull`.
 
-```
+```bash
 docker pull megaease/easeagent-initializer
 ```
 
@@ -65,7 +66,7 @@ EaseMesh Operator implements a control loop that repeatedly compares the desired
 
 For convenience, we provide the EaseMesh Operator docker image in docker hub. you can download image via `docker pull`.
 
-```
+```bash
 docker pull megaease/easemesh-operator
 ```
 
@@ -77,13 +78,12 @@ Ensuring you have all three images (accessing docker hub without any problems), 
 
 #### Build the EaseMesh client tools from scratch
 
-The `emctl` can be built from source code, you may follow this guide to build it. 
-
+The `emctl` can be built from source code, you may follow this guide to build it.
 
 > The emctl is implemented in Golang language, you need prepare golang (1.16+) dev environment in advance
 
-
 1. clone source code
+
 ```bash
 git clone https://github.com/megaease/easemesh
 ```
@@ -96,7 +96,6 @@ cd easemesh/emctl && make
 
 3. If no errors occurred, the target was built in `bin/` directory, named with `emctl`
 
-
 ### Environments
 
 #### K8s and Connectivity
@@ -105,7 +104,7 @@ EaseMesh severely depends on the K8s, in order to install the EaseMesh, you must
 
 The installation of the EaseMesh needs admin privilege of K8s cluster, the  `emctl` looks for a file named config in the $HOME/.kube directory. The emctl use it to communicate with K8s API server of a cluster.
 
-By default, The control plane of the EaseMesh exposes its service via K8s' [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport), so you should ensure that the node running `emctl` can access nodes of the K8s cluster 
+By default, The control plane of the EaseMesh exposes its service via K8s' [NodePort](https://kubernetes.io/docs/concepts/services-networking/service/#nodeport), so you should ensure that the node running `emctl` can access nodes of the K8s cluster
 
 #### Persistent Volume
 
@@ -195,13 +194,11 @@ volumeBindingMode: WaitForFirstConsumer
 
 Changing contents according to your environment, provisioning it to your K8s cluster. You must ensure all PVs are created normally.
 
-
 > We leverage [local volume](https://kubernetes.io/docs/concepts/storage/volumes/#local) to persistent control plane data.
 
 ## Installation
 
 ### Install EaseMesh
-
 
 If all prerequisites are fulfilled properly, we can begin to install the EaseMesh. Although there are servals steps that setups required components, it can be done by one command. Steps are:
 
@@ -209,9 +206,9 @@ If all prerequisites are fulfilled properly, we can begin to install the EaseMes
 - **Provision mesh controller**: Mesh controller is implemented in the Easegress, but it is disabled by default. Installation needs to apply a configuration to enable the Mesh controller.
 - **Create the `Custom Resource Definition`**: EaseMesh leverages custom resource definition to manage an application. Installation needs to create it in advance.
 - **Provision the Operator**: The Operator is used to reconciling custom resources to deployment resources.
-- **Provision Mesh ingress**: Mesh ingress is used to take over traffics entering in K8s cluster 
+- **Provision Mesh ingress**: Mesh ingress is used to take over traffics entering in K8s cluster
 
-The installation will run all steps one by one. 
+The installation will run all steps one by one.
 
 Install command is:
 
@@ -225,7 +222,7 @@ If you want to speed up your installation, you can tag all three images and uplo
 emctl install --image-registry-url {your_private_docker_registry_address}
 ```
 
-more arguments can be discovered via :
+more arguments can be discovered via:
 
 ```bash
 emctl install --help
@@ -245,11 +242,25 @@ If EaseMesh infrastructure has already been installed, the add-on features could
 emctl install --only-add-on --add-ons=ShadowService
 ```
 
+### Install CoreDNS
+
+If you want to support pure spring-boot (without spring-cloud suite) application or non-Java languages, installing EaseMesh dedicated CoreDNS is a must. It's very easy to do it:
+
+```bash
+emctl install coredns --replicas 1
+```
+
+more arguments can be discovered via:
+
+```bash
+emctl install coredns --help
+```
+
 ### Reset environment
 
 If you want to remove the EaseMesh, just run the command:
 
-```
+```bash
 emctl reset
 ```
 
@@ -257,7 +268,7 @@ emctl reset
 
 To only uninstall an add-on, run the command:
 
-```
+```bash
 emctl reset --only-add-on --add-ons={addon1,addon2,...}
 ```
 

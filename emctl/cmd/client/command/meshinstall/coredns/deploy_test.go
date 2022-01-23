@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package shadowservice
+package coredns
 
 import (
 	"testing"
@@ -25,8 +25,11 @@ import (
 	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
 
 	"github.com/spf13/cobra"
+	appsV1 "k8s.io/api/apps/v1"
 	extensionfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 )
 
 func prepareContext() (*installbase.StageContext, *fake.Clientset, *extensionfake.Clientset) {
@@ -36,19 +39,48 @@ func prepareContext() (*installbase.StageContext, *fake.Clientset, *extensionfak
 	install := &flags.Install{}
 	cmd := &cobra.Command{}
 	install.AttachCmd(cmd)
-	return meshtesting.PrepareInstallContext(cmd, client, extensionClient, install), client, extensionClient
+	ctx := meshtesting.PrepareInstallContext(cmd, client, extensionClient, install)
+	ctx.CoreDNSFlags = &flags.CoreDNS{}
+	return ctx, client, extensionClient
 }
 
 func TestDeploy(t *testing.T) {
-	ctx, _, _ := prepareContext()
+	ctx, client, _ := prepareContext()
+
+	Deploy(ctx)
 
 	for _, f := range []func(*installbase.StageContext) installbase.InstallFunc{
-		deploymentSpec, shadowServiceKindSpec,
+		configMapSpec, clusterRoleSpec, coreDNSDeploymentSpec,
 	} {
 		f(ctx).Deploy(ctx)
 	}
 
-	Deploy(ctx)
+	client.PrependReactor("get", "*", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+		var replicas int32 = 1
+		switch action.GetResource().Resource {
+		case "deployments":
+			return true, &appsV1.Deployment{
+				Spec: appsV1.DeploymentSpec{
+					Replicas: &replicas,
+				},
+				Status: appsV1.DeploymentStatus{
+					ReadyReplicas: replicas,
+				},
+			}, nil
+		case "statefulsets":
+			return true, &appsV1.StatefulSet{
+				Spec: appsV1.StatefulSetSpec{
+					Replicas: &replicas,
+				},
+				Status: appsV1.StatefulSetStatus{
+					ReadyReplicas: replicas,
+				},
+			}, nil
+		}
+		return true, nil, nil
+	})
+
+	checkCoreDNSStatus(ctx.Client, ctx.Flags)
 }
 
 func TestDescribePhase(t *testing.T) {

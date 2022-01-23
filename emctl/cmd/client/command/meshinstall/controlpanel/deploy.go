@@ -35,7 +35,6 @@ import (
 
 // Deploy will deploy resource of control panel
 func Deploy(ctx *installbase.StageContext) error {
-
 	installFuncs := []installbase.InstallFunc{
 		namespaceSpec(ctx),
 		configMapSpec(ctx),
@@ -75,7 +74,6 @@ func PreCheck(context *installbase.StageContext) error {
 	boundedPVCSuffixes := []string{}
 	for i := 0; i < context.Flags.EasegressControlPlaneReplicas; i++ {
 		boundedPVCSuffixes = append(boundedPVCSuffixes, fmt.Sprintf("%s-%d", installbase.DefaultMeshControlPlaneName, i))
-
 	}
 	for _, pv := range pvList.Items {
 		if pv.Status.Phase == v1.VolumeAvailable &&
@@ -102,7 +100,6 @@ func PreCheck(context *installbase.StageContext) error {
 	}
 
 	return nil
-
 }
 
 // Clear will clear all installed resource about control panel
@@ -149,7 +146,6 @@ func checkPVAccessModes(accessModel v1.PersistentVolumeAccessMode, volume *v1.Pe
 }
 
 func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
-
 	// Wait a fix time for the Easegress cluster to start
 	time.Sleep(time.Second * time.Duration(ctx.Flags.WaitControlPlaneTimeoutInSeconds))
 
@@ -185,7 +181,6 @@ func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 					return nil, errors.Errorf("check control plane member list error, return status code is :%d", statusCode)
 				}
 				members, err := unmarshalMember(body)
-
 				if err != nil {
 					return nil, err
 				}

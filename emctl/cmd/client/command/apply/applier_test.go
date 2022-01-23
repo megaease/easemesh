@@ -46,7 +46,6 @@ func TestApplierCreateSuccessful(t *testing.T) {
 			t.Fatalf("apply %+v, error:%s", resource, err)
 		}
 	}
-
 }
 
 func TestApplierLoopOver(t *testing.T) {

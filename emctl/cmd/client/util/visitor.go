@@ -121,7 +121,6 @@ func expandPathsToFileVisitors(decoder Decoder, paths string, recursive bool, ex
 		visitors = append(visitors, visitor)
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +262,6 @@ func readHTTPWithRetries(client *resty.Client, duration time.Duration, u string,
 		R().
 		SetDoNotParseResponse(true).
 		Get(u)
-
 	if err != nil {
 		return nil, err
 	}

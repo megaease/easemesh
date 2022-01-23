@@ -29,7 +29,6 @@ import (
 )
 
 func TestCanaryGenerator(t *testing.T) {
-
 	testData := []struct {
 		goPackage    string
 		sourceFile   string
@@ -80,7 +79,7 @@ func TestExtractResourceName(t *testing.T) {
 	}
 
 	sourceFile := filepath.Join(tmpDir, "observability.go")
-	err = ioutil.WriteFile(sourceFile, []byte(source), 0600)
+	err = ioutil.WriteFile(sourceFile, []byte(source), 0o600)
 	if err != nil {
 		t.Fatalf("write sourcefile error:%s", err)
 	}
@@ -133,7 +132,6 @@ func TestExtractResourceName(t *testing.T) {
 	spec := &InterfaceFileSpec{SourceFile: sourceFile, Buf: jen.NewFile("hhh")}
 	g := New(spec)
 	g.Accept(&testVisitorAdaptor{interfaceMethod: interfaceMethod})
-
 }
 
 type (
@@ -152,36 +150,42 @@ func (b begin) do(imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	}
 	return nil
 }
+
 func (i getterConcreate) do(name string, spec *InterfaceFileSpec) error {
 	if i != nil {
 		return i(name, spec)
 	}
 	return nil
 }
+
 func (i interfaceConcreate) do(name string, spec *InterfaceFileSpec) error {
 	if i != nil {
 		return i(name, spec)
 	}
 	return nil
 }
+
 func (i resourceGetterMethod) do(name string, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	if i != nil {
 		return i(name, method, imports, spec)
 	}
 	return nil
 }
+
 func (i interfaceMethod) do(concreateStruct string, verb Verb, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	if i != nil {
 		i(concreateStruct, verb, method, imports, spec)
 	}
 	return nil
 }
+
 func (i end) do(buf *jen.File) error {
 	if i != nil {
 		i(buf)
 	}
 	return nil
 }
+
 func (i onErr) do(e error) {
 	if i != nil {
 		i(e)
@@ -201,22 +205,27 @@ type testVisitorAdaptor struct {
 func (t *testVisitorAdaptor) visitorBegin(imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	return t.begin.do(imports, spec)
 }
+
 func (t *testVisitorAdaptor) visitorResourceGetterConcreatStruct(name string, spec *InterfaceFileSpec) error {
 	return t.getterConcreate.do(name, spec)
 }
-func (t *testVisitorAdaptor) visitorInterfaceConcreatStruct(name string, spec *InterfaceFileSpec) error {
 
+func (t *testVisitorAdaptor) visitorInterfaceConcreatStruct(name string, spec *InterfaceFileSpec) error {
 	return t.interfaceConcreate.do(name, spec)
 }
+
 func (t *testVisitorAdaptor) visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	return t.resourceGetterMethod.do(name, method, imports, spec)
 }
+
 func (t *testVisitorAdaptor) visitorIntrefaceMethod(concreateStruct string, verb Verb, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	return t.interfaceMethod.do(concreateStruct, verb, method, imports, spec)
 }
+
 func (t *testVisitorAdaptor) visitorEnd(spec *InterfaceFileSpec) error {
 	return t.end.do(spec.Buf)
 }
+
 func (t *testVisitorAdaptor) onError(e error) {
 	t.onErr.do(e)
 }

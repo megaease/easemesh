@@ -24,7 +24,6 @@ import (
 
 func stepOneDescribe(*installbase.StageContext, installbase.InstallPhase) string {
 	return "stepOneDescribe"
-
 }
 
 func stepOneClear(s *installbase.StageContext) error {
@@ -41,7 +40,6 @@ func stepOnePreCheck(s *installbase.StageContext) error {
 
 func stepTwoDescribe(*installbase.StageContext, installbase.InstallPhase) string {
 	return "stepTwoDescribe"
-
 }
 
 func stepTwoClear(s *installbase.StageContext) error {
@@ -57,7 +55,6 @@ func stepTwoPreCheck(s *installbase.StageContext) error {
 }
 
 func TestInstallation(t *testing.T) {
-
 	installStages := []InstallStage{
 		Wrap(stepOnePreCheck, stepOneDeploy, stepOneClear, stepOneDescribe),
 		Wrap(stepTwoPreCheck, stepTwoDeploy, stepTwoClear, stepTwoDescribe),

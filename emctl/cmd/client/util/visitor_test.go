@@ -25,19 +25,16 @@ import (
 )
 
 func TestFileVisitor(t *testing.T) {
-
 	types := meshtesting.GetAllResourceKinds()
 	types = append(types, meshtesting.ResourceTypeKind{Type: nil, Kind: resource.KindServiceInstance})
 	for i, tp := range types {
 		name := "resource"
 		if i == 0 {
 			name = ""
-
 		}
 		newCommandVisitor(tp.Kind, name).
 			Visit(func(mo meta.MeshObject, e error) error { return nil })
 	}
-
 }
 
 func TestVisitorForSTDIN(t *testing.T) {

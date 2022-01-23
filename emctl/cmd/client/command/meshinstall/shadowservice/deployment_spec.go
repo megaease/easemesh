@@ -73,7 +73,6 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
 func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	return func(installFlags *flags.Install) *appsV1.Deployment {
-
 		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisitor("shadowservice-controller",
 			installFlags.ImageRegistryURL+"/"+installFlags.ShadowServiceControllerImage,

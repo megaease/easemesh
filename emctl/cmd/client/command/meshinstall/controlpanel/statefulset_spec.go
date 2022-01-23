@@ -65,7 +65,7 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 			MatchLabels: labels,
 		}
 
-		var replicas = int32(ctx.Flags.EasegressControlPlaneReplicas)
+		replicas := int32(ctx.Flags.EasegressControlPlaneReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = labels
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
@@ -83,6 +83,7 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 		return spec
 	}
 }
+
 func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
 		spec := fn(ctx)
@@ -126,7 +127,8 @@ func (m *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []str
 	return []string{"/bin/sh"},
 		[]string{
 			"-c",
-			"/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-master.yaml"}
+			"/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-master.yaml",
+		}
 }
 
 func (m *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
@@ -234,7 +236,6 @@ func (m *containerVisitor) VisitorLivenessProbe(c *v1.Container) (*v1.Probe, err
 }
 
 func (m *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, error) {
-
 	// The initialization of the etcd's cluster depended on the domain name,
 	// but domain name register rely on pod ready status, and pod ready
 	// status rely on the successful initialization of etcd's cluster.

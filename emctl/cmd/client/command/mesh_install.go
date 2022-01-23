@@ -26,6 +26,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/controlpanel"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/coredns"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/crd"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
@@ -46,8 +47,10 @@ func InstallCmd() *cobra.Command {
 		Use:     "install",
 		Short:   "Deploy infrastructure components of the EaseMesh",
 		Long:    "",
-		Example: "emctl install --clean-when-failed",
+		Example: "emctl install coredns --clean-when-failed",
 	}
+	cmd.AddCommand(coredns.CoreDNSCmd())
+
 	flags := &flags.Install{}
 	flags.AttachCmd(cmd)
 
@@ -114,6 +117,7 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 			installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
 			installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
 			installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
+			installation.Wrap(coredns.PreCheck, coredns.Deploy, coredns.Clear, coredns.DescribePhase),
 		)
 	}
 

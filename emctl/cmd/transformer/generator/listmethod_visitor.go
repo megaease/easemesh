@@ -163,7 +163,6 @@ func globalUnmarshalObject(resourceName, subResource string) (codes []jen.Code, 
 }
 
 func serviceResultAssign(resourceName, subResource string) (codes []jen.Code, err error) {
-
 	capResourceName := strings.ToUpper(resourceName[0:1]) + resourceName[1:]
 	stmtDef := jen.Id("results").Op(":=").Op("[]").Op("*").Qual(resourcePkg, capResourceName).Block()
 	codes = append(codes, stmtDef)

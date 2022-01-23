@@ -68,17 +68,19 @@ limitations under the License.`)
 	spec.Buf.Line()
 	return nil
 }
+
 func (m *meshClientVisitor) visitorResourceGetterConcreatStruct(name string, spec *InterfaceFileSpec) error {
 	spec.Buf.Type().Id(name).Struct(jen.Id("client").Qual("", "*meshClient"))
 	m.getterID = name
 	return nil
 }
+
 func (m *meshClientVisitor) visitorInterfaceConcreatStruct(name string, spec *InterfaceFileSpec) error {
 	spec.Buf.Type().Id(name).Struct(jen.Id("client").Qual("", "*meshClient"))
 	return nil
 }
-func (m *meshClientVisitor) visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 
+func (m *meshClientVisitor) visitorResourceGetterMethod(name string, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	var arguments, results []jen.Code
 	err := covertFuncType(method, imports).extractArguments(&arguments).extractResults(&results).error()
 	if err != nil {
@@ -95,8 +97,8 @@ func (m *meshClientVisitor) visitorResourceGetterMethod(name string, method *ast
 	})
 	return nil
 }
-func (m *meshClientVisitor) visitorIntrefaceMethod(concreateStruct string, verb Verb, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 
+func (m *meshClientVisitor) visitorIntrefaceMethod(concreateStruct string, verb Verb, method *ast.Field, imports []*ast.ImportSpec, spec *InterfaceFileSpec) error {
 	var err error
 
 	info := &buildInfo{
@@ -126,6 +128,7 @@ func (m *meshClientVisitor) visitorIntrefaceMethod(concreateStruct string, verb 
 	}
 	return nil
 }
+
 func (m *meshClientVisitor) visitorEnd(spec *InterfaceFileSpec) error {
 	return nil
 }
@@ -145,6 +148,7 @@ func covertFuncType(method *ast.Field, imports []*ast.ImportSpec) *converter {
 
 	return &converter{funcType: funcType, err: err, funcName: method.Names[0].Name, imports: imports}
 }
+
 func (c *converter) funcIdens(fields []*ast.Field, withID bool) (codes []jen.Code) {
 	for i, r := range fields {
 		var statement *jen.Statement
@@ -228,6 +232,7 @@ func (c *converter) extractResults(codes *[]jen.Code) *converter {
 	}
 	return c
 }
+
 func (c *converter) extractFuncName(name *string) *converter {
 	if c.err == nil {
 		*name = c.funcName
