@@ -58,15 +58,17 @@ For `data isolation`, `Shadow Service` can replace the connection information of
 
 ## The usage of shadow service
 
-Let's introduce the usage of Shadow Service by a payment scenario. This scenario involves three services, User, Order, and Payment, the User and Order Services each uses a MySQL database, as shown in the following diagram (the payment service eventually calls a third-party service to complete the payment, but is not shown in the diagram).
+Now let’s introduce the usage of Shadow Service with a simplified payment scenario, it is involving two services, Order and Payment, the Order service calls the Payment service, the Payment service will eventually call a third-party service (not shown in the figure) to complete the payment, and the Order service also accesses a MySQL database.
+
+The system is deployed into Kubernetes via EaseMesh, during the deployment process, EaseMesh injects SideCar ([Easegress](https://github.com/megaease/easegress)-based) and [JavaAgent](https://github.com/megaease/easeagent) into the application's POD, thereby hijacking the HTTP requests and data requests issued by the application, achieving the `3-consistency` and `4-isolation` we have mentioned earlier. Below is the architecture of the system.
 
 ![diagram-02](./imgs/shadow-service-guide-02.png)
 
-To test it, we need to first create the copies of the databases:
+To test it, we need to first create a copy of the database. This step can be done through the backup and recovery function of MySQL. Because both data copies are in the same security domain, it is no need to desensitize the data.
 
 ![diagram-03](./imgs/shadow-service-guide-03.png)
 
-Then, the below `emctl` command will create the shadow copies of the user and order service, a Canary rule (created automatically, so not included in the configuration), and the mocked payment service. Note that the databases for the User and Order service are changed to database copies which we have just created.
+Then, the below `emctl` command will create the shadow copy of the Order service, a Canary rule (created automatically, so not included in the configuration). Note that the database for the Order service is changed to database copy which we have just created.
 
 ```bash
 echo '
@@ -81,23 +83,15 @@ spec:
     uris: "jdbc:mysql://172.20.2.216:3306/shadow_user_db..."
     userName: "megaease"
     password: "megaease"
+' | emctl apply
+```
 
----
+![diagram-04](./imgs/shadow-service-guide-04.png)
 
-kind: ShadowService
-apiVersion: mesh.megaease.com/v1alpla1
-metadata:
-  name: shadow-order-service
-spec:
-  serviceName: order-service
-  namespace: megaease-mall
-  mysql:
-    uris: "jdbc:mysql://172.20.2.216:3306/shadow_order_db..."
-    userName: "megaease"
-    password: "megaease"
+Finally, since we don't want to pay for the test requests, we'll use the following command to mock the Payment service. Note that calling a third-party payment service usually involves several very complex security verification steps, which makes it difficult for this service to be mocked. Therefore, we wrap the third-party service into the internal Payment service to simplify the calling process. The service which was mocked below is the internal service instead of the third-party service.
 
----
-
+```bash
+echo '
 kind: Mock
 apiVersion: mesh.megaease.com/v1alpha1
 metadata:
@@ -118,14 +112,15 @@ spec:
 ' | emctl apply
 ```
 
-This completes the creation of the entire Shadow Service, and below is the final system architecture:
+This completes the creation of the test system, to which we can send a request with an `X-Mesh-Shadow: shadow` header for stress testing. The final system architecture looks like below.
 
-![diagram-04](./imgs/shadow-service-guide-04.png)
+![diagram-05](./imgs/shadow-service-guide-05.png)
 
 ## Pros of shadow service
 
-In addition to reliable results and not affecting the production environment, `Shadow Service` also has the following pros when compare with traditional full-stack stress test methods:
-
-* Zero code change: everything is done via configuration, no need to modify any code and lower risks to create new bugs.
-* Low cost: when using cloud-based servers, the hardware resources used for testing can be applied just before the test and released immediately after the test, you only need to pay for what you need.
-* Secure: although production data is used during testing, the test environment and the production environment are in the same security domain, so it doesn't increase the risk of data leakage.
+Compared to traditional testing methods, stress testing with Shadow Service has clear advantages in the following five areas:
+* **Zero code change**: everything is done via configuration, no need to modify any code and lower risks to create new bugs.
+* **Low cost**: when using cloud-based servers, the hardware resources used for testing can be applied just before the test and released immediately after the test, you only need to pay for what you need.
+* **Business logic is basically the same as the production environment**: Except for a few services that are mocked, the test system is completely consistent with the production system, avoiding inaccuracies caused by differences in business logic to the greatest extent.
+* **Test with production data**: The data of the test system and the production system are completely consistent, which ensures the reliability of the test results.
+* **Secure**: although production data is used during testing, the test environment and the production environment are in the same security domain, so it doesn't increase the risk of data leakage.
