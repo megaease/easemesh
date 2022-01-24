@@ -48,9 +48,9 @@ The `3-consistency` are business consistency, data consistency, and resource con
 
 The `4-isolation` are business isolation, data isolation, traffic isolation, and resource isolation. These isolations are all designed to completely separate the production and test environment to avoid their mutual impact. 
 
-Obviously, the `3-consistency` focuses on the reliability of the test result, while the `4-isolation` ensures that the test process does not corrupt the production environment.
+The `3-consistency` focuses on the reliability of the test result, while the `4-isolation` ensures that the test process does not corrupt the production environment.
 
-Based on these principles, MegaEase implements the `Shadow Service` feature in EaseMesh. By using this feature, users can easily replica all services in the production environment, and except for a `shadow` tag, these replicas are exactly the same as the original service, thus ensuring `business consistency` and `business isolation`. At the same time, `Shadow Service` creates a Canary rule automatically which forwards requests with `X-Mesh-Shadow: shadow` header to the service replica and other requests to the original service for `traffic isolation`.
+Based on these principles, MegaEase implements the `Shadow Service` feature in EaseMesh. By using this feature, users can easily replica all services in the production environment, and except for a `shadow` tag, these replicas are the same as the original service, thus ensuring `business consistency` and `business isolation`. At the same time, `Shadow Service` creates a Canary rule automatically which forwards requests with `X-Mesh-Shadow: shadow` header to the service replica and other requests to the original service for `traffic isolation`.
 
 For `data isolation`, `Shadow Service` can replace the connection information of various middlewares (including MySQL, Kafka, Redis, etc.) according to the configuration, and change the destination of data requests, while users can make a copy of the production data as test data to ensure `data consistency`.
 
@@ -68,7 +68,7 @@ To test it, we need to first create a copy of the database. This step can be don
 
 ![diagram-03](./imgs/shadow-service-guide-03.png)
 
-Then, the below `emctl` command will create the shadow copy of the Order service, a Canary rule (created automatically, so not included in the configuration). Note that the database for the Order service is changed to database copy which we have just created.
+Then, the below `emctl` command will create the shadow copy of the Order service, a Canary rule (created automatically, so not included in the configuration). Note that the database for the Order service is changed to the database copy which we have just created.
 
 ```bash
 echo '
