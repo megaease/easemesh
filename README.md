@@ -177,13 +177,13 @@ We support to automatically inject sidecar and the JavaAgent when a deployment w
 kubectl apply -f https://raw.githubusercontent.com/megaease/easemesh-spring-petclinic/main/namespace/spring-petclinic.yaml
 ```
 
-#### 7.1.3 Step 4: Setup Database
+#### 7.1.3 Step 3: Setup Database
 
 The pet clinic demo needs to access database, the default is memory database. But in the EaseMesh quick start, you could to use memory database by default.
 
 >If you want to use the MySQL database, you could create the DB table schemes and import records from [PetClinic example](https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db/mysql) to set up yours.
 
-#### 7.1.4 Step 3: Apply petclinic stack
+#### 7.1.4 Step 4: Apply petclinic stack
 
 Deploy petclinic resources to k8s cluster, we have developed an [operator](./operator/README.md) to manage the custom resource (MeshDeployment) of the EaseMesh. `Meshdeployment` contains a K8s' complete deployment spec and a piece of extra information about the service.
 
