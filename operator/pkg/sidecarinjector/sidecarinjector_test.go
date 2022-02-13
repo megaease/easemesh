@@ -20,6 +20,7 @@ package sidecarinjector
 import (
 	_ "embed"
 
+	"github.com/go-logr/logr"
 	"github.com/megaease/easemesh/mesh-operator/pkg/base"
 
 	v1 "k8s.io/api/apps/v1"
@@ -48,6 +49,7 @@ var _ = Describe("SidecarInjector", func() {
 		baseRuntime := &base.Runtime{
 			Name:            "test-runtime-name",
 			ImagePullPolicy: "IfNotPresent",
+			Log:             logr.Discard(),
 		}
 
 		service := &MeshService{

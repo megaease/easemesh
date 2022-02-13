@@ -51,7 +51,7 @@ const (
 	DefaultImageRegistryURL = "docker.io"
 
 	// DefaultSidecarImageName is the default sidecar image name.
-	DefaultSidecarImageName = "megaease/easegress:server-sidecar"
+	DefaultSidecarImageName = "megaease/easegress:easemesh"
 
 	// DefaultImagePullPolicy is the default image pull policy.
 	DefaultImagePullPolicy = "IfNotPresent"
@@ -63,9 +63,7 @@ const (
 	DefaultLog4jConfigName = "log4j.xml"
 )
 
-var (
-	scheme = runtime.NewScheme()
-)
+var scheme = runtime.NewScheme()
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -79,6 +77,7 @@ type ConfigSpec struct {
 	ImageRegistryURL     string   `yaml:"image-registry-url" jsonschema:"required"`
 	ClusterName          string   `yaml:"cluster-name" jsonschema:"required"`
 	ClusterJoinURLs      []string `yaml:"cluster-join-urls" jsonschema:"required"`
+	APIAddr              string   `yaml:"api-addr" jsonschema:"required"`
 	MetricsAddr          string   `yaml:"metrics-bind-address" jsonschema:"required"`
 	EnableLeaderElection bool     `yaml:"leader-elect" jsonschema:"required"`
 	ProbeAddr            string   `yaml:"health-probe-bind-address" jsonschema:"required"`
@@ -99,6 +98,7 @@ func main() {
 		imageRegistryURL     string
 		sidecarImageName     string
 		imagePullPolicy      string
+		apiAddr              string
 		clusterName          string
 		clusterJoinURLs      []string
 		metricsAddr          string
@@ -121,6 +121,7 @@ func main() {
 	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
 	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
 	pflag.StringSliceVar(&clusterJoinURLs, "cluster-join-urls", []string{"http://easemesh-controlplane-svc.easemesh:2380"}, "The addresses to join the Easegress.")
+	pflag.StringVar(&apiAddr, "api-addr", "easemesh-controlplane-svc.easemesh:2381", "The API addresses of EaseMesh control plane.")
 	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	pflag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+
@@ -139,6 +140,11 @@ func main() {
 
 	if configFile != "" {
 		unmarshalConfigFile(configFile, setupLog, func(spec *ConfigSpec) {
+			// NOTE: Backward compatible for old config file.
+			if spec.APIAddr != "" {
+				apiAddr = spec.APIAddr
+			}
+
 			imageRegistryURL = spec.ImageRegistryURL
 			clusterName = spec.ClusterName
 			clusterJoinURLs = spec.ClusterJoinURLs
@@ -179,6 +185,7 @@ func main() {
 		AgentInitializerImageName: agentInitializerImageName,
 		Log4jConfigName:           log4jConfigName,
 
+		APIAddr:         apiAddr,
 		ClusterJoinURLs: clusterJoinURLs,
 		ClusterName:     clusterName,
 	}

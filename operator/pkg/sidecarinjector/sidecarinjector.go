@@ -48,14 +48,15 @@ var (
 
 	// Init container stuff.
 	initContainerName      = "initializer"
-	initContainerImageName = func(customImage string, br *base.Runtime) string {
+	initContainerImageName = func(customImage string, spec *meshControllerSpec) string {
 		if customImage != "" {
 			return customImage
 		}
 
-		if br.AgentInitializerImageName != "" {
-			return br.AgentInitializerImageName
+		if spec.AgentInitializerImageName != "" {
+			return spec.AgentInitializerImageName
 		}
+
 		return "megaease/easeagent-initializer:latest"
 	}
 
@@ -86,10 +87,10 @@ var (
 	}
 
 	appContainerJavaEnvName  = "JAVA_TOOL_OPTIONS"
-	appContainerJavaEnvValue = func(br *base.Runtime) string {
+	appContainerJavaEnvValue = func(spec *meshControllerSpec) string {
 		log4jConfigName := "log4j2.xml"
-		if br.Log4jConfigName != "" {
-			log4jConfigName = br.Log4jConfigName
+		if spec.Log4jConfigName != "" {
+			log4jConfigName = spec.Log4jConfigName
 		}
 		return fmt.Sprintf(" -javaagent:%s/easeagent.jar -Deaseagent.log.conf=%s/%s ",
 			appContainerAgentVolumeMountPath, appContainerAgentVolumeMountPath, log4jConfigName)
@@ -97,12 +98,12 @@ var (
 
 	// Sidecar container stuff.
 	sidecarContainerName      = "easemesh-sidecar"
-	sidecarContainerImageName = func(customImage string, baseRuntime *base.Runtime) string {
+	sidecarContainerImageName = func(customImage string, spec *meshControllerSpec) string {
 		if customImage != "" {
 			return customImage
 		}
-		if baseRuntime.SidecarImageName != "" {
-			return baseRuntime.SidecarImageName
+		if spec.SidecarImageName != "" {
+			return spec.SidecarImageName
 		}
 		return "megaease/easegress:server-sidecar"
 	}
@@ -199,7 +200,8 @@ labels:
 type (
 	// SidecarInjector is sidecar injector for pod.
 	SidecarInjector struct {
-		*base.Runtime
+		runtime     *base.Runtime
+		dynamicSpec *dynamicSpec
 		meshService *MeshService
 		pod         *corev1.PodSpec
 	}
@@ -234,7 +236,8 @@ type (
 // New creates a SidecarInjector.
 func New(baseRuntime *base.Runtime, meshService *MeshService, pod *corev1.PodSpec) *SidecarInjector {
 	return &SidecarInjector{
-		Runtime:     baseRuntime,
+		runtime:     baseRuntime,
+		dynamicSpec: newDynamicSpec(baseRuntime),
 		meshService: meshService,
 		pod:         pod,
 	}
@@ -318,14 +321,13 @@ func (m *SidecarInjector) injectVolumes(volumes ...corev1.Volume) {
 			m.pod.Volumes = append(m.pod.Volumes, volume)
 		}
 	}
-
 }
 
 func (m *SidecarInjector) injectInitContainer() {
 	initContainer := corev1.Container{
 		Name:            initContainerName,
-		Image:           m.completeImageURL(initContainerImageName(m.meshService.InitContainerImage, m.Runtime)),
-		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
+		Image:           m.completeImageURL(initContainerImageName(m.meshService.InitContainerImage, m.dynamicSpec.spec())),
+		ImagePullPolicy: corev1.PullPolicy(m.dynamicSpec.spec().ImagePullPolicy),
 		Command:         initContainerCommand(m.meshService),
 		VolumeMounts:    initContainerVolumeMounts,
 	}
@@ -350,7 +352,7 @@ func (m *SidecarInjector) adaptAppContainerSpec() error {
 	appContainerEnvs := []corev1.EnvVar{
 		{
 			Name:  appContainerJavaEnvName,
-			Value: appContainerJavaEnvValue(m.Runtime),
+			Value: appContainerJavaEnvValue(m.dynamicSpec.spec()),
 		},
 	}
 
@@ -364,8 +366,8 @@ func (m *SidecarInjector) adaptAppContainerSpec() error {
 func (m *SidecarInjector) injectSidecarContainer() {
 	sidecarContainer := corev1.Container{
 		Name:            sidecarContainerName,
-		Image:           m.completeImageURL(sidecarContainerImageName(m.SidecarImageName, m.Runtime)),
-		ImagePullPolicy: corev1.PullPolicy(m.ImagePullPolicy),
+		Image:           m.completeImageURL(sidecarContainerImageName(m.meshService.SidecarImage, m.dynamicSpec.spec())),
+		ImagePullPolicy: corev1.PullPolicy(m.dynamicSpec.spec().ImagePullPolicy),
 		Command:         sidecarContainerCmd,
 		VolumeMounts:    sidecarContainerVolumeMounts,
 		Env:             siecarContainerEnvs,
@@ -379,7 +381,7 @@ func (m *SidecarInjector) completeImageURL(imageName string) string {
 	if strings.Contains(imageName, ".") { // imageName with repository name, we don't add prefix
 		return imageName
 	}
-	return filepath.Join(m.ImageRegistryURL, imageName)
+	return filepath.Join(m.dynamicSpec.spec().ImageRegistryURL, imageName)
 }
 
 func injectContainers(containers []corev1.Container, elems ...corev1.Container) []corev1.Container {
