@@ -244,6 +244,8 @@ emctl install --only-add-on --add-ons=ShadowService
 
 ### Install CoreDNS
 
+NOTICE: Installing EaseMesh didacated CoreDNS will cover original CoreDNS spec and config in kube-system.
+
 If you want to support pure spring-boot (without spring-cloud suite) application or non-Java languages, installing EaseMesh dedicated CoreDNS is a must. It's very easy to do it:
 
 ```bash

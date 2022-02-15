@@ -57,27 +57,8 @@ func PreCheck(context *installbase.StageContext) error {
 	return nil
 }
 
-// Clear clears all k8s resources about coreDNS
+// Clear does nothing.
 func Clear(context *installbase.StageContext) error {
-	appsV1Resources := [][]string{
-		{"deployments", coreDNSDeployment},
-	}
-
-	coreV1Resources := [][]string{
-		{"configmaps", coreDNSConfigMap},
-	}
-
-	rbacV1Resources := [][]string{
-		{"clusterroles", coreDNSClusterRole},
-	}
-
-	installbase.DeleteResources(context.Client, appsV1Resources,
-		coreDNSNamespace, installbase.DeleteAppsV1Resource)
-	installbase.DeleteResources(context.Client, coreV1Resources,
-		coreDNSNamespace, installbase.DeleteCoreV1Resource)
-	installbase.DeleteResources(context.Client, rbacV1Resources,
-		coreDNSNamespace, installbase.DeleteRbacV1Resources)
-
 	return nil
 }
 
