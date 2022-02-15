@@ -29,7 +29,6 @@ import (
 )
 
 func main() {
-
 	flag.Parse()
 
 	resourceType := flag.Arg(0)
@@ -42,7 +41,7 @@ func main() {
 		resourceMappings = flag.Args()[1:]
 	}
 
-	var subResource = ""
+	subResource := ""
 	if strings.Contains(resourceType, ".") {
 		r := strings.Split(resourceType, ".")
 		resourceType = r[0]
@@ -62,7 +61,6 @@ func main() {
 }
 
 func initialSpec(resourceName generator.ResourceType, subResource string, mapping []string) *generator.InterfaceFileSpec {
-
 	spec := generator.InterfaceFileSpec{}
 	// Get the package of the file with go:generate comment
 	goPackage := os.Getenv("GOPACKAGE")

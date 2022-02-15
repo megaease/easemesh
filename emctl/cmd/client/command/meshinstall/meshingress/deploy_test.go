@@ -76,7 +76,6 @@ func TestDeploy(t *testing.T) {
 	})
 
 	Deploy(ctx)
-
 }
 
 func TestDescribePhase(t *testing.T) {

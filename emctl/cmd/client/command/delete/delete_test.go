@@ -70,7 +70,6 @@ func TestDeleteRunFail(t *testing.T) {
 
 	deleteFlag.YamlFile = "invalidYamlSpecFile"
 	Run(cmd, deleteFlag)
-
 }
 
 var tenantSpec = `

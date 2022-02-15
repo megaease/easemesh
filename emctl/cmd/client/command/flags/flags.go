@@ -176,6 +176,14 @@ type (
 		WaitControlPlaneTimeoutInSeconds int
 	}
 
+	// CoreDNS holds the options for installing EaseMesh-version CoreDNS.
+	CoreDNS struct {
+		*OperationGlobal
+		Replicas        int
+		Image           string
+		CleanWhenFailed bool
+	}
+
 	// Reset holds the option for the EaseMesh resest sub command
 	Reset struct {
 		*OperationGlobal
@@ -227,6 +235,16 @@ func GetServerAddress() string {
 		return ""
 	}
 	return rc.Server
+}
+
+// AttachCmd attaches options for installation of coredns.
+func (c *CoreDNS) AttachCmd(cmd *cobra.Command) {
+	c.OperationGlobal = &OperationGlobal{}
+	c.OperationGlobal.AttachCmd(cmd)
+
+	cmd.Flags().BoolVar(&c.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")
+	cmd.Flags().IntVar(&c.Replicas, "replicas", 1, "CoreDNS replicas")
+	cmd.Flags().StringVar(&c.Image, "image", "megaease/coredns:latest", "CoreDNS image name")
 }
 
 // AttachCmd attaches options for installation sub command

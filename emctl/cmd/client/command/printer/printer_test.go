@@ -26,7 +26,6 @@ import (
 )
 
 func TestPrinter(t *testing.T) {
-
 	yamlPrinter := New("yaml")
 	jsonPrinter := New("json")
 	tablePrinter := New("table")

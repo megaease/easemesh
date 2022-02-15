@@ -45,6 +45,7 @@ func TestResetFlag(t *testing.T) {
 	r := Reset{}
 	r.AttachCmd(cmd)
 }
+
 func TestDeleteFlag(t *testing.T) {
 	cmd := &cobra.Command{}
 	d := Delete{}

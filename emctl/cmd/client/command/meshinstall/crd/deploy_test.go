@@ -30,7 +30,6 @@ import (
 )
 
 func prepareContext() *installbase.StageContext {
-
 	client := fake.NewSimpleClientset()
 	exptensionClient := extensionfake.NewSimpleClientset()
 
@@ -39,6 +38,7 @@ func prepareContext() *installbase.StageContext {
 	install.AttachCmd(cmd)
 	return meshtesting.PrepareInstallContext(cmd, client, exptensionClient, install)
 }
+
 func TestDeploy(t *testing.T) {
 	Deploy(prepareContext())
 }

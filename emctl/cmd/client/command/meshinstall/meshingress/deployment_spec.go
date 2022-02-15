@@ -64,7 +64,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 			MatchLabels: meshIngressLabel(),
 		}
 
-		var replicas = int32(installFlags.MeshIngressReplicas)
+		replicas := int32(installFlags.MeshIngressReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = meshIngressLabel()
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
@@ -73,9 +73,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-
 	return func(installFlags *flags.Install) *appsV1.Deployment {
-
 		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisitor("easegress-ingress",
 			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
@@ -88,7 +86,6 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 		spec := fn(installFlags)
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
@@ -116,13 +113,11 @@ func newVisitor(installFlags *flags.Install) installbase.ContainerVisitor {
 }
 
 func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
-
 	return []string{"/bin/sh"},
 		[]string{"-c", "/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-ingress.yaml"}
 }
 
 func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
-
 	return []v1.ContainerPort{
 		{
 			Name:          installbase.DefaultMeshAdminPortName,
@@ -159,16 +154,16 @@ func (v *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
 		},
 	}, nil
 }
+
 func (v *containerVisitor) VisitorEnvFrom(c *v1.Container) ([]v1.EnvFromSource, error) {
-
 	return nil, nil
 }
+
 func (v *containerVisitor) VisitorResourceRequirements(c *v1.Container) (*v1.ResourceRequirements, error) {
-
 	return nil, nil
 }
-func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
 
+func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
 	return []v1.VolumeMount{
 		{
 			Name:      "eg-ingress-config",
@@ -183,7 +178,6 @@ func (v *containerVisitor) VisitorVolumeDevices(c *v1.Container) ([]v1.VolumeDev
 }
 
 func (v *containerVisitor) VisitorLivenessProbe(c *v1.Container) (*v1.Probe, error) {
-
 	/* FIXME: K8s probe report connection reset, but the port can be accessed via localhost/127.0.0.1
 	maybe the default admin API port should listen on all interface instead of loopback address.
 
@@ -206,7 +200,6 @@ func (v *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, er
 }
 
 func (v *containerVisitor) VisitorLifeCycle(c *v1.Container) (*v1.Lifecycle, error) {
-
 	return nil, nil
 }
 

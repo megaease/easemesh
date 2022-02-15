@@ -90,7 +90,6 @@ func TestDeploy(t *testing.T) {
 	checkEasegressControlPlaneStatus(ctx)
 
 	clearEaseMeshControlPlaneProvision(ctx.Cmd, ctx.Client, ctx.Flags)
-
 }
 
 func TestCheckPV(T *testing.T) {

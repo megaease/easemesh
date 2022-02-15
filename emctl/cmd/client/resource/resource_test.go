@@ -25,16 +25,18 @@ import (
 )
 
 func TestObjectCreator(t *testing.T) {
-
-	kinds := []string{KindCanary, KindCustomResourceKind, KindIngress, KindLoadBalance,
+	kinds := []string{
+		KindCanary, KindCustomResourceKind, KindIngress, KindLoadBalance,
 		KindMeshController, KindObservabilityMetrics, KindObservabilityOutputServer, KindObservabilityTracings,
-		KindResilience, KindService, KindServiceInstance, KindTenant, "CustomResource"}
+		KindResilience, KindService, KindServiceInstance, KindTenant, "CustomResource",
+	}
 
 	NewObjectCreator().NewFromResource(meta.MeshResource{
 		VersionKind: meta.VersionKind{
 			Kind:       KindCanary,
 			APIVersion: DefaultAPIVersion,
-		}})
+		},
+	})
 
 	for _, kind := range kinds {
 		resource, err := NewObjectCreator().NewFromKind(meta.VersionKind{Kind: kind})

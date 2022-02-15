@@ -33,13 +33,13 @@ import (
 )
 
 func createTestDir(t *testing.T, path string) {
-	if err := os.MkdirAll(path, 0750); err != nil {
+	if err := os.MkdirAll(path, 0o750); err != nil {
 		t.Fatalf("error creating test dir: %v", err)
 	}
 }
 
 func writeTestFile(t *testing.T, path string, contents string) {
-	if err := ioutil.WriteFile(path, []byte(contents), 0644); err != nil {
+	if err := ioutil.WriteFile(path, []byte(contents), 0o644); err != nil {
 		t.Fatalf("error creating test file %#v", err)
 	}
 }
@@ -161,7 +161,6 @@ func TestBuilderVisitor(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 }
@@ -180,5 +179,4 @@ func TestURLVisitorBuilder(t *testing.T) {
 			v.Visit(func(mo meta.MeshObject, e error) error { return nil })
 		}
 	}
-
 }

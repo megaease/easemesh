@@ -37,8 +37,10 @@ func TestDeleter(t *testing.T) {
 		}).Added()
 
 	rks := meshtesting.GetAllResourceKinds()
-	rks = append(rks, meshtesting.ResourceTypeKind{Type: reflect.TypeOf(resource.ServiceInstance{}),
-		Kind: resource.KindServiceInstance})
+	rks = append(rks, meshtesting.ResourceTypeKind{
+		Type: reflect.TypeOf(resource.ServiceInstance{}),
+		Kind: resource.KindServiceInstance,
+	})
 	client := meshclient.NewFakeClient(reactorType)
 	for _, rk := range rks {
 
@@ -58,8 +60,10 @@ func TestDeleterFail(t *testing.T) {
 		}).Added()
 
 	rks := meshtesting.GetAllResourceKinds()
-	rks = append(rks, meshtesting.ResourceTypeKind{Type: reflect.TypeOf(resource.ServiceInstance{}),
-		Kind: resource.KindServiceInstance})
+	rks = append(rks, meshtesting.ResourceTypeKind{
+		Type: reflect.TypeOf(resource.ServiceInstance{}),
+		Kind: resource.KindServiceInstance,
+	})
 	client := meshclient.NewFakeClient(reactorType)
 	for _, rk := range rks {
 

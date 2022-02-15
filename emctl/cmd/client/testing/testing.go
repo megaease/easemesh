@@ -93,12 +93,11 @@ func PrepareYamlFile(spec string, t *testing.T) (specFile string) {
 	}
 
 	specFile = filepath.Join(specDir, "01-tenant.yaml")
-	err = ioutil.WriteFile(specFile, []byte(spec), 0600)
+	err = ioutil.WriteFile(specFile, []byte(spec), 0o600)
 	if err != nil {
 		t.Fatalf("write %s file error:%s", specFile, err)
 	}
 	return specFile
-
 }
 
 func prepareFileInput(spec string, t *testing.T) *flags.AdminFileInput {

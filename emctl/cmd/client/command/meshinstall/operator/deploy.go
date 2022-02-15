@@ -62,7 +62,6 @@ func Deploy(ctx *installbase.StageContext) error {
 			serviceSpec(ctx),
 			mutatingWebhookSpec(ctx),
 		})
-
 	if err != nil {
 		return err
 	}
@@ -143,7 +142,6 @@ func checkOperatorStatus(client kubernetes.Interface, installFlags *flags.Instal
 		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
 			installbase.DefaultMeshOperatorName,
 			installbase.DeploymentReadyPredict)
-
 		if err != nil {
 			return err
 		}

@@ -46,7 +46,6 @@ func Run(cmd *cobra.Command, flag *flags.Apply) {
 			Filenames: []string{flag.YamlFile},
 		}).
 		Do()
-
 	if err != nil {
 		common.ExitWithErrorf("build visitor failed: %v", err)
 	}

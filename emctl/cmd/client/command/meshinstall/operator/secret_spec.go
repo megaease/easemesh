@@ -107,7 +107,8 @@ func generateCsrAndKeyPem(namespace string) ([]byte, []byte, error) {
 	csrBuffer := &bytes.Buffer{}
 	err = pem.Encode(csrBuffer, &pem.Block{
 		Type:  "CERTIFICATE REQUEST",
-		Bytes: csrBytes})
+		Bytes: csrBytes,
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -115,7 +116,8 @@ func generateCsrAndKeyPem(namespace string) ([]byte, []byte, error) {
 	keyBuffer := &bytes.Buffer{}
 	err = pem.Encode(keyBuffer, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
 	if err != nil {
 		return nil, nil, err
 	}

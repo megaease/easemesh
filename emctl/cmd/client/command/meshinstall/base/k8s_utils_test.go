@@ -44,7 +44,6 @@ func TestNewKubernetesClient(t *testing.T) {
 }
 
 func prepareClientForTest() kubernetes.Interface {
-
 	var result runtime.Object
 	client := fake.NewSimpleClientset()
 	client.PrependReactor("create", "*", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
@@ -65,7 +64,6 @@ func prepareClientForTest() kubernetes.Interface {
 	})
 
 	return client
-
 }
 
 func TestDeployNameSpace(t *testing.T) {
@@ -171,7 +169,6 @@ func TestDeployMutatingWebhookConfig(t *testing.T) {
 }
 
 func TestListPersistentVolume(t *testing.T) {
-
 	client := prepareClientForTest()
 	_, err := ListPersistentVolume(client)
 	if err != nil {
@@ -220,8 +217,7 @@ func TestStatefulsetPredict(t *testing.T) {
 		t.Fatalf("expect statefulset is read")
 	}
 
-	a := struct {
-	}{}
+	a := struct{}{}
 	if StatefulsetReadyPredict(a) {
 		t.Fatalf("expect statefulset is not read")
 	}
@@ -237,8 +233,7 @@ func TestDeployPredict(t *testing.T) {
 		t.Fatalf("expect statefulset is read")
 	}
 
-	a := struct {
-	}{}
+	a := struct{}{}
 	if DeploymentReadyPredict(a) {
 		t.Fatalf("expect statefulset is not read")
 	}
@@ -269,7 +264,6 @@ func TestCheckDeploymentResourcestatus(t *testing.T) {
 }
 
 func TestGetMeshControlPlaneEndpoints(t *testing.T) {
-
 	client := fake.NewSimpleClientset()
 
 	client.PrependReactor("get", "services",
@@ -380,8 +374,8 @@ func TestAdaptListPodFunc(t *testing.T) {
 	if format == "" {
 		t.Fatalf("format should has contents")
 	}
-
 }
+
 func TestDeleteAppV1Resource(t *testing.T) {
 	// TODO only when upstream fix RESTClient() bug, I can test it
 	// https://github.com/kubernetes/client-go/blob/release-1.22/kubernetes/typed/core/v1/fake/fake_core_client.go#L97

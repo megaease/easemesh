@@ -37,9 +37,7 @@ func newInterfaceFinder(filename string) *interfaceFinder {
 }
 
 func (i *interfaceFinder) parseFile() error {
-
 	find := func(n ast.Node) bool {
-
 		var ts *ast.TypeSpec
 		var ok bool
 

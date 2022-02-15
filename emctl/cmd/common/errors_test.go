@@ -35,5 +35,4 @@ func TestErrors(t *testing.T) {
 	ExitWithErrorf("found an error: %s", err)
 	OutputError(err)
 	OutputErrorf("found an error: %s", err)
-
 }

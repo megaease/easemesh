@@ -31,9 +31,9 @@ import (
 )
 
 func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	var host = "0.0.0.0"
+	host := "0.0.0.0"
 
-	var config = installbase.EasegressConfig{
+	config := installbase.EasegressConfig{
 		Name:                    installbase.DefaultMeshControlPlaneName,
 		ClusterName:             installbase.DefaultMeshControlPlaneName,
 		ClusterRole:             installbase.WriterClusterRole,

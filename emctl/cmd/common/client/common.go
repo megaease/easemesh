@@ -48,6 +48,7 @@ type HTTPJSONClient interface {
 
 // Option is option function
 type Option func(*resty.Client)
+
 type httpJSONClient struct {
 	options []Option
 }
@@ -81,7 +82,6 @@ func WrapRetryOptions(retryCount int, retryWaitTime time.Duration, conditionFunc
 }
 
 func (h *httpJSONClient) setupClient(timeout *time.Duration, extraHeaders map[string]string) *resty.Client {
-
 	client := resty.New()
 	client.
 		SetHeader("Content-Type", "application/json").
@@ -89,7 +89,6 @@ func (h *httpJSONClient) setupClient(timeout *time.Duration, extraHeaders map[st
 
 	if timeout != nil {
 		client.SetTimeout(*timeout)
-
 	}
 
 	for _, o := range h.options {
@@ -103,6 +102,7 @@ func (h *httpJSONClient) setupClient(timeout *time.Duration, extraHeaders map[st
 	}
 	return client
 }
+
 func closeRawBody(r *resty.Response) {
 	if r != nil && r.RawBody() != nil {
 		defer r.RawBody().Close()
@@ -121,6 +121,7 @@ func (h *httpJSONClient) Post(url string, reqBody interface{}, timeout time.Dura
 		return fn(r.Body(), r.StatusCode())
 	})
 }
+
 func (h *httpJSONClient) PostByContext(ctx context.Context, url string, reqBody interface{}, extraHeaders map[string]string) HTTPJSONResponseHandler {
 	client := h.setupClient(nil, extraHeaders)
 	r, err := client.R().SetContext(ctx).SetBody(reqBody).Post(url)

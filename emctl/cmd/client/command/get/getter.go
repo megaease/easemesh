@@ -28,8 +28,8 @@ import (
 
 // WrapGetterByMeshObject wraps getter for mesh object.
 func WrapGetterByMeshObject(object meta.MeshObject,
-	client meshclient.MeshClient, timeout time.Duration) Getter {
-
+	client meshclient.MeshClient, timeout time.Duration,
+) Getter {
 	base := baseGetter{
 		client:  client,
 		timeout: timeout,

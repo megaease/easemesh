@@ -66,7 +66,7 @@ func (r *RCFile) Marshal() error {
 		return errors.Wrapf(err, "marshal %+v to yaml failed", r)
 	}
 
-	err = ioutil.WriteFile(r.path, buff, 0644)
+	err = ioutil.WriteFile(r.path, buff, 0o644)
 	if err != nil {
 		return errors.Wrapf(err, "write file %s failed", r.path)
 	}

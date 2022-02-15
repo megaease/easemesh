@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package operator
+package coredns
 
 import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
@@ -30,14 +30,12 @@ import (
 
 type deploymentSpecFunc func(ctx *installbase.StageContext) *appsV1.Deployment
 
-func operatorDeploymentSpec(ctx *installbase.StageContext) installbase.InstallFunc {
+func coreDNSDeploymentSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	deployment := deploymentConfigVolumeSpec(
-		deploymentManagerContainerSpec(
-			deploymentRBACContainerSpec(
-				deploymentBaseSpec(deploymentInitialize(nil)))))(ctx)
+		deploymentBaseSpec(deploymentInitialize(nil)))(ctx)
 
 	return func(ctx *installbase.StageContext) error {
-		err := installbase.DeployDeployment(deployment, ctx.Client, ctx.Flags.MeshNamespace)
+		err := installbase.DeployDeployment(deployment, ctx.Client, coreDNSNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "deployment operation %s failed", deployment.Name)
 		}
@@ -45,9 +43,9 @@ func operatorDeploymentSpec(ctx *installbase.StageContext) installbase.InstallFu
 	}
 }
 
-func meshOperatorLabels() map[string]string {
+func coreDNSLabels() map[string]string {
 	selector := map[string]string{}
-	selector["easemesh-operator"] = "operator-manager"
+	selector["k8s-app"] = "kube-dns"
 	return selector
 }
 
@@ -61,49 +59,58 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	return func(ctx *installbase.StageContext) *appsV1.Deployment {
 		spec := fn(ctx)
 
-		labels := meshOperatorLabels()
-		spec.Name = installbase.DefaultMeshOperatorName
+		labels := coreDNSLabels()
+		spec.Name = "coredns"
+		spec.Labels = labels
 		spec.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: labels,
 		}
-
-		replicas := int32(ctx.Flags.EaseMeshOperatorReplicas)
+		replicas := int32(ctx.CoreDNSFlags.Replicas)
 		spec.Spec.Replicas = &replicas
+
 		spec.Spec.Template.Labels = labels
-		spec.Spec.Template.Spec.Containers = []v1.Container{}
+
+		spec.Spec.Template.Spec.Affinity = &v1.Affinity{
+			NodeAffinity: &v1.NodeAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{
+					{
+						Preference: v1.NodeSelectorTerm{
+							MatchExpressions: []v1.NodeSelectorRequirement{
+								{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: "In",
+									Values:   []string{""},
+								},
+							},
+						},
+						Weight: 100,
+					},
+				},
+			},
+		}
+
+		spec.Spec.Template.Spec.PriorityClassName = "system-cluster-critical"
+		spec.Spec.Template.Spec.RestartPolicy = "Always"
+		spec.Spec.Template.Spec.ServiceAccountName = "coredns"
+		spec.Spec.Template.Spec.DNSPolicy = "Default"
 
 		var v int64 = 65532 //?
 		spec.Spec.Template.Spec.SecurityContext = &v1.PodSecurityContext{
 			RunAsUser: &v,
 		}
-		return spec
-	}
-}
 
-func deploymentRBACContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(ctx *installbase.StageContext) *appsV1.Deployment {
-		spec := fn(ctx)
-		rbacContainer := v1.Container{}
-		rbacContainer.Name = "kube-rbac-proxy"
-		rbacContainer.Image = "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
-		rbacContainer.Ports = []v1.ContainerPort{
-			{
-				Name:          "https",
-				ContainerPort: 8443,
-			},
-		}
-		rbacContainer.Args = []string{
-			"--secure-listen-address=0.0.0.0:8443",
-			"--upstream=http://127.0.0.1:8080/",
-			"--logtostderr=true",
-			"--v=10",
-		}
-		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, rbacContainer)
+		container, _ := installbase.AcceptContainerVisitor("coredns",
+			ctx.CoreDNSFlags.Image,
+			v1.PullIfNotPresent,
+			newVisitor(ctx))
+
+		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
 		return spec
 	}
 }
 
 func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
+	var defaultMode int32 = 420
 	return func(ctx *installbase.StageContext) *appsV1.Deployment {
 		spec := fn(ctx)
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
@@ -112,33 +119,19 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 				VolumeSource: v1.VolumeSource{
 					ConfigMap: &v1.ConfigMapVolumeSource{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: meshOperatorConfigMap,
+							Name: "coredns",
+						},
+						DefaultMode: &defaultMode,
+						Items: []v1.KeyToPath{
+							{
+								Key:  "Corefile",
+								Path: "Corefile",
+							},
 						},
 					},
 				},
 			},
-			{
-				Name: "cert-volume",
-				VolumeSource: v1.VolumeSource{
-					Secret: &v1.SecretVolumeSource{
-						SecretName: installbase.DefaultMeshOperatorSecretName,
-					},
-				},
-			},
 		}
-		return spec
-	}
-}
-
-func deploymentManagerContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(ctx *installbase.StageContext) *appsV1.Deployment {
-		spec := fn(ctx)
-		container, _ := installbase.AcceptContainerVisitor("operator-manager",
-			ctx.Flags.ImageRegistryURL+"/"+ctx.Flags.EaseMeshOperatorImage,
-			v1.PullIfNotPresent,
-			newVisitor(ctx))
-
-		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
 		return spec
 	}
 }
@@ -152,15 +145,25 @@ type containerVisitor struct {
 }
 
 func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
-	return []string{"/manager"},
-		[]string{"--config=/opt/mesh/operator-config.yaml"}
+	return nil, []string{"-conf", "/etc/coredns/Corefile"}
 }
 
 func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
 	return []v1.ContainerPort{
 		{
-			Name:          "mutate-webhook",
-			ContainerPort: 9090,
+			Name:          "dns",
+			ContainerPort: 53,
+			Protocol:      v1.ProtocolUDP,
+		},
+		{
+			Name:          "dns-tcp",
+			ContainerPort: 53,
+			Protocol:      v1.ProtocolTCP,
+		},
+		{
+			Name:          "metrics",
+			ContainerPort: 9153,
+			Protocol:      v1.ProtocolTCP,
 		},
 	}, nil
 }
@@ -208,12 +211,7 @@ func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMoun
 	return []v1.VolumeMount{
 		{
 			Name:      "config-volume",
-			MountPath: "/opt/mesh/operator-config.yaml",
-			SubPath:   "operator-config.yaml",
-		},
-		{
-			Name:      "cert-volume",
-			MountPath: installbase.DefaultMeshOperatorCertDir,
+			MountPath: "/etc/coredns",
 		},
 	}, nil
 }
@@ -226,13 +224,16 @@ func (v *containerVisitor) VisitorLivenessProbe(c *v1.Container) (*v1.Probe, err
 	return &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path:   "/healthz",
-				Port:   intstr.FromInt(8081),
+				Path:   "/health",
+				Port:   intstr.FromInt(8080),
 				Scheme: "HTTP",
 			},
 		},
-		InitialDelaySeconds: 15,
+		InitialDelaySeconds: 10,
 		PeriodSeconds:       20,
+		SuccessThreshold:    1,
+		FailureThreshold:    10,
+		TimeoutSeconds:      5,
 	}, nil
 }
 
@@ -240,13 +241,16 @@ func (v *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, er
 	return &v1.Probe{
 		Handler: v1.Handler{
 			HTTPGet: &v1.HTTPGetAction{
-				Path:   "/readyz",
-				Port:   intstr.FromInt(8081),
+				Path:   "/ready",
+				Port:   intstr.FromInt(8181),
 				Scheme: "HTTP",
 			},
 		},
-		InitialDelaySeconds: 5,
-		PeriodSeconds:       10,
+		InitialDelaySeconds: 10,
+		PeriodSeconds:       20,
+		SuccessThreshold:    1,
+		FailureThreshold:    10,
+		TimeoutSeconds:      5,
 	}, nil
 }
 
@@ -255,5 +259,18 @@ func (v *containerVisitor) VisitorLifeCycle(c *v1.Container) (*v1.Lifecycle, err
 }
 
 func (v *containerVisitor) VisitorSecurityContext(c *v1.Container) (*v1.SecurityContext, error) {
-	return nil, nil
+	allowPrivilegeEscalation := false
+	readOnlyRootFilesystem := true
+	return &v1.SecurityContext{
+		AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+		Capabilities: &v1.Capabilities{
+			Add: []v1.Capability{
+				"NET_BIND_SERVICE",
+			},
+			Drop: []v1.Capability{
+				"all",
+			},
+		},
+		ReadOnlyRootFilesystem: &readOnlyRootFilesystem,
+	}, nil
 }

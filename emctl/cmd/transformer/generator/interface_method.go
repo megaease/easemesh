@@ -70,6 +70,7 @@ func (r resourceFetcher) do(arguments, results []jen.Code) (string, error) {
 	}
 	return r(arguments, results)
 }
+
 func (i *interfaceBuilder) buildGetMethod(info *buildInfo) (err error) {
 	factories := []genCodeFactory{
 		buildURLStatement(info),
@@ -121,7 +122,6 @@ func (i *interfaceBuilder) buildCreateMethod(info *buildInfo) (err error) {
 }
 
 func (i *interfaceBuilder) buildDeleteMethod(info *buildInfo) (err error) {
-
 	factories := []genCodeFactory{
 		buildURLStatement(info),
 		buildDeleteByContextStatement(info),
@@ -134,7 +134,6 @@ func (i *interfaceBuilder) buildDeleteMethod(info *buildInfo) (err error) {
 		return errors.Wrapf(err, "build delete method of the interface error")
 	}
 	return nil
-
 }
 
 func (i *interfaceBuilder) buildListMethod(info *buildInfo) error {
@@ -190,6 +189,7 @@ func (i *interfaceBuilder) buildMethodBody(resourceName string, factories []genC
 	}
 	return nil
 }
+
 func buildPatchURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
@@ -224,6 +224,7 @@ func buildURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 		return jen.Id("url").Op(":=").Qual("fmt", "Sprintf").Call(args...), nil
 	}
 }
+
 func buildServiceTypePostURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
@@ -315,7 +316,6 @@ func buildReturnStatement(info *buildInfo) func(string) (jen.Code, error) {
 }
 
 func buildPutByContextStatement(info *buildInfo) func(string) (jen.Code, error) {
-
 	return func(resourceName string) (jen.Code, error) {
 		return jen.Id("_").Op(",").Id("err").Op(":=").
 			Qual(clientPkg, "NewHTTPJSON").Call().
@@ -435,7 +435,6 @@ func buildCreateByContextStatement(info *buildInfo) func(string) (jen.Code, erro
 
 func buildPluralResourceURLStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
-
 		subURL := mappingURLFromResourceName(resourceName, info.resource2UrlMapping)
 		// triming characters after /%s
 		pos := strings.Index(subURL, "/%s")
@@ -448,6 +447,7 @@ func buildPluralResourceURLStatement(info *buildInfo) func(string) (jen.Code, er
 			Op("+").Id("apiURL").Op("+").Lit("/mesh/" + subURL), nil
 	}
 }
+
 func buildListByContextStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		var err error
@@ -474,13 +474,13 @@ func buildListByContextStatement(info *buildInfo) func(string) (jen.Code, error)
 }
 
 func buildListJudgeErrReturnStatement(info *buildInfo) func(string) (jen.Code, error) {
-
 	return func(resourceName string) (jen.Code, error) {
 		return jen.If(jen.Id("err").Op("!=").Nil().Block(
 			jen.Return(jen.Nil(), jen.Id("err")),
 		)), nil
 	}
 }
+
 func buildListReturnStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
 		capResourceName := strings.ToUpper(string(resourceName[0])) + resourceName[1:]

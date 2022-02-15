@@ -19,7 +19,6 @@ package meta
 import "testing"
 
 func TestMeta(t *testing.T) {
-
 	const (
 		expectKind       = "Tenant"
 		expectAPIVersion = "mesh.megaease.com/v1alpha1"
@@ -52,5 +51,4 @@ func TestMeta(t *testing.T) {
 	if mr.Labels() != nil {
 		t.Fatalf("expect labels is nil but %+v", mr.Labels())
 	}
-
 }

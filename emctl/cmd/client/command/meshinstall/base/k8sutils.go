@@ -302,7 +302,6 @@ func DeployConfigMap(configMap *v1.ConfigMap, clientSet kubernetes.Interface, na
 
 // DeploySecret creates or updates Secret.
 func DeploySecret(secret *v1.Secret, clientSet kubernetes.Interface, namespace string) error {
-
 	createFn := func() error {
 		_, err := clientSet.CoreV1().Secrets(namespace).
 			Create(requestContext(), secret, createOptions())

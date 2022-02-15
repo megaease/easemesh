@@ -32,19 +32,20 @@ import (
 func TestGetter(t *testing.T) {
 	reactorType := "__test_reactor_type"
 	rks := meshtesting.GetAllResourceKinds()
-	rks = append(rks, meshtesting.ResourceTypeKind{Type: reflect.TypeOf(resource.ServiceInstance{}),
-		Kind: resource.KindServiceInstance})
+	rks = append(rks, meshtesting.ResourceTypeKind{
+		Type: reflect.TypeOf(resource.ServiceInstance{}),
+		Kind: resource.KindServiceInstance,
+	})
 	fake.NewResourceReactorBuilder(reactorType).
 		AddReactor("*", "*", "*", func(action fake.Action) (handled bool, rets []meta.MeshObject, err error) {
 			for _, rk := range rks {
 				if action.GetVersionKind().Kind == rk.Kind {
-
 					return true,
 						[]meta.MeshObject{
-							meshtesting.CreateMeshObjectFromType(rk.Type, rk.Kind, "new/bbb")},
+							meshtesting.CreateMeshObjectFromType(rk.Type, rk.Kind, "new/bbb"),
+						},
 						nil
 				}
-
 			}
 			return true, nil, nil
 		}).Added()
@@ -72,8 +73,10 @@ func TestGetter(t *testing.T) {
 func TestGetterFail(t *testing.T) {
 	reactorType := "__test_reactor_type"
 	rks := meshtesting.GetAllResourceKinds()
-	rks = append(rks, meshtesting.ResourceTypeKind{Type: reflect.TypeOf(resource.ServiceInstance{}),
-		Kind: resource.KindServiceInstance})
+	rks = append(rks, meshtesting.ResourceTypeKind{
+		Type: reflect.TypeOf(resource.ServiceInstance{}),
+		Kind: resource.KindServiceInstance,
+	})
 	fake.NewResourceReactorBuilder(reactorType).
 		AddReactor("*", "*", "*", func(action fake.Action) (handled bool, rets []meta.MeshObject, err error) {
 			return true, nil, nil

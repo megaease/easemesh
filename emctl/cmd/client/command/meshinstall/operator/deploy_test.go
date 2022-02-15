@@ -137,7 +137,6 @@ func TestDeploy(t *testing.T) {
 	})
 
 	checkOperatorStatus(ctx.Client, ctx.Flags)
-
 }
 
 func TestDescribePhase(t *testing.T) {
