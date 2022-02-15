@@ -124,7 +124,7 @@ var (
 			FieldPath: "status.podIP",
 		},
 	}
-	siecarContainerEnvs = []corev1.EnvVar{
+	sidecarContainerEnvs = []corev1.EnvVar{
 		{
 			Name:      sidecarContainerAppIPEnvName,
 			ValueFrom: sidecarContainerAppIPEnvValue,
@@ -370,7 +370,7 @@ func (m *SidecarInjector) injectSidecarContainer() {
 		ImagePullPolicy: corev1.PullPolicy(m.dynamicSpec.spec().ImagePullPolicy),
 		Command:         sidecarContainerCmd,
 		VolumeMounts:    sidecarContainerVolumeMounts,
-		Env:             siecarContainerEnvs,
+		Env:             sidecarContainerEnvs,
 		Ports:           sidecarContainerPorts,
 	}
 

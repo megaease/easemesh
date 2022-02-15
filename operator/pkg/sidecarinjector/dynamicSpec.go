@@ -60,6 +60,13 @@ func newDynamicSpec(runtime *base.Runtime) *dynamicSpec {
 		return ds
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		ds.runtime.Log.Error(err, "get mesh controller spec failed", "url", url,
+			"statuscode", resp.StatusCode)
+
+		return ds
+	}
+
 	buff, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		ds.runtime.Log.Error(err, "read body failed", "url", url)
