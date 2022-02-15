@@ -40,6 +40,7 @@ type (
 		// Log4jConfigName is  the name of log4f config name.
 		Log4jConfigName string
 
+		APIAddr         string
 		ClusterJoinURLs []string
 		ClusterName     string
 	}
