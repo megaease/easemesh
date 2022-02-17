@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/megaease/easemeshctl/cmd/common"
@@ -76,7 +77,7 @@ type (
 
 // NewKubernetesClient creates Kubernetes client set.
 func NewKubernetesClient() (kubernetes.Interface, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	config, err := clientcmd.BuildConfigFromFlags("", kubernetesConfigPath())
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func NewKubernetesClient() (kubernetes.Interface, error) {
 
 // NewKubernetesAPIExtensionsClient creates Kubernetes API extensions client.
 func NewKubernetesAPIExtensionsClient() (apiextensions.Interface, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	config, err := clientcmd.BuildConfigFromFlags("", kubernetesConfigPath())
 	if err != nil {
 		return nil, err
 	}
@@ -100,6 +101,15 @@ func NewKubernetesAPIExtensionsClient() (apiextensions.Interface, error) {
 		return nil, err
 	}
 	return clientset, nil
+}
+
+func kubernetesConfigPath() string {
+	kubeConfigPath := os.Getenv("KUBECONFIG")
+	if kubeConfigPath != "" {
+		return kubeConfigPath
+	}
+
+	return DefaultKubernetesConfigPath
 }
 
 func requestContext() context.Context     { return context.TODO() }
