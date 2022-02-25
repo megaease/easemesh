@@ -76,7 +76,9 @@ type (
 
 // NewKubernetesClient creates Kubernetes client set.
 func NewKubernetesClient() (kubernetes.Interface, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{}).
+		ClientConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +92,9 @@ func NewKubernetesClient() (kubernetes.Interface, error) {
 
 // NewKubernetesAPIExtensionsClient creates Kubernetes API extensions client.
 func NewKubernetesAPIExtensionsClient() (apiextensions.Interface, error) {
-	config, err := clientcmd.BuildConfigFromFlags("", DefaultKubernetesConfigPath)
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{}).
+		ClientConfig()
 	if err != nil {
 		return nil, err
 	}
