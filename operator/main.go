@@ -60,7 +60,7 @@ const (
 	DefaultAgentInitializerImageName = "megaease/easeagent-initializer"
 
 	// DefaultLog4jConfigName is the default log4j config file name.
-	DefaultLog4jConfigName = "log4j.xml"
+	DefaultLog4jConfigName = "easeagent-log4j2.xml"
 )
 
 var scheme = runtime.NewScheme()
