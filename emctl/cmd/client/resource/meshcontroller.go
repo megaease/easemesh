@@ -54,6 +54,46 @@ type (
 
 		// ExternalServiceRegistry is the external service registry name.
 		ExternalServiceRegistry string `yaml:"externalServiceRegistry" jsonschema:"omitempty"`
+		CleanExternalRegistry   bool   `yaml:"cleanExternalRegistry"`
+
+		Security *Security `yaml:"security" jsonschema:"omitempty"`
+
+		// Sidecar injection relevant config.
+		ImageRegistryURL          string `yaml:"imageRegistryURL" jsonschema:"omitempty"`
+		ImagePullPolicy           string `yaml:"imagePullPolicy" jsonschema:"omitempty"`
+		SidecarImageName          string `yaml:"sidecarImageName" jsonschema:"omitempty"`
+		AgentInitializerImageName string `yaml:"agentInitializerImageName" jsonschema:"omitempty"`
+		Log4jConfigName           string `yaml:"log4jConfigName" jsonschema:"omitempty"`
+
+		MonitorMTLS *MonitorMTLS `yaml:"monitorMTLS" jsonschema:"omitempty"`
+	}
+
+	// Security is the spec for mesh-wide security.
+	Security struct {
+		MTLSMode     string `yaml:"mtlsMode" jsonschema:"required"`
+		CertProvider string `yaml:"certProvider" jsonschema:"required"`
+
+		RootCertTTL string `yaml:"rootCertTTL" jsonschema:"required,format=duration"`
+		AppCertTTL  string `yaml:"appCertTTL" jsonschema:"required,format=duration"`
+	}
+
+	// MonitorMTLS is the spec of mTLS specification of monitor.
+	MonitorMTLS struct {
+		Enabled  bool   `yaml:"enabled" jsonschema:"required"`
+		URL      string `yaml:"url" jsonschema:"required"`
+		Username string `yaml:"username" jsonschema:"required"`
+		Password string `yaml:"password" jsonschema:"required"`
+
+		ReporterAppendType string         `yaml:"reporterAppendType"`
+		CaCertBase64       string         `yaml:"caCertBase64" jsonschema:"required,format=base64"`
+		Certs              []*MonitorCert `yaml:"certs" jsonschema:"required"`
+	}
+
+	// MonitorCert is the spec for single pack of mTLS.
+	MonitorCert struct {
+		CertBase64 string   `yaml:"certBase64" jsonschema:"required,format=base64"`
+		KeyBase64  string   `yaml:"keyBase64" jsonschema:"required,format=base64"`
+		Services   []string `yaml:"services" jsonschema:"required"`
 	}
 )
 
