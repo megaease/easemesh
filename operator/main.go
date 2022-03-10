@@ -195,7 +195,7 @@ func main() {
 	meshDeploymentRuntime.Name = "MeshDeployment"
 	meshDeploymentRuntime.Log = ctrl.Log.WithName("controllers").WithName("MeshDeployment")
 	meshDeploymentReconciler := &controllers.MeshDeploymentReconciler{Runtime: &meshDeploymentRuntime}
-	meshDeploymentReconciler.SetupWithManager(mgr)
+	err = meshDeploymentReconciler.SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "create controller of MeshDeployment failed")
 		os.Exit(1)
