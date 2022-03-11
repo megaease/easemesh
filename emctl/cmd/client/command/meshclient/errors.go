@@ -28,16 +28,11 @@ var (
 
 // IsConflictError judge err is a ConflictError
 func IsConflictError(err error) (result bool) {
-	if errors.Cause(err) == ConflictError {
-		result = true
-	}
-	return
+	return errors.Cause(err) == ConflictError
+
 }
 
 // IsNotFoundError judge err is a NotFoundError
 func IsNotFoundError(err error) (result bool) {
-	if errors.Cause(err) == NotFoundError {
-		result = true
-	}
-	return
+	return errors.Cause(err) == NotFoundError
 }
