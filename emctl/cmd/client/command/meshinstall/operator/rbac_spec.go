@@ -56,11 +56,7 @@ func roleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	}
 
 	return func(ctx *installbase.StageContext) error {
-		err := installbase.DeployRole(operatorLeaderElectionRole, ctx.Client, ctx.Flags.MeshNamespace)
-		if err != nil {
-			return err
-		}
-		return nil
+		return installbase.DeployRole(operatorLeaderElectionRole, ctx.Client, ctx.Flags.MeshNamespace)
 	}
 }
 
@@ -161,11 +157,7 @@ func roleBindingSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	}
 
 	return func(ctx *installbase.StageContext) error {
-		err := installbase.DeployRoleBinding(operatorLeaderElectionRoleBinding, ctx.Client, ctx.Flags.MeshNamespace)
-		if err != nil {
-			return err
-		}
-		return nil
+		return installbase.DeployRoleBinding(operatorLeaderElectionRoleBinding, ctx.Client, ctx.Flags.MeshNamespace)
 	}
 }
 
