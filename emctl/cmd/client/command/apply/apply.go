@@ -59,7 +59,7 @@ func Run(cmd *cobra.Command, flag *flags.Apply) {
 
 			err := WrapApplierByMeshObject(mo, meshclient.New(flag.Server), flag.Timeout).Apply()
 			if err != nil {
-				return fmt.Errorf("%s/%s applied failed: %s", mo.Kind(), mo.Name(), err)
+				return errors.Wrapf(err, "%s/%s applied failed: %s", mo.Kind(), mo.Name())
 			}
 
 			fmt.Printf("%s/%s applied successfully\n", mo.Kind(), mo.Name())
