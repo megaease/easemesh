@@ -27,6 +27,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	meshtesting "github.com/megaease/easemeshctl/cmd/client/testing"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApplierCreateSuccessful(t *testing.T) {
@@ -40,42 +41,9 @@ func TestApplierCreateSuccessful(t *testing.T) {
 	types := meshtesting.GetAllResourceKinds()
 	client := meshclient.NewFakeClient(reactorType)
 	for _, tp := range types {
-		resource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
-		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
-		if err != nil {
-			t.Fatalf("apply %+v, error:%s", resource, err)
-		}
-	}
-}
-
-func TestApplierLoopOver(t *testing.T) {
-	status := map[string]error{}
-	reactorType := "__reactor"
-	fake.NewResourceReactorBuilder(reactorType).
-		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
-			err1, ok := status[action.GetVersionKind().Kind]
-			if !ok {
-				status[action.GetVersionKind().Kind] = meshclient.ConflictError
-				return true, nil, meshclient.ConflictError
-			}
-			switch {
-			case meshclient.IsConflictError(err1):
-				status[action.GetVersionKind().Kind] = meshclient.NotFoundError
-				return true, nil, meshclient.NotFoundError
-			case meshclient.IsNotFoundError(err1):
-				return true, nil, nil
-			}
-			return true, nil, nil
-		}).
-		Added()
-	types := meshtesting.GetAllResourceKinds()
-	client := meshclient.NewFakeClient(reactorType)
-	for _, tp := range types {
-		resource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
-		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
-		if err != nil {
-			t.Fatalf("apply %+v, error:%s", resource, err)
-		}
+		meshResource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
+		err := WrapApplierByMeshObject(meshResource, client, time.Second*1).Apply()
+		assert.ErrorIs(t, err, nil)
 	}
 }
 
@@ -89,21 +57,21 @@ func TestApplierFastFail(t *testing.T) {
 	types := meshtesting.GetAllResourceKinds()
 	client := meshclient.NewFakeClient(reactorType)
 	for _, tp := range types {
-		resource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
-		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
-		if err == nil {
-			t.Fatalf("apply %+v, error:%s", resource, err)
-		}
+		meshResource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
+		err := WrapApplierByMeshObject(meshResource, client, time.Second*1).Apply()
+		assert.NotErrorIs(t, err, meshclient.ConflictError)
+		assert.NotErrorIs(t, err, meshclient.NotFoundError)
+		assert.NotErrorIs(t, err, nil)
 	}
 
 	serviceInstance := meshtesting.CreateMeshObjectFromType(reflect.TypeOf(resource.ServiceInstance{}), resource.KindServiceInstance, "new")
 	err := WrapApplierByMeshObject(serviceInstance, client, time.Second*1).Apply()
-	if err == nil {
-		t.Fatal("serviceinstance applier should failure")
-	}
+	assert.NotErrorIs(t, err, meshclient.ConflictError)
+	assert.NotErrorIs(t, err, meshclient.NotFoundError)
+	assert.NotErrorIs(t, err, nil)
 }
 
-func TestApplierCreateFail(t *testing.T) {
+func TestApplierCreateFailButPatchSuccess(t *testing.T) {
 	status := map[string]error{}
 	reactorType := "__reactor"
 	fake.NewResourceReactorBuilder(reactorType).
@@ -113,12 +81,31 @@ func TestApplierCreateFail(t *testing.T) {
 				status[action.GetVersionKind().Kind] = meshclient.ConflictError
 				return true, nil, meshclient.ConflictError
 			}
-			switch {
-			case meshclient.IsConflictError(err1):
-				status[action.GetVersionKind().Kind] = meshclient.NotFoundError
+			assert.ErrorIs(t, err1, meshclient.ConflictError)
+			return true, nil, nil
+		}).
+		Added()
+	types := meshtesting.GetAllResourceKinds()
+	client := meshclient.NewFakeClient(reactorType)
+	for _, tp := range types {
+		meshResource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
+		err := WrapApplierByMeshObject(meshResource, client, time.Second*1).Apply()
+		assert.ErrorIs(t, err, nil)
+	}
+}
+
+func TestApplierCreateFailAndPatchFail(t *testing.T) {
+	status := map[string]error{}
+	reactorType := "__reactor"
+	fake.NewResourceReactorBuilder(reactorType).
+		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
+			err1, ok := status[action.GetVersionKind().Kind]
+			if !ok {
+				status[action.GetVersionKind().Kind] = meshclient.ConflictError
+				return true, nil, meshclient.ConflictError
+			}
+			if meshclient.IsConflictError(err1) {
 				return true, nil, meshclient.NotFoundError
-			case meshclient.IsNotFoundError(err1):
-				return true, nil, err1
 			}
 			return true, nil, nil
 		}).
@@ -126,38 +113,8 @@ func TestApplierCreateFail(t *testing.T) {
 	types := meshtesting.GetAllResourceKinds()
 	client := meshclient.NewFakeClient(reactorType)
 	for _, tp := range types {
-		resource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
-		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
-		if err == nil {
-			t.Fatalf("apply %+v, should raise an error", resource)
-		}
-	}
-}
-
-func TestApplierPatchFail(t *testing.T) {
-	status := map[string]error{}
-	reactorType := "__reactor"
-	fake.NewResourceReactorBuilder(reactorType).
-		AddReactor("*", "*", "*", func(action fake.Action) (bool, []meta.MeshObject, error) {
-			err1, ok := status[action.GetVersionKind().Kind]
-			if !ok {
-				status[action.GetVersionKind().Kind] = meshclient.ConflictError
-				return true, nil, meshclient.ConflictError
-			}
-			switch {
-			case meshclient.IsConflictError(err1):
-				return true, nil, err1
-			}
-			return true, nil, nil
-		}).
-		Added()
-	types := meshtesting.GetAllResourceKinds()
-	client := meshclient.NewFakeClient(reactorType)
-	for _, tp := range types {
-		resource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
-		err := WrapApplierByMeshObject(resource, client, time.Second*1).Apply()
-		if err == nil {
-			t.Fatalf("apply %+v, should raise an error", resource)
-		}
+		meshResource := meshtesting.CreateMeshObjectFromType(tp.Type, tp.Kind, "new")
+		err := WrapApplierByMeshObject(meshResource, client, time.Second*1).Apply()
+		assert.ErrorIs(t, err, meshclient.NotFoundError)
 	}
 }
