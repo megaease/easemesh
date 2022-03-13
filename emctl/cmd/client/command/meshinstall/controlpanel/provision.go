@@ -18,7 +18,6 @@
 package controlpanel
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -31,14 +30,15 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
 )
 
 func provisionEaseMeshControlPlane(ctx *installbase.StageContext) error {
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
-		installbase.DefaultMeshControlPlanePlubicServiceName,
-		installbase.DefaultMeshAdminPortName)
+		installbase.ControlPlanePlubicServiceName,
+		installbase.ControlPlaneStatefulSetAdminPortName)
 	if err != nil {
 		return errors.Wrap(err, "get mesh control panel entrypoint failed")
 	}
@@ -49,11 +49,12 @@ func provisionEaseMeshControlPlane(ctx *installbase.StageContext) error {
 		RegistryType:      ctx.Flags.EaseMeshRegistryType,
 		HeartbeatInterval: strconv.Itoa(ctx.Flags.HeartbeatInterval) + "s",
 		IngressPort:       ctx.Flags.MeshIngressServicePort,
+		APIPort:           installbase.MeshControllerAPIPort,
 	}
 
-	configBody, err := json.Marshal(meshControllerConfig)
+	configBody, err := yaml.Marshal(meshControllerConfig)
 	if err != nil {
-		return fmt.Errorf("startUp MeshController failed: %v", err)
+		return fmt.Errorf("marshal %#v to yaml failed: %v", meshControllerConfig, err)
 	}
 
 	for _, entrypoint := range entrypoints {
@@ -77,8 +78,8 @@ func provisionEaseMeshControlPlane(ctx *installbase.StageContext) error {
 
 func clearEaseMeshControlPlaneProvision(cmd *cobra.Command, kubeClient kubernetes.Interface, installFlags *flags.Install) {
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(kubeClient, installFlags.MeshNamespace,
-		installbase.DefaultMeshControlPlanePlubicServiceName,
-		installbase.DefaultMeshAdminPortName)
+		installbase.ControlPlanePlubicServiceName,
+		installbase.ControlPlaneStatefulSetAdminPortName)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			common.OutputErrorf("clear: get mesh control panel entrypoint failed: %s", err)

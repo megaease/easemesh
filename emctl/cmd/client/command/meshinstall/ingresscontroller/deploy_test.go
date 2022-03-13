@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package meshingress
+package ingresscontroller
 
 import (
 	"testing"

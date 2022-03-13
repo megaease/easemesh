@@ -18,64 +18,51 @@
 package controlpanel
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
 
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
-	yamljsontool "github.com/ghodss/yaml"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	host := "0.0.0.0"
-
 	config := installbase.EasegressConfig{
-		Name:                    installbase.DefaultMeshControlPlaneName,
-		ClusterName:             installbase.DefaultMeshControlPlaneName,
-		ClusterRole:             installbase.WriterClusterRole,
-		ClusterListenClientUrls: []string{"http://" + "0.0.0.0:" + strconv.Itoa(ctx.Flags.EgClientPort)},
-		ClusterListenPeerUrls:   []string{"http://" + "0.0.0.0:" + strconv.Itoa(ctx.Flags.EgPeerPort)},
-		ClusterJoinUrls:         []string{},
-		APIAddr:                 host + ":" + strconv.Itoa(ctx.Flags.EgAdminPort),
-		DataDir:                 "/opt/eg-data/data",
-		WalDir:                  "",
-		CPUProfileFile:          "",
-		MemoryProfileFile:       "",
-		LogDir:                  "/opt/eg-data/log",
-		MemberDir:               "/opt/eg-data/member",
-		StdLogLevel:             "INFO",
+		// Injected from env EG_NAME
+		// Name:                    "" ,
+
+		ClusterName: installbase.ControlPlaneStatefulSetName,
+		ClusterRole: installbase.EasegressPrimaryClusterRole,
+		Cluster: installbase.ClusterOptions{
+			ListenPeerURLs:   []string{fmt.Sprintf("http://0.0.0.0:%d", ctx.Flags.EgPeerPort)},
+			ListenClientURLs: []string{fmt.Sprintf("http://0.0.0.0:%d", ctx.Flags.EgClientPort)},
+
+			// Injected from command line.
+			// AdvertiseClientURLs: nil,
+
+			// Injected from command line.
+			// InitialAdvertisePeerURLs: nil,
+
+			// Injected from command line.
+			// InitialCluster: nil,
+		},
+		APIAddr: fmt.Sprintf("0.0.0.0:%d", ctx.Flags.EgAdminPort),
+		HomeDir: installbase.ControlPlaneHomeDir,
+		DataDir: installbase.ControlPlaneDataDir,
 	}
 
-	for i := 0; i < ctx.Flags.EasegressControlPlaneReplicas; i++ {
-		config.ClusterJoinUrls = append(config.ClusterJoinUrls,
-			fmt.Sprintf("http://%s-%d.%s.%s:%d",
-				installbase.DefaultMeshControlPlaneName,
-				i,
-				installbase.DefaultMeshControlPlaneHeadlessServiceName,
-				ctx.Flags.MeshNamespace,
-				ctx.Flags.EgPeerPort))
+	yamlBuff, _ := yaml.Marshal(config)
+	data := map[string]string{
+		installbase.ControlPlaneConfigMapKey: string(yamlBuff),
 	}
-
-	configData := map[string]string{}
-	configBytes, _ := yaml.Marshal(config)
-	configData["eg-master.yaml"] = string(configBytes)
-
-	buff, _ := yaml.Marshal(configData)
-	configJSON, _ := yamljsontool.YAMLToJSON(buff)
-
-	var params map[string]string
-	_ = json.Unmarshal(configJSON, &params)
 
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshControlPlaneConfig,
+			Name:      installbase.ControlPlaneConfigMapName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
-		Data: params,
+		Data: data,
 	}
 
 	return func(ctx *installbase.StageContext) error {

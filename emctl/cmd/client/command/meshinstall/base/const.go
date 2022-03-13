@@ -27,83 +27,139 @@ const (
 )
 
 const (
-	// DefaultOperatorPath is path of default operation configuration.
-	DefaultOperatorPath = "./manifests/easemesh-operator.yaml"
+	// --- Easegress itself related.
 
-	// DefaultMeshControlPlaneName is the default control plane name of easemesh.
-	DefaultMeshControlPlaneName = "easemesh-control-plane"
-	// DefaultMeshClientPortName is the default port name of etcd client.
-	DefaultMeshClientPortName = "client-port"
-	// DefaultMeshPeerPortName is the default port name of etcd peer.
-	DefaultMeshPeerPortName = "peer-port"
-	// DefaultMeshAdminPortName is the default port name of etcd administration.
-	DefaultMeshAdminPortName = "admin-port"
-	// DefaultMeshControlPlanePlubicServiceName is the default exposed public service name of the EaseMesh.
-	DefaultMeshControlPlanePlubicServiceName = "easemesh-controlplane-public"
+	// EasegressPrimaryClusterRole is the primary role name of Easegress.
+	EasegressPrimaryClusterRole = "primary"
+	// EasegressSecondaryClusterRole is the secondary role name of Easegress.
+	EasegressSecondaryClusterRole = "secondary"
 
-	// DefaultMeshControlPlaneHeadlessServiceName is the default headless service name.
-	DefaultMeshControlPlaneHeadlessServiceName = "easemesh-controlplane-hs"
-	// DefaultMeshControlPlaneServicePeerPort  is the default value of etcd peer port.
-	DefaultMeshControlPlaneServicePeerPort = 2380
-	// DefaultMeshControlPlanelServiceAdminPort is the default value of etcd admin port.
-	DefaultMeshControlPlanelServiceAdminPort = 2381
+	// --- Control plane config related to path (putting them together makes it clearer).
 
-	// DefaultMeshControlPlanePVName is the default name of the persisten volume used by the control plane.
-	DefaultMeshControlPlanePVName = "easegress-control-plane-pv"
-	// DefaultMeshControlPlanePVHostPath is the default of path of pv.
-	DefaultMeshControlPlanePVHostPath = "/opt/easemesh"
-	// DefaultMeshControlPlaneConfig is the default configmap name of the easemesh control plane.
-	DefaultMeshControlPlaneConfig = "easemesh-cluster-cm"
+	// ControlPlaneConfigMapName is the name of config map of control plane.
+	ControlPlaneConfigMapName = "easemesh-control-plane-config"
+	// ControlPlaneConfigMapKey is the key of data of config map of control plane.
+	ControlPlaneConfigMapKey = "control-plane.yaml"
+	// ControlPlaneConfigMapVolumeMountPath is the path of volume mouth of config map of control plane.
+	ControlPlaneConfigMapVolumeMountPath = "/opt/easegress/config/control-plane.yaml"
+	// ControlPlaneConfigMapVolumeMountSubPath is the subpath of volume mouth of config map of control plane.
+	ControlPlaneConfigMapVolumeMountSubPath = "control-plane.yaml"
+	// ControlPlaneHomeDir is home directory of control plane.
+	ControlPlaneHomeDir = "/opt/easegress"
+	// ControlPlaneDataDir is data directory of control plane.
+	ControlPlaneDataDir = "/opt/easegress/control-plane-data"
+	// ControlPlaneCmd is the essential command of control plane.
+	ControlPlaneCmd = "/opt/easegress/bin/easegress-server -f /opt/easegress/config/control-plane.yaml"
 
-	// MeshControllerName is the mesh controller name in the easegress.
+	// --- Control plane StatefuleSet related.
+
+	// ControlPlaneStatefulSetName is the name of control plane statefulset.
+	ControlPlaneStatefulSetName = "easemesh-control-plane"
+	// ControlPlaneStatefulSetClientPortName is the name of client port.
+	ControlPlaneStatefulSetClientPortName = "client-port"
+	// ControlPlaneStatefulSetPeerPortName is the name of peer port.
+	ControlPlaneStatefulSetPeerPortName = "peer-port"
+	// ControlPlaneStatefulSetAdminPortName is the name of admin port.
+	ControlPlaneStatefulSetAdminPortName = "admin-port"
+	// ControlPlanePVCName is the name of persisten volume claim control plane.
+	ControlPlanePVCName = "control-plane-pvc"
+
+	// --- Control Plane Service related.
+
+	// ControlPlanePlubicServiceName is name of public service of control plane.
+	ControlPlanePlubicServiceName = "easemesh-control-plane-public"
+	// ControlPlaneHeadlessServiceName is name of headless service of control plane.
+	ControlPlaneHeadlessServiceName = "easemesh-control-plane-hs"
+
+	// --- Sidecar related.
+
+	// SidecarHomeDir is the directory of sidecar.
+	SidecarHomeDir = "/opt/easegress"
+
+	// --- MeshController related.
+
+	// MeshControllerName is the name of MeshController in EaseMesh.
 	MeshControllerName = "easemesh-controller"
+	// MeshControllerAPIPort is the API port of sidecar for handling local Eureka/Conslu/Nacos APIs.
+	MeshControllerAPIPort = 13009
 
-	// DefaultMeshOperatorName is the default meshdeployment operator name of the EaseMesh.
-	DefaultMeshOperatorName = "easemesh-operator"
-	// DefaultMeshOperatorServiceName is the default service name of the meshdeployment operator.
-	DefaultMeshOperatorServiceName = "easemesh-operator-service"
-	// DefaultMeshOperatorSecretName is the default secret resource name of the meshdeployment operator.
-	DefaultMeshOperatorSecretName = "easemesh-operator-secret"
-	// DefaultMeshOperatorCSRName is the default CSR resource name of the meshdeployment operator.
-	DefaultMeshOperatorCSRName = "easemesh-operator-csr"
-	// DefaultMeshOperatorMutatingWebhookName  is the default operator mutating-webhook name of the adminission control.
-	DefaultMeshOperatorMutatingWebhookName = "easemesh-operator-mutating-webhook"
-	// DefaultMeshOperatorMutatingWebhookPath is the default path of the admission control for the EaseMesh.
-	DefaultMeshOperatorMutatingWebhookPath = "/mutate"
-	// DefaultMeshOperatorMutatingWebhookPort is the default port listened by the adminssion control for the EaseMesh.
-	DefaultMeshOperatorMutatingWebhookPort = 9090
-	// DefaultMeshOperatorCertDir is the default certs file localtion the adminssion control server.
-	DefaultMeshOperatorCertDir = "/cert-volume"
-	// DefaultMeshOperatorCertFileName is the default certs file name of the admission control server.
-	DefaultMeshOperatorCertFileName = "cert.pem"
-	// DefaultMeshOperatorKeyFileName is the default key name of the admission control server.
-	DefaultMeshOperatorKeyFileName = "key.pem"
+	// --- Operator Deployment related.
 
-	// DefaultSidecarImageName is the default sidecar image name.
-	DefaultSidecarImageName = "megaease/easegress:server-sidecar"
-	// DefaultEaseagentInitializerImageName is the default easeagent initializer image name.
-	DefaultEaseagentInitializerImageName = "megaease/easeagent-initializer:latest"
-	// DefaultLog4jConfigName is the default log4j config file name of the easeagent.
-	DefaultLog4jConfigName = "log4j2.xml"
+	// OperatorConfigMapName is the name of config map of operator.
+	OperatorConfigMapName = "easemesh-operator-config"
+	// OperatorConfigMapKey is the key of config map of operator.
+	OperatorConfigMapKey = "operator.yaml"
+	// OperatorConfigMapVolumeMountPath is the path of volume mouth of config map of operator.
+	OperatorConfigMapVolumeMountPath = "/opt/operator/operator.yaml"
+	// OperatorConfigMapVolumeMountSubPath is the subpath of volume mouth of config map in control plane config map.
+	OperatorConfigMapVolumeMountSubPath = "operator.yaml"
+	// OperatorSecretName is the name of secret of operator deployment.
+	OperatorSecretName = "easemesh-operator-secret"
+	// OperatorSecretVolumeMountPath is the secret directory of adminssion control of operator deployment.
+	OperatorSecretVolumeMountPath = "/opt/operator/cert-volume"
+	// OperatorSecretCertFileName is the cert filename of admission control of operator deployment.
+	OperatorSecretCertFileName = "cert.pem"
+	// OperatorSecretKeyFileName is the key filename of admission control of operator deployment.
+	OperatorSecretKeyFileName = "key.pem"
+	// OperatorCmd is the command of operator.
+	OperatorCmd = "/manager"
+	// OperatorArgs is the args of operator.
+	OperatorArgs = "--config=/opt/operator/operator.yaml"
 
-	// DefaultMeshIngressConfig is the default configmap name of the meshingress.
-	DefaultMeshIngressConfig = "easemesh-ingress-config"
-	// DefaultMeshIngressService is the default service name of the meshingress.
-	DefaultMeshIngressService = "easemesh-ingress-service"
-	// DefaultMeshIngressControllerName is the default deployment name of the meshingress.
-	DefaultMeshIngressControllerName = "easemesh-ingress-easegress"
-	// DefaultShadowServiceControllerName is the default deployment name of the shadow service controller.
-	DefaultShadowServiceControllerName = "easemesh-shadowservice-controller"
+	// OperatorDeploymentName is the name of operator deployment.
+	OperatorDeploymentName = "easemesh-operator"
+	// OperatorServiceName is the name of service of operator deployment.
+	OperatorServiceName = "easemesh-operator-service"
+	// OperatorCSRName is the name of CertificateSigningRequest of operator deployment.
+	OperatorCSRName = "easemesh-operator-csr"
+	// OperatorMutatingWebhookName is the name of mutating-webhook of admission control of operator deployment.
+	OperatorMutatingWebhookName = "easemesh-operator-mutating-webhook"
+	// OperatorMutatingWebhookPath is the path of admission control of operator deployment.
+	OperatorMutatingWebhookPath = "/mutate"
+	// OperatorMutatingWebhookPortName is the name of mutating webhook port of admission control of operator deployment.
+	OperatorMutatingWebhookPortName = "mutate-port"
+	// OperatorMutatingWebhookPort is the port of adminssion control of operator deployment.
+	OperatorMutatingWebhookPort = 9090
 
-	// DefaultKubeDir represents default kubernetes client configuration directory.
+	// --- Operator injection related.
+
+	// SidecarImageName is the imaget name of sidecar.
+	SidecarImageName = "megaease/easegress:easemesh"
+	// AgentInitializerImageName is the image name of agent initializer.
+	AgentInitializerImageName = "megaease/easeagent-initializer:latest"
+	// AgentLog4jConfigName is the file name of log4j config of agent.
+	AgentLog4jConfigName = "log4j2.xml"
+
+	// --- Ingress Controller related.
+
+	// IngressControllerDeploymentName is the name of deployment of ingress controller.
+	IngressControllerDeploymentName = "easemesh-ingress-controller"
+	// IngressControllerDeploymentCmd is the essetial command of deployment of ingress controller.
+	IngressControllerDeploymentCmd = "/opt/easegress/bin/easegress-server -f /opt/easegress/config/ingress-controller.yaml"
+	// IngressControllerConfigMapName is the name of config map of ingress controller.
+	IngressControllerConfigMapName = "easemesh-ingress-controller-config"
+	// IngressControllerServiceName is the name of service of ingress controller
+	IngressControllerServiceName = "easemesh-ingress-controller-service"
+	// IngressControllerConfigMapKey is the key of data of config map of ingress controller.
+	IngressControllerConfigMapKey = "ingress-controller.yaml"
+	// IngressControllerConfigMapVolumeMountPath is the path of volume mouth of config map of ingress controller.
+	IngressControllerConfigMapVolumeMountPath = "/opt/easegress/config/ingress-controller.yaml"
+	// IngressControllerConfigMapVolumeMountSubPath is the subpath of volume mouth of config map of ingress controller.
+	IngressControllerConfigMapVolumeMountSubPath = "control-plane.yaml"
+	// IngressControllerHomeDir is home directory of control plane.
+	IngressControllerHomeDir = "/opt/easegress"
+
+	// --- Shadow Service related.
+
+	// IngressControllerShadowServiceName is the name of shadow service of ingress controller.
+	IngressControllerShadowServiceName = "easemesh-ingress-controller-shadowservice"
+
+	// --- Kubernetes related.
+
+	// DefaultKubeDir is the directory of Kubernetes config.
 	DefaultKubeDir = ".kube"
-
-	// DefaultKubernetesConfig is the default config name of the K8s.
-	DefaultKubernetesConfig = "config"
-	// WriterClusterRole is the write role name of the Easegress.
-	WriterClusterRole = "writer"
-	// ReaderClusterRole is the read role name of the Easegress.
-	ReaderClusterRole = "reader"
+	// DefaultKubernetesFilename is the file name of Kubernetes config.
+	DefaultKubernetesFilename = "config"
 )
 
 // InstallPhase is the phrase of installation.

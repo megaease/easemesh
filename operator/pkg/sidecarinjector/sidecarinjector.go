@@ -171,7 +171,7 @@ func initContainerCommand(service *MeshService) []string {
 cp -r /easeagent-volume/* %s
 
 echo 'name: %s
-cluster-join-urls: http://easemesh-controlplane-svc.easemesh:2380
+cluster-join-urls: http://easemesh-control-plane-service.easemesh:2380
 cluster-request-timeout: 10s
 cluster-role: reader
 cluster-name: easemesh-control-plane

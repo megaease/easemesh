@@ -29,21 +29,17 @@ import (
 )
 
 const (
-	meshOperatorConfigMap = "easemesh-operator-config"
-	//
-	meshOperatorLeaderElectionRole        = "mesh-operator-leader-election-role"
-	meshOperatorLeaderElectionRoleBinding = "mesh-operator-leader-election-rolebinding"
-	//
-	meshOperatorManagerClusterRole        = "mesh-operator-manager-role"
-	meshOperatorManagerClusterRoleBinding = "mesh-operator-manager-rolebinding"
+	leaderElectionRole        = "mesh-operator-leader-election-role"
+	leaderElectionRoleBinding = "mesh-operator-leader-election-rolebinding"
 
-	//
-	meshOperatorMetricsReaderClusterRole        = "mesh-operator-metrics-reader-role"
-	meshOperatorMetricsReaderClusterRoleBinding = "mesh-operator-metrics-reader-rolebinding"
+	managerClusterRole        = "mesh-operator-manager-role"
+	managerClusterRoleBinding = "mesh-operator-manager-rolebinding"
 
-	//
-	meshOperatorProxyClusterRole        = "mesh-operator-proxy-role"
-	meshOperatorProxyClusterRoleBinding = "mesh-operator-proxy-rolebinding"
+	metricsReaderClusterRole        = "mesh-operator-metrics-reader-role"
+	metricsReaderClusterRoleBinding = "mesh-operator-metrics-reader-rolebinding"
+
+	proxyClusterRole        = "mesh-operator-proxy-role"
+	proxyClusterRoleBinding = "mesh-operator-proxy-rolebinding"
 )
 
 // Deploy deploy resources of operator
@@ -78,32 +74,32 @@ func PreCheck(context *installbase.StageContext) error {
 // Clear clears all k8s resources about operator
 func Clear(context *installbase.StageContext) error {
 	certificateV1BetaResources := [][]string{
-		{"certificatesigningrequests", installbase.DefaultMeshOperatorCSRName},
+		{"certificatesigningrequests", installbase.OperatorCSRName},
 	}
 
 	appsV1Resources := [][]string{
-		{"deployments", installbase.DefaultMeshOperatorName},
+		{"deployments", installbase.OperatorDeploymentName},
 	}
 
 	coreV1Resources := [][]string{
-		{"services", installbase.DefaultMeshOperatorServiceName},
-		{"configmaps", meshOperatorConfigMap},
-		{"secrets", installbase.DefaultMeshOperatorSecretName},
+		{"services", installbase.OperatorServiceName},
+		{"configmaps", installbase.OperatorConfigMapName},
+		{"secrets", installbase.OperatorSecretName},
 	}
 
 	rbacV1Resources := [][]string{
-		{"rolebindings", meshOperatorLeaderElectionRoleBinding},
-		{"roles", meshOperatorLeaderElectionRole},
-		{"clusterrolebindings", meshOperatorManagerClusterRoleBinding},
-		{"clusterroles", meshOperatorManagerClusterRole},
-		{"clusterrolebindings", meshOperatorMetricsReaderClusterRoleBinding},
-		{"clusterroles", meshOperatorMetricsReaderClusterRole},
-		{"clusterrolebindings", meshOperatorProxyClusterRoleBinding},
-		{"clusterroles", meshOperatorProxyClusterRole},
+		{"rolebindings", leaderElectionRoleBinding},
+		{"roles", leaderElectionRole},
+		{"clusterrolebindings", managerClusterRoleBinding},
+		{"clusterroles", managerClusterRole},
+		{"clusterrolebindings", metricsReaderClusterRoleBinding},
+		{"clusterroles", metricsReaderClusterRole},
+		{"clusterrolebindings", proxyClusterRoleBinding},
+		{"clusterroles", proxyClusterRole},
 	}
 
 	admissionregV1Resources := [][]string{
-		{"mutatingwebhookconfigurations", installbase.DefaultMeshOperatorMutatingWebhookName},
+		{"mutatingwebhookconfigurations", installbase.OperatorMutatingWebhookName},
 	}
 
 	installbase.DeleteResources(context.Client, certificateV1BetaResources,
@@ -127,7 +123,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	case installbase.BeginPhase:
 		return fmt.Sprintf("Begin to install mesh operator in the namespace: %s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
-		return fmt.Sprintf("\nMesh operator deployed successfully, deployment: %s\n%s", installbase.DefaultMeshOperatorName,
+		return fmt.Sprintf("\nMesh operator deployed successfully, deployment: %s\n%s", installbase.OperatorDeploymentName,
 			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(meshOperatorLabels())))
 	}
@@ -140,7 +136,7 @@ func checkOperatorStatus(client kubernetes.Interface, installFlags *flags.Instal
 		time.Sleep(time.Millisecond * 100)
 		i++
 		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
-			installbase.DefaultMeshOperatorName,
+			installbase.OperatorDeploymentName,
 			installbase.DeploymentReadyPredict)
 		if err != nil {
 			return err

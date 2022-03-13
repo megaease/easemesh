@@ -52,7 +52,7 @@ func PreCheck(context *installbase.StageContext) error {
 func Clear(context *installbase.StageContext) error {
 	deleteShadowServiceKindSpec(context)
 	appsV1Resources := [][]string{
-		{"deployments", installbase.DefaultShadowServiceControllerName},
+		{"deployments", installbase.IngressControllerShadowServiceName},
 	}
 	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNamespace, installbase.DeleteAppsV1Resource)
 	return nil
@@ -65,7 +65,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	case installbase.BeginPhase:
 		return fmt.Sprintf("Begin to install shadow service controller in the namespace:%s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
-		return fmt.Sprintf("\nShadow service controller deployed successfully, deployment:%s\n%s", installbase.DefaultShadowServiceControllerName,
+		return fmt.Sprintf("\nShadow service controller deployed successfully, deployment:%s\n%s", installbase.IngressControllerShadowServiceName,
 			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(shadowServiceLabel())))
 	}
@@ -81,7 +81,7 @@ func checkShadowServiceStatus(client kubernetes.Interface, installFlags *flags.I
 			return errors.Errorf("easeMesh shadow service controller deploy failed, shadow service controller (EG deployment) not ready")
 		}
 		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
-			installbase.DefaultShadowServiceControllerName,
+			installbase.IngressControllerShadowServiceName,
 			installbase.DeploymentReadyPredict)
 		if ready {
 			return nil

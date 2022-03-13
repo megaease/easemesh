@@ -27,9 +27,9 @@ import (
 )
 
 func meshControlPlaneLabel() map[string]string {
-	selector := map[string]string{}
-	selector["mesh-controlpanel-app"] = "easegress-mesh-controlpanel"
-	return selector
+	return map[string]string{
+		"app": installbase.ControlPlaneStatefulSetName,
+	}
 }
 
 func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
@@ -37,7 +37,7 @@ func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 
 	headlessService := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshControlPlaneHeadlessServiceName,
+			Name:      installbase.ControlPlaneHeadlessServiceName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 	}
@@ -46,17 +46,17 @@ func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	headlessService.Spec.Selector = labels
 	headlessService.Spec.Ports = []v1.ServicePort{
 		{
-			Name:       installbase.DefaultMeshAdminPortName,
+			Name:       installbase.ControlPlaneStatefulSetAdminPortName,
 			Port:       int32(ctx.Flags.EgAdminPort),
 			TargetPort: intstr.IntOrString{IntVal: 2381},
 		},
 		{
-			Name:       installbase.DefaultMeshPeerPortName,
+			Name:       installbase.ControlPlaneStatefulSetPeerPortName,
 			Port:       int32(ctx.Flags.EgPeerPort),
 			TargetPort: intstr.IntOrString{IntVal: 2380},
 		},
 		{
-			Name:       installbase.DefaultMeshClientPortName,
+			Name:       installbase.ControlPlaneStatefulSetClientPortName,
 			Port:       int32(ctx.Flags.EgClientPort),
 			TargetPort: intstr.IntOrString{IntVal: 2379},
 		},
@@ -72,17 +72,17 @@ func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	headfulService.Spec.Selector = labels
 	headfulService.Spec.Ports = []v1.ServicePort{
 		{
-			Name:       installbase.DefaultMeshAdminPortName,
+			Name:       installbase.ControlPlaneStatefulSetAdminPortName,
 			Port:       int32(ctx.Flags.EgAdminPort),
 			TargetPort: intstr.IntOrString{IntVal: 2381},
 		},
 		{
-			Name:       installbase.DefaultMeshPeerPortName,
+			Name:       installbase.ControlPlaneStatefulSetPeerPortName,
 			Port:       int32(ctx.Flags.EgPeerPort),
 			TargetPort: intstr.IntOrString{IntVal: 2380},
 		},
 		{
-			Name:       installbase.DefaultMeshClientPortName,
+			Name:       installbase.ControlPlaneStatefulSetClientPortName,
 			Port:       int32(ctx.Flags.EgClientPort),
 			TargetPort: intstr.IntOrString{IntVal: 2379},
 		},
@@ -90,23 +90,23 @@ func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshControlPlanePlubicServiceName,
+			Name:      installbase.ControlPlanePlubicServiceName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 	}
 	service.Spec.Ports = []v1.ServicePort{
 		{
-			Name:       installbase.DefaultMeshAdminPortName,
+			Name:       installbase.ControlPlaneStatefulSetAdminPortName,
 			Port:       int32(ctx.Flags.EgAdminPort),
 			TargetPort: intstr.IntOrString{IntVal: 2381},
 		},
 		{
-			Name:       installbase.DefaultMeshPeerPortName,
+			Name:       installbase.ControlPlaneStatefulSetPeerPortName,
 			Port:       int32(ctx.Flags.EgPeerPort),
 			TargetPort: intstr.IntOrString{IntVal: 2380},
 		},
 		{
-			Name:       installbase.DefaultMeshClientPortName,
+			Name:       installbase.ControlPlaneStatefulSetClientPortName,
 			Port:       int32(ctx.Flags.EgClientPort),
 			TargetPort: intstr.IntOrString{IntVal: 2379},
 		},

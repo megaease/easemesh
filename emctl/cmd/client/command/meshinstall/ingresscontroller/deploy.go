@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package meshingress
+package ingresscontroller
 
 import (
 	"fmt"
@@ -50,11 +50,11 @@ func PreCheck(context *installbase.StageContext) error {
 // Clear will clear all installed resource about mesh ingress panel
 func Clear(context *installbase.StageContext) error {
 	appsV1Resources := [][]string{
-		{"deployments", installbase.DefaultMeshIngressControllerName},
+		{"deployments", installbase.IngressControllerDeploymentName},
 	}
 	coreV1Resources := [][]string{
-		{"services", installbase.DefaultMeshIngressService},
-		{"configmap", installbase.DefaultMeshIngressConfig},
+		{"services", installbase.IngressControllerServiceName},
+		{"configmap", installbase.IngressControllerConfigMapName},
 	}
 
 	installbase.DeleteResources(context.Client, appsV1Resources, context.Flags.MeshNamespace, installbase.DeleteAppsV1Resource)
@@ -69,7 +69,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	case installbase.BeginPhase:
 		return fmt.Sprintf("Begin to install mesh ingress controller in the namespace:%s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
-		return fmt.Sprintf("\nMesh ingress controller deployed successfully, deployment:%s\n%s", installbase.DefaultMeshIngressControllerName,
+		return fmt.Sprintf("\nMesh ingress controller deployed successfully, deployment:%s\n%s", installbase.IngressControllerDeploymentName,
 			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(meshIngressLabel())))
 	}
@@ -85,7 +85,7 @@ func checkMeshIngressStatus(client kubernetes.Interface, installFlags *flags.Ins
 			return errors.Errorf("easeMesh meshingress controller deploy failed, mesh ingress controller (EG deployment) not ready")
 		}
 		ready, err := installbase.CheckDeploymentResourceStatus(client, installFlags.MeshNamespace,
-			installbase.DefaultMeshIngressControllerName,
+			installbase.IngressControllerDeploymentName,
 			installbase.DeploymentReadyPredict)
 		if ready {
 			return nil

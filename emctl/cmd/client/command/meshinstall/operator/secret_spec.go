@@ -37,7 +37,7 @@ import (
 func secretSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshOperatorSecretName,
+			Name:      installbase.OperatorSecretName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 		Data: map[string][]byte{},
@@ -66,8 +66,8 @@ func secretSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 
 		// NOTE: []byte will be automatically encoded as a base64-encoded string.
 		// Reference: https://golang.org/pkg/encoding/json/#Marshal
-		secret.Data[installbase.DefaultMeshOperatorCertFileName] = certPem
-		secret.Data[installbase.DefaultMeshOperatorKeyFileName] = keyPem
+		secret.Data[installbase.OperatorSecretCertFileName] = certPem
+		secret.Data[installbase.OperatorSecretKeyFileName] = keyPem
 
 		err = installbase.DeploySecret(secret, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
@@ -91,9 +91,9 @@ func generateCsrAndKeyPem(namespace string) ([]byte, []byte, error) {
 		},
 
 		DNSNames: []string{
-			installbase.DefaultMeshOperatorServiceName,
-			fmt.Sprintf("%s.%s", installbase.DefaultMeshOperatorServiceName, namespace),
-			fmt.Sprintf("%s.%s.svc", installbase.DefaultMeshOperatorServiceName, namespace),
+			installbase.OperatorServiceName,
+			fmt.Sprintf("%s.%s", installbase.OperatorServiceName, namespace),
+			fmt.Sprintf("%s.%s.svc", installbase.OperatorServiceName, namespace),
 		},
 
 		SignatureAlgorithm: x509.SHA256WithRSA,

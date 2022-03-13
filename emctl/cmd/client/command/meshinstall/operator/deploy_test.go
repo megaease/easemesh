@@ -74,7 +74,7 @@ func TestDeploy(t *testing.T) {
 
 	client.PrependReactor("get", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 		return true, &v1.Secret{
-			Data: map[string][]byte{installbase.DefaultMeshOperatorCertFileName: []byte(helloWorld)},
+			Data: map[string][]byte{installbase.OperatorSecretCertFileName: []byte(helloWorld)},
 		}, nil
 	})
 	mutatingWebhookSpec(ctx).Deploy(ctx)
@@ -92,7 +92,7 @@ func TestDeploy(t *testing.T) {
 				APIVersion: "certificates.k8s.io/v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      installbase.DefaultMeshOperatorCSRName,
+				Name:      installbase.OperatorCSRName,
 				Namespace: ctx.Flags.MeshNamespace,
 			},
 			Spec: certv1.CertificateSigningRequestSpec{

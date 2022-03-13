@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package meshingress
+package ingresscontroller
 
 import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
@@ -26,7 +26,7 @@ import (
 
 func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	service := &v1.Service{}
-	service.Name = installbase.DefaultMeshIngressService
+	service.Name = installbase.IngressControllerServiceName
 
 	service.Spec.Ports = []v1.ServicePort{
 		{

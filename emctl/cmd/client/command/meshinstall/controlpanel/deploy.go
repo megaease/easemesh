@@ -73,7 +73,7 @@ func PreCheck(context *installbase.StageContext) error {
 	quantity := resource.MustParse(context.Flags.MeshControlPlanePersistVolumeCapacity)
 	boundedPVCSuffixes := []string{}
 	for i := 0; i < context.Flags.EasegressControlPlaneReplicas; i++ {
-		boundedPVCSuffixes = append(boundedPVCSuffixes, fmt.Sprintf("%s-%d", installbase.DefaultMeshControlPlaneName, i))
+		boundedPVCSuffixes = append(boundedPVCSuffixes, fmt.Sprintf("%s-%d", installbase.ControlPlaneStatefulSetName, i))
 	}
 	for _, pv := range pvList.Items {
 		if pv.Status.Phase == v1.VolumeAvailable &&
@@ -105,13 +105,13 @@ func PreCheck(context *installbase.StageContext) error {
 // Clear will clear all installed resource about control panel
 func Clear(context *installbase.StageContext) error {
 	statefulsetResource := [][]string{
-		{"statefulsets", installbase.DefaultMeshControlPlaneName},
+		{"statefulsets", installbase.ControlPlaneStatefulSetName},
 	}
 	coreV1Resources := [][]string{
 		{"services", context.Flags.EgServiceName},
-		{"services", installbase.DefaultMeshControlPlanePlubicServiceName},
-		{"services", installbase.DefaultMeshControlPlaneHeadlessServiceName},
-		{"configmaps", installbase.DefaultMeshControlPlaneConfig},
+		{"services", installbase.ControlPlanePlubicServiceName},
+		{"services", installbase.ControlPlaneHeadlessServiceName},
+		{"configmaps", installbase.ControlPlaneConfigMapName},
 	}
 
 	clearEaseMeshControlPlaneProvision(context.Cmd, context.Client, context.Flags)
@@ -129,7 +129,7 @@ func DescribePhase(context *installbase.StageContext, phase installbase.InstallP
 	case installbase.BeginPhase:
 		return fmt.Sprintf("Begin to install mesh control plane service in the namespace %s", context.Flags.MeshNamespace)
 	case installbase.EndPhase:
-		return fmt.Sprintf("\nControl panel statefulset %s\n%s", installbase.DefaultMeshControlPlaneName,
+		return fmt.Sprintf("\nControl panel statefulset %s\n%s", installbase.ControlPlaneStatefulSetName,
 			installbase.FormatPodStatus(context.Client, context.Flags.MeshNamespace,
 				installbase.AdaptListPodFunc(meshControlPlaneLabel())))
 	}
@@ -150,8 +150,8 @@ func checkEasegressControlPlaneStatus(ctx *installbase.StageContext) error {
 	time.Sleep(time.Second * time.Duration(ctx.Flags.WaitControlPlaneTimeoutInSeconds))
 
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
-		installbase.DefaultMeshControlPlanePlubicServiceName,
-		installbase.DefaultMeshAdminPortName)
+		installbase.ControlPlanePlubicServiceName,
+		installbase.ControlPlaneStatefulSetAdminPortName)
 	if err != nil {
 		return errors.Wrap(err, "get mesh control plane entrypoint failed")
 	}

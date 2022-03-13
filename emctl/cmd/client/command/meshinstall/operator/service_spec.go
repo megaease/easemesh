@@ -31,7 +31,7 @@ func serviceSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 
 	service := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshOperatorServiceName,
+			Name:      installbase.OperatorServiceName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 	}

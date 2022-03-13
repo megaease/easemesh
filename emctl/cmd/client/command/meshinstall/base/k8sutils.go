@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
+	"os"
 
 	"github.com/megaease/easemeshctl/cmd/common"
 
@@ -570,11 +570,19 @@ func GetMeshControlPlaneEndpoints(client kubernetes.Interface, namespace, resour
 	entrypoints := []string{}
 	for _, n := range nodes.Items {
 		for _, i := range n.Status.Addresses {
+			address := i.Address
+
+			// NOTICE: For situation where the node address is not reachable.
+			if os.Getenv("EMCTL_NODE_ADDRESS") != "" {
+				address = os.Getenv("EMCTL_NODE_ADDRESS")
+			}
+
 			if i.Type == v1.NodeInternalIP {
-				entrypoints = append(entrypoints, "http://"+i.Address+":"+strconv.Itoa(int(nodePort)))
+				entrypoints = append(entrypoints, fmt.Sprintf("http://%s:%d", address, nodePort))
 			}
 		}
 	}
+
 	return entrypoints, nil
 }
 

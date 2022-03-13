@@ -49,7 +49,7 @@ const (
 	DefaultMeshAdminPort = 2381
 
 	// DefaultMeshControlPlaneHeadfulServiceName is the default headful service name of the EaseMesh control plane
-	DefaultMeshControlPlaneHeadfulServiceName = "easemesh-controlplane-svc"
+	DefaultMeshControlPlaneHeadfulServiceName = "easemesh-control-plane-service"
 
 	// DefaultMeshControlPlaneCheckHealthzMaxTime is a duration that installation wait for checking the control plane service status
 	DefaultMeshControlPlaneCheckHealthzMaxTime = 60

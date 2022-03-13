@@ -60,7 +60,7 @@ func deploymentInitialize(fn deploymentSpecFunc) deploymentSpecFunc {
 func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 	return func(installFlags *flags.Install) *appsV1.Deployment {
 		spec := fn(installFlags)
-		spec.Name = installbase.DefaultShadowServiceControllerName
+		spec.Name = installbase.IngressControllerShadowServiceName
 		spec.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: shadowServiceLabel(),
 		}

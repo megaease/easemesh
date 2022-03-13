@@ -83,8 +83,8 @@ spec:
 func shadowServiceKindSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	return func(ctx *installbase.StageContext) error {
 		entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
-			installbase.DefaultMeshControlPlanePlubicServiceName,
-			installbase.DefaultMeshAdminPortName)
+			installbase.ControlPlanePlubicServiceName,
+			installbase.ControlPlaneStatefulSetAdminPortName)
 		if err != nil {
 			return err
 		}
@@ -101,8 +101,8 @@ func shadowServiceKindSpec(ctx *installbase.StageContext) installbase.InstallFun
 
 func deleteShadowServiceKindSpec(ctx *installbase.StageContext) error {
 	entrypoints, err := installbase.GetMeshControlPlaneEndpoints(ctx.Client, ctx.Flags.MeshNamespace,
-		installbase.DefaultMeshControlPlanePlubicServiceName,
-		installbase.DefaultMeshAdminPortName)
+		installbase.ControlPlanePlubicServiceName,
+		installbase.ControlPlaneStatefulSetAdminPortName)
 	if err != nil {
 		return err
 	}

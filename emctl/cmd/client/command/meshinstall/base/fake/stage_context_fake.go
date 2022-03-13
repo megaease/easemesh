@@ -26,7 +26,8 @@ import (
 
 // NewStageContextForApply return a fake stageContext for apply subcommand
 func NewStageContextForApply(client kubernetes.Interface,
-	apiextensionsClient apiextensions.Interface) *installbase.StageContext {
+	apiextensionsClient apiextensions.Interface,
+) *installbase.StageContext {
 	return &installbase.StageContext{
 		Client:              client,
 		APIExtensionsClient: apiextensionsClient,
@@ -42,8 +43,8 @@ func NewStageContextForApply(client kubernetes.Interface,
 			EgServiceAdminPort: 2381,
 
 			MeshControlPlaneStorageClassName:      "easemesh-storage-class",
-			MeshControlPlanePersistVolumeName:     installbase.DefaultMeshControlPlanePVName,
-			MeshControlPlanePersistVolumeHostPath: installbase.DefaultMeshControlPlanePVHostPath,
+			MeshControlPlanePersistVolumeName:     installbase.ControlPlanePVCName,
+			MeshControlPlanePersistVolumeHostPath: "/opt/easemesh",
 			MeshControlPlanePersistVolumeCapacity: "3Gi",
 			MeshControlPlaneCheckHealthzMaxTime:   1000,
 
@@ -59,7 +60,7 @@ func NewStageContextForApply(client kubernetes.Interface,
 
 			OperationGlobal: &flags.OperationGlobal{
 				MeshNamespace: "easemesh",
-				EgServiceName: "easemesh-controlplane-svc",
+				EgServiceName: "easemesh-control-plane-svc",
 			},
 		},
 	}

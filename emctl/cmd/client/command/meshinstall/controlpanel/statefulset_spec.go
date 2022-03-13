@@ -58,8 +58,8 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
 		spec := fn(ctx)
 		labels := meshControlPlaneLabel()
-		spec.Name = installbase.DefaultMeshControlPlaneName
-		spec.Spec.ServiceName = installbase.DefaultMeshControlPlaneHeadlessServiceName
+		spec.Name = installbase.ControlPlaneStatefulSetName
+		spec.Spec.ServiceName = installbase.ControlPlaneHeadlessServiceName
 
 		spec.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: labels,
@@ -70,11 +70,11 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 		spec.Spec.Template.Labels = labels
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
 			{
-				Name: installbase.DefaultMeshControlPlaneConfig,
+				Name: installbase.ControlPlaneConfigMapName,
 				VolumeSource: v1.VolumeSource{
 					ConfigMap: &v1.ConfigMapVolumeSource{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: installbase.DefaultMeshControlPlaneConfig,
+							Name: installbase.ControlPlaneConfigMapName,
 						},
 					},
 				},
@@ -88,7 +88,7 @@ func statefulsetPVCSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 	return func(ctx *installbase.StageContext) *appsV1.StatefulSet {
 		spec := fn(ctx)
 		pvc := v1.PersistentVolumeClaim{}
-		pvc.Name = installbase.DefaultMeshControlPlanePVName
+		pvc.Name = installbase.ControlPlanePVCName
 		pvc.Spec.AccessModes = []v1.PersistentVolumeAccessMode{v1.ReadWriteOnce}
 		pvc.Spec.StorageClassName = &ctx.Flags.MeshControlPlaneStorageClassName
 
@@ -124,25 +124,33 @@ type containerVisitor struct {
 var _ installbase.ContainerVisitor = &containerVisitor{}
 
 func (m *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
-	return []string{"/bin/sh"},
+	clientURL := fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.ControlPlaneHeadlessServiceName,
+		m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgClientPort)
+	peerURL := fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.ControlPlaneHeadlessServiceName,
+		m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgPeerPort)
+	initCluster := installbase.ControlPlaneInitialClusterStr(m.ctx)
+
+	return []string{"/opt/easegress/bin/easegress-server"},
 		[]string{
-			"-c",
-			"/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-master.yaml",
+			"-f", installbase.ControlPlaneConfigMapVolumeMountPath,
+			"--advertise-client-urls", clientURL,
+			"--initial-advertise-peer-urls", peerURL,
+			"--initial-cluster", initCluster,
 		}
 }
 
 func (m *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
 	return []v1.ContainerPort{
 		{
-			Name:          installbase.DefaultMeshAdminPortName,
+			Name:          installbase.ControlPlaneStatefulSetAdminPortName,
 			ContainerPort: flags.DefaultMeshAdminPort,
 		},
 		{
-			Name:          installbase.DefaultMeshClientPortName,
+			Name:          installbase.ControlPlaneStatefulSetClientPortName,
 			ContainerPort: flags.DefaultMeshClientPort,
 		},
 		{
-			Name:          installbase.DefaultMeshPeerPortName,
+			Name:          installbase.ControlPlaneStatefulSetPeerPortName,
 			ContainerPort: flags.DefaultMeshPeerPort,
 		},
 	}, nil
@@ -158,20 +166,23 @@ func (m *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
 				},
 			},
 		},
-		// We set a unreachable host to --advertise-clients-urls and
-		// initial-advertise-peer-urls as we need a consistency configuration
-		// for all Easegress instance. The real cluster-advertise-client-url
-		// and cluster-initial-peer-url will be passed through environment
-		// `EG_CLUSTER_ADVERTISE_CLIENT_URL` and `EG_CLUSTER_INITIAL_ADVERTISE_PEER_URLS`
-		{
-			// Kubernetes leverage shell syntax to help refering another environment
-			Name:  "EG_CLUSTER_ADVERTISE_CLIENT_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgClientPort),
-		},
-		{
-			Name:  "EG_CLUSTER_INITIAL_ADVERTISE_PEER_URLS",
-			Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.DefaultMeshControlPlaneHeadlessServiceName, m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgPeerPort),
-		},
+
+		// NOTE: These new cluster options is second-level struct,
+		// which env values will be covered by empty field of config file.
+		// So we use command line for now.
+
+		// {
+		// 	Name:  "EG_ADVERTISE_CLIENT_URLS",
+		// 	Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.ControlPlaneHeadlessServiceName, m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgClientPort),
+		// },
+		// {
+		// 	Name:  "EG_INITIAL_ADVERTISE_PEER_URLS",
+		// 	Value: fmt.Sprintf("http://$(EG_NAME).%s.%s:%d", installbase.ControlPlaneHeadlessServiceName, m.ctx.Flags.MeshNamespace, m.ctx.Flags.EgPeerPort),
+		// },
+		// {
+		// 	Name:  "EG_INITIAL_CLUSTER",
+		// 	Value: installbase.ControlPlaneInitialClusterStr(m.ctx),
+		// },
 	}, nil
 }
 
@@ -214,13 +225,13 @@ func (m *containerVisitor) VisitorResourceRequirements(c *v1.Container) (*v1.Res
 func (m *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
 	return []v1.VolumeMount{
 		{
-			Name:      installbase.DefaultMeshControlPlanePVName,
-			MountPath: "/opt/eg-data/",
+			Name:      installbase.ControlPlanePVCName,
+			MountPath: installbase.ControlPlaneDataDir,
 		},
 		{
-			Name:      installbase.DefaultMeshControlPlaneConfig,
-			MountPath: "/opt/eg-config/eg-master.yaml",
-			SubPath:   "eg-master.yaml",
+			Name:      installbase.ControlPlaneConfigMapName,
+			MountPath: installbase.ControlPlaneConfigMapVolumeMountPath,
+			SubPath:   installbase.ControlPlaneConfigMapVolumeMountSubPath,
 		},
 	}, nil
 }

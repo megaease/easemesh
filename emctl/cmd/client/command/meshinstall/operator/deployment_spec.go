@@ -47,7 +47,7 @@ func operatorDeploymentSpec(ctx *installbase.StageContext) installbase.InstallFu
 
 func meshOperatorLabels() map[string]string {
 	selector := map[string]string{}
-	selector["easemesh-operator"] = "operator-manager"
+	selector["app"] = installbase.OperatorDeploymentName
 	return selector
 }
 
@@ -62,7 +62,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec := fn(ctx)
 
 		labels := meshOperatorLabels()
-		spec.Name = installbase.DefaultMeshOperatorName
+		spec.Name = installbase.OperatorDeploymentName
 		spec.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: labels,
 		}
@@ -108,20 +108,20 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec := fn(ctx)
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
 			{
-				Name: "config-volume",
+				Name: installbase.OperatorConfigMapName,
 				VolumeSource: v1.VolumeSource{
 					ConfigMap: &v1.ConfigMapVolumeSource{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: meshOperatorConfigMap,
+							Name: installbase.OperatorConfigMapName,
 						},
 					},
 				},
 			},
 			{
-				Name: "cert-volume",
+				Name: installbase.OperatorSecretName,
 				VolumeSource: v1.VolumeSource{
 					Secret: &v1.SecretVolumeSource{
-						SecretName: installbase.DefaultMeshOperatorSecretName,
+						SecretName: installbase.OperatorSecretName,
 					},
 				},
 			},
@@ -152,15 +152,14 @@ type containerVisitor struct {
 }
 
 func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
-	return []string{"/manager"},
-		[]string{"--config=/opt/mesh/operator-config.yaml"}
+	return []string{installbase.OperatorCmd}, []string{installbase.OperatorArgs}
 }
 
 func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
 	return []v1.ContainerPort{
 		{
-			Name:          "mutate-webhook",
-			ContainerPort: 9090,
+			Name:          installbase.OperatorMutatingWebhookPortName,
+			ContainerPort: installbase.OperatorMutatingWebhookPort,
 		},
 	}, nil
 }
@@ -207,13 +206,13 @@ func (v *containerVisitor) VisitorResourceRequirements(c *v1.Container) (*v1.Res
 func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
 	return []v1.VolumeMount{
 		{
-			Name:      "config-volume",
-			MountPath: "/opt/mesh/operator-config.yaml",
-			SubPath:   "operator-config.yaml",
+			Name:      installbase.OperatorConfigMapName,
+			MountPath: installbase.OperatorConfigMapVolumeMountPath,
+			SubPath:   installbase.OperatorConfigMapVolumeMountSubPath,
 		},
 		{
-			Name:      "cert-volume",
-			MountPath: installbase.DefaultMeshOperatorCertDir,
+			Name:      installbase.OperatorSecretName,
+			MountPath: installbase.OperatorSecretVolumeMountPath,
 		},
 	}, nil
 }
