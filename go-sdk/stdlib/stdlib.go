@@ -90,12 +90,14 @@ func (a *Agent) handleConfig(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("read config body failed: %v", err)
+		return
 	}
 
 	config := &AgentConfig{}
 	err = json.Unmarshal(body, config)
 	if err != nil {
 		log.Printf("unmarshal config body failed: %v", err)
+		return
 	}
 
 	headers := strings.Split(config.Headers, ",")
