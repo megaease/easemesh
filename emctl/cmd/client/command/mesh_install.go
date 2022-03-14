@@ -117,7 +117,6 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 			installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
 			installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
 			installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
-			installation.Wrap(coredns.PreCheck, coredns.Deploy, coredns.Clear, coredns.DescribePhase),
 		)
 	}
 
