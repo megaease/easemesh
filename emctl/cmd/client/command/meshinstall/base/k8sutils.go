@@ -574,7 +574,7 @@ func GetMeshControlPlaneEndpoints(client kubernetes.Interface, namespace, resour
 
 			// NOTICE: For situation where the node address is not reachable.
 			if addr := os.Getenv("EMCTL_NODE_ADDRESS"); addr != "" {
-				addrress = addr
+				address = addr
 			}
 
 			if i.Type == v1.NodeInternalIP {
