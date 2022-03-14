@@ -1,3 +1,5 @@
+
+
 ## Background
 
 * EaseMesh uses Easegress-based sidecar inside Kubernetes Pod for **traffic hosting** and  EaseAgent for metrics reporting and RESTful-API-based RPC enhancement.
@@ -17,12 +19,13 @@ There are three types of traffic that are managed by EaseMesh.
 
 The ports used by EaseMesh sidecar+agent system
 
-| Role    | Port  | Description                                                                                                                 |
-| ------- | ----- | --------------------------------------------------------------------------------------------------------------------------- |
-| Sidecar | 13001 | The default Ingress port listened by sidecar for handing over traffic to local Java application                             |
-| Sidecar | 13002 | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application     |
-| Sidecar | 13009 | The default registry and discovery port listened by sidecar, for handling local Java application's Eureka/Conslu/Nacos APIs |
-| Agent   | 9900  | The default health port listened by Agent queried by sidecar for checking the liveness of Java application                  |
+| Role        | Port              | Description                                                                                                                 |
+|-------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| Sidecar     | 13001             | The default Ingress port listened by sidecar for handing over traffic to local Java application                             |
+| Sidecar     | 13002             | The default egress port listened by sidecar for routing local Java applications RPC request to another Java application     |
+| Sidecar     | 13009             | The default registry and discovery port listened by sidecar, for handling local Java application's Eureka/Conslu/Nacos APIs |
+| Agent       | 9900              | The default health port listened by Agent queried by sidecar for checking the liveness of Java application                  |
+| Application | customized port | The port listened by the user application. The sidecar routes ingress traffic to it                                         |
 
 
 
@@ -62,5 +65,26 @@ Requirement:
 3. It must serve the `http://localhost:9900/health` URI for EaseMesh health checking. (Only HTTP 200 return is required, regardless of the body content)
 
 4. It must reserve ports `13001` , `13002` and `13009` for local sidecar usage.
+
+5. It should specify the application port in Kubernetes deployment's `mesh.megaease.com/application-port` annotation for sidecar routing the ingress traffic. If it is omitted, the first port of the first container will be regarded as the application port.
+
+6. The sidecar periodically post agent config to `http://localhost:9900/config` to notify the latest config. The config body is like(some fields are ommitted)
+
+```json
+{
+  "easeagent.progress.forwarded.headers": "X-Location,X-Mesh-Service-Canary,X-Phone-Os",
+  "loadBalance.policy": "random",
+  "name": "service-001",
+  "registerTenant": "mesh-tenant",
+  "sidecar.address": "127.0.0.1",
+  "sidecar.discoveryType": "consul",
+  "sidecar.egressPort": "13002",
+  "sidecar.egressProtocol": "http",
+  "sidecar.ingressPort": "13001",
+  "sidecar.ingressProtocol": "http"
+}
+```
+
+For example, we extract the value of `easeagent.progress.forwarded.headers` to get the canary headers needed to transmit across the chain.
 
 If an application obeys the protocol above, then EaseMesh can run it inside with sacrificed observability regardless of the implements programming language.
