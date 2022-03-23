@@ -37,7 +37,7 @@ func deployCSR(ctx *installbase.StageContext, csrPem, keyPem []byte) (CertPem []
 			APIVersion: "certificates.k8s.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshOperatorCSRName,
+			Name:      installbase.OperatorCSRName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 		Spec: certv1.CertificateSigningRequestSpec{
@@ -63,7 +63,7 @@ func deployCSR(ctx *installbase.StageContext, csrPem, keyPem []byte) (CertPem []
 
 	for i := 0; ; i++ {
 		csr, err = ctx.Client.CertificatesV1().CertificateSigningRequests().Get(context.TODO(),
-			installbase.DefaultMeshOperatorCSRName, metav1.GetOptions{})
+			installbase.OperatorCSRName, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}

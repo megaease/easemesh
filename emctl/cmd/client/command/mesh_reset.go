@@ -22,8 +22,8 @@ import (
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/controlpanel"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/crd"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/ingresscontroller"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
-	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/shadowservice"
 	"github.com/megaease/easemeshctl/cmd/common"
@@ -59,7 +59,7 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 		// clear everything
 		clearFuncs = []installation.ClearFunc{
 			shadowservice.Clear,
-			meshingress.Clear,
+			ingresscontroller.Clear,
 			operator.Clear,
 			controlpanel.Clear,
 			crd.Clear,

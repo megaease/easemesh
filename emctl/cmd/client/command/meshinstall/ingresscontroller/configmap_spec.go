@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-package meshingress
+package ingresscontroller
 
 import (
-	"strconv"
+	"fmt"
 
-	"github.com/megaease/easemeshctl/cmd/client/command/flags"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 
 	"github.com/pkg/errors"
@@ -30,35 +29,37 @@ import (
 )
 
 func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	params := &installbase.EasegressReaderParams{}
-	params.ClusterRole = installbase.ReaderClusterRole
-	params.ClusterRequestTimeout = "10s"
-	params.ClusterJoinUrls = "http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + ":" + strconv.Itoa(ctx.Flags.EgPeerPort)
-	params.ClusterName = installbase.DefaultMeshControlPlaneName
-	params.Name = "mesh-ingress"
+	config := installbase.EasegressConfig{
+		// Injected from env EG_NAME
+		// Name:                    "" ,
 
-	labels := make(map[string]string)
-	labels["mesh-role"] = "ingress-controller"
-	params.Labels = labels
-
-	data := map[string]string{}
-	ingressControllerConfig, err := yaml.Marshal(params)
-	configMap := &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      installbase.DefaultMeshIngressConfig,
-			Namespace: ctx.Flags.MeshNamespace,
+		ClusterName: installbase.ControlPlaneStatefulSetName,
+		ClusterRole: installbase.EasegressSecondaryClusterRole,
+		Cluster: installbase.ClusterOptions{
+			PrimaryListenPeerURLs: installbase.ControlPlanePeerURLs(ctx),
+		},
+		APIAddr: fmt.Sprintf("0.0.0.0:%d", ctx.Flags.EgAdminPort),
+		HomeDir: installbase.ControlPlaneHomeDir,
+		Labels: map[string]string{
+			"mesh-role": "ingress-controller",
 		},
 	}
-	if err == nil {
-		data["eg-ingress.yaml"] = string(ingressControllerConfig)
-		configMap.Data = data
+
+	yamlBuff, _ := yaml.Marshal(config)
+	data := map[string]string{
+		installbase.ControlPlaneConfigMapKey: string(yamlBuff),
+	}
+
+	configMap := &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      installbase.IngressControllerConfigMapName,
+			Namespace: ctx.Flags.MeshNamespace,
+		},
+		Data: data,
 	}
 
 	return func(ctx *installbase.StageContext) error {
-		if err != nil {
-			return errors.Wrapf(err, "Create MeshIngress %s configmap spec", configMap.Name)
-		}
-		err = installbase.DeployConfigMap(configMap, ctx.Client, ctx.Flags.MeshNamespace)
+		err := installbase.DeployConfigMap(configMap, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
 			return errors.Wrapf(err, "Deploy configmap %s", configMap.Name)
 		}

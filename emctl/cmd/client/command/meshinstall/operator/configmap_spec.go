@@ -33,23 +33,23 @@ import (
 func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	cfg := installbase.MeshOperatorConfig{
 		ImageRegistryURL:          ctx.Flags.ImageRegistryURL,
-		ClusterName:               installbase.DefaultMeshControlPlaneName,
+		ClusterName:               installbase.ControlPlaneStatefulSetName,
 		ClusterJoinURLs:           []string{"http://" + flags.DefaultMeshControlPlaneHeadfulServiceName + "." + ctx.Flags.MeshNamespace + ":" + strconv.Itoa(ctx.Flags.EgPeerPort)},
 		MetricsAddr:               "127.0.0.1:8080",
 		EnableLeaderElection:      false,
 		ProbeAddr:                 ":8081",
-		WebhookPort:               installbase.DefaultMeshOperatorMutatingWebhookPort,
-		CertDir:                   installbase.DefaultMeshOperatorCertDir,
-		CertName:                  installbase.DefaultMeshOperatorCertFileName,
-		KeyName:                   installbase.DefaultMeshOperatorKeyFileName,
-		SidecarImageName:          installbase.DefaultSidecarImageName,
-		AgentInitializerImageName: installbase.DefaultEaseagentInitializerImageName,
-		Log4jConfigName:           installbase.DefaultLog4jConfigName,
+		WebhookPort:               installbase.OperatorMutatingWebhookPort,
+		CertDir:                   installbase.OperatorSecretVolumeMountPath,
+		CertName:                  installbase.OperatorSecretCertFileName,
+		KeyName:                   installbase.OperatorSecretKeyFileName,
+		SidecarImageName:          installbase.SidecarImageName,
+		AgentInitializerImageName: installbase.AgentInitializerImageName,
+		Log4jConfigName:           installbase.AgentLog4jConfigName,
 	}
 
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      meshOperatorConfigMap,
+			Name:      installbase.OperatorConfigMapName,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 	}
@@ -57,7 +57,7 @@ func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	if err == nil {
 		// error will left for high order function to jude
 		data := map[string]string{}
-		data["operator-config.yaml"] = string(operatorConfig)
+		data[installbase.OperatorConfigMapKey] = string(operatorConfig)
 		configMap.Data = data
 	}
 

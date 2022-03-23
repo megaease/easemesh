@@ -39,7 +39,7 @@ func roleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	operatorLeaderElectionRole := &rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ctx.Flags.MeshNamespace,
-			Name:      meshOperatorLeaderElectionRole,
+			Name:      leaderElectionRole,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -63,7 +63,7 @@ func roleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 func clusterRoleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	operatorManagerClusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meshOperatorManagerClusterRole,
+			Name: managerClusterRole,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -96,7 +96,7 @@ func clusterRoleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 
 	metricsReaderClusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meshOperatorMetricsReaderClusterRole,
+			Name: metricsReaderClusterRole,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -108,7 +108,7 @@ func clusterRoleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 
 	operatorProxyClusterRole := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meshOperatorProxyClusterRole,
+			Name: proxyClusterRole,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -139,13 +139,13 @@ func clusterRoleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 func roleBindingSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	operatorLeaderElectionRoleBinding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      meshOperatorLeaderElectionRoleBinding,
+			Name:      leaderElectionRoleBinding,
 			Namespace: ctx.Flags.MeshNamespace,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "Role",
-			Name:     meshOperatorLeaderElectionRole,
+			Name:     leaderElectionRole,
 		},
 		Subjects: []rbacv1.Subject{
 			{
@@ -164,12 +164,12 @@ func roleBindingSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 func clusterRoleBindingSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	operatorManagerClusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meshOperatorManagerClusterRoleBinding,
+			Name: managerClusterRoleBinding,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     meshOperatorManagerClusterRole,
+			Name:     managerClusterRole,
 		},
 		Subjects: []rbacv1.Subject{
 			{
@@ -182,12 +182,12 @@ func clusterRoleBindingSpec(ctx *installbase.StageContext) installbase.InstallFu
 
 	operatorProxyClusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meshOperatorProxyClusterRoleBinding,
+			Name: proxyClusterRoleBinding,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     meshOperatorProxyClusterRole,
+			Name:     proxyClusterRole,
 		},
 		Subjects: []rbacv1.Subject{
 			{
@@ -200,12 +200,12 @@ func clusterRoleBindingSpec(ctx *installbase.StageContext) installbase.InstallFu
 
 	operatorMetricsReaderClusterRoleBinding := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: meshOperatorMetricsReaderClusterRoleBinding,
+			Name: metricsReaderClusterRoleBinding,
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     meshOperatorMetricsReaderClusterRole,
+			Name:     metricsReaderClusterRole,
 		},
 		Subjects: []rbacv1.Subject{
 			{

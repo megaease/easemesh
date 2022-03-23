@@ -17,7 +17,7 @@ kind: ServiceCanary
 metadata:
   name: shadow-service-canary
 spec:
-  priority: 5 
+  priority: 5
   selector:
     matchServices: [service1, service2, service3]
     matchInstanceLabels: {version: shadow}
@@ -33,7 +33,7 @@ kind: ServiceCanary
 metadata:
   name: shadow-service-canary
 spec:
-  priority: 5 
+  priority: 5
   selector:
     matchServices: [service1, service2]
     matchInstanceLabels: {version: shadow}
@@ -42,6 +42,7 @@ spec:
       X-Mesh-Shadow:
         exact: shadow
 `
+
 const sourceDeploymentYaml = `
 apiVersion: apps/v1
 kind: Deployment
@@ -131,7 +132,7 @@ spec:
         - sh
         - -c
         - "set -e\ncp -r /easeagent-volume/* /agent-volume\n\necho 'name: visits-service\ncluster-join-urls:
-          http://easemesh-controlplane-svc.easemesh:2380\ncluster-request-timeout:
+          http://easemesh-control-plane-service.easemesh:2380\ncluster-request-timeout:
           10s\ncluster-role: reader\ncluster-name: easemesh-control-plane\nlabels:\n
           \ alive-probe: http://localhost:9900/health\n  application-port: 8080\n
           \ mesh-service-labels: \n  mesh-servicename: visits-service\n' > /sidecar-volume/sidecar-config.yaml"

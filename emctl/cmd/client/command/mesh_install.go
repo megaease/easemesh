@@ -28,8 +28,8 @@ import (
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/controlpanel"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/coredns"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/crd"
+	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/ingresscontroller"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/installation"
-	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/meshingress"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/operator"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshinstall/shadowservice"
 	"github.com/megaease/easemeshctl/cmd/client/command/rcfile"
@@ -116,7 +116,7 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 			installation.Wrap(crd.PreCheck, crd.Deploy, crd.Clear, crd.DescribePhase),
 			installation.Wrap(controlpanel.PreCheck, controlpanel.Deploy, controlpanel.Clear, controlpanel.DescribePhase),
 			installation.Wrap(operator.PreCheck, operator.Deploy, operator.Clear, operator.DescribePhase),
-			installation.Wrap(meshingress.PreCheck, meshingress.Deploy, meshingress.Clear, meshingress.DescribePhase),
+			installation.Wrap(ingresscontroller.PreCheck, ingresscontroller.Deploy, ingresscontroller.Clear, ingresscontroller.DescribePhase),
 		)
 	}
 
@@ -149,7 +149,7 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 
 func postInstall(context *installbase.StageContext) {
 	namespace := context.Flags.MeshNamespace
-	name := installbase.DefaultMeshControlPlanePlubicServiceName
+	name := installbase.ControlPlanePlubicServiceName
 	service, err := context.Client.CoreV1().Services(namespace).Get(stdcontext.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		common.OutputErrorf("ignored: get service %s/%s failed: %v", namespace, name, err)
@@ -183,14 +183,14 @@ func postInstall(context *installbase.StageContext) {
 	}
 
 	for _, port := range service.Spec.Ports {
-		if port.Name == installbase.DefaultMeshAdminPortName {
+		if port.Name == installbase.ControlPlaneStatefulSetAdminPortName {
 			rc.Server = fmt.Sprintf("%s:%d", firstNodeIP, port.NodePort)
 			break
 		}
 	}
 
 	if rc.Server == "" {
-		common.OutputErrorf("ignored: %s of service %s/%s not found", installbase.DefaultMeshAdminPortName, namespace, name)
+		common.OutputErrorf("ignored: %s of service %s/%s not found", installbase.ControlPlaneStatefulSetAdminPortName, namespace, name)
 		return
 	}
 

@@ -120,8 +120,8 @@ func main() {
 	pflag.StringVar(&log4jConfigName, "log4j-config-name", DefaultLog4jConfigName, "The log4j config file name")
 	pflag.StringVar(&imagePullPolicy, "image-pull-policy", DefaultImagePullPolicy, "The image pull policy. (support Always, IfNotPresent, Never)")
 	pflag.StringVar(&clusterName, "cluster-name", "", "The name of the Easegress cluster.")
-	pflag.StringSliceVar(&clusterJoinURLs, "cluster-join-urls", []string{"http://easemesh-controlplane-svc.easemesh:2380"}, "The addresses to join the Easegress.")
-	pflag.StringVar(&apiAddr, "api-addr", "easemesh-controlplane-svc.easemesh:2381", "The API addresses of EaseMesh control plane.")
+	pflag.StringSliceVar(&clusterJoinURLs, "cluster-join-urls", []string{"http://easemesh-control-plane-service.easemesh:2380"}, "The addresses to join the Easegress.")
+	pflag.StringVar(&apiAddr, "api-addr", "easemesh-control-plane-service.easemesh:2381", "The API addresses of EaseMesh control plane.")
 	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	pflag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager. "+

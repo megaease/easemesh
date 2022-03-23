@@ -28,15 +28,15 @@ import (
 )
 
 func mutatingWebhookSpec(ctx *installbase.StageContext) installbase.InstallFunc {
-	mutatingPath := installbase.DefaultMeshOperatorMutatingWebhookPath
-	mutatingPort := int32(installbase.DefaultMeshOperatorMutatingWebhookPort)
+	mutatingPath := installbase.OperatorMutatingWebhookPath
+	mutatingPort := int32(installbase.OperatorMutatingWebhookPort)
 	mutatingScope := admissionregv1.NamespacedScope
 	mutatingSideEffects := admissionregv1.SideEffectClassNoneOnDryRun
 
 	mutatingWebhookConfig := func(caBundle []byte) *admissionregv1.MutatingWebhookConfiguration {
 		return &admissionregv1.MutatingWebhookConfiguration{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      installbase.DefaultMeshOperatorMutatingWebhookName,
+				Name:      installbase.OperatorMutatingWebhookName,
 				Namespace: ctx.Flags.MeshNamespace,
 			},
 			Webhooks: []admissionregv1.MutatingWebhook{
@@ -61,7 +61,7 @@ func mutatingWebhookSpec(ctx *installbase.StageContext) installbase.InstallFunc 
 					},
 					ClientConfig: admissionregv1.WebhookClientConfig{
 						Service: &admissionregv1.ServiceReference{
-							Name:      installbase.DefaultMeshOperatorServiceName,
+							Name:      installbase.OperatorServiceName,
 							Namespace: ctx.Flags.MeshNamespace,
 							Path:      &mutatingPath,
 							Port:      &mutatingPort,
@@ -96,16 +96,16 @@ func mutatingWebhookSpec(ctx *installbase.StageContext) installbase.InstallFunc 
 	}
 
 	return func(ctx *installbase.StageContext) error {
-		secret, err := ctx.Client.CoreV1().Secrets(ctx.Flags.MeshNamespace).Get(context.TODO(), installbase.DefaultMeshOperatorSecretName, metav1.GetOptions{})
+		secret, err := ctx.Client.CoreV1().Secrets(ctx.Flags.MeshNamespace).Get(context.TODO(), installbase.OperatorSecretName, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
 
-		certBase64, exists := secret.Data[installbase.DefaultMeshOperatorCertFileName]
+		certBase64, exists := secret.Data[installbase.OperatorSecretCertFileName]
 		if !exists {
 			return fmt.Errorf("key %v in secret %s not found",
-				installbase.DefaultMeshOperatorCertFileName,
-				installbase.DefaultMeshOperatorSecretName)
+				installbase.OperatorSecretCertFileName,
+				installbase.OperatorSecretName)
 		}
 
 		config := mutatingWebhookConfig(certBase64)

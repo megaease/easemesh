@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package meshingress
+package ingresscontroller
 
 import (
 	"github.com/megaease/easemeshctl/cmd/client/command/flags"
@@ -27,11 +27,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type deploymentSpecFunc func(*flags.Install) *appsV1.Deployment
+type deploymentSpecFunc func(*installbase.StageContext) *appsV1.Deployment
 
 func meshIngressLabel() map[string]string {
 	selector := map[string]string{}
-	selector["app"] = "Easegress-ingress"
+	selector["app"] = installbase.IngressControllerDeploymentName
 	return selector
 }
 
@@ -39,32 +39,32 @@ func deploymentSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	deployment := deploymentConfigVolumeSpec(
 		deploymentContainerSpec(
 			deploymentBaseSpec(
-				deploymentInitialize(nil))))(ctx.Flags)
+				deploymentInitialize(nil))))(ctx)
 
 	return func(ctx *installbase.StageContext) error {
 		err := installbase.DeployDeployment(deployment, ctx.Client, ctx.Flags.MeshNamespace)
 		if err != nil {
-			return errors.Wrapf(err, "deployment operation %s failed", deployment.Name)
+			return errors.Wrapf(err, "deploy %s failed", deployment.Name)
 		}
 		return err
 	}
 }
 
 func deploymentInitialize(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.Deployment {
+	return func(ctx *installbase.StageContext) *appsV1.Deployment {
 		return &appsV1.Deployment{}
 	}
 }
 
 func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.Deployment {
-		spec := fn(installFlags)
-		spec.Name = installbase.DefaultMeshIngressControllerName
+	return func(ctx *installbase.StageContext) *appsV1.Deployment {
+		spec := fn(ctx)
+		spec.Name = installbase.IngressControllerDeploymentName
 		spec.Spec.Selector = &metav1.LabelSelector{
 			MatchLabels: meshIngressLabel(),
 		}
 
-		replicas := int32(installFlags.MeshIngressReplicas)
+		replicas := int32(ctx.Flags.MeshIngressReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = meshIngressLabel()
 		spec.Spec.Template.Spec.Containers = []v1.Container{}
@@ -73,12 +73,12 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.Deployment {
-		spec := fn(installFlags)
-		container, _ := installbase.AcceptContainerVisitor("easegress-ingress",
-			installFlags.ImageRegistryURL+"/"+installFlags.EasegressImage,
+	return func(ctx *installbase.StageContext) *appsV1.Deployment {
+		spec := fn(ctx)
+		container, _ := installbase.AcceptContainerVisitor(installbase.IngressControllerDeploymentName,
+			ctx.Flags.ImageRegistryURL+"/"+ctx.Flags.EasegressImage,
 			v1.PullIfNotPresent,
-			newVisitor(installFlags))
+			newVisitor(ctx))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)
 		return spec
@@ -86,15 +86,15 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
-	return func(installFlags *flags.Install) *appsV1.Deployment {
-		spec := fn(installFlags)
+	return func(ctx *installbase.StageContext) *appsV1.Deployment {
+		spec := fn(ctx)
 		spec.Spec.Template.Spec.Volumes = []v1.Volume{
 			{
-				Name: "eg-ingress-config",
+				Name: installbase.IngressControllerConfigMapName,
 				VolumeSource: v1.VolumeSource{
 					ConfigMap: &v1.ConfigMapVolumeSource{
 						LocalObjectReference: v1.LocalObjectReference{
-							Name: installbase.DefaultMeshIngressConfig,
+							Name: installbase.IngressControllerConfigMapName,
 						},
 					},
 				},
@@ -105,30 +105,30 @@ func deploymentConfigVolumeSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 }
 
 type containerVisitor struct {
-	installFlags *flags.Install
+	ctx *installbase.StageContext
 }
 
-func newVisitor(installFlags *flags.Install) installbase.ContainerVisitor {
-	return &containerVisitor{installFlags}
+func newVisitor(ctx *installbase.StageContext) installbase.ContainerVisitor {
+	return &containerVisitor{ctx}
 }
 
-func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, installFlags []string) {
+func (v *containerVisitor) VisitorCommandAndArgs(c *v1.Container) (command []string, args []string) {
 	return []string{"/bin/sh"},
-		[]string{"-c", "/opt/easegress/bin/easegress-server -f /opt/eg-config/eg-ingress.yaml"}
+		[]string{"-c", installbase.IngressControllerDeploymentCmd}
 }
 
 func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.ContainerPort, error) {
 	return []v1.ContainerPort{
 		{
-			Name:          installbase.DefaultMeshAdminPortName,
+			Name:          installbase.ControlPlaneStatefulSetAdminPortName,
 			ContainerPort: flags.DefaultMeshAdminPort,
 		},
 		{
-			Name:          installbase.DefaultMeshClientPortName,
+			Name:          installbase.ControlPlaneStatefulSetClientPortName,
 			ContainerPort: flags.DefaultMeshClientPort,
 		},
 		{
-			Name:          installbase.DefaultMeshPeerPortName,
+			Name:          installbase.ControlPlaneStatefulSetPeerPortName,
 			ContainerPort: flags.DefaultMeshPeerPort,
 		},
 	}, nil
@@ -136,6 +136,14 @@ func (v *containerVisitor) VisitorContainerPorts(c *v1.Container) ([]v1.Containe
 
 func (v *containerVisitor) VisitorEnvs(c *v1.Container) ([]v1.EnvVar, error) {
 	return []v1.EnvVar{
+		{
+			Name: "EG_NAME",
+			ValueFrom: &v1.EnvVarSource{
+				FieldRef: &v1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
 		{
 			Name: "HOSTNAME",
 			ValueFrom: &v1.EnvVarSource{
@@ -166,9 +174,9 @@ func (v *containerVisitor) VisitorResourceRequirements(c *v1.Container) (*v1.Res
 func (v *containerVisitor) VisitorVolumeMounts(c *v1.Container) ([]v1.VolumeMount, error) {
 	return []v1.VolumeMount{
 		{
-			Name:      "eg-ingress-config",
-			MountPath: "/opt/eg-config/eg-ingress.yaml",
-			SubPath:   "eg-ingress.yaml",
+			Name:      installbase.IngressControllerConfigMapName,
+			MountPath: installbase.IngressControllerConfigMapVolumeMountPath,
+			SubPath:   installbase.IngressControllerConfigMapVolumeMountSubPath,
 		},
 	}, nil
 }

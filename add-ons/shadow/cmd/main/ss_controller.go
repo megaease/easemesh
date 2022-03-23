@@ -30,12 +30,10 @@ import (
 
 const (
 	// DefaultMeshServer is the default access address of the easemesh control plane
-	DefaultMeshServer = "easemesh-controlplane-svc.easemesh:2381"
+	DefaultMeshServer = "easemesh-control-plane-service.easemesh:2381"
 )
 
-var (
-	meshServer = flag.String("mesh-server", DefaultMeshServer, "An address to access the EaseMesh control plane")
-)
+var meshServer = flag.String("mesh-server", DefaultMeshServer, "An address to access the EaseMesh control plane")
 
 func easemeshOption(config *controller.Config) error {
 	config.MeshServer = *meshServer
