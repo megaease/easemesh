@@ -22,50 +22,50 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
+	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type mockGetter struct {
+type canaryInterface struct {
 	client *meshClient
 }
-type mockInterface struct {
+type canaryGetter struct {
 	client *meshClient
 }
 
-func (m *mockGetter) Mock() MockInterface {
-	return &mockInterface{client: m.client}
+func (c *canaryGetter) Canary() CanaryInterface {
+	return &canaryInterface{client: c.client}
 }
-func (m *mockInterface) Get(args0 context.Context, args1 string) (*resource.Mock, error) {
-	url := fmt.Sprintf("http://"+m.client.server+apiURL+"/mesh/"+"services/%s/mock", args1)
+func (c *canaryInterface) Get(args0 context.Context, args1 string) (*resource.Canary, error) {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/"+"services/%s/canary", args1)
 	r0, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(buff []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "get Mock %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "get Canary %s", args1)
 		}
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Mock := &v2alpha1.Mock{}
-		err := json.Unmarshal(buff, Mock)
+		Canary := &v1alpha1.Canary{}
+		err := json.Unmarshal(buff, Canary)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.Mock")
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Canary")
 		}
-		return resource.ToMock(args1, Mock), nil
+		return resource.ToCanary(args1, Canary), nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return r0.(*resource.Mock), nil
+	return r0.(*resource.Canary), nil
 }
-func (m *mockInterface) Patch(args0 context.Context, args1 *resource.Mock) error {
-	url := fmt.Sprintf("http://"+m.client.server+apiURL+"/mesh/"+"services/%s/mock", args1.Name())
-	object := args1.ToV2Alpha1()
+func (c *canaryInterface) Patch(args0 context.Context, args1 *resource.Canary) error {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/"+"services/%s/canary", args1.Name())
+	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "patch Mock %s", args1.Name())
+			return nil, errors.Wrapf(NotFoundError, "patch Canary %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -74,12 +74,12 @@ func (m *mockInterface) Patch(args0 context.Context, args1 *resource.Mock) error
 	})
 	return err
 }
-func (m *mockInterface) Create(args0 context.Context, args1 *resource.Mock) error {
-	url := fmt.Sprintf("http://"+m.client.server+apiURL+"/mesh/"+"services/%s/mock", args1.Name())
-	object := args1.ToV2Alpha1()
+func (c *canaryInterface) Create(args0 context.Context, args1 *resource.Canary) error {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/"+"services/%s/canary", args1.Name())
+	object := args1.ToV1Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
-			return nil, errors.Wrapf(ConflictError, "create Mock %s", args1.Name())
+			return nil, errors.Wrapf(ConflictError, "create Canary %s", args1.Name())
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -88,11 +88,11 @@ func (m *mockInterface) Create(args0 context.Context, args1 *resource.Mock) erro
 	})
 	return err
 }
-func (m *mockInterface) Delete(args0 context.Context, args1 string) error {
-	url := fmt.Sprintf("http://"+m.client.server+apiURL+"/mesh/"+"services/%s/mock", args1)
+func (c *canaryInterface) Delete(args0 context.Context, args1 string) error {
+	url := fmt.Sprintf("http://"+c.client.server+apiURL+"/mesh/"+"services/%s/canary", args1)
 	_, err := client.NewHTTPJSON().DeleteByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
-			return nil, errors.Wrapf(NotFoundError, "Delete Mock %s", args1)
+			return nil, errors.Wrapf(NotFoundError, "Delete Canary %s", args1)
 		}
 		if statusCode < 300 && statusCode >= 200 {
 			return nil, nil
@@ -101,8 +101,8 @@ func (m *mockInterface) Delete(args0 context.Context, args1 string) error {
 	})
 	return err
 }
-func (m *mockInterface) List(args0 context.Context) ([]*resource.Mock, error) {
-	url := "http://" + m.client.server + apiURL + "/mesh/services"
+func (c *canaryInterface) List(args0 context.Context) ([]*resource.Canary, error) {
+	url := "http://" + c.client.server + apiURL + "/mesh/services"
 	result, err := client.NewHTTPJSON().GetByContext(args0, url, nil, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "list service")
@@ -110,15 +110,15 @@ func (m *mockInterface) List(args0 context.Context) ([]*resource.Mock, error) {
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		services := []v2alpha1.Service{}
+		services := []v1alpha1.Service{}
 		err := json.Unmarshal(b, &services)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
 		}
-		results := []*resource.Mock{}
+		results := []*resource.Canary{}
 		for _, service := range services {
-			if service.Mock != nil {
-				results = append(results, resource.ToMock(service.Name, service.Mock))
+			if service.Canary != nil {
+				results = append(results, resource.ToCanary(service.Name, service.Canary))
 			}
 		}
 		return results, nil
@@ -126,5 +126,5 @@ func (m *mockInterface) List(args0 context.Context) ([]*resource.Mock, error) {
 	if err != nil {
 		return nil, err
 	}
-	return result.([]*resource.Mock), nil
+	return result.([]*resource.Canary), nil
 }

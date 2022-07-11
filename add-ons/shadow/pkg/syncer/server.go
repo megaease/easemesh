@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,10 +47,8 @@ const (
 	MeshServiceCanaryPath = "/mesh/servicecanaries/%s"
 )
 
-var (
-	// NotFoundError indicate that the resource does not exist
-	NotFoundError = errors.Errorf("resource not found")
-)
+// NotFoundError indicate that the resource does not exist
+var NotFoundError = errors.Errorf("resource not found")
 
 // MeshControlPlane captures the set of operations for interacting with the EaseMesh REST apis.
 type MeshControlPlane interface {

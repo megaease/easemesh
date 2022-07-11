@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,7 +87,6 @@ func (searcher *ShadowServiceDeploySearcher) searchDeployment(namespace string, 
 					deployment,
 				}
 			}
-
 		}
 	}
 }
