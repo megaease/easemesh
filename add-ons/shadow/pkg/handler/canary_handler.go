@@ -3,7 +3,7 @@ package handler
 import (
 	"log"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/syncer"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
@@ -80,14 +80,14 @@ func createShadowServiceCanary(services []object.ShadowService) *resource.Servic
 		),
 		Spec: &resource.ServiceCanarySpec{
 			Priority: shadowServiceCanaryDefaultPriority,
-			Selector: &v1alpha1.ServiceSelector{
+			Selector: &v2alpha1.ServiceSelector{
 				MatchServices: matchServices,
 				MatchInstanceLabels: map[string]string{
 					shadowServiceCanaryLabelKey: shadowServiceCanaryLabelValue,
 				},
 			},
-			TrafficRules: &v1alpha1.TrafficRules{
-				Headers: map[string]*v1alpha1.StringMatch{
+			TrafficRules: &v2alpha1.TrafficRules{
+				Headers: map[string]*v2alpha1.StringMatch{
 					shadowServiceCanaryHeader: {
 						Exact: shadowServiceCanaryHeaderValue,
 					},

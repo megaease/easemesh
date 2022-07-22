@@ -12,7 +12,7 @@ import (
 )
 
 const fakeCanaryYaml = `
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 kind: ServiceCanary
 metadata:
   name: shadow-service-canary
@@ -28,7 +28,7 @@ spec:
 `
 
 const fakeDeleteCanaryYaml = `
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 kind: ServiceCanary
 metadata:
   name: shadow-service-canary

@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemeshctl/cmd/client/command/meshclient"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
@@ -138,10 +138,10 @@ func (server *Server) GetServiceCanary(name string) (*resource.ServiceCanary, er
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		ServiceCanary := &v1alpha1.ServiceCanary{}
+		ServiceCanary := &v2alpha1.ServiceCanary{}
 		err := json.Unmarshal(buff, ServiceCanary)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.ServiceCanary")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.ServiceCanary")
 		}
 		return resource.ToServiceCanary(ServiceCanary), nil
 	})
@@ -157,7 +157,7 @@ func (server *Server) PatchServiceCanary(serviceCanary *resource.ServiceCanary) 
 	defer cancelFunc()
 
 	url := fmt.Sprintf("http://"+server.MeshServer+apiURL+MeshServiceCanaryPath, serviceCanary.Name())
-	alpha1 := serviceCanary.ToV1Alpha1()
+	alpha1 := serviceCanary.ToV2Alpha1()
 	_, err := emctlclient.NewHTTPJSON().PutByContext(ctx, url, alpha1, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch ServiceCanary %s", serviceCanary.Name())
@@ -176,7 +176,7 @@ func (server *Server) CreateServiceCanary(args1 *resource.ServiceCanary) error {
 	defer cancelFunc()
 
 	url := "http://" + server.MeshServer + apiURL + MeshServiceCanaryPrefix
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := emctlclient.NewHTTPJSON().PostByContext(ctx, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(meshclient.ConflictError, "create ServiceCanary %s", args1.Name())
