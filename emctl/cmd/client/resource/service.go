@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -33,12 +33,11 @@ type (
 	ServiceSpec struct {
 		RegisterTenant string `yaml:"registerTenant" jsonschema:"required"`
 
-		Sidecar       *v1alpha1.Sidecar       `yaml:"sidecar" jsonschema:"required"`
-		Mock          *v1alpha1.Mock          `yaml:"mock" jsonschema:"omitempty"`
-		Resilience    *v1alpha1.Resilience    `yaml:"resilience" jsonschema:"omitempty"`
-		Canary        *v1alpha1.Canary        `yaml:"canary" jsonschema:"omitempty"`
-		LoadBalance   *v1alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
-		Observability *v1alpha1.Observability `yaml:"observability" jsonschema:"omitempty"`
+		Sidecar       *v2alpha1.Sidecar       `yaml:"sidecar" jsonschema:"required"`
+		Mock          *v2alpha1.Mock          `yaml:"mock" jsonschema:"omitempty"`
+		Resilience    *v2alpha1.Resilience    `yaml:"resilience" jsonschema:"omitempty"`
+		LoadBalance   *v2alpha1.LoadBalance   `yaml:"loadBalance" jsonschema:"omitempty"`
+		Observability *v2alpha1.Observability `yaml:"observability" jsonschema:"omitempty"`
 	}
 )
 
@@ -58,14 +57,13 @@ func (s *Service) Columns() []*meta.TableColumn {
 	}
 }
 
-// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (s *Service) ToV1Alpha1() *v1alpha1.Service {
-	result := &v1alpha1.Service{}
+// ToV2Alpha1 converts an Ingress resource to v2alpha1.Ingress
+func (s *Service) ToV2Alpha1() *v2alpha1.Service {
+	result := &v2alpha1.Service{}
 	result.Name = s.Name()
 	if s.Spec != nil {
 		result.RegisterTenant = s.Spec.RegisterTenant
 		result.Resilience = s.Spec.Resilience
-		result.Canary = s.Spec.Canary
 		result.LoadBalance = s.Spec.LoadBalance
 		result.Mock = s.Spec.Mock
 		result.Sidecar = s.Spec.Sidecar
@@ -74,8 +72,8 @@ func (s *Service) ToV1Alpha1() *v1alpha1.Service {
 	return result
 }
 
-// ToService converts a v1alpha1.Service resource to a Service resource
-func ToService(service *v1alpha1.Service) *Service {
+// ToService converts a v2alpha1.Service resource to a Service resource
+func ToService(service *v2alpha1.Service) *Service {
 	result := &Service{
 		Spec: &ServiceSpec{},
 	}
@@ -83,7 +81,6 @@ func ToService(service *v1alpha1.Service) *Service {
 	result.Spec.RegisterTenant = service.RegisterTenant
 	result.Spec.Sidecar = service.Sidecar
 	result.Spec.Resilience = service.Resilience
-	result.Spec.Canary = service.Canary
 	result.Spec.Mock = service.Mock
 	result.Spec.LoadBalance = service.LoadBalance
 	result.Spec.Observability = service.Observability

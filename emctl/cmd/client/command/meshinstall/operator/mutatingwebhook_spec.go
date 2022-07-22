@@ -53,10 +53,6 @@ func mutatingWebhookSpec(ctx *installbase.StageContext) installbase.InstallFunc 
 									"kube-public",
 								},
 							},
-							{
-								Key:      "mesh.megaease.com/mesh-service",
-								Operator: metav1.LabelSelectorOpExists,
-							},
 						},
 					},
 					ClientConfig: admissionregv1.WebhookClientConfig{

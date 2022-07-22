@@ -93,7 +93,7 @@ func (r *resourceReactor) DoRequest(verb, kind, resource string, obj meta.MeshOb
 	action := &actionImpl{
 		verb: verb,
 		vk: meta.VersionKind{
-			APIVersion: "mesh.megaease.com/v1alpha1", Kind: kind,
+			APIVersion: "mesh.megaease.com/v2alpha1", Kind: kind,
 		},
 	}
 	switch verb {

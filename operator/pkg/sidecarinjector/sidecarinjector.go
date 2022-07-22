@@ -171,15 +171,16 @@ func initContainerCommand(service *MeshService) []string {
 cp -r /easeagent-volume/* %s
 
 echo 'name: %s
-cluster-join-urls: http://easemesh-control-plane-service.easemesh:2380
-cluster-request-timeout: 10s
-cluster-role: reader
 cluster-name: easemesh-control-plane
+cluster-role: reader
+cluster-request-timeout: 10s
+cluster:
+  primary-listen-peer-urls: http://easemesh-control-plane-service.easemesh:2380
 labels:
-  alive-probe: %s
-  application-port: %d
+  mesh-alive-probe: %s
+  mesh-application-port: %d
   mesh-service-labels: %s
-  mesh-servicename: %s
+  mesh-service-name: %s
 ' > %s`
 
 	cmd := fmt.Sprintf(cmdTemplate,

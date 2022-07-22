@@ -304,8 +304,6 @@ func adaptCommandKind(kind string) string {
 		return resource.KindTenant
 	case low(resource.KindLoadBalance):
 		return resource.KindLoadBalance
-	case low(resource.KindCanary):
-		return resource.KindCanary
 	case low(resource.KindObservabilityTracings):
 		return resource.KindObservabilityTracings
 	case low(resource.KindObservabilityOutputServer):

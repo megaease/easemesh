@@ -63,10 +63,6 @@ type (
 		baseGetter
 	}
 
-	fakeCanaryGetter struct {
-		baseGetter
-	}
-
 	fakeLoadbalanceGetter struct {
 		baseGetter
 	}
@@ -98,7 +94,7 @@ type (
 	fakeCustomResourceGetter struct {
 		baseGetter
 	}
-	fakeV1alpha1 struct {
+	fakeV2alpha1 struct {
 		resourceReactor fake.ResourceReactor
 	}
 	fakeMeshClient struct {
@@ -109,7 +105,6 @@ type (
 var _ MeshClient = &fakeMeshClient{}
 
 func (b *baseGetter) doModifyRequest(kind, name string, obj meta.MeshObject) error {
-
 	_, err := b.resourceReactor.DoRequest("get", kind, name, obj)
 	if err != nil {
 		return err
@@ -117,70 +112,95 @@ func (b *baseGetter) doModifyRequest(kind, name string, obj meta.MeshObject) err
 	return nil
 }
 
-func (f *fakeMeshClient) V1Alpha1() V1Alpha1Interface {
-	return &fakeV1alpha1{fake.ResourceReactorForType(f.reactorType)}
-}
-func (f *fakeV1alpha1) Tenant() TenantInterface {
-	return &fakeTenantGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTenant}}
-}
-func (f *fakeV1alpha1) Service() ServiceInterface {
-	return &fakeServiceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindService}}
-}
-func (f *fakeV1alpha1) ServiceInstance() ServiceInstanceInterface {
-	return &fakeServiceInstanceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindServiceInstance}}
+func (f *fakeMeshClient) V2Alpha1() V2Alpha1Interface {
+	return &fakeV2alpha1{fake.ResourceReactorForType(f.reactorType)}
 }
 
-func (f *fakeV1alpha1) LoadBalance() LoadBalanceInterface {
-	return &fakeLoadbalanceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindLoadBalance}}
-}
-func (f *fakeV1alpha1) Canary() CanaryInterface {
-	return &fakeCanaryGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindCanary}}
-}
-func (f *fakeV1alpha1) ObservabilityTracings() ObservabilityTracingsInterface {
-	return &fakeObservabilityTracingGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindObservabilityTracings}}
+func (f *fakeV2alpha1) Tenant() TenantInterface {
+	return &fakeTenantGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindTenant,
+	}}
 }
 
-func (f *fakeV1alpha1) ObservabilityMetrics() ObservabilityMetricsInterface {
-	return &fakeObservabilityMetricGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindObservabilityMetrics}}
-}
-func (f *fakeV1alpha1) ObservabilityOutputServer() ObservabilityOutputServerInterface {
-	return &fakeObservabilityOutputServerGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindObservabilityOutputServer}}
+func (f *fakeV2alpha1) Service() ServiceInterface {
+	return &fakeServiceGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindService,
+	}}
 }
 
-func (f *fakeV1alpha1) Resilience() ResilienceInterface {
-	return &fakeResilienceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindResilience}}
+func (f *fakeV2alpha1) ServiceInstance() ServiceInstanceInterface {
+	return &fakeServiceInstanceGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindServiceInstance,
+	}}
 }
 
-func (f *fakeV1alpha1) Mock() MockInterface {
-	return &fakeMockGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindMock}}
+func (f *fakeV2alpha1) LoadBalance() LoadBalanceInterface {
+	return &fakeLoadbalanceGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindLoadBalance,
+	}}
 }
 
-func (f *fakeV1alpha1) Ingress() IngressInterface {
-	return &fakeIngressGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindIngress}}
+func (f *fakeV2alpha1) ObservabilityTracings() ObservabilityTracingsInterface {
+	return &fakeObservabilityTracingGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindObservabilityTracings,
+	}}
 }
 
-func (f *fakeV1alpha1) HTTPRouteGroup() HTTPRouteGroupInterface {
-	return &fakeHTTPRouteGroupGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindHTTPRouteGroup}}
+func (f *fakeV2alpha1) ObservabilityMetrics() ObservabilityMetricsInterface {
+	return &fakeObservabilityMetricGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindObservabilityMetrics,
+	}}
 }
 
-func (f *fakeV1alpha1) TrafficTarget() TrafficTargetInterface {
-	return &fakeTrafficTargetGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindTrafficTarget}}
+func (f *fakeV2alpha1) ObservabilityOutputServer() ObservabilityOutputServerInterface {
+	return &fakeObservabilityOutputServerGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindObservabilityOutputServer,
+	}}
 }
 
-func (f *fakeV1alpha1) ServiceCanary() ServiceCanaryInterface {
+func (f *fakeV2alpha1) Resilience() ResilienceInterface {
+	return &fakeResilienceGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindResilience,
+	}}
+}
+
+func (f *fakeV2alpha1) Mock() MockInterface {
+	return &fakeMockGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindMock,
+	}}
+}
+
+func (f *fakeV2alpha1) Ingress() IngressInterface {
+	return &fakeIngressGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindIngress,
+	}}
+}
+
+func (f *fakeV2alpha1) HTTPRouteGroup() HTTPRouteGroupInterface {
+	return &fakeHTTPRouteGroupGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindHTTPRouteGroup,
+	}}
+}
+
+func (f *fakeV2alpha1) TrafficTarget() TrafficTargetInterface {
+	return &fakeTrafficTargetGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindTrafficTarget,
+	}}
+}
+
+func (f *fakeV2alpha1) ServiceCanary() ServiceCanaryInterface {
 	return &fakeServiceCanaryGetter{
 		baseGetter: baseGetter{
 			resourceReactor: f.resourceReactor,
@@ -189,19 +209,25 @@ func (f *fakeV1alpha1) ServiceCanary() ServiceCanaryInterface {
 	}
 }
 
-func (f *fakeV1alpha1) CustomResourceKind() CustomResourceKindInterface {
-	return &fakeCustomResourceKindGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindCustomResourceKind}}
+func (f *fakeV2alpha1) CustomResourceKind() CustomResourceKindInterface {
+	return &fakeCustomResourceKindGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindCustomResourceKind,
+	}}
 }
 
-func (f *fakeV1alpha1) CustomResource() CustomResourceInterface {
-	return &fakeCustomResourceGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: "-"}}
+func (f *fakeV2alpha1) CustomResource() CustomResourceInterface {
+	return &fakeCustomResourceGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            "-",
+	}}
 }
 
-func (f *fakeV1alpha1) MeshController() MeshControllerInterface {
-	return &fakeMeshControllerGetter{baseGetter: baseGetter{resourceReactor: f.resourceReactor,
-		kind: resource.KindMeshController}}
+func (f *fakeV2alpha1) MeshController() MeshControllerInterface {
+	return &fakeMeshControllerGetter{baseGetter: baseGetter{
+		resourceReactor: f.resourceReactor,
+		kind:            resource.KindMeshController,
+	}}
 }
 
 func (f *fakeMeshControllerGetter) Get(ctx context.Context, name string) (*resource.MeshController, error) {
@@ -222,12 +248,15 @@ func (f *fakeMeshControllerGetter) Get(ctx context.Context, name string) (*resou
 func (f *fakeMeshControllerGetter) Patch(ctx context.Context, r *resource.MeshController) error {
 	return f.doModifyRequest(resource.KindMeshController, r.Name(), r)
 }
+
 func (f *fakeMeshControllerGetter) Create(ctx context.Context, r *resource.MeshController) error {
 	return f.doModifyRequest(resource.KindMeshController, r.Name(), r)
 }
+
 func (f *fakeMeshControllerGetter) Delete(ctx context.Context, name string) error {
 	return f.doModifyRequest(resource.KindMeshController, name, nil)
 }
+
 func (f *fakeMeshControllerGetter) List(context.Context) ([]*resource.MeshController, error) {
 	o, err := f.resourceReactor.DoRequest("list", resource.KindMeshController, "", nil)
 	if err != nil {
@@ -264,12 +293,15 @@ func (f *fakeTenantGetter) Get(ctx context.Context, name string) (*resource.Tena
 func (f *fakeTenantGetter) Patch(ctx context.Context, t *resource.Tenant) error {
 	return f.doModifyRequest(resource.KindTenant, t.Name(), t)
 }
+
 func (f *fakeTenantGetter) Create(ctx context.Context, t *resource.Tenant) error {
 	return f.doModifyRequest(resource.KindTenant, t.Name(), t)
 }
+
 func (f *fakeTenantGetter) Delete(ctx context.Context, name string) error {
 	return f.doModifyRequest(resource.KindTenant, name, nil)
 }
+
 func (f *fakeTenantGetter) List(ctx context.Context) ([]*resource.Tenant, error) {
 	o, err := f.resourceReactor.DoRequest("list", resource.KindTenant, "", nil)
 	if err != nil {
@@ -414,53 +446,6 @@ func (f *fakeLoadbalanceGetter) List(ctx context.Context) ([]*resource.LoadBalan
 	result := []*resource.LoadBalance{}
 	for _, m := range o {
 		c := m.(*resource.LoadBalance)
-		if c != nil {
-			result = append(result, c)
-		}
-	}
-	return result, nil
-}
-
-// fakeCanaryGetter implementation
-
-func (f *fakeCanaryGetter) Get(ctx context.Context, name string) (*resource.Canary, error) {
-	o, err := f.resourceReactor.DoRequest("get", resource.KindCanary, name, nil)
-	if err != nil {
-		return nil, err
-	}
-	if len(o) == 0 {
-		return nil, NotFoundError
-	}
-	result, ok := o[0].(*resource.Canary)
-	if !ok {
-		return nil, errors.Errorf("get an unknown MeshObject %+v", o)
-	}
-	return result, nil
-}
-
-func (f *fakeCanaryGetter) Patch(ctx context.Context, t *resource.Canary) error {
-	return f.doModifyRequest(resource.KindCanary, t.Name(), t)
-}
-
-func (f *fakeCanaryGetter) Create(ctx context.Context, t *resource.Canary) error {
-	return f.doModifyRequest(resource.KindCanary, t.Name(), t)
-}
-
-func (f *fakeCanaryGetter) Delete(ctx context.Context, name string) error {
-	return f.doModifyRequest(resource.KindCanary, name, nil)
-}
-
-func (f *fakeCanaryGetter) List(ctx context.Context) ([]*resource.Canary, error) {
-	o, err := f.resourceReactor.DoRequest("list", resource.KindCanary, "", nil)
-	if err != nil {
-		return nil, err
-	}
-	if len(o) == 0 {
-		return nil, NotFoundError
-	}
-	result := []*resource.Canary{}
-	for _, m := range o {
-		c := m.(*resource.Canary)
 		if c != nil {
 			result = append(result, c)
 		}

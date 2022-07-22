@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
@@ -47,10 +47,10 @@ func (s *serviceInterface) Get(args0 context.Context, args1 string) (*resource.S
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Service := &v1alpha1.Service{}
+		Service := &v2alpha1.Service{}
 		err := json.Unmarshal(buff, Service)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Service")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.Service")
 		}
 		return resource.ToService(Service), nil
 	})
@@ -61,7 +61,7 @@ func (s *serviceInterface) Get(args0 context.Context, args1 string) (*resource.S
 }
 func (s *serviceInterface) Patch(args0 context.Context, args1 *resource.Service) error {
 	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"services/%s", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch Service %s", args1.Name())
@@ -75,7 +75,7 @@ func (s *serviceInterface) Patch(args0 context.Context, args1 *resource.Service)
 }
 func (s *serviceInterface) Create(args0 context.Context, args1 *resource.Service) error {
 	url := "http://" + s.client.server + apiURL + "/mesh/services"
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Service %s", args1.Name())
@@ -109,10 +109,10 @@ func (s *serviceInterface) List(args0 context.Context) ([]*resource.Service, err
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		service := []v1alpha1.Service{}
+		service := []v2alpha1.Service{}
 		err := json.Unmarshal(b, &service)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.Service{}
 		for _, item := range service {

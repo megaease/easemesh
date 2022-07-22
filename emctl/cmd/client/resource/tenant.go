@@ -20,7 +20,7 @@ package resource
 import (
 	"strings"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -58,9 +58,9 @@ func (t *Tenant) Columns() []*meta.TableColumn {
 	}
 }
 
-// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
-	result := &v1alpha1.Tenant{}
+// ToV2Alpha1 converts an Ingress resource to v2alpha1.Ingress
+func (t *Tenant) ToV2Alpha1() *v2alpha1.Tenant {
+	result := &v2alpha1.Tenant{}
 	result.Name = t.Name()
 	if t.Spec != nil {
 		result.Services = t.Spec.Services
@@ -69,8 +69,8 @@ func (t *Tenant) ToV1Alpha1() *v1alpha1.Tenant {
 	return result
 }
 
-// ToTenant converts a v1alpha1.Tenant resource to a Tenant resource
-func ToTenant(tenant *v1alpha1.Tenant) *Tenant {
+// ToTenant converts a v2alpha1.Tenant resource to a Tenant resource
+func ToTenant(tenant *v2alpha1.Tenant) *Tenant {
 	result := &Tenant{
 		Spec: &TenantSpec{},
 	}

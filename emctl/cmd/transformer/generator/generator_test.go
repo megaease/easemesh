@@ -28,13 +28,12 @@ import (
 	utiltesting "k8s.io/client-go/util/testing"
 )
 
-func TestCanaryGenerator(t *testing.T) {
+func TestGenerator(t *testing.T) {
 	testData := []struct {
 		goPackage    string
 		sourceFile   string
 		resourceType ResourceType
 	}{
-		{goPackage: "github.com/megaease/easemeshctl/cmd/client/command/meshclient", sourceFile: "../../client/command/meshclient/canary.go", resourceType: "Global"},
 		{goPackage: "github.com/megaease/easemeshctl/cmd/client/command/meshclient", sourceFile: "../../client/command/meshclient/serviceinstance.go", resourceType: "Global"},
 		{goPackage: "github.com/megaease/easemeshctl/cmd/client/command/meshclient", sourceFile: "../../client/command/meshclient/resilience.go", resourceType: "Service"},
 	}
@@ -63,7 +62,7 @@ func TestCanaryGenerator(t *testing.T) {
 }
 
 func TestQualRender(t *testing.T) {
-	q := jen.Qual("resource", "Canary")
+	q := jen.Qual("resource", "Service")
 	buf := &bytes.Buffer{}
 	err := q.Render(buf)
 	if err != nil {

@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type hTTPRouteGroupInterface struct {
+type hTTPRouteGroupGetter struct {
 	client *meshClient
 }
-type hTTPRouteGroupGetter struct {
+type hTTPRouteGroupInterface struct {
 	client *meshClient
 }
 
@@ -47,10 +47,10 @@ func (h *hTTPRouteGroupInterface) Get(args0 context.Context, args1 string) (*res
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		HTTPRouteGroup := &v1alpha1.HTTPRouteGroup{}
+		HTTPRouteGroup := &v2alpha1.HTTPRouteGroup{}
 		err := json.Unmarshal(buff, HTTPRouteGroup)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.HTTPRouteGroup")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.HTTPRouteGroup")
 		}
 		return resource.ToHTTPRouteGroup(HTTPRouteGroup), nil
 	})
@@ -61,7 +61,7 @@ func (h *hTTPRouteGroupInterface) Get(args0 context.Context, args1 string) (*res
 }
 func (h *hTTPRouteGroupInterface) Patch(args0 context.Context, args1 *resource.HTTPRouteGroup) error {
 	url := fmt.Sprintf("http://"+h.client.server+apiURL+"/mesh/"+"httproutegroups/%s", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch HTTPRouteGroup %s", args1.Name())
@@ -75,7 +75,7 @@ func (h *hTTPRouteGroupInterface) Patch(args0 context.Context, args1 *resource.H
 }
 func (h *hTTPRouteGroupInterface) Create(args0 context.Context, args1 *resource.HTTPRouteGroup) error {
 	url := "http://" + h.client.server + apiURL + "/mesh/httproutegroups"
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create HTTPRouteGroup %s", args1.Name())
@@ -109,10 +109,10 @@ func (h *hTTPRouteGroupInterface) List(args0 context.Context) ([]*resource.HTTPR
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		hTTPRouteGroup := []v1alpha1.HTTPRouteGroup{}
+		hTTPRouteGroup := []v2alpha1.HTTPRouteGroup{}
 		err := json.Unmarshal(b, &hTTPRouteGroup)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.HTTPRouteGroup{}
 		for _, item := range hTTPRouteGroup {

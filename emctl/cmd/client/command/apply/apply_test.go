@@ -69,7 +69,7 @@ func TestRunFail(t *testing.T) {
 
 var tenantSpec = `
 kind: Tenant
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 metadata:
   name: mesh-service
 spec:

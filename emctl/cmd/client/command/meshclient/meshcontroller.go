@@ -53,7 +53,7 @@ func (t *meshControllerInterface) Get(ctx context.Context, meshControllerID stri
 			if statusCode >= 300 {
 				return nil, errors.Errorf("call %s failed: return status code: %d text: %s", url, statusCode, string(b))
 			}
-			meshController := &resource.MeshControllerV1Alpha1{}
+			meshController := &resource.MeshControllerV2Alpha1{}
 			err := yaml.Unmarshal(b, meshController)
 			if err != nil {
 				return nil, errors.Wrap(err, "unmarshal data to MeshController")
@@ -70,7 +70,7 @@ func (t *meshControllerInterface) Get(ctx context.Context, meshControllerID stri
 func (t *meshControllerInterface) Patch(ctx context.Context, meshController *resource.MeshController) error {
 	jsonClient := client.NewHTTPJSON()
 	url := fmt.Sprintf("http://"+t.client.server+MeshControllerURL, meshController.Name())
-	update, err := yaml.Marshal(meshController.ToV1Alpha1())
+	update, err := yaml.Marshal(meshController.ToV2Alpha1())
 	if err != nil {
 		return fmt.Errorf("marshal %#v to yaml failed: %v", meshController, err)
 	}
@@ -93,7 +93,7 @@ func (t *meshControllerInterface) Patch(ctx context.Context, meshController *res
 
 func (t *meshControllerInterface) Create(ctx context.Context, meshController *resource.MeshController) error {
 	url := fmt.Sprintf("http://" + t.client.server + MeshControllersURL)
-	create, err := yaml.Marshal(meshController.ToV1Alpha1())
+	create, err := yaml.Marshal(meshController.ToV2Alpha1())
 	if err != nil {
 		return fmt.Errorf("marshal %#v to yaml failed: %v", meshController, err)
 	}
@@ -150,7 +150,7 @@ func (t *meshControllerInterface) List(ctx context.Context) ([]*resource.MeshCon
 					return nil, errors.Wrapf(err, "marshal %#v to yaml", object)
 				}
 
-				meshController := &resource.MeshControllerV1Alpha1{}
+				meshController := &resource.MeshControllerV2Alpha1{}
 				err = yaml.Unmarshal(buff, meshController)
 				if err != nil {
 					return nil, fmt.Errorf("unmarshal %s to yaml failed: %v", buff, err)

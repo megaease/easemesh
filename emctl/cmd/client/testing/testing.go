@@ -54,7 +54,6 @@ func GetAllResourceKinds() []ResourceTypeKind {
 		{Type: reflect.TypeOf(resource.ObservabilityMetrics{}), Kind: resource.KindObservabilityMetrics},
 		{Type: reflect.TypeOf(resource.ObservabilityOutputServer{}), Kind: resource.KindObservabilityOutputServer},
 		{Type: reflect.TypeOf(resource.ObservabilityTracings{}), Kind: resource.KindObservabilityTracings},
-		{Type: reflect.TypeOf(resource.Canary{}), Kind: resource.KindCanary},
 		{Type: reflect.TypeOf(resource.Service{}), Kind: resource.KindService},
 		{Type: reflect.TypeOf(resource.Resilience{}), Kind: resource.KindResilience},
 		{Type: reflect.TypeOf(resource.Mock{}), Kind: resource.KindMock},
@@ -71,7 +70,7 @@ func CreateMeshObjectFromType(t reflect.Type, kind, nm string) meta.MeshObject {
 	knd := versionKind.FieldByName("Kind")
 
 	knd.SetString(kind)
-	version.SetString("v1alpha1")
+	version.SetString("v2alpha1")
 
 	metaData := meshObject.FieldByName("MetaData")
 	name := metaData.FieldByName("Name")
@@ -126,7 +125,8 @@ func PrepareGetFlags(server, spec string, t *testing.T) *flags.Get {
 func PrepareInstallContext(cmd *cobra.Command,
 	client kubernetes.Interface,
 	extensionClient apiextensions.Interface,
-	installFlags *flags.Install) *installbase.StageContext {
+	installFlags *flags.Install,
+) *installbase.StageContext {
 	clearFunc := func(*installbase.StageContext) error { return nil }
 	return &installbase.StageContext{
 		Cmd:                 cmd,

@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -84,9 +84,9 @@ func (do *DynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	return nil
 }
 
-// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (k *CustomResourceKind) ToV1Alpha1() *v1alpha1.CustomResourceKind {
-	result := &v1alpha1.CustomResourceKind{}
+// ToV2Alpha1 converts an Ingress resource to v2alpha1.Ingress
+func (k *CustomResourceKind) ToV2Alpha1() *v2alpha1.CustomResourceKind {
+	result := &v2alpha1.CustomResourceKind{}
 	result.Name = k.Name()
 	if k.Spec != nil {
 		s, _ := structpb.NewStruct(k.Spec.JSONSchema)
@@ -95,8 +95,8 @@ func (k *CustomResourceKind) ToV1Alpha1() *v1alpha1.CustomResourceKind {
 	return result
 }
 
-// ToCustomResourceKind converts a v1alpha1.CustomResourceKind resource to a CustomResourceKind resource
-func ToCustomResourceKind(k *v1alpha1.CustomResourceKind) *CustomResourceKind {
+// ToCustomResourceKind converts a v2alpha1.CustomResourceKind resource to a CustomResourceKind resource
+func ToCustomResourceKind(k *v2alpha1.CustomResourceKind) *CustomResourceKind {
 	result := &CustomResourceKind{
 		Spec: &CustomResourceKindSpec{},
 	}
@@ -107,8 +107,8 @@ func ToCustomResourceKind(k *v1alpha1.CustomResourceKind) *CustomResourceKind {
 	return result
 }
 
-// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (r *CustomResource) ToV1Alpha1() map[string]interface{} {
+// ToV2Alpha1 converts an Ingress resource to v2alpha1.Ingress
+func (r *CustomResource) ToV2Alpha1() map[string]interface{} {
 	result := map[string]interface{}{}
 	result["name"] = r.Name()
 	result["kind"] = r.Kind()
@@ -118,7 +118,7 @@ func (r *CustomResource) ToV1Alpha1() map[string]interface{} {
 	return result
 }
 
-// ToCustomResource converts a v1alpha1.CustomResource resource to a CustomResource resource
+// ToCustomResource converts a v2alpha1.CustomResource resource to a CustomResource resource
 func ToCustomResource(r map[string]interface{}) *CustomResource {
 	result := &CustomResource{
 		Spec: map[string]interface{}{},

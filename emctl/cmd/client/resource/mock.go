@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -26,19 +26,19 @@ type (
 	// Mock describes mock resource of the EaseMesh
 	Mock struct {
 		meta.MeshResource `yaml:",inline"`
-		Spec              *v1alpha1.Mock `yaml:"spec" jsonschema:"required"`
+		Spec              *v2alpha1.Mock `yaml:"spec" jsonschema:"required"`
 	}
 )
 
-// ToV1Alpha1 converts a Mock resource to v1alpha1.Mock
-func (m *Mock) ToV1Alpha1() *v1alpha1.Mock {
+// ToV2Alpha1 converts a Mock resource to v2alpha1.Mock
+func (m *Mock) ToV2Alpha1() *v2alpha1.Mock {
 	return m.Spec
 }
 
-// ToMock converts a v1alpha1.Mock resource to a Mock resource
-func ToMock(name string, mock *v1alpha1.Mock) *Mock {
+// ToMock converts a v2alpha1.Mock resource to a Mock resource
+func ToMock(name string, mock *v2alpha1.Mock) *Mock {
 	result := &Mock{
-		Spec: &v1alpha1.Mock{},
+		Spec: &v2alpha1.Mock{},
 	}
 	result.MeshResource = NewMockResource(DefaultAPIVersion, name)
 	result.Spec.Enabled = mock.Enabled

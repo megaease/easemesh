@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -29,7 +29,7 @@ type (
 	// ServiceInstance describes service instance resource of the EaseMesh
 	ServiceInstance struct {
 		meta.MeshResource `yaml:",inline"`
-		Spec              *v1alpha1.ServiceInstance `yaml:"spec" jsonschema:"required"`
+		Spec              *v2alpha1.ServiceInstance `yaml:"spec" jsonschema:"required"`
 	}
 )
 
@@ -72,10 +72,10 @@ func (si *ServiceInstance) Columns() []*meta.TableColumn {
 	}
 }
 
-// ToServiceInstance converts a v1alpha1.ServiceInstance resource to a ServiceInstance resource.
-func ToServiceInstance(instance *v1alpha1.ServiceInstance) *ServiceInstance {
+// ToServiceInstance converts a v2alpha1.ServiceInstance resource to a ServiceInstance resource.
+func ToServiceInstance(instance *v2alpha1.ServiceInstance) *ServiceInstance {
 	result := &ServiceInstance{
-		Spec: &v1alpha1.ServiceInstance{},
+		Spec: &v2alpha1.ServiceInstance{},
 	}
 
 	name := fmt.Sprintf("%s/%s", instance.ServiceName, instance.InstanceID)
@@ -87,7 +87,7 @@ func ToServiceInstance(instance *v1alpha1.ServiceInstance) *ServiceInstance {
 	return result
 }
 
-// ToV1Alpha1 converts a Service resource to v1alpha1.ServiceInstance.
-func (si *ServiceInstance) ToV1Alpha1() *v1alpha1.ServiceInstance {
+// ToV2Alpha1 converts a Service resource to v2alpha1.ServiceInstance.
+func (si *ServiceInstance) ToV2Alpha1() *v2alpha1.ServiceInstance {
 	return si.Spec
 }

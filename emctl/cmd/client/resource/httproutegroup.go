@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -31,13 +31,13 @@ type (
 
 	// HTTPRouteGroupSpec wraps all route rules
 	HTTPRouteGroupSpec struct {
-		Matches []*v1alpha1.HTTPMatch `yaml:"matches" jsonschema:"required"`
+		Matches []*v2alpha1.HTTPMatch `yaml:"matches" jsonschema:"required"`
 	}
 )
 
-// ToV1Alpha1 converts an HTTPRouteGroup resource to v1alpha1.HTTPRouteGroup
-func (grp *HTTPRouteGroup) ToV1Alpha1() *v1alpha1.HTTPRouteGroup {
-	result := &v1alpha1.HTTPRouteGroup{}
+// ToV2Alpha1 converts an HTTPRouteGroup resource to v2alpha1.HTTPRouteGroup
+func (grp *HTTPRouteGroup) ToV2Alpha1() *v2alpha1.HTTPRouteGroup {
+	result := &v2alpha1.HTTPRouteGroup{}
 	result.Name = grp.Name()
 	if grp.Spec != nil {
 		result.Matches = grp.Spec.Matches
@@ -45,8 +45,8 @@ func (grp *HTTPRouteGroup) ToV1Alpha1() *v1alpha1.HTTPRouteGroup {
 	return result
 }
 
-// ToHTTPRouteGroup converts a v1alpha1.HTTPRouteGroup resource to an HTTPRouteGroup resource
-func ToHTTPRouteGroup(grp *v1alpha1.HTTPRouteGroup) *HTTPRouteGroup {
+// ToHTTPRouteGroup converts a v2alpha1.HTTPRouteGroup resource to an HTTPRouteGroup resource
+func ToHTTPRouteGroup(grp *v2alpha1.HTTPRouteGroup) *HTTPRouteGroup {
 	result := &HTTPRouteGroup{
 		Spec: &HTTPRouteGroupSpec{},
 	}

@@ -56,7 +56,7 @@ var _ interfaceMethodBuilder = &interfaceBuilder{}
 const (
 	clientPkg   = "github.com/megaease/easemeshctl/cmd/common/client"
 	errorsPkg   = "github.com/pkg/errors"
-	v1alpha1Pkg = "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1Pkg = "github.com/megaease/easemesh-api/v2alpha1"
 	resourcePkg = "github.com/megaease/easemeshctl/cmd/client/resource"
 )
 
@@ -239,7 +239,7 @@ func buildServiceTypePostURLStatement(info *buildInfo) func(string) (jen.Code, e
 
 func buildResourceToObjectStatement(info *buildInfo) func(string) (jen.Code, error) {
 	return func(resourceName string) (jen.Code, error) {
-		return jen.Id("object").Op(":=").Id("args1").Dot("ToV1Alpha1").Call(), nil
+		return jen.Id("object").Op(":=").Id("args1").Dot("ToV2Alpha1").Call(), nil
 	}
 }
 
@@ -271,14 +271,14 @@ func buildGetByContextHTTPCallStatement(info *buildInfo) func(string) (jen.Code,
 						jen.Id("url"), jen.Id("statusCode"), jen.String().Call(jen.Id("buff")),
 					)),
 				)
-				stmt3 := jen.Id(resourceName).Op(":=").Op("&").Qual(v1alpha1Pkg, capResourceName).Block()
+				stmt3 := jen.Id(resourceName).Op(":=").Op("&").Qual(v2alpha1Pkg, capResourceName).Block()
 				stmt4 := jen.Id("err").Op(":=").Qual("encoding/json", "Unmarshal").Call(
 					jen.Id("buff"), jen.Id(resourceName),
 				)
 				stmt5 := jen.If(jen.Id("err").Op("!=").Nil()).Block(
 					jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 						jen.Id("err"),
-						jen.Lit("unmarshal data to v1alpha1."+resourceName)),
+						jen.Lit("unmarshal data to v2alpha1."+resourceName)),
 					))
 
 				var returnStmt jen.Code

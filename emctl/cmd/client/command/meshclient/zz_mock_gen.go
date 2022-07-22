@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type mockInterface struct {
+type mockGetter struct {
 	client *meshClient
 }
-type mockGetter struct {
+type mockInterface struct {
 	client *meshClient
 }
 
@@ -47,10 +47,10 @@ func (m *mockInterface) Get(args0 context.Context, args1 string) (*resource.Mock
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Mock := &v1alpha1.Mock{}
+		Mock := &v2alpha1.Mock{}
 		err := json.Unmarshal(buff, Mock)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Mock")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.Mock")
 		}
 		return resource.ToMock(args1, Mock), nil
 	})
@@ -61,7 +61,7 @@ func (m *mockInterface) Get(args0 context.Context, args1 string) (*resource.Mock
 }
 func (m *mockInterface) Patch(args0 context.Context, args1 *resource.Mock) error {
 	url := fmt.Sprintf("http://"+m.client.server+apiURL+"/mesh/"+"services/%s/mock", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch Mock %s", args1.Name())
@@ -75,7 +75,7 @@ func (m *mockInterface) Patch(args0 context.Context, args1 *resource.Mock) error
 }
 func (m *mockInterface) Create(args0 context.Context, args1 *resource.Mock) error {
 	url := fmt.Sprintf("http://"+m.client.server+apiURL+"/mesh/"+"services/%s/mock", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Mock %s", args1.Name())
@@ -109,10 +109,10 @@ func (m *mockInterface) List(args0 context.Context) ([]*resource.Mock, error) {
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		services := []v1alpha1.Service{}
+		services := []v2alpha1.Service{}
 		err := json.Unmarshal(b, &services)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.Mock{}
 		for _, service := range services {

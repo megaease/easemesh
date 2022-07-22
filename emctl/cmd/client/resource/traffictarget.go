@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -31,15 +31,15 @@ type (
 
 	// TrafficTargetSpec wraps all route rules
 	TrafficTargetSpec struct {
-		Destination *v1alpha1.IdentityBindingSubject   `yaml:"destination" jsonschema:"required"`
-		Sources     []*v1alpha1.IdentityBindingSubject `yaml:"sources" jsonschema:"required"`
-		Rules       []*v1alpha1.TrafficTargetRule      `yaml:"rules" jsonschema:"required"`
+		Destination *v2alpha1.IdentityBindingSubject   `yaml:"destination" jsonschema:"required"`
+		Sources     []*v2alpha1.IdentityBindingSubject `yaml:"sources" jsonschema:"required"`
+		Rules       []*v2alpha1.TrafficTargetRule      `yaml:"rules" jsonschema:"required"`
 	}
 )
 
-// ToV1Alpha1 converts an TrafficTarget resource to v1alpha1.TrafficTarget
-func (tt *TrafficTarget) ToV1Alpha1() *v1alpha1.TrafficTarget {
-	result := &v1alpha1.TrafficTarget{}
+// ToV2Alpha1 converts an TrafficTarget resource to v2alpha1.TrafficTarget
+func (tt *TrafficTarget) ToV2Alpha1() *v2alpha1.TrafficTarget {
+	result := &v2alpha1.TrafficTarget{}
 	result.Name = tt.Name()
 	if tt.Spec != nil {
 		result.Destination = tt.Spec.Destination
@@ -49,8 +49,8 @@ func (tt *TrafficTarget) ToV1Alpha1() *v1alpha1.TrafficTarget {
 	return result
 }
 
-// ToTrafficTarget converts a v1alpha1.TrafficTarget resource to an TrafficTarget resource
-func ToTrafficTarget(tt *v1alpha1.TrafficTarget) *TrafficTarget {
+// ToTrafficTarget converts a v2alpha1.TrafficTarget resource to an TrafficTarget resource
+func ToTrafficTarget(tt *v2alpha1.TrafficTarget) *TrafficTarget {
 	result := &TrafficTarget{
 		Spec: &TrafficTargetSpec{},
 	}
