@@ -14,6 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/zap v1.19.0
+	golang.org/x/sys v0.0.0-20220721230656-c6bc011c0c49 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.20.9
