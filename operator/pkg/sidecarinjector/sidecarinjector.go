@@ -161,18 +161,12 @@ var (
 )
 
 func initContainerCommand(service *MeshService) []string {
-	// TODO: Adjust for label names:
-	// alive-probe -> mesh-alive-probe-url
-	// application-port -> mesh-application-port
-	// mesh-service-labels: Use `,` as separator instead of `&`.
-	// mesh-servicename -> mesh-service-name
-
 	const cmdTemplate = `set -e
 cp -r /easeagent-volume/* %s
 
 echo 'name: %s
 cluster-name: easemesh-control-plane
-cluster-role: reader
+cluster-role: secondary
 cluster-request-timeout: 10s
 cluster:
   primary-listen-peer-urls: http://easemesh-control-plane-service.easemesh:2380

@@ -83,9 +83,9 @@ spec:
 
           echo 'name: vets-service
           cluster-name: easemesh-control-plane
-          cluster-role: reader
+          cluster-role: secondary
           cluster-request-timeout: 10s
-          cluster
+          cluster:
             primary-listen-peer-urls: http://easemesh-control-plane-service.easemesh:2380
           labels:
             mesh-alive-probe: http://localhost:9000/health
