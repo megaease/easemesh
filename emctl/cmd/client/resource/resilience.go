@@ -45,5 +45,6 @@ func ToResilience(name string, resilience *v2alpha1.Resilience) *Resilience {
 	result.Spec.Retry = resilience.Retry
 	result.Spec.CircuitBreaker = resilience.CircuitBreaker
 	result.Spec.TimeLimiter = resilience.TimeLimiter
+	result.Spec.FailureCodes = resilience.FailureCodes
 	return result
 }
