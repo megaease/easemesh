@@ -475,6 +475,8 @@ github.com/megaease/easemesh-api v1.3.5 h1:0MV1VVdiVZXqRUSt6rJdzI8+cAAPo6QAK9t6y
 github.com/megaease/easemesh-api v1.3.5/go.mod h1:VJWyuh/airQFJPJ9nfzAjholezslTHYZ70kU4Oq37MU=
 github.com/megaease/easemesh-api v1.4.0 h1:vj9G0NPU2bLVd+EQCbapiWOxsriQdhvnblCTsFUP18Y=
 github.com/megaease/easemesh-api v1.4.0/go.mod h1:2deFUaGV1rDkVJk5yyU8PCIROqOyeFVb0e3oRcqHRZ8=
+github.com/megaease/easemesh-api v1.4.1 h1:jsavr7plcucLxeyPCqK5yXAmk48a8mClXEzZ0LjUGno=
+github.com/megaease/easemesh-api v1.4.1/go.mod h1:Q2oPAsxkpAE/Gc6pH3Rc2HZotB1doYFO/Pvw7XYWu3I=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/dns v1.1.50/go.mod h1:e3IlAVfNqAllflbibAZEWOXOQ+Ynzk/dDozDxY7XnME=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=
