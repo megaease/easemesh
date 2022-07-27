@@ -119,29 +119,30 @@ docker-push:
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = ${MKFILE_DIR}bin/controller-gen
 controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
 # Download kustomize locally if necessary
 KUSTOMIZE = ${MKFILE_DIR}/bin/kustomize
 kustomize:
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
 # Download setup-envtest
 SETUP_ENVTEST = ${MKFILE_DIR}/bin/setup-envtest
 setup_envtest:
-	$(call go-get-tool,$(SETUP_ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+	$(call go-install-tool,$(SETUP_ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
 	$(SETUP_ENVTEST) use --arch=amd64 -p path ${K8S_VER}
 	echo ""
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
-define go-get-tool
+# go-install-tool will 'go get' any package $2 and install it to $1.
+# Reference: https://go.dev/doc/go-get-install-deprecation
+define go-install-tool
 @[ -f $(1) ] || { \
 set -e ;\
 TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(MKFILE_DIR)/bin go get $(2) ;\
+GOBIN=$(MKFILE_DIR)/bin go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef

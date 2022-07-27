@@ -21,7 +21,7 @@ import "testing"
 func TestMeta(t *testing.T) {
 	const (
 		expectKind       = "Tenant"
-		expectAPIVersion = "mesh.megaease.com/v1alpha1"
+		expectAPIVersion = "mesh.megaease.com/v2alpha1"
 		expectName       = "pet"
 	)
 

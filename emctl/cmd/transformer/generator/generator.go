@@ -31,7 +31,7 @@ type (
 	// Verb indicated how to access mesh resource
 	Verb string
 	// ResourceType indicates what type of resource, there are three types of resources Global
-	// (tenant, service, ingress), Service (canary, loadbalance, resilience),
+	// (tenant, service, ingress), Service (loadbalance, resilience),
 	// ServiceSubresource (observabilityTracings, observabilityMetrics, observabilityOutputServer).
 	ResourceType string
 

@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -31,13 +31,13 @@ type (
 
 	// IngressSpec wraps all route rules
 	IngressSpec struct {
-		Rules []*v1alpha1.IngressRule `yaml:"rules" jsonschema:"required"`
+		Rules []*v2alpha1.IngressRule `yaml:"rules" jsonschema:"required"`
 	}
 )
 
-// ToV1Alpha1 converts an Ingress resource to v1alpha1.Ingress
-func (ing *Ingress) ToV1Alpha1() *v1alpha1.Ingress {
-	result := &v1alpha1.Ingress{}
+// ToV2Alpha1 converts an Ingress resource to v2alpha1.Ingress
+func (ing *Ingress) ToV2Alpha1() *v2alpha1.Ingress {
+	result := &v2alpha1.Ingress{}
 	result.Name = ing.Name()
 	if ing.Spec != nil {
 		result.Rules = ing.Spec.Rules
@@ -45,8 +45,8 @@ func (ing *Ingress) ToV1Alpha1() *v1alpha1.Ingress {
 	return result
 }
 
-// ToIngress converts a v1alpha1.Ingress resource to an Ingress resource
-func ToIngress(ingress *v1alpha1.Ingress) *Ingress {
+// ToIngress converts a v2alpha1.Ingress resource to an Ingress resource
+func ToIngress(ingress *v2alpha1.Ingress) *Ingress {
 	result := &Ingress{
 		Spec: &IngressSpec{},
 	}

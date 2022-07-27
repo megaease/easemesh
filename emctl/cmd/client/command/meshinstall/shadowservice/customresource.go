@@ -95,7 +95,7 @@ func shadowServiceKindSpec(ctx *installbase.StageContext) installbase.InstallFun
 			return err
 		}
 		client := meshclient.New(entrypoints[0])
-		return client.V1Alpha1().CustomResourceKind().Create(ctx.Cmd.Context(), &kind)
+		return client.V2Alpha1().CustomResourceKind().Create(ctx.Cmd.Context(), &kind)
 	}
 }
 
@@ -108,5 +108,5 @@ func deleteShadowServiceKindSpec(ctx *installbase.StageContext) error {
 	}
 
 	client := meshclient.New(entrypoints[0])
-	return client.V1Alpha1().CustomResourceKind().Delete(ctx.Cmd.Context(), "ShadowService")
+	return client.V2Alpha1().CustomResourceKind().Delete(ctx.Cmd.Context(), "ShadowService")
 }

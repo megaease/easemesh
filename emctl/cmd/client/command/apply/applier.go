@@ -42,7 +42,8 @@ type baseApplier struct {
 
 // WrapApplierByMeshObject returns a Applier from a MeshObject
 func WrapApplierByMeshObject(object meta.MeshObject,
-	client meshclient.MeshClient, timeout time.Duration) Applier {
+	client meshclient.MeshClient, timeout time.Duration,
+) Applier {
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerApplier{object: object.(*resource.MeshController), baseApplier: baseApplier{client: client, timeout: timeout}}
@@ -50,8 +51,6 @@ func WrapApplierByMeshObject(object meta.MeshObject,
 		return &serviceApplier{object: object.(*resource.Service), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindServiceInstance:
 		return &serviceInstanceApplier{object: object.(*resource.ServiceInstance), baseApplier: baseApplier{client: client, timeout: timeout}}
-	case resource.KindCanary:
-		return &canaryApplier{object: object.(*resource.Canary), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindLoadBalance:
 		return &loadBalanceApplier{object: object.(*resource.LoadBalance), baseApplier: baseApplier{client: client, timeout: timeout}}
 	case resource.KindTenant:
@@ -89,18 +88,18 @@ type meshControllerApplier struct {
 func (mc *meshControllerApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), mc.timeout)
 	defer cancelFunc()
-	err := mc.client.V1Alpha1().MeshController().Create(ctx, mc.object)
+	err := mc.client.V2Alpha1().MeshController().Create(ctx, mc.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = mc.client.V1Alpha1().MeshController().Patch(ctx, mc.object)
+			err = mc.client.V2Alpha1().MeshController().Patch(ctx, mc.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update meshController %s", mc.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = mc.client.V1Alpha1().MeshController().Create(ctx, mc.object)
+			err = mc.client.V2Alpha1().MeshController().Create(ctx, mc.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create meshController %s", mc.object.Name())
 			}
@@ -118,18 +117,18 @@ type serviceApplier struct {
 func (s *serviceApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
-	err := s.client.V1Alpha1().Service().Create(ctx, s.object)
+	err := s.client.V2Alpha1().Service().Create(ctx, s.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = s.client.V1Alpha1().Service().Patch(ctx, s.object)
+			err = s.client.V2Alpha1().Service().Patch(ctx, s.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update service %s", s.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = s.client.V1Alpha1().Service().Create(ctx, s.object)
+			err = s.client.V2Alpha1().Service().Create(ctx, s.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create service %s", s.object.Name())
 			}
@@ -148,35 +147,6 @@ func (si *serviceInstanceApplier) Apply() error {
 	return errors.New("not support applying service instance")
 }
 
-type canaryApplier struct {
-	baseApplier
-	object *resource.Canary
-}
-
-func (c *canaryApplier) Apply() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
-	defer cancelFunc()
-	err := c.client.V1Alpha1().Canary().Create(ctx, c.object)
-	for {
-		switch {
-		case err == nil:
-			return nil
-		case meshclient.IsConflictError(err):
-			err = c.client.V1Alpha1().Canary().Patch(ctx, c.object)
-			if err != nil && meshclient.IsConflictError(err) {
-				return errors.Wrapf(err, "update canary %s", c.object.Name())
-			}
-		case meshclient.IsNotFoundError(err):
-			err = c.client.V1Alpha1().Canary().Create(ctx, c.object)
-			if err != nil && meshclient.IsNotFoundError(err) {
-				return errors.Wrapf(err, "create canary %s", c.object.Name())
-			}
-		default:
-			return errors.Wrapf(err, "apply canary %s", c.object.Name())
-		}
-	}
-}
-
 type observabilityTracingsApplier struct {
 	baseApplier
 	object *resource.ObservabilityTracings
@@ -185,18 +155,18 @@ type observabilityTracingsApplier struct {
 func (o *observabilityTracingsApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
-	err := o.client.V1Alpha1().ObservabilityTracings().Create(ctx, o.object)
+	err := o.client.V2Alpha1().ObservabilityTracings().Create(ctx, o.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = o.client.V1Alpha1().ObservabilityTracings().Patch(ctx, o.object)
+			err = o.client.V2Alpha1().ObservabilityTracings().Patch(ctx, o.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update observabilityTracings %s", o.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = o.client.V1Alpha1().ObservabilityTracings().Create(ctx, o.object)
+			err = o.client.V2Alpha1().ObservabilityTracings().Create(ctx, o.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create observabilityTracings %s", o.object.Name())
 			}
@@ -214,18 +184,18 @@ type observabilityMetricsApplier struct {
 func (o *observabilityMetricsApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
-	err := o.client.V1Alpha1().ObservabilityMetrics().Create(ctx, o.object)
+	err := o.client.V2Alpha1().ObservabilityMetrics().Create(ctx, o.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = o.client.V1Alpha1().ObservabilityMetrics().Patch(ctx, o.object)
+			err = o.client.V2Alpha1().ObservabilityMetrics().Patch(ctx, o.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update observabilityMetrics %s", o.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = o.client.V1Alpha1().ObservabilityMetrics().Create(ctx, o.object)
+			err = o.client.V2Alpha1().ObservabilityMetrics().Create(ctx, o.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create observabilityMetrics %s", o.object.Name())
 			}
@@ -243,18 +213,18 @@ type observabilityOutputServerApplier struct {
 func (o *observabilityOutputServerApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
-	err := o.client.V1Alpha1().ObservabilityOutputServer().Create(ctx, o.object)
+	err := o.client.V2Alpha1().ObservabilityOutputServer().Create(ctx, o.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = o.client.V1Alpha1().ObservabilityOutputServer().Patch(ctx, o.object)
+			err = o.client.V2Alpha1().ObservabilityOutputServer().Patch(ctx, o.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update observabilityOutputServer %s", o.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = o.client.V1Alpha1().ObservabilityOutputServer().Create(ctx, o.object)
+			err = o.client.V2Alpha1().ObservabilityOutputServer().Create(ctx, o.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create observabilityOutputServer %s", o.object.Name())
 			}
@@ -272,18 +242,18 @@ type loadBalanceApplier struct {
 func (l *loadBalanceApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), l.timeout)
 	defer cancelFunc()
-	err := l.client.V1Alpha1().LoadBalance().Create(ctx, l.object)
+	err := l.client.V2Alpha1().LoadBalance().Create(ctx, l.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = l.client.V1Alpha1().LoadBalance().Patch(ctx, l.object)
+			err = l.client.V2Alpha1().LoadBalance().Patch(ctx, l.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update loadbalance %s", l.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = l.client.V1Alpha1().LoadBalance().Create(ctx, l.object)
+			err = l.client.V2Alpha1().LoadBalance().Create(ctx, l.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create loadbalance %s", l.object.Name())
 			}
@@ -301,18 +271,18 @@ type tenantApplier struct {
 func (t *tenantApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), t.timeout)
 	defer cancelFunc()
-	err := t.client.V1Alpha1().Tenant().Create(ctx, t.object)
+	err := t.client.V2Alpha1().Tenant().Create(ctx, t.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = t.client.V1Alpha1().Tenant().Patch(ctx, t.object)
+			err = t.client.V2Alpha1().Tenant().Patch(ctx, t.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update tenant %s", t.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = t.client.V1Alpha1().Tenant().Create(ctx, t.object)
+			err = t.client.V2Alpha1().Tenant().Create(ctx, t.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create tenant %s", t.object.Name())
 			}
@@ -330,18 +300,18 @@ type resilienceApplier struct {
 func (r *resilienceApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), r.timeout)
 	defer cancelFunc()
-	err := r.client.V1Alpha1().Resilience().Create(ctx, r.object)
+	err := r.client.V2Alpha1().Resilience().Create(ctx, r.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = r.client.V1Alpha1().Resilience().Patch(ctx, r.object)
+			err = r.client.V2Alpha1().Resilience().Patch(ctx, r.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update resilience %s", r.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = r.client.V1Alpha1().Resilience().Create(ctx, r.object)
+			err = r.client.V2Alpha1().Resilience().Create(ctx, r.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create resilience %s", r.object.Name())
 			}
@@ -359,18 +329,18 @@ type mockApplier struct {
 func (m *mockApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), m.timeout)
 	defer cancelFunc()
-	err := m.client.V1Alpha1().Mock().Create(ctx, m.object)
+	err := m.client.V2Alpha1().Mock().Create(ctx, m.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = m.client.V1Alpha1().Mock().Patch(ctx, m.object)
+			err = m.client.V2Alpha1().Mock().Patch(ctx, m.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update mock %s", m.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = m.client.V1Alpha1().Mock().Create(ctx, m.object)
+			err = m.client.V2Alpha1().Mock().Create(ctx, m.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create mock %s", m.object.Name())
 			}
@@ -388,18 +358,18 @@ type ingressApplier struct {
 func (i *ingressApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), i.timeout)
 	defer cancelFunc()
-	err := i.client.V1Alpha1().Ingress().Create(ctx, i.object)
+	err := i.client.V2Alpha1().Ingress().Create(ctx, i.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = i.client.V1Alpha1().Ingress().Patch(ctx, i.object)
+			err = i.client.V2Alpha1().Ingress().Patch(ctx, i.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update ingress %s", i.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = i.client.V1Alpha1().Ingress().Create(ctx, i.object)
+			err = i.client.V2Alpha1().Ingress().Create(ctx, i.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create ingress %s", i.object.Name())
 			}
@@ -417,18 +387,18 @@ type httpRouteGroupApplier struct {
 func (g *httpRouteGroupApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), g.timeout)
 	defer cancelFunc()
-	err := g.client.V1Alpha1().HTTPRouteGroup().Create(ctx, g.object)
+	err := g.client.V2Alpha1().HTTPRouteGroup().Create(ctx, g.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = g.client.V1Alpha1().HTTPRouteGroup().Patch(ctx, g.object)
+			err = g.client.V2Alpha1().HTTPRouteGroup().Patch(ctx, g.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update httpRouteGroup %s", g.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = g.client.V1Alpha1().HTTPRouteGroup().Create(ctx, g.object)
+			err = g.client.V2Alpha1().HTTPRouteGroup().Create(ctx, g.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create httpRouteGroup %s", g.object.Name())
 			}
@@ -446,18 +416,18 @@ type trafficTargetApplier struct {
 func (tt *trafficTargetApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), tt.timeout)
 	defer cancelFunc()
-	err := tt.client.V1Alpha1().TrafficTarget().Create(ctx, tt.object)
+	err := tt.client.V2Alpha1().TrafficTarget().Create(ctx, tt.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = tt.client.V1Alpha1().TrafficTarget().Patch(ctx, tt.object)
+			err = tt.client.V2Alpha1().TrafficTarget().Patch(ctx, tt.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update trafficTarget %s", tt.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = tt.client.V1Alpha1().TrafficTarget().Create(ctx, tt.object)
+			err = tt.client.V2Alpha1().TrafficTarget().Create(ctx, tt.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create trafficTarget %s", tt.object.Name())
 			}
@@ -475,18 +445,18 @@ type serviceCanaryApplier struct {
 func (sc *serviceCanaryApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), sc.timeout)
 	defer cancelFunc()
-	err := sc.client.V1Alpha1().ServiceCanary().Create(ctx, sc.object)
+	err := sc.client.V2Alpha1().ServiceCanary().Create(ctx, sc.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = sc.client.V1Alpha1().ServiceCanary().Patch(ctx, sc.object)
+			err = sc.client.V2Alpha1().ServiceCanary().Patch(ctx, sc.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update serviceCanary %s", sc.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = sc.client.V1Alpha1().ServiceCanary().Create(ctx, sc.object)
+			err = sc.client.V2Alpha1().ServiceCanary().Create(ctx, sc.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create serviceCanary %s", sc.object.Name())
 			}
@@ -504,18 +474,18 @@ type customResourceKindApplier struct {
 func (k *customResourceKindApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
-	err := k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
+	err := k.client.V2Alpha1().CustomResourceKind().Create(ctx, k.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = k.client.V1Alpha1().CustomResourceKind().Patch(ctx, k.object)
+			err = k.client.V2Alpha1().CustomResourceKind().Patch(ctx, k.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update custom resource kind %s", k.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = k.client.V1Alpha1().CustomResourceKind().Create(ctx, k.object)
+			err = k.client.V2Alpha1().CustomResourceKind().Create(ctx, k.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create custom resource kind %s", k.object.Name())
 			}
@@ -533,18 +503,18 @@ type customResourceApplier struct {
 func (cra *customResourceApplier) Apply() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), cra.timeout)
 	defer cancelFunc()
-	err := cra.client.V1Alpha1().CustomResource().Create(ctx, cra.object)
+	err := cra.client.V2Alpha1().CustomResource().Create(ctx, cra.object)
 	for {
 		switch {
 		case err == nil:
 			return nil
 		case meshclient.IsConflictError(err):
-			err = cra.client.V1Alpha1().CustomResource().Patch(ctx, cra.object)
+			err = cra.client.V2Alpha1().CustomResource().Patch(ctx, cra.object)
 			if err != nil && meshclient.IsConflictError(err) {
 				return errors.Wrapf(err, "update custom resource %s", cra.object.Name())
 			}
 		case meshclient.IsNotFoundError(err):
-			err = cra.client.V1Alpha1().CustomResource().Create(ctx, cra.object)
+			err = cra.client.V2Alpha1().CustomResource().Create(ctx, cra.object)
 			if err != nil && meshclient.IsNotFoundError(err) {
 				return errors.Wrapf(err, "create custom resource %s", cra.object.Name())
 			}

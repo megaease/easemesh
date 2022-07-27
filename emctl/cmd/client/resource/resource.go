@@ -28,7 +28,7 @@ import (
 
 const (
 	// DefaultAPIVersion is current apis version for the EaseMesh
-	DefaultAPIVersion = "mesh.megaease.com/v1alpha1"
+	DefaultAPIVersion = "mesh.megaease.com/v2alpha1"
 
 	// LoadBalanceRoundRobinPolicy is round robin policy
 	LoadBalanceRoundRobinPolicy = "roundRobin"
@@ -53,9 +53,6 @@ const (
 
 	// KindServiceInstance is the service instance kind of EaseMesh resource.
 	KindServiceInstance = "ServiceInstance"
-
-	// KindCanary is canary kind of the EaseMesh resource
-	KindCanary = "Canary"
 
 	// KindObservabilityMetrics is observability metrics kind of the EaseMesh resource
 	KindObservabilityMetrics = "ObservabilityMetrics"
@@ -144,10 +141,6 @@ func (oc *objectCreator) new(kind meta.VersionKind, metaData meta.MetaData) (met
 		return &LoadBalance{
 			MeshResource: NewLoadBalanceResource(apiVersion, metaData.Name),
 		}, nil
-	case KindCanary:
-		return &Canary{
-			MeshResource: NewCanaryResource(apiVersion, metaData.Name),
-		}, nil
 	case KindObservabilityTracings:
 		return &ObservabilityTracings{
 			MeshResource: NewObservabilityTracingsResource(apiVersion, metaData.Name),
@@ -223,11 +216,6 @@ func NewServiceResource(apiVersion, name string) meta.MeshResource {
 // NewServiceInstanceResource returns a MeshResource with the service kind
 func NewServiceInstanceResource(apiVersion, name string) meta.MeshResource {
 	return NewMeshResource(apiVersion, KindServiceInstance, name)
-}
-
-// NewCanaryResource returns a MeshResource with the canary kind
-func NewCanaryResource(apiVersion, name string) meta.MeshResource {
-	return NewMeshResource(apiVersion, KindCanary, name)
 }
 
 // NewLoadBalanceResource returns a MeshResource with the loadbalance kind

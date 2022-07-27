@@ -18,7 +18,7 @@
 package resource
 
 import (
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -26,7 +26,7 @@ type (
 	// LoadBalance describes loadbalance resource of the EaseMesh
 	LoadBalance struct {
 		meta.MeshResource `yaml:",inline"`
-		Spec              *v1alpha1.LoadBalance `yaml:"spec" jsonschema:"required"`
+		Spec              *v2alpha1.LoadBalance `yaml:"spec" jsonschema:"required"`
 	}
 )
 
@@ -50,15 +50,15 @@ func (l *LoadBalance) Columns() []*meta.TableColumn {
 	}
 }
 
-// ToV1Alpha1 converts a loadbalance resource to v1alpha1.LoadBalance
-func (l *LoadBalance) ToV1Alpha1() *v1alpha1.LoadBalance {
+// ToV2Alpha1 converts a loadbalance resource to v2alpha1.LoadBalance
+func (l *LoadBalance) ToV2Alpha1() *v2alpha1.LoadBalance {
 	return l.Spec
 }
 
-// ToLoadBalance converts a v1alpha1.LoadBalance resource to a LoadBalance resource
-func ToLoadBalance(name string, loadBalance *v1alpha1.LoadBalance) *LoadBalance {
+// ToLoadBalance converts a v2alpha1.LoadBalance resource to a LoadBalance resource
+func ToLoadBalance(name string, loadBalance *v2alpha1.LoadBalance) *LoadBalance {
 	result := &LoadBalance{
-		Spec: &v1alpha1.LoadBalance{},
+		Spec: &v2alpha1.LoadBalance{},
 	}
 	result.MeshResource = NewLoadBalanceResource(DefaultAPIVersion, name)
 	result.Spec = loadBalance

@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type resilienceInterface struct {
+type resilienceGetter struct {
 	client *meshClient
 }
-type resilienceGetter struct {
+type resilienceInterface struct {
 	client *meshClient
 }
 
@@ -47,10 +47,10 @@ func (r *resilienceInterface) Get(args0 context.Context, args1 string) (*resourc
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Resilience := &v1alpha1.Resilience{}
+		Resilience := &v2alpha1.Resilience{}
 		err := json.Unmarshal(buff, Resilience)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Resilience")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.Resilience")
 		}
 		return resource.ToResilience(args1, Resilience), nil
 	})
@@ -61,7 +61,7 @@ func (r *resilienceInterface) Get(args0 context.Context, args1 string) (*resourc
 }
 func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resilience) error {
 	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch Resilience %s", args1.Name())
@@ -75,7 +75,7 @@ func (r *resilienceInterface) Patch(args0 context.Context, args1 *resource.Resil
 }
 func (r *resilienceInterface) Create(args0 context.Context, args1 *resource.Resilience) error {
 	url := fmt.Sprintf("http://"+r.client.server+apiURL+"/mesh/"+"services/%s/resilience", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Resilience %s", args1.Name())
@@ -109,10 +109,10 @@ func (r *resilienceInterface) List(args0 context.Context) ([]*resource.Resilienc
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		services := []v1alpha1.Service{}
+		services := []v2alpha1.Service{}
 		err := json.Unmarshal(b, &services)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.Resilience{}
 		for _, service := range services {

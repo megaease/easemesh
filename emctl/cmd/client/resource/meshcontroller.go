@@ -31,8 +31,8 @@ type (
 		MeshControllerAdmin `yaml:",inline"`
 	}
 
-	// MeshControllerV1Alpha1 is the v1alphv1 version of mesh controller.
-	MeshControllerV1Alpha1 struct {
+	// MeshControllerV2Alpha1 is the v1alphv1 version of mesh controller.
+	MeshControllerV2Alpha1 struct {
 		Kind                string `yaml:"kind"`
 		Name                string `yaml:"name"`
 		MeshControllerAdmin `yaml:",inline"`
@@ -123,17 +123,17 @@ func (mc *MeshController) Columns() []*meta.TableColumn {
 	}
 }
 
-// ToV1Alpha1 converts MeshController resouce to v1alpha1.
-func (mc *MeshController) ToV1Alpha1() *MeshControllerV1Alpha1 {
-	return &MeshControllerV1Alpha1{
+// ToV2Alpha1 converts MeshController resouce to v2alpha1.
+func (mc *MeshController) ToV2Alpha1() *MeshControllerV2Alpha1 {
+	return &MeshControllerV2Alpha1{
 		Kind:                mc.Kind(),
 		Name:                mc.Name(),
 		MeshControllerAdmin: mc.MeshControllerAdmin,
 	}
 }
 
-// ToMeshController converts a MeshControllerV1Alpha1 resouce to a MeshController resource.
-func ToMeshController(meshController *MeshControllerV1Alpha1) *MeshController {
+// ToMeshController converts a MeshControllerV2Alpha1 resouce to a MeshController resource.
+func ToMeshController(meshController *MeshControllerV2Alpha1) *MeshController {
 	return &MeshController{
 		MeshResource:        NewMeshResource(DefaultAPIVersion, meshController.Kind, meshController.Name),
 		MeshControllerAdmin: meshController.MeshControllerAdmin,

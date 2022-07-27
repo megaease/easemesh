@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
@@ -47,10 +47,10 @@ func (l *loadBalanceInterface) Get(args0 context.Context, args1 string) (*resour
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		LoadBalance := &v1alpha1.LoadBalance{}
+		LoadBalance := &v2alpha1.LoadBalance{}
 		err := json.Unmarshal(buff, LoadBalance)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.LoadBalance")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.LoadBalance")
 		}
 		return resource.ToLoadBalance(args1, LoadBalance), nil
 	})
@@ -61,7 +61,7 @@ func (l *loadBalanceInterface) Get(args0 context.Context, args1 string) (*resour
 }
 func (l *loadBalanceInterface) Patch(args0 context.Context, args1 *resource.LoadBalance) error {
 	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch LoadBalance %s", args1.Name())
@@ -75,7 +75,7 @@ func (l *loadBalanceInterface) Patch(args0 context.Context, args1 *resource.Load
 }
 func (l *loadBalanceInterface) Create(args0 context.Context, args1 *resource.LoadBalance) error {
 	url := fmt.Sprintf("http://"+l.client.server+apiURL+"/mesh/"+"services/%s/loadbalance", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create LoadBalance %s", args1.Name())
@@ -109,10 +109,10 @@ func (l *loadBalanceInterface) List(args0 context.Context) ([]*resource.LoadBala
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		services := []v1alpha1.Service{}
+		services := []v2alpha1.Service{}
 		err := json.Unmarshal(b, &services)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.LoadBalance{}
 		for _, service := range services {

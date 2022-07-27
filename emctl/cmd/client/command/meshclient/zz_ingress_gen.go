@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type ingressInterface struct {
+type ingressGetter struct {
 	client *meshClient
 }
-type ingressGetter struct {
+type ingressInterface struct {
 	client *meshClient
 }
 
@@ -47,10 +47,10 @@ func (i *ingressInterface) Get(args0 context.Context, args1 string) (*resource.I
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Ingress := &v1alpha1.Ingress{}
+		Ingress := &v2alpha1.Ingress{}
 		err := json.Unmarshal(buff, Ingress)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Ingress")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.Ingress")
 		}
 		return resource.ToIngress(Ingress), nil
 	})
@@ -61,7 +61,7 @@ func (i *ingressInterface) Get(args0 context.Context, args1 string) (*resource.I
 }
 func (i *ingressInterface) Patch(args0 context.Context, args1 *resource.Ingress) error {
 	url := fmt.Sprintf("http://"+i.client.server+apiURL+"/mesh/"+"ingresses/%s", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch Ingress %s", args1.Name())
@@ -75,7 +75,7 @@ func (i *ingressInterface) Patch(args0 context.Context, args1 *resource.Ingress)
 }
 func (i *ingressInterface) Create(args0 context.Context, args1 *resource.Ingress) error {
 	url := "http://" + i.client.server + apiURL + "/mesh/ingresses"
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Ingress %s", args1.Name())
@@ -109,10 +109,10 @@ func (i *ingressInterface) List(args0 context.Context) ([]*resource.Ingress, err
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		ingress := []v1alpha1.Ingress{}
+		ingress := []v2alpha1.Ingress{}
 		err := json.Unmarshal(b, &ingress)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.Ingress{}
 		for _, item := range ingress {

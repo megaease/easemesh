@@ -25,17 +25,16 @@ import (
 
 // MeshClient is a client for accessing the EaseMesh control plane service
 type MeshClient interface {
-	V1Alpha1() V1Alpha1Interface
+	V2Alpha1() V2Alpha1Interface
 }
 
-// V1Alpha1Interface is an interface that aggregates all resources accessor for the EaseMesh
-type V1Alpha1Interface interface {
+// V2Alpha1Interface is an interface that aggregates all resources accessor for the EaseMesh
+type V2Alpha1Interface interface {
 	MeshControllerGetter
 	TenantGetter
 	ServiceGetter
 	ServiceInstanceGetter
 	LoadbalanceGetter
-	CanaryGetter
 	ObservabilityGetter
 	ResilienceGetter
 	MockGetter

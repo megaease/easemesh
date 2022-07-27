@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type tenantInterface struct {
+type tenantGetter struct {
 	client *meshClient
 }
-type tenantGetter struct {
+type tenantInterface struct {
 	client *meshClient
 }
 
@@ -47,10 +47,10 @@ func (t *tenantInterface) Get(args0 context.Context, args1 string) (*resource.Te
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		Tenant := &v1alpha1.Tenant{}
+		Tenant := &v2alpha1.Tenant{}
 		err := json.Unmarshal(buff, Tenant)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.Tenant")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.Tenant")
 		}
 		return resource.ToTenant(Tenant), nil
 	})
@@ -61,7 +61,7 @@ func (t *tenantInterface) Get(args0 context.Context, args1 string) (*resource.Te
 }
 func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) error {
 	url := fmt.Sprintf("http://"+t.client.server+apiURL+"/mesh/"+"tenants/%s", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch Tenant %s", args1.Name())
@@ -75,7 +75,7 @@ func (t *tenantInterface) Patch(args0 context.Context, args1 *resource.Tenant) e
 }
 func (t *tenantInterface) Create(args0 context.Context, args1 *resource.Tenant) error {
 	url := "http://" + t.client.server + apiURL + "/mesh/tenants"
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create Tenant %s", args1.Name())
@@ -109,10 +109,10 @@ func (t *tenantInterface) List(args0 context.Context) ([]*resource.Tenant, error
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		tenant := []v1alpha1.Tenant{}
+		tenant := []v2alpha1.Tenant{}
 		err := json.Unmarshal(b, &tenant)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.Tenant{}
 		for _, item := range tenant {

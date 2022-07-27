@@ -30,7 +30,8 @@ import (
 
 // WrapDeleterByMeshObject returns a new Deleter from a MeshObject
 func WrapDeleterByMeshObject(object meta.MeshObject,
-	client meshclient.MeshClient, timeout time.Duration) Deleter {
+	client meshclient.MeshClient, timeout time.Duration,
+) Deleter {
 	switch object.Kind() {
 	case resource.KindMeshController:
 		return &meshControllerDeleter{object: object.(*resource.MeshController), baseDeleter: baseDeleter{client: client, timeout: timeout}}
@@ -38,8 +39,6 @@ func WrapDeleterByMeshObject(object meta.MeshObject,
 		return &serviceDeleter{object: object.(*resource.Service), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindServiceInstance:
 		return &serviceInstanceDeleter{object: object.(*resource.ServiceInstance), baseDeleter: baseDeleter{client: client, timeout: timeout}}
-	case resource.KindCanary:
-		return &canaryDeleter{object: object.(*resource.Canary), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindLoadBalance:
 		return &loadBalanceDeleter{object: object.(*resource.LoadBalance), baseDeleter: baseDeleter{client: client, timeout: timeout}}
 	case resource.KindTenant:
@@ -87,7 +86,7 @@ type meshControllerDeleter struct {
 func (s *meshControllerDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
-	return s.client.V1Alpha1().MeshController().Delete(ctx, s.object.Name())
+	return s.client.V2Alpha1().MeshController().Delete(ctx, s.object.Name())
 }
 
 type serviceDeleter struct {
@@ -98,7 +97,7 @@ type serviceDeleter struct {
 func (s *serviceDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), s.timeout)
 	defer cancelFunc()
-	return s.client.V1Alpha1().Service().Delete(ctx, s.object.Name())
+	return s.client.V2Alpha1().Service().Delete(ctx, s.object.Name())
 }
 
 type serviceInstanceDeleter struct {
@@ -115,25 +114,8 @@ func (s *serviceInstanceDeleter) Delete() error {
 		return err
 	}
 
-	return s.client.V1Alpha1().ServiceInstance().Delete(ctx,
+	return s.client.V2Alpha1().ServiceInstance().Delete(ctx,
 		serviceName, instanceID)
-}
-
-type canaryDeleter struct {
-	baseDeleter
-	object *resource.Canary
-}
-
-func (c *canaryDeleter) Delete() error {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
-	defer cancelFunc()
-
-	err := c.client.V1Alpha1().Canary().Delete(ctx, c.object.Name())
-	if meshclient.IsNotFoundError(err) {
-		return errors.Wrapf(err, "delete canary %s", c.object.Name())
-	}
-
-	return err
 }
 
 type observabilityTracingsDeleter struct {
@@ -145,7 +127,7 @@ func (o *observabilityTracingsDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
-	err := o.client.V1Alpha1().ObservabilityTracings().Delete(ctx, o.object.Name())
+	err := o.client.V2Alpha1().ObservabilityTracings().Delete(ctx, o.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete observabilityTracings %s", o.object.Name())
 	}
@@ -162,7 +144,7 @@ func (o *observabilityMetricsDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
-	err := o.client.V1Alpha1().ObservabilityMetrics().Delete(ctx, o.object.Name())
+	err := o.client.V2Alpha1().ObservabilityMetrics().Delete(ctx, o.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete observabilityMetrics %s", o.object.Name())
 	}
@@ -179,7 +161,7 @@ func (o *observabilityOutputServerDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), o.timeout)
 	defer cancelFunc()
 
-	err := o.client.V1Alpha1().ObservabilityOutputServer().Delete(ctx, o.object.Name())
+	err := o.client.V2Alpha1().ObservabilityOutputServer().Delete(ctx, o.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete observabilityOutputServer %s", o.object.Name())
 	}
@@ -196,7 +178,7 @@ func (l *loadBalanceDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), l.timeout)
 	defer cancelFunc()
 
-	err := l.client.V1Alpha1().LoadBalance().Delete(ctx, l.object.Name())
+	err := l.client.V2Alpha1().LoadBalance().Delete(ctx, l.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete loadBalance %s", l.object.Name())
 	}
@@ -213,7 +195,7 @@ func (t *tenantDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), t.timeout)
 	defer cancelFunc()
 
-	err := t.client.V1Alpha1().Tenant().Delete(ctx, t.object.Name())
+	err := t.client.V2Alpha1().Tenant().Delete(ctx, t.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete tenant %s", t.object.Name())
 	}
@@ -230,7 +212,7 @@ func (r *resilienceDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), r.timeout)
 	defer cancelFunc()
 
-	err := r.client.V1Alpha1().Resilience().Delete(ctx, r.object.Name())
+	err := r.client.V2Alpha1().Resilience().Delete(ctx, r.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete resilience %s", r.object.Name())
 	}
@@ -247,7 +229,7 @@ func (m *mockDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), m.timeout)
 	defer cancelFunc()
 
-	err := m.client.V1Alpha1().Mock().Delete(ctx, m.object.Name())
+	err := m.client.V2Alpha1().Mock().Delete(ctx, m.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete mock %s", m.object.Name())
 	}
@@ -264,7 +246,7 @@ func (i *ingressDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), i.timeout)
 	defer cancelFunc()
 
-	err := i.client.V1Alpha1().Ingress().Delete(ctx, i.object.Name())
+	err := i.client.V2Alpha1().Ingress().Delete(ctx, i.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete ingress %s", i.object.Name())
 	}
@@ -281,7 +263,7 @@ func (g *httpRouteGroupDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), g.timeout)
 	defer cancelFunc()
 
-	err := g.client.V1Alpha1().HTTPRouteGroup().Delete(ctx, g.object.Name())
+	err := g.client.V2Alpha1().HTTPRouteGroup().Delete(ctx, g.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete http route group %s", g.object.Name())
 	}
@@ -298,7 +280,7 @@ func (tt *trafficTargetDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), tt.timeout)
 	defer cancelFunc()
 
-	err := tt.client.V1Alpha1().HTTPRouteGroup().Delete(ctx, tt.object.Name())
+	err := tt.client.V2Alpha1().HTTPRouteGroup().Delete(ctx, tt.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete traffic target %s", tt.object.Name())
 	}
@@ -315,7 +297,7 @@ func (sc *serviceCanaryDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), sc.timeout)
 	defer cancelFunc()
 
-	err := sc.client.V1Alpha1().ServiceCanary().Delete(ctx, sc.object.Name())
+	err := sc.client.V2Alpha1().ServiceCanary().Delete(ctx, sc.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete serviceCanary %s", sc.object.Name())
 	}
@@ -332,7 +314,7 @@ func (k *customResourceKindDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), k.timeout)
 	defer cancelFunc()
 
-	err := k.client.V1Alpha1().CustomResourceKind().Delete(ctx, k.object.Name())
+	err := k.client.V2Alpha1().CustomResourceKind().Delete(ctx, k.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete custom resource kind %s", k.object.Name())
 	}
@@ -349,7 +331,7 @@ func (crd *customResourceDeleter) Delete() error {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), crd.timeout)
 	defer cancelFunc()
 
-	err := crd.client.V1Alpha1().CustomResource().Delete(ctx, crd.object.Kind(), crd.object.Name())
+	err := crd.client.V2Alpha1().CustomResource().Delete(ctx, crd.object.Kind(), crd.object.Name())
 	if meshclient.IsNotFoundError(err) {
 		return errors.Wrapf(err, "delete custom resource %s", crd.object.Name())
 	}

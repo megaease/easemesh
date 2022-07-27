@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
@@ -47,10 +47,10 @@ func (s *serviceCanaryInterface) Get(args0 context.Context, args1 string) (*reso
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		ServiceCanary := &v1alpha1.ServiceCanary{}
+		ServiceCanary := &v2alpha1.ServiceCanary{}
 		err := json.Unmarshal(buff, ServiceCanary)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.ServiceCanary")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.ServiceCanary")
 		}
 		return resource.ToServiceCanary(ServiceCanary), nil
 	})
@@ -61,7 +61,7 @@ func (s *serviceCanaryInterface) Get(args0 context.Context, args1 string) (*reso
 }
 func (s *serviceCanaryInterface) Patch(args0 context.Context, args1 *resource.ServiceCanary) error {
 	url := fmt.Sprintf("http://"+s.client.server+apiURL+"/mesh/"+"servicecanaries/%s", args1.Name())
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PutByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusNotFound {
 			return nil, errors.Wrapf(NotFoundError, "patch ServiceCanary %s", args1.Name())
@@ -75,7 +75,7 @@ func (s *serviceCanaryInterface) Patch(args0 context.Context, args1 *resource.Se
 }
 func (s *serviceCanaryInterface) Create(args0 context.Context, args1 *resource.ServiceCanary) error {
 	url := "http://" + s.client.server + apiURL + "/mesh/servicecanaries"
-	object := args1.ToV1Alpha1()
+	object := args1.ToV2Alpha1()
 	_, err := client.NewHTTPJSON().PostByContext(args0, url, object, nil).HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
 		if statusCode == http.StatusConflict {
 			return nil, errors.Wrapf(ConflictError, "create ServiceCanary %s", args1.Name())
@@ -109,10 +109,10 @@ func (s *serviceCanaryInterface) List(args0 context.Context) ([]*resource.Servic
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		serviceCanary := []v1alpha1.ServiceCanary{}
+		serviceCanary := []v2alpha1.ServiceCanary{}
 		err := json.Unmarshal(b, &serviceCanary)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.ServiceCanary{}
 		for _, item := range serviceCanary {

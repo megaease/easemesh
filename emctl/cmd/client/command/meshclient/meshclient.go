@@ -36,21 +36,20 @@ func init() {
 
 type meshClient struct {
 	server   string
-	v1Alpha1 V1Alpha1Interface
+	v2Alpha1 V2Alpha1Interface
 }
 
-func (m *meshClient) V1Alpha1() V1Alpha1Interface {
-	return m.v1Alpha1
+func (m *meshClient) V2Alpha1() V2Alpha1Interface {
+	return m.v2Alpha1
 }
 
 // NOTE: This line is required because generator generates a wrong name for
 // httpRouteGroupGetter. Please remove it when the generator issue is fixed
 type httpRouteGroupGetter = hTTPRouteGroupGetter
 
-type v1alpha1Interface struct {
+type v2alpha1Interface struct {
 	meshControllerGetter
 	loadbalanceGetter
-	canaryGetter
 	resilienceGetter
 	mockGetter
 	serviceGetter
@@ -65,7 +64,7 @@ type v1alpha1Interface struct {
 	customResourceGetter
 }
 
-var _ V1Alpha1Interface = &v1alpha1Interface{}
+var _ V2Alpha1Interface = &v2alpha1Interface{}
 
 // New initials a new MeshClient
 func New(server string) MeshClient {
@@ -79,10 +78,9 @@ func New(server string) MeshClient {
 	}
 
 	client := &meshClient{server: server}
-	alpha1 := v1alpha1Interface{
+	alpha1 := v2alpha1Interface{
 		meshControllerGetter:     meshControllerGetter{client: client},
 		loadbalanceGetter:        loadbalanceGetter{client: client},
-		canaryGetter:             canaryGetter{client: client},
 		resilienceGetter:         resilienceGetter{client: client},
 		mockGetter:               mockGetter{client: client},
 		tenantGetter:             tenantGetter{client: client},
@@ -96,6 +94,6 @@ func New(server string) MeshClient {
 		customResourceKindGetter: customResourceKindGetter{client: client},
 		customResourceGetter:     customResourceGetter{client: client},
 	}
-	client.v1Alpha1 = &alpha1
+	client.v2Alpha1 = &alpha1
 	return client
 }

@@ -21,17 +21,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	v1alpha1 "github.com/megaease/easemesh-api/v1alpha1"
+	v2alpha1 "github.com/megaease/easemesh-api/v2alpha1"
 	resource "github.com/megaease/easemeshctl/cmd/client/resource"
 	client "github.com/megaease/easemeshctl/cmd/common/client"
 	errors "github.com/pkg/errors"
 	"net/http"
 )
 
-type serviceInstanceInterface struct {
+type serviceInstanceGetter struct {
 	client *meshClient
 }
-type serviceInstanceGetter struct {
+type serviceInstanceInterface struct {
 	client *meshClient
 }
 
@@ -47,10 +47,10 @@ func (s *serviceInstanceInterface) Get(args0 context.Context, args1 string, args
 		if statusCode >= 300 {
 			return nil, errors.Errorf("call %s failed, return status code %d text %+v", url, statusCode, string(buff))
 		}
-		ServiceInstance := &v1alpha1.ServiceInstance{}
+		ServiceInstance := &v2alpha1.ServiceInstance{}
 		err := json.Unmarshal(buff, ServiceInstance)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.ServiceInstance")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.ServiceInstance")
 		}
 		return resource.ToServiceInstance(ServiceInstance), nil
 	})
@@ -81,10 +81,10 @@ func (s *serviceInstanceInterface) List(args0 context.Context) ([]*resource.Serv
 		if statusCode >= 300 && statusCode < 200 {
 			return nil, errors.Errorf("call GET %s failed, return statuscode %d text %+v", url, statusCode, b)
 		}
-		serviceInstance := []v1alpha1.ServiceInstance{}
+		serviceInstance := []v2alpha1.ServiceInstance{}
 		err := json.Unmarshal(b, &serviceInstance)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unmarshal data to v1alpha1.")
+			return nil, errors.Wrapf(err, "unmarshal data to v2alpha1.")
 		}
 		results := []*resource.ServiceInstance{}
 		for _, item := range serviceInstance {

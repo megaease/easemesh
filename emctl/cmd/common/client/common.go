@@ -64,7 +64,7 @@ func NewHTTPJSON(o ...Option) HTTPJSONClient {
 	return &httpJSONClient{options: o}
 }
 
-// WrapRetryOptions wraps option to retryer
+// WrapRetryOptions wraps option to retry
 func WrapRetryOptions(retryCount int, retryWaitTime time.Duration, conditionFunc func(b []byte, err error) bool) []Option {
 	return []Option{
 		func(client *resty.Client) {

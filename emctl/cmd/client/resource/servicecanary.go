@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 )
 
@@ -36,8 +36,8 @@ type (
 	// ServiceCanarySpec is the service canary spec.
 	ServiceCanarySpec struct {
 		Priority     int32
-		Selector     *v1alpha1.ServiceSelector `yaml:"selector" jsonschema:"required"`
-		TrafficRules *v1alpha1.TrafficRules    `yaml:"trafficRules" jsonschema:"required"`
+		Selector     *v2alpha1.ServiceSelector `yaml:"selector" jsonschema:"required"`
+		TrafficRules *v2alpha1.TrafficRules    `yaml:"trafficRules" jsonschema:"required"`
 	}
 )
 
@@ -73,9 +73,9 @@ func (sc *ServiceCanary) Columns() []*meta.TableColumn {
 	}
 }
 
-// ToV1Alpha1 converts a ServiceCanary resource to v1alpha1.ServiceCanary.
-func (sc *ServiceCanary) ToV1Alpha1() *v1alpha1.ServiceCanary {
-	result := &v1alpha1.ServiceCanary{}
+// ToV2Alpha1 converts a ServiceCanary resource to v2alpha1.ServiceCanary.
+func (sc *ServiceCanary) ToV2Alpha1() *v2alpha1.ServiceCanary {
+	result := &v2alpha1.ServiceCanary{}
 	result.Name = sc.Name()
 	if sc.Spec != nil {
 		result.Selector = sc.Spec.Selector
@@ -86,8 +86,8 @@ func (sc *ServiceCanary) ToV1Alpha1() *v1alpha1.ServiceCanary {
 	return result
 }
 
-// ToServiceCanary converts a v1alpha1.ServiceCanary resource to a ServiceCanary resource.
-func ToServiceCanary(serviceCanary *v1alpha1.ServiceCanary) *ServiceCanary {
+// ToServiceCanary converts a v2alpha1.ServiceCanary resource to a ServiceCanary resource.
+func ToServiceCanary(serviceCanary *v2alpha1.ServiceCanary) *ServiceCanary {
 	result := &ServiceCanary{
 		Spec: &ServiceCanarySpec{},
 	}

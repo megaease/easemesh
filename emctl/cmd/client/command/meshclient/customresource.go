@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
 	"github.com/megaease/easemeshctl/cmd/common/client"
 
@@ -54,10 +54,10 @@ func (k *customResourceKindInterface) Get(ctx context.Context, customResourceKin
 			if statusCode >= 300 {
 				return nil, errors.Errorf("call %s failed, return status code: %d text:%s", url, statusCode, string(b))
 			}
-			customResourceKind := &v1alpha1.CustomResourceKind{}
+			customResourceKind := &v2alpha1.CustomResourceKind{}
 			err := json.Unmarshal(b, customResourceKind)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.CustomResourceKind")
+				return nil, errors.Wrap(err, "unmarshal data to v2alpha1.CustomResourceKind")
 			}
 			return resource.ToCustomResourceKind(customResourceKind), nil
 		})
@@ -71,7 +71,7 @@ func (k *customResourceKindInterface) Get(ctx context.Context, customResourceKin
 func (k *customResourceKindInterface) Patch(ctx context.Context, customResourceKind *resource.CustomResourceKind) error {
 	jsonClient := client.NewHTTPJSON()
 	url := "http://" + k.client.server + MeshCustomResourceKindsURL
-	update := customResourceKind.ToV1Alpha1()
+	update := customResourceKind.ToV2Alpha1()
 	_, err := jsonClient.
 		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -88,7 +88,7 @@ func (k *customResourceKindInterface) Patch(ctx context.Context, customResourceK
 }
 
 func (k *customResourceKindInterface) Create(ctx context.Context, customResourceKind *resource.CustomResourceKind) error {
-	created := customResourceKind.ToV1Alpha1()
+	created := customResourceKind.ToV2Alpha1()
 	url := "http://" + k.client.server + MeshCustomResourceKindsURL
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.
@@ -137,7 +137,7 @@ func (k *customResourceKindInterface) List(ctx context.Context) ([]*resource.Cus
 				return nil, errors.Errorf("call GET %s failed, return statuscode %d text %s", url, statusCode, string(b))
 			}
 
-			customResourceKinds := []v1alpha1.CustomResourceKind{}
+			customResourceKinds := []v2alpha1.CustomResourceKind{}
 			err := json.Unmarshal(b, &customResourceKinds)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unmarshal custom resource kind result")
@@ -183,7 +183,7 @@ func (o *customResourceInterface) Get(ctx context.Context, kind, customResourceI
 			customResource := map[string]interface{}{}
 			err := json.Unmarshal(b, &customResource)
 			if err != nil {
-				return nil, errors.Wrap(err, "unmarshal data to v1alpha1.CustomResource")
+				return nil, errors.Wrap(err, "unmarshal data to v2alpha1.CustomResource")
 			}
 			return resource.ToCustomResource(customResource), nil
 		})
@@ -197,7 +197,7 @@ func (o *customResourceInterface) Get(ctx context.Context, kind, customResourceI
 func (o *customResourceInterface) Patch(ctx context.Context, customResource *resource.CustomResource) error {
 	jsonClient := client.NewHTTPJSON()
 	url := "http://" + o.client.server + MeshAllCustomResourcesURL
-	update := customResource.ToV1Alpha1()
+	update := customResource.ToV2Alpha1()
 	_, err := jsonClient.
 		PutByContext(ctx, url, update, nil).
 		HandleResponse(func(b []byte, statusCode int) (interface{}, error) {
@@ -214,7 +214,7 @@ func (o *customResourceInterface) Patch(ctx context.Context, customResource *res
 }
 
 func (o *customResourceInterface) Create(ctx context.Context, customResource *resource.CustomResource) error {
-	created := customResource.ToV1Alpha1()
+	created := customResource.ToV2Alpha1()
 	url := "http://" + o.client.server + MeshAllCustomResourcesURL
 	_, err := client.NewHTTPJSON().
 		// FIXME: the standard RESTful URL of create resource is POST /v1/api/{resources} instead of POST /v1/api/{resources}/{id}.

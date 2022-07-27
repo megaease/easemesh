@@ -82,15 +82,16 @@ spec:
           cp -r /easeagent-volume/* /agent-volume
 
           echo 'name: vets-service
-          cluster-join-urls: http://easemesh-control-plane-service.easemesh:2380
-          cluster-request-timeout: 10s
-          cluster-role: reader
           cluster-name: easemesh-control-plane
+          cluster-role: secondary
+          cluster-request-timeout: 10s
+          cluster:
+            primary-listen-peer-urls: http://easemesh-control-plane-service.easemesh:2380
           labels:
-            alive-probe: http://localhost:9000/health
-            application-port: 9000
+            mesh-alive-probe: http://localhost:9000/health
+            mesh-application-port: 9000
             mesh-service-labels: app=vets-service,version=beta
-            mesh-servicename: vets-service
+            mesh-service-name: vets-service
           ' > /sidecar-volume/sidecar-config.yaml
         image: megaease/easeagent-initializer:latest
         imagePullPolicy: IfNotPresent

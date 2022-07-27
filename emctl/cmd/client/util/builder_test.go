@@ -46,7 +46,7 @@ func writeTestFile(t *testing.T, path string, contents string) {
 
 const (
 	aTenant = `kind: Tenant
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 metadata:
   name: tenant_{id}
 spec:
@@ -54,7 +54,7 @@ spec:
 `
 
 	aService = `kind: Service
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 metadata:
   name: service_{id}
 spec:
@@ -63,7 +63,7 @@ spec:
 `
 
 	aCustomResourceKind = `kind: CustomResourceKind
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 metadata:
   name: custom_resource_kind_{id}
 spec:
@@ -71,7 +71,7 @@ spec:
 `
 
 	aCustomResource = `kind: custom_resource_kind_1
-apiVersion: mesh.megaease.com/v1alpha1
+apiVersion: mesh.megaease.com/v2alpha1
 metadata:
   name: custom_resource_{id}
 spec:
@@ -170,7 +170,7 @@ func TestURLVisitorBuilder(t *testing.T) {
 		Stdin().
 		URL(0, &url.URL{}).
 		HTTPAttemptCount(1).
-		CommandParam(&CommandOptions{Kind: resource.KindCanary, Name: "name"}).
+		CommandParam(&CommandOptions{Kind: resource.KindService, Name: "name"}).
 		Command().
 		Do()
 

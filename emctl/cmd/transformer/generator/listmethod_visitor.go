@@ -128,7 +128,7 @@ func (s *baseListMethodVisitor) visitorAssignResult() error {
 }
 
 func serviceUnmarshalObject(resourceName, subResource string) (result []jen.Code, err error) {
-	stmt3 := jen.Id("services").Op(":=").Op("[]").Qual(v1alpha1Pkg, "Service").Block()
+	stmt3 := jen.Id("services").Op(":=").Op("[]").Qual(v2alpha1Pkg, "Service").Block()
 	result = append(result, stmt3)
 	stmt4 := jen.Id("err").Op(":=").Qual("encoding/json", "Unmarshal").Call(
 		jen.Id("b"), jen.Op("&").Id("services"),
@@ -137,7 +137,7 @@ func serviceUnmarshalObject(resourceName, subResource string) (result []jen.Code
 	stmt5 := jen.If(jen.Id("err").Op("!=").Nil()).Block(
 		jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 			jen.Id("err"),
-			jen.Lit("unmarshal data to v1alpha1.")),
+			jen.Lit("unmarshal data to v2alpha1.")),
 		))
 	result = append(result, stmt5)
 	return
@@ -145,7 +145,7 @@ func serviceUnmarshalObject(resourceName, subResource string) (result []jen.Code
 
 func globalUnmarshalObject(resourceName, subResource string) (codes []jen.Code, err error) {
 	resourceVarName := strings.ToLower(resourceName[0:1]) + resourceName[1:]
-	def := jen.Id(resourceVarName).Op(":=").Op("[]").Qual(v1alpha1Pkg, resourceName).Op("{}")
+	def := jen.Id(resourceVarName).Op(":=").Op("[]").Qual(v2alpha1Pkg, resourceName).Op("{}")
 	codes = append(codes, def)
 
 	unmarshal := jen.Id("err").Op(":=").Qual("encoding/json", "Unmarshal").Call(
@@ -156,7 +156,7 @@ func globalUnmarshalObject(resourceName, subResource string) (codes []jen.Code, 
 	judgeUnmarshal := jen.If(jen.Id("err").Op("!=").Nil()).Block(
 		jen.Return(jen.Nil(), jen.Qual(errorsPkg, "Wrapf").Call(
 			jen.Id("err"),
-			jen.Lit("unmarshal data to v1alpha1.")),
+			jen.Lit("unmarshal data to v2alpha1.")),
 		))
 	codes = append(codes, judgeUnmarshal)
 	return

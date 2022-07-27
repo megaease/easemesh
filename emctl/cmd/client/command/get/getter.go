@@ -42,8 +42,6 @@ func WrapGetterByMeshObject(object meta.MeshObject,
 		return &serviceGetter{object: object.(*resource.Service), baseGetter: base}
 	case resource.KindServiceInstance:
 		return &serviceInstanceGetter{object: object.(*resource.ServiceInstance), baseGetter: base}
-	case resource.KindCanary:
-		return &canaryGetter{object: object.(*resource.Canary), baseGetter: base}
 	case resource.KindLoadBalance:
 		return &loadBalanceGetter{object: object.(*resource.LoadBalance), baseGetter: base}
 	case resource.KindTenant:
@@ -95,7 +93,7 @@ func (s *meshControllerGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if s.object.Name() != "" {
-		meshController, err := s.client.V1Alpha1().MeshController().Get(ctx, s.object.Name())
+		meshController, err := s.client.V2Alpha1().MeshController().Get(ctx, s.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +101,7 @@ func (s *meshControllerGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{meshController}, nil
 	}
 
-	meshControllers, err := s.client.V1Alpha1().MeshController().List(ctx)
+	meshControllers, err := s.client.V2Alpha1().MeshController().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +124,7 @@ func (s *serviceGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if s.object.Name() != "" {
-		service, err := s.client.V1Alpha1().Service().Get(ctx, s.object.Name())
+		service, err := s.client.V2Alpha1().Service().Get(ctx, s.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +132,7 @@ func (s *serviceGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{service}, nil
 	}
 
-	services, err := s.client.V1Alpha1().Service().List(ctx)
+	services, err := s.client.V2Alpha1().Service().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +160,7 @@ func (s *serviceInstanceGetter) Get() ([]meta.MeshObject, error) {
 			return nil, err
 		}
 
-		serviceInstance, err := s.client.V1Alpha1().ServiceInstance().Get(ctx,
+		serviceInstance, err := s.client.V2Alpha1().ServiceInstance().Get(ctx,
 			serviceName, instanceID)
 		if err != nil {
 			return nil, err
@@ -171,7 +169,7 @@ func (s *serviceInstanceGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{serviceInstance}, nil
 	}
 
-	serviceInstances, err := s.client.V1Alpha1().ServiceInstance().List(ctx)
+	serviceInstances, err := s.client.V2Alpha1().ServiceInstance().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -179,37 +177,6 @@ func (s *serviceInstanceGetter) Get() ([]meta.MeshObject, error) {
 	objects := make([]meta.MeshObject, len(serviceInstances))
 	for i := range serviceInstances {
 		objects[i] = serviceInstances[i]
-	}
-
-	return objects, nil
-}
-
-type canaryGetter struct {
-	baseGetter
-	object *resource.Canary
-}
-
-func (c *canaryGetter) Get() ([]meta.MeshObject, error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), c.timeout)
-	defer cancelFunc()
-
-	if c.object.Name() != "" {
-		canary, err := c.client.V1Alpha1().Canary().Get(ctx, c.object.Name())
-		if err != nil {
-			return nil, err
-		}
-
-		return []meta.MeshObject{canary}, nil
-	}
-
-	canaries, err := c.client.V1Alpha1().Canary().List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	objects := make([]meta.MeshObject, len(canaries))
-	for i := range canaries {
-		objects[i] = canaries[i]
 	}
 
 	return objects, nil
@@ -225,7 +192,7 @@ func (o *observabilityTracingsGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if o.object.Name() != "" {
-		tracings, err := o.client.V1Alpha1().ObservabilityTracings().Get(ctx, o.object.Name())
+		tracings, err := o.client.V2Alpha1().ObservabilityTracings().Get(ctx, o.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +200,7 @@ func (o *observabilityTracingsGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{tracings}, nil
 	}
 
-	tracings, err := o.client.V1Alpha1().ObservabilityTracings().List(ctx)
+	tracings, err := o.client.V2Alpha1().ObservabilityTracings().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +223,7 @@ func (o *observabilityMetricsGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if o.object.Name() != "" {
-		metrics, err := o.client.V1Alpha1().ObservabilityMetrics().Get(ctx, o.object.Name())
+		metrics, err := o.client.V2Alpha1().ObservabilityMetrics().Get(ctx, o.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -264,7 +231,7 @@ func (o *observabilityMetricsGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{metrics}, nil
 	}
 
-	metrics, err := o.client.V1Alpha1().ObservabilityMetrics().List(ctx)
+	metrics, err := o.client.V2Alpha1().ObservabilityMetrics().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +254,7 @@ func (o *observabilityOutputServerGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if o.object.Name() != "" {
-		server, err := o.client.V1Alpha1().ObservabilityOutputServer().Get(ctx, o.object.Name())
+		server, err := o.client.V2Alpha1().ObservabilityOutputServer().Get(ctx, o.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -295,7 +262,7 @@ func (o *observabilityOutputServerGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{server}, nil
 	}
 
-	servers, err := o.client.V1Alpha1().ObservabilityOutputServer().List(ctx)
+	servers, err := o.client.V2Alpha1().ObservabilityOutputServer().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +285,7 @@ func (l *loadBalanceGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if l.object.Name() != "" {
-		lb, err := l.client.V1Alpha1().LoadBalance().Get(ctx, l.object.Name())
+		lb, err := l.client.V2Alpha1().LoadBalance().Get(ctx, l.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +293,7 @@ func (l *loadBalanceGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{lb}, nil
 	}
 
-	lbs, err := l.client.V1Alpha1().LoadBalance().List(ctx)
+	lbs, err := l.client.V2Alpha1().LoadBalance().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +316,7 @@ func (t *tenantGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if t.object.Name() != "" {
-		tenant, err := t.client.V1Alpha1().Tenant().Get(ctx, t.object.Name())
+		tenant, err := t.client.V2Alpha1().Tenant().Get(ctx, t.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -357,7 +324,7 @@ func (t *tenantGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{tenant}, nil
 	}
 
-	tenants, err := t.client.V1Alpha1().Tenant().List(ctx)
+	tenants, err := t.client.V2Alpha1().Tenant().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +347,7 @@ func (r *resilienceGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if r.object.Name() != "" {
-		resilience, err := r.client.V1Alpha1().Resilience().Get(ctx, r.object.Name())
+		resilience, err := r.client.V2Alpha1().Resilience().Get(ctx, r.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -388,7 +355,7 @@ func (r *resilienceGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{resilience}, nil
 	}
 
-	resiliences, err := r.client.V1Alpha1().Resilience().List(ctx)
+	resiliences, err := r.client.V2Alpha1().Resilience().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +378,7 @@ func (m *mockGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if m.object.Name() != "" {
-		mock, err := m.client.V1Alpha1().Mock().Get(ctx, m.object.Name())
+		mock, err := m.client.V2Alpha1().Mock().Get(ctx, m.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -419,7 +386,7 @@ func (m *mockGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{mock}, nil
 	}
 
-	mocks, err := m.client.V1Alpha1().Mock().List(ctx)
+	mocks, err := m.client.V2Alpha1().Mock().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +409,7 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if i.object.Name() != "" {
-		ingress, err := i.client.V1Alpha1().Ingress().Get(ctx, i.object.Name())
+		ingress, err := i.client.V2Alpha1().Ingress().Get(ctx, i.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -450,7 +417,7 @@ func (i *ingressGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{ingress}, nil
 	}
 
-	ingresses, err := i.client.V1Alpha1().Ingress().List(ctx)
+	ingresses, err := i.client.V2Alpha1().Ingress().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +440,7 @@ func (g *httpRouteGroupGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if g.object.Name() != "" {
-		httpRouteGroup, err := g.client.V1Alpha1().HTTPRouteGroup().Get(ctx, g.object.Name())
+		httpRouteGroup, err := g.client.V2Alpha1().HTTPRouteGroup().Get(ctx, g.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -481,7 +448,7 @@ func (g *httpRouteGroupGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{httpRouteGroup}, nil
 	}
 
-	httpRouteGroups, err := g.client.V1Alpha1().TrafficTarget().List(ctx)
+	httpRouteGroups, err := g.client.V2Alpha1().TrafficTarget().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -504,7 +471,7 @@ func (tt *trafficTargetGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if tt.object.Name() != "" {
-		trafficTarget, err := tt.client.V1Alpha1().TrafficTarget().Get(ctx, tt.object.Name())
+		trafficTarget, err := tt.client.V2Alpha1().TrafficTarget().Get(ctx, tt.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -512,7 +479,7 @@ func (tt *trafficTargetGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{trafficTarget}, nil
 	}
 
-	trafficTargets, err := tt.client.V1Alpha1().TrafficTarget().List(ctx)
+	trafficTargets, err := tt.client.V2Alpha1().TrafficTarget().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +502,7 @@ func (i *serviceCanaryGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if i.object.Name() != "" {
-		ingress, err := i.client.V1Alpha1().ServiceCanary().Get(ctx, i.object.Name())
+		ingress, err := i.client.V2Alpha1().ServiceCanary().Get(ctx, i.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -543,7 +510,7 @@ func (i *serviceCanaryGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{ingress}, nil
 	}
 
-	serviceCanaries, err := i.client.V1Alpha1().ServiceCanary().List(ctx)
+	serviceCanaries, err := i.client.V2Alpha1().ServiceCanary().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -566,7 +533,7 @@ func (k *customResourceKindGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if k.object.Name() != "" {
-		customResourceKind, err := k.client.V1Alpha1().CustomResourceKind().Get(ctx, k.object.Name())
+		customResourceKind, err := k.client.V2Alpha1().CustomResourceKind().Get(ctx, k.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -574,7 +541,7 @@ func (k *customResourceKindGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{customResourceKind}, nil
 	}
 
-	customResourceKinds, err := k.client.V1Alpha1().CustomResourceKind().List(ctx)
+	customResourceKinds, err := k.client.V2Alpha1().CustomResourceKind().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -597,7 +564,7 @@ func (crg *customResourceGetter) Get() ([]meta.MeshObject, error) {
 	defer cancelFunc()
 
 	if crg.object.Name() != "" {
-		customResource, err := crg.client.V1Alpha1().CustomResource().Get(ctx, crg.object.Kind(), crg.object.Name())
+		customResource, err := crg.client.V2Alpha1().CustomResource().Get(ctx, crg.object.Kind(), crg.object.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -605,7 +572,7 @@ func (crg *customResourceGetter) Get() ([]meta.MeshObject, error) {
 		return []meta.MeshObject{customResource}, nil
 	}
 
-	customResources, err := crg.client.V1Alpha1().CustomResource().List(ctx, crg.object.Kind())
+	customResources, err := crg.client.V2Alpha1().CustomResource().List(ctx, crg.object.Kind())
 	if err != nil {
 		return nil, err
 	}

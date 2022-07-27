@@ -19,21 +19,21 @@ package resource
 import (
 	"testing"
 
-	"github.com/megaease/easemesh-api/v1alpha1"
+	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemeshctl/cmd/client/resource/meta"
 	"gopkg.in/yaml.v2"
 )
 
 func TestObjectCreator(t *testing.T) {
 	kinds := []string{
-		KindCanary, KindCustomResourceKind, KindIngress, KindLoadBalance,
+		KindCustomResourceKind, KindIngress, KindLoadBalance,
 		KindMeshController, KindObservabilityMetrics, KindObservabilityOutputServer, KindObservabilityTracings,
 		KindResilience, KindService, KindServiceInstance, KindTenant, "CustomResource",
 	}
 
 	NewObjectCreator().NewFromResource(meta.MeshResource{
 		VersionKind: meta.VersionKind{
-			Kind:       KindCanary,
+			Kind:       KindService,
 			APIVersion: DefaultAPIVersion,
 		},
 	})
@@ -45,52 +45,49 @@ func TestObjectCreator(t *testing.T) {
 		}
 		switch r := resource.(type) {
 		case *LoadBalance:
-			l := r.ToV1Alpha1()
+			l := r.ToV2Alpha1()
 			ToLoadBalance("new", l).Columns()
-			r.Spec = &v1alpha1.LoadBalance{}
-			l = r.ToV1Alpha1()
+			r.Spec = &v2alpha1.LoadBalance{}
+			l = r.ToV2Alpha1()
 			ToLoadBalance("new", l).Columns()
 		case *MeshController:
-			ToMeshController(r.ToV1Alpha1()).Columns()
+			ToMeshController(r.ToV2Alpha1()).Columns()
 		case *Ingress:
 			r.Spec = &IngressSpec{}
-			ToIngress(r.ToV1Alpha1())
+			ToIngress(r.ToV2Alpha1())
 		case *HTTPRouteGroup:
 			r.Spec = &HTTPRouteGroupSpec{}
-			ToHTTPRouteGroup(r.ToV1Alpha1())
+			ToHTTPRouteGroup(r.ToV2Alpha1())
 		case *TrafficTarget:
 			r.Spec = &TrafficTargetSpec{}
-			ToTrafficTarget(r.ToV1Alpha1())
-		case *Canary:
-			r.Spec = &v1alpha1.Canary{}
-			ToCanary("new", r.ToV1Alpha1())
+			ToTrafficTarget(r.ToV2Alpha1())
 		case *CustomResourceKind:
-			ToCustomResourceKind(r.ToV1Alpha1())
+			ToCustomResourceKind(r.ToV2Alpha1())
 		case *ObservabilityMetrics:
-			ToObservabilityMetrics("new", r.ToV1Alpha1())
+			ToObservabilityMetrics("new", r.ToV2Alpha1())
 		case *ObservabilityOutputServer:
-			ToObservabilityOutputServer("new", r.ToV1Alpha1())
+			ToObservabilityOutputServer("new", r.ToV2Alpha1())
 		case *ObservabilityTracings:
-			ToObservabilityTracings("new", r.ToV1Alpha1())
+			ToObservabilityTracings("new", r.ToV2Alpha1())
 		case *Resilience:
-			r.Spec = &v1alpha1.Resilience{}
-			ToResilience("new", r.ToV1Alpha1())
+			r.Spec = &v2alpha1.Resilience{}
+			ToResilience("new", r.ToV2Alpha1())
 		case *Mock:
-			r.Spec = &v1alpha1.Mock{}
-			ToMock("new", r.ToV1Alpha1())
+			r.Spec = &v2alpha1.Mock{}
+			ToMock("new", r.ToV2Alpha1())
 		case *Service:
-			ToService(r.ToV1Alpha1()).Columns()
+			ToService(r.ToV2Alpha1()).Columns()
 			r.Spec = &ServiceSpec{}
-			s := ToService(r.ToV1Alpha1())
+			s := ToService(r.ToV2Alpha1())
 			s.Spec = nil
 			s.Columns()
 		case *ServiceInstance:
-			r.Spec = &v1alpha1.ServiceInstance{
+			r.Spec = &v2alpha1.ServiceInstance{
 				ServiceName: "aaa",
 				InstanceID:  "bbb",
 			}
-			ToServiceInstance(r.ToV1Alpha1()).Columns()
-			s := ToServiceInstance(r.ToV1Alpha1())
+			ToServiceInstance(r.ToV2Alpha1()).Columns()
+			s := ToServiceInstance(r.ToV2Alpha1())
 			s.Spec = nil
 			s.Columns()
 			r.ParseName()
@@ -98,15 +95,15 @@ func TestObjectCreator(t *testing.T) {
 			r.ParseName()
 		case *Tenant:
 			r.Spec = &TenantSpec{}
-			ToTenant(r.ToV1Alpha1()).Columns()
-			t := ToTenant(r.ToV1Alpha1())
+			ToTenant(r.ToV2Alpha1()).Columns()
+			t := ToTenant(r.ToV2Alpha1())
 			t.Spec = nil
 			t.Columns()
 		case *CustomResource:
 			ToCustomResource(map[string]interface{}{
 				"name": "name",
 				"kind": "kind1",
-			}).ToV1Alpha1()
+			}).ToV2Alpha1()
 		}
 
 	}
