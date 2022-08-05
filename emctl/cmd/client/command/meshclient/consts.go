@@ -18,7 +18,7 @@
 package meshclient
 
 const (
-	apiURL = "/apis/v1"
+	apiURL = "/apis/v2"
 
 	// MeshControllersURL is the mesh controller prefix.
 	MeshControllersURL = apiURL + "/objects"

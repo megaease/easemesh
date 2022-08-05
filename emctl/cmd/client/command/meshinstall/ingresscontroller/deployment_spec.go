@@ -194,7 +194,7 @@ func (v *containerVisitor) VisitorLivenessProbe(c *v1.Container) (*v1.Probe, err
 			HTTPGet: &v1.HTTPGetAction{
 				Host: "localhost",
 				Port: intstr.FromInt(installbase.DefaultMeshAdminPort),
-				Path: "/apis/v1/healthz",
+				Path: "/apis/v2/healthz",
 			},
 		},
 		InitialDelaySeconds: 50,

@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	apiURL = "/apis/v1"
+	apiURL = "/apis/v2"
 	// MeshCustomObjetWatchURL is the mesh custom resource watching path.
 	MeshCustomObjetWatchURL = apiURL + "/mesh/watchcustomresources/%s"
 	// MeshCustomObjectsURL is the mesh custom resource list path.

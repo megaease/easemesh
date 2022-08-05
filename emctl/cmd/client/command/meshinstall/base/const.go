@@ -19,11 +19,11 @@ package installbase
 
 const (
 	// ObjectsURL is url of objects.
-	ObjectsURL = "/apis/v1/objects"
+	ObjectsURL = "/apis/v2/objects"
 	// ObjectURL is url of object.
-	ObjectURL = "/apis/v1/objects/%s"
+	ObjectURL = "/apis/v2/objects/%s"
 	// MemberList is url of member list.
-	MemberList = "/apis/v1/status/members"
+	MemberList = "/apis/v2/status/members"
 )
 
 const (
