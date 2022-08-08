@@ -258,7 +258,7 @@ func (m *containerVisitor) VisitorReadinessProbe(c *v1.Container) (*v1.Probe, er
 	// 		HTTPGet: &v1.HTTPGetAction{
 	// 			Host: "127.0.0.1",
 	// 			Port: intstr.FromInt(m.ctx.Flags.EgAdminPort),
-	// 			Path: "/apis/v1/healthz",
+	// 			Path: "/apis/v2/healthz",
 	// 		},
 	// 	},
 	// 	InitialDelaySeconds: 10,

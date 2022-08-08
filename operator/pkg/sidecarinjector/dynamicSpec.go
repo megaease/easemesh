@@ -53,7 +53,7 @@ func newDynamicSpec(runtime *base.Runtime) *dynamicSpec {
 
 	ds.meshControllerSpec = ds.staticSpec()
 
-	url := fmt.Sprintf("http://%s/apis/v1/objects/%s", ds.runtime.APIAddr, meshControllerName)
+	url := fmt.Sprintf("http://%s/apis/v2/objects/%s", ds.runtime.APIAddr, meshControllerName)
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		ds.runtime.Log.Error(err, "get mesh controller spec failed", "url", url)
