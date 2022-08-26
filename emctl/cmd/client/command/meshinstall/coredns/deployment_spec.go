@@ -94,10 +94,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec.Spec.Template.Spec.ServiceAccountName = "coredns"
 		spec.Spec.Template.Spec.DNSPolicy = "Default"
 
-		var v int64 = 65532 //?
-		spec.Spec.Template.Spec.SecurityContext = &v1.PodSecurityContext{
-			RunAsUser: &v,
-		}
+		spec.Spec.Template.Spec.SecurityContext = &v1.PodSecurityContext{}
 
 		container, _ := installbase.AcceptContainerVisitor("coredns",
 			ctx.CoreDNSFlags.Image,

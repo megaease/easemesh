@@ -646,7 +646,7 @@ func DeleteAdmissionregV1Resources(client kubernetes.Interface, resources, names
 // DeleteCertificateV1Beta1Resources deletes resources within group CertificateV1Beta1.
 func DeleteCertificateV1Beta1Resources(client kubernetes.Interface, resources, namespace, name string) error {
 	// NOTE: RESTClinet can't find csr resource.
-	err := client.CertificatesV1beta1().CertificateSigningRequests().Delete(context.Background(), name, metav1.DeleteOptions{})
+	err := client.CertificatesV1().CertificateSigningRequests().Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
