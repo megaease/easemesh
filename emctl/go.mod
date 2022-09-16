@@ -11,7 +11,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/json-iterator/go v1.1.12
-	github.com/megaease/easemesh-api v1.4.1
+	github.com/megaease/easemesh-api v1.4.3
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
@@ -19,7 +19,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/text v0.3.7
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.22.3
