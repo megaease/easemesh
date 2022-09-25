@@ -197,6 +197,8 @@ spec:
         env:
         - name: JAVA_TOOL_OPTIONS
           value: ' -javaagent:/agent-volume/easeagent.jar -Deaseagent.log.conf=/agent-volume/log4j2.xml '
+        - name: EASEMESH_TAGS
+          value: '{"label.local":"shadow"}'
         image: megaease/spring-petclinic-visits-service:latest
         imagePullPolicy: Always
         lifecycle:
