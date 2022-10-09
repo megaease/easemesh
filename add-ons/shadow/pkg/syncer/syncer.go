@@ -55,7 +55,7 @@ func (s *ShadowServiceSyncer) pull(kind string) ([]object.ShadowService, error) 
 		log.Printf("failed to pull data for kind %s: %v", kind, err)
 		return nil, err
 	}
-	log.Printf("Pull ShadowService Success.")
+	log.Printf("pull ShadowService Success.")
 	return result, nil
 }
 

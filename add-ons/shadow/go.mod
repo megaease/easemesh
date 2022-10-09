@@ -3,7 +3,7 @@ module github.com/megaease/easemesh/mesh-shadow
 go 1.16
 
 require (
-	github.com/megaease/easemesh-api v1.4.1
+	github.com/megaease/easemesh-api v1.4.3
 	github.com/megaease/easemeshctl v1.2.0
 	github.com/pkg/errors v0.9.1
 	k8s.io/api v0.22.3

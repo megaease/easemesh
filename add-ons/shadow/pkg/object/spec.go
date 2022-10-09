@@ -17,6 +17,8 @@
 
 package object
 
+import v1 "k8s.io/api/core/v1"
+
 type (
 	// MySQL configures the MySQL configuration of the shadow service.
 	MySQL struct {
@@ -61,5 +63,9 @@ type (
 		Redis         *Redis         `yaml:"redis" jsonschema:"omitempty"`
 		RabbitMQ      *RabbitMQ      `yaml:"rabbitMq" jsonschema:"omitempty"`
 		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
+
+		Envs       map[string]string `yaml:"envs" jsonschema:"omitempty"`
+		ConfigMaps []v1.ConfigMap    `yaml:"configMaps" jsonschema:"omitempty"`
+		Secrets    []v1.Secret       `yaml:"secrets" jsonschema:"omitempty"`
 	}
 )

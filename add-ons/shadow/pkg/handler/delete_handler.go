@@ -19,9 +19,12 @@ package handler
 
 import (
 	"log"
+	"strings"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
+	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
+
 	appv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -43,14 +46,44 @@ type ShadowServiceDeleter struct {
 func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
 	block := obj.(ShadowServiceBlock)
 	var err error
-	switch block.deployObj.(type) {
+	switch obj := block.deployObj.(type) {
 	case appv1.Deployment:
-		deployment := block.deployObj.(appv1.Deployment)
+		deployment := obj
 		err = utils.DeleteDeployment(deployment.Namespace, deployment.Name, deleter.KubeClient, metav1.DeleteOptions{})
 		if err != nil {
 			log.Printf("Delete ShadowService's Deployment failed. NameSpace: %s, Name: %s. error: %s", deployment.Namespace, deployment.Name, err)
 		} else {
 			log.Printf("Delete ShadowService's Deployment Success. NameSpace: %s, Name: %s.", deployment.Namespace, deployment.Name)
+		}
+
+		shadowConfigMapIDs := deployment.Annotations[shadowConfigMapsAnnotationKey]
+		for _, shadowConfigMapID := range strings.Split(shadowConfigMapIDs, ",") {
+			id := strings.Split(shadowConfigMapID, "/")
+			if len(id) != 2 {
+				log.Printf("invalid shadow configmap id: %s", id)
+				continue
+			}
+
+			ns, name := id[0], id[1]
+
+			configMapResource := [][]string{{"configmaps", name}}
+			installbase.DeleteResources(deleter.KubeClient, configMapResource,
+				ns, installbase.DeleteCoreV1Resource)
+		}
+
+		shadowSecretIDs := deployment.Annotations[shadowSecretsAnnotationKey]
+		for _, shadowSecretID := range strings.Split(shadowSecretIDs, ",") {
+			id := strings.Split(shadowSecretID, "/")
+			if len(id) != 2 {
+				log.Printf("invalid shadow secret id: %s", id)
+				continue
+			}
+
+			ns, name := id[0], id[1]
+
+			secretResource := [][]string{{"secrets", name}}
+			installbase.DeleteResources(deleter.KubeClient, secretResource,
+				ns, installbase.DeleteCoreV1Resource)
 		}
 	}
 }
@@ -71,7 +104,6 @@ func (deleter *ShadowServiceDeleter) FindDeletableObjs(obj interface{}) {
 	for _, namespace := range namespaces {
 		deleter.findDeletableDeployments(namespace.Name, shadowServiceNameMap)
 	}
-
 }
 
 func shadowListOptions() metav1.ListOptions {

@@ -78,7 +78,22 @@ spec:
           userName:
             type: string
           password:
-            type: string`
+            type: string
+      envs:
+        type: object
+        additionalProperties: true
+      configMaps:
+        type: array
+        additionalItems: true
+        items:
+          type: object
+          additionalProperties: true
+      secrets:
+        type: array
+        additionalItems: true
+        items:
+          type: object
+          additionalProperties: true`
 
 func shadowServiceKindSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 	return func(ctx *installbase.StageContext) error {
@@ -95,7 +110,16 @@ func shadowServiceKindSpec(ctx *installbase.StageContext) installbase.InstallFun
 			return err
 		}
 		client := meshclient.New(entrypoints[0])
-		return client.V2Alpha1().CustomResourceKind().Create(ctx.Cmd.Context(), &kind)
+
+		err = client.V2Alpha1().CustomResourceKind().Create(ctx.Cmd.Context(), &kind)
+		if meshclient.IsConflictError(err) {
+			err = client.V2Alpha1().CustomResourceKind().Patch(ctx.Cmd.Context(), &kind)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 }
 

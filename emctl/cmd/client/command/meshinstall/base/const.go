@@ -152,7 +152,7 @@ const (
 	// --- Shadow Service related.
 
 	// IngressControllerShadowServiceName is the name of shadow service of ingress controller.
-	IngressControllerShadowServiceName = "easemesh-ingress-controller-shadowservice"
+	IngressControllerShadowServiceName = "easemesh-addon-shadowservice"
 
 	// --- Kubernetes related.
 

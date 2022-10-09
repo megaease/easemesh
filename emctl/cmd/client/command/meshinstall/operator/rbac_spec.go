@@ -68,13 +68,13 @@ func clusterRoleSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{"apps"},
-				Resources: []string{"deployments"},
+				Resources: []string{"deployments", "statefulsets"},
 				Verbs:     []string{roleVerbGet, roleVerbList, roleVerbWatch, roleVerbCreate, roleVerbUpdate, roleVerbPatch, roleVerbDelete},
 			},
 			{
 				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs:     []string{roleVerbGet, roleVerbList},
+				Resources: []string{"pods", "configmaps", "secrets"},
+				Verbs:     []string{roleVerbGet, roleVerbList, roleVerbWatch, roleVerbCreate, roleVerbUpdate, roleVerbPatch, roleVerbDelete},
 			},
 			{
 				APIGroups: []string{"mesh.megaease.com"},

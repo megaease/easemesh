@@ -19,6 +19,8 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -26,7 +28,7 @@ import (
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	installbase "github.com/megaease/easemeshctl/cmd/client/command/meshinstall/base"
 	"github.com/pkg/errors"
-	appsV1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,22 +36,73 @@ import (
 // ShadowDeploymentFunc type ShadowFunc func(ctx *object.CloneContext) error
 type ShadowDeploymentFunc func() error
 
-func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
+func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Deployment, shadowService *object.ShadowService) ShadowDeploymentFunc {
 	shadowDeployment := cloner.cloneDeploymentSpec(sourceDeployment, shadowService)
+	shadowConfigmaps := cloner.cloneConfigMapSpecs(shadowDeployment, shadowService)
+	shadowSecrets := cloner.cloneSecretSpecs(shadowDeployment, shadowService)
 	return func() error {
+		for _, cm := range shadowConfigmaps {
+			// Clean retrieval data.
+			cm.ResourceVersion, cm.UID = "", ""
+
+			err := installbase.DeployConfigMap(&cm, cloner.KubeClient, cm.Namespace)
+			if err != nil {
+				return errors.Wrapf(err, "clone configmap %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+			}
+
+			log.Printf("deploy configmap %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
+		}
+
+		for _, secret := range shadowSecrets {
+			// Clean retrieval data.
+			secret.ResourceVersion, secret.UID = "", ""
+
+			err := installbase.DeploySecret(&secret, cloner.KubeClient, secret.Namespace)
+			if err != nil {
+				return errors.Wrapf(err, "clone secret %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+			}
+
+			log.Printf("deploy secret %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
+		}
+
 		err := installbase.DeployDeployment(shadowDeployment, cloner.KubeClient, shadowDeployment.Namespace)
 		if err != nil {
-			return errors.Wrapf(err, "Clone deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+			return errors.Wrapf(err, "clone deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 		}
-		return err
+
+		log.Printf("deploy deployment %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
+
+		return nil
 	}
 }
 
-func (cloner *ShadowServiceCloner) cloneDeploymentSpec(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
+func (cloner *ShadowServiceCloner) cloneDeploymentSpec(sourceDeployment *appsv1.Deployment, shadowService *object.ShadowService) *appsv1.Deployment {
 	shadowDeployment := cloner.generateShadowDeployment(sourceDeployment, shadowService)
 	cloner.decorateShadowDeploymentBaseSpec(shadowDeployment, sourceDeployment)
-	cloner.decorateShadowConfiguration(shadowDeployment, sourceDeployment, shadowService)
+	cloner.decorateEnvs(shadowDeployment, sourceDeployment, shadowService)
+	cloner.decorateVolumes(shadowDeployment, shadowService)
+
 	return shadowDeployment
+}
+
+func (cloner *ShadowServiceCloner) cloneConfigMapSpecs(deployment *appsv1.Deployment, shadowService *object.ShadowService) []corev1.ConfigMap {
+	configMaps := []corev1.ConfigMap{}
+	for _, configMap := range shadowService.ConfigMaps {
+		configMap.Name = shadowVolumeName(configMap.Name, deployment.Name)
+		configMaps = append(configMaps, configMap)
+	}
+
+	return configMaps
+}
+
+func (cloner *ShadowServiceCloner) cloneSecretSpecs(deployment *appsv1.Deployment, shadowService *object.ShadowService) []corev1.Secret {
+	secrets := []corev1.Secret{}
+	for _, secret := range shadowService.Secrets {
+		secret.Name = shadowVolumeName(secret.Name, deployment.Name)
+		secrets = append(secrets, secret)
+	}
+
+	return secrets
 }
 
 // findContainer returns the copy of the container,
@@ -62,7 +115,6 @@ func findContainer(containers []corev1.Container, containerName string) (*corev1
 			}
 			return &containers[i], false
 		}
-
 	} else {
 		for _, container := range containers {
 			if container.Name == containerName {
@@ -107,44 +159,57 @@ func injectEnvVars(envVars []corev1.EnvVar, elems ...corev1.EnvVar) []corev1.Env
 }
 
 func generateShadowConfigEnv(envName string, config interface{}) *corev1.EnvVar {
-	if config == nil || reflect.ValueOf(config).IsNil() {
+	if config == nil {
 		return nil
 	}
 
-	configJSON, err := json.Marshal(config)
-	if err != nil {
-		return nil
+	env := &corev1.EnvVar{
+		Name: envName,
+	}
+	switch c := config.(type) {
+	case string:
+		env.Value = c
+	default:
+		value := reflect.ValueOf(c)
+		if value.Kind() == reflect.Ptr && value.IsNil() {
+			return nil
+		}
+
+		configJSON, err := json.Marshal(config)
+		if err != nil {
+			return nil
+		}
+		env.Value = string(configJSON)
 	}
 
-	env := &corev1.EnvVar{}
-	env.Name = envName
-	env.Value = string(configJSON)
 	return env
-
 }
 
-func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-	if sourceDeployment.Labels == nil {
-		sourceDeployment.Labels = map[string]string{}
-	}
-	injectShadowLabels(sourceDeployment.Labels)
-
-	if sourceDeployment.Annotations == nil {
-		sourceDeployment.Annotations = map[string]string{}
-	}
-	injectShadowAnnotation(sourceDeployment.Annotations, shadowService)
-	return &appsV1.Deployment{
+func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *appsv1.Deployment, shadowService *object.ShadowService) *appsv1.Deployment {
+	deployment := &appsv1.Deployment{
 		TypeMeta: sourceDeployment.TypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        shadowName(sourceDeployment.Name),
+			Name:        shadowDeploymentName(sourceDeployment.Name),
 			Namespace:   sourceDeployment.Namespace,
 			Labels:      sourceDeployment.Labels,
 			Annotations: sourceDeployment.Annotations,
 		},
 	}
+
+	if deployment.Labels == nil {
+		deployment.Labels = map[string]string{}
+	}
+	injectShadowLabels(deployment.Labels)
+
+	if deployment.Annotations == nil {
+		deployment.Annotations = map[string]string{}
+	}
+	injectShadowAnnotation(deployment, shadowService)
+
+	return deployment
 }
 
-func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *appsV1.Deployment, sourceDeployment *appsV1.Deployment) *appsV1.Deployment {
+func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *appsv1.Deployment, sourceDeployment *appsv1.Deployment) *appsv1.Deployment {
 	deployment.Spec = sourceDeployment.Spec
 
 	matchLabels := deployment.Spec.Selector.MatchLabels
@@ -177,43 +242,70 @@ func (cloner *ShadowServiceCloner) decorateShadowDeploymentBaseSpec(deployment *
 	return deployment
 }
 
-func (cloner *ShadowServiceCloner) decorateShadowConfiguration(deployment *appsV1.Deployment, sourceDeployment *appsV1.Deployment, shadowService *object.ShadowService) *appsV1.Deployment {
-	configurationMap := shadowConfigurationMap(shadowService)
-	keys := shadowConfigurationKeys()
+type envList []corev1.EnvVar
+
+func (e envList) Len() int           { return len(e) }
+func (e envList) Less(i, j int) bool { return e[i].Name < e[j].Name }
+func (e envList) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
+
+func (cloner *ShadowServiceCloner) decorateEnvs(deployment *appsv1.Deployment, sourceDeployment *appsv1.Deployment, shadowService *object.ShadowService) *appsv1.Deployment {
+	envs := shadowEnvs(shadowService)
+
+	appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
+	appContainer, _ := findContainer(deployment.Spec.Template.Spec.Containers, appContainerName)
+	appContainer.Env = injectEnvVars(appContainer.Env, envs...)
+	deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
+	return deployment
+}
+
+func shadowVolumeName(volumeName, shadowDeploymentName string) string {
+	// shadowDeploymentName contains suffix -shadow already.
+	// There is no need to repeat it in the shadow volume name.
+	return fmt.Sprintf("%s-%s", volumeName, shadowDeploymentName)
+}
+
+func (cloner *ShadowServiceCloner) decorateVolumes(deployment *appsv1.Deployment, shadowService *object.ShadowService) {
+	for i, volume := range deployment.Spec.Template.Spec.Volumes {
+		shadowName := shadowVolumeName(volume.Name, deployment.Name)
+
+		if volume.ConfigMap != nil {
+			deployment.Spec.Template.Spec.Volumes[i].ConfigMap.Name = shadowName
+		}
+
+		if volume.Secret != nil {
+			deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName = shadowName
+		}
+	}
+}
+
+func shadowDeploymentName(name string) string {
+	return name + shadowDeploymentNameSuffix
+}
+
+func shadowEnvs(shadowService *object.ShadowService) []corev1.EnvVar {
+	envs := make(map[string]interface{})
+	envs[databaseShadowConfigEnv] = shadowService.MySQL
+	envs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
+	envs[redisShadowConfigEnv] = shadowService.Redis
+	envs[kafkaShadowConfigEnv] = shadowService.Kafka
+	envs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
+
+	// User defined envs.
+	for k, v := range shadowService.Envs {
+		envs[k] = v
+	}
+
 	newEnvs := make([]corev1.EnvVar, 0)
-	for _, k := range keys {
-		v := configurationMap[k]
+	for k, v := range envs {
 		env := generateShadowConfigEnv(k, v)
 		if env != nil {
 			newEnvs = append(newEnvs, *env)
 		}
 	}
 
-	appContainerName, _ := sourceDeployment.Annotations[shadowAppContainerNameKey]
-	appContainer, _ := findContainer(deployment.Spec.Template.Spec.Containers, appContainerName)
-	appContainer.Env = injectEnvVars(appContainer.Env, newEnvs...)
-	deployment.Spec.Template.Spec.Containers = injectContainers(deployment.Spec.Template.Spec.Containers, *appContainer)
-	return deployment
-}
+	sort.Sort(envList(newEnvs))
 
-func shadowName(name string) string {
-	return name + shadowDeploymentNameSuffix
-}
-
-func shadowConfigurationMap(shadowService *object.ShadowService) map[string]interface{} {
-	shadowConfigs := make(map[string]interface{})
-	shadowConfigs[databaseShadowConfigEnv] = shadowService.MySQL
-	shadowConfigs[elasticsearchShadowConfigEnv] = shadowService.ElasticSearch
-	shadowConfigs[redisShadowConfigEnv] = shadowService.Redis
-	shadowConfigs[kafkaShadowConfigEnv] = shadowService.Kafka
-	shadowConfigs[rabbitmqShadowConfigEnv] = shadowService.RabbitMQ
-	return shadowConfigs
-}
-
-func shadowConfigurationKeys() []string {
-	configKeys := []string{databaseShadowConfigEnv, elasticsearchShadowConfigEnv, redisShadowConfigEnv, kafkaShadowConfigEnv, rabbitmqShadowConfigEnv}
-	sort.Strings(configKeys)
-	return configKeys
+	return newEnvs
 }
 
 func sourceName(name string) string {
@@ -224,14 +316,31 @@ func injectShadowLabels(labels map[string]string) {
 	labels[shadowLabelKey] = "true"
 }
 
-func injectShadowAnnotation(annotations map[string]string, service *object.ShadowService) {
-	annotations[shadowServiceNameAnnotationKey] = service.Name
-	annotations[shadowServiceVersionLabelAnnotationKey] = shadowServiceVersionLabelAnnotationValue
+func injectShadowAnnotation(deployment *appsv1.Deployment,
+	service *object.ShadowService,
+) {
+	deployment.Annotations[shadowServiceNameAnnotationKey] = service.Name
+	deployment.Annotations[shadowServiceVersionLabelAnnotationKey] = shadowServiceVersionLabelAnnotationValue
+
+	shadowConfigMapIDs := []string{}
+	for _, configMap := range service.ConfigMaps {
+		shadowConfigMapID := fmt.Sprintf("%s/%s", configMap.Namespace, shadowVolumeName(configMap.Name, deployment.Name))
+		shadowConfigMapIDs = append(shadowConfigMapIDs, shadowConfigMapID)
+	}
+	deployment.Annotations[shadowConfigMapsAnnotationKey] = strings.Join(shadowConfigMapIDs, ",")
+
+	shadowSecretIDs := []string{}
+	for _, secret := range service.Secrets {
+		shadowSecretID := fmt.Sprintf("%s/%s", secret.Namespace, shadowVolumeName(secret.Name, deployment.Name))
+		shadowSecretIDs = append(shadowSecretIDs, shadowSecretID)
+	}
+	deployment.Annotations[shadowSecretsAnnotationKey] = strings.Join(shadowSecretIDs, ",")
 }
 
 func shadowContainers(containers []corev1.Container) []corev1.Container {
 	newContainers := make([]corev1.Container, 0)
 	for _, container := range containers {
+		// Prune sidecar container in case of repeated insertion from operator.
 		if container.Name != sidecarContainerName {
 			newContainers = append(newContainers, shadowContainer(container))
 		}
@@ -243,6 +352,7 @@ func shadowContainer(container corev1.Container) corev1.Container {
 	mounts := container.VolumeMounts
 	newMounts := make([]corev1.VolumeMount, 0)
 	for _, mount := range mounts {
+		// Prune volumes generated from mesh operator.
 		if mount.Name != agentVolumeName {
 			newMounts = append(newMounts, mount)
 		}
@@ -254,6 +364,7 @@ func shadowContainer(container corev1.Container) corev1.Container {
 func shadowInitContainers(initContainers []corev1.Container) []corev1.Container {
 	newInitContainers := make([]corev1.Container, 0)
 	for _, initContainer := range initContainers {
+		// Prune volumes generated from mesh operator.
 		if initContainer.Name != initContainerName {
 			newInitContainers = append(newInitContainers, initContainer)
 		}
@@ -265,6 +376,7 @@ func shadowVolumes(volumes []corev1.Volume) []corev1.Volume {
 	newVolumes := make([]corev1.Volume, 0)
 
 	for _, volume := range volumes {
+		// Prune volumes generated from mesh operator.
 		if volume.Name == agentVolumeName || volume.Name == sidecarVolumeName {
 			continue
 		}

@@ -1,6 +1,6 @@
 SHELL:=/bin/bash
 
-.PHONY: vet clean test dependency_sync image
+.PHONY: vet clean test dependency_sync image build
 
 MKFILE_PATH := $(abspath $(lastword ${MAKEFILE_LIST}))
 MKFILE_DIR := $(shell dirname ${MKFILE_PATH})
@@ -13,11 +13,12 @@ ifndef BUILDDATE
   BUILDDATE := $(shell date "+%Y-%m-%d_%H:%M:%SZ+8")
 endif
 
-GO_BUILD_FLAGS := -ldflags "-X main.commit=${COMMIT} -X main.buildDate=${BUILDDATE}" -v 
+GO_BUILD_FLAGS := -ldflags "-X main.commit=${COMMIT} -X main.buildDate=${BUILDDATE}" -v
 
 TARGET = ${MKFILE_DIR}/bin/easemesh-shadowservice-controller
 
 build: vet ${TARGET}
+
 ${TARGET}: ${ALL_FILES}
 	@cd ${MKFILE_DIR} && \
 	CGO_ENABLED=0 go build ${GO_BUILD_FLAGS}\
@@ -34,8 +35,9 @@ clean:
 	@rm -f ${TARGET}
 
 image: rootfs/Dockerfile vet ${ALL_FILES}
-	docker build -t megaease/easemesh-shadowservice-controller:1.0-alpine \
-     -f ${MKFILE_DIR}/rootfs/Dockerfile ${MKFILE_DIR} --build-arg COMMITID=${COMMIT} --build-arg BUILDDATE=${BUILDDATE}
+	docker build -t megaease/easemesh-shadowservice-controller:latest \
+     	-f ${MKFILE_DIR}/rootfs/Dockerfile ${MKFILE_DIR} --build-arg COMMITID=${COMMIT} --build-arg BUILDDATE=${BUILDDATE}
+	docker tag megaease/easemesh-shadowservice-controller:latest megaease/easemesh-shadowservice-controller:v1.1.0
 
 test:
 	go test ./... ${TEST_FLAGS}
