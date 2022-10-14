@@ -164,6 +164,8 @@ metadata:
   annotations:
     mesh.megaease.com/service-labels: version=shadow
     mesh.megaease.com/service-name: visits-service
+    mesh.megaease.com/shadow-configmaps: ""
+    mesh.megaease.com/shadow-secrets: ""
     mesh.megaease.com/shadow-service-name: shadow-visits-service
   labels:
     mesh.megaease.com/shadow-service: "true"
@@ -226,7 +228,7 @@ spec:
           items:
           - key: application-sit-yml
             path: application-sit.yml
-          name: visits-service
+          name: configmap-volume-0-visits-service-shadow
         name: configmap-volume-0
 `
 

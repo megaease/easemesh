@@ -35,8 +35,11 @@ clean:
 	@rm -f ${TARGET}
 
 image: rootfs/Dockerfile vet ${ALL_FILES}
-	docker build -t megaease/easemesh-shadowservice-controller:latest \
-     	-f ${MKFILE_DIR}/rootfs/Dockerfile ${MKFILE_DIR} --build-arg COMMITID=${COMMIT} --build-arg BUILDDATE=${BUILDDATE}
+	docker buildx build --platform linux/amd64 \
+	-t megaease/easemesh-shadowservice-controller:latest \
+	-f ${MKFILE_DIR}/rootfs/Dockerfile ${MKFILE_DIR} \
+	--build-arg COMMITID=${COMMIT} \
+	--build-arg BUILDDATE=${BUILDDATE}
 	docker tag megaease/easemesh-shadowservice-controller:latest megaease/easemesh-shadowservice-controller:v1.1.0
 
 test:
