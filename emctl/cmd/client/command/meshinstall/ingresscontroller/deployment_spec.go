@@ -77,7 +77,7 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec := fn(ctx)
 		container, _ := installbase.AcceptContainerVisitor(installbase.IngressControllerDeploymentName,
 			ctx.Flags.ImageRegistryURL+"/"+ctx.Flags.EasegressImage,
-			v1.PullIfNotPresent,
+			v1.PullPolicy(ctx.Flags.ImagePullPolicy),
 			newVisitor(ctx))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)

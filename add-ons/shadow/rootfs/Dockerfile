@@ -1,8 +1,8 @@
-FROM alpine:3.13
+FROM alpine:3.16
 
 WORKDIR /opt/easemesh-shadowservice
 
-ADD easemesh-shadowservice-controller /opt/easemesh-shadowservice/bin/
+ADD bin/easemesh-shadowservice-controller /opt/easemesh-shadowservice/bin/
 COPY rootfs/entrypoint.sh /
 
 RUN apk --no-cache add tini tzdata && \

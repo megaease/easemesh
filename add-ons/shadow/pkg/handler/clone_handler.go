@@ -38,6 +38,13 @@ const (
 
 	shadowServiceNameAnnotationKey = "mesh.megaease.com/shadow-service-name"
 
+	// The value is comma-separated list of configmap names.
+	// E.g: cm01-nginx-shadow,cm02-nginx-shadow
+	shadowConfigMapsAnnotationKey = "mesh.megaease.com/shadow-configmaps"
+	// The value is comma-separated list of secret names.
+	// E.g: cm01-nginx-shadow,cm02-nginx-shadow
+	shadowSecretsAnnotationKey = "mesh.megaease.com/shadow-secrets"
+
 	shadowServiceVersionLabelAnnotationKey   = "mesh.megaease.com/service-labels"
 	shadowServiceVersionLabelAnnotationValue = "version=shadow"
 
@@ -76,7 +83,6 @@ type ShadowServiceCloner struct {
 
 // Clone execute clone operation if there has ShadowService object.
 func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
-
 	var err error
 	block := obj.(ShadowServiceBlock)
 	switch block.deployObj.(type) {
@@ -85,8 +91,8 @@ func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
 		err = cloner.cloneDeployment(&deployment, &block.service)()
 	}
 	if err != nil {
-		log.Printf("Clone shadow service failed. service name: %s error: %s", block.service.ServiceName, err)
+		log.Printf("clone shadow service failed. service name: %s error: %s", block.service.ServiceName, err)
 	} else {
-		log.Printf("Clone shadow service success. service name: %s error: %s", block.service.ServiceName, err)
+		log.Printf("clone shadow service succeed. service name: %s", block.service.ServiceName)
 	}
 }

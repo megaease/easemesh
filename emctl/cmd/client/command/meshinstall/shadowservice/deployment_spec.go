@@ -76,7 +76,7 @@ func deploymentContainerSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 		spec := fn(installFlags)
 		container, _ := installbase.AcceptContainerVisitor("shadowservice-controller",
 			installFlags.ImageRegistryURL+"/"+installFlags.ShadowServiceControllerImage,
-			v1.PullIfNotPresent,
+			v1.PullPolicy(installFlags.ImagePullPolicy),
 			newVisitor(installFlags))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)

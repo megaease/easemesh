@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	appsV1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 func TestShadowServiceCloner_cloneDeploymentSpec(t *testing.T) {
@@ -44,6 +46,10 @@ func TestShadowServiceCloner_cloneDeploymentSpec(t *testing.T) {
 				KubeClient: tt.fields.KubeClient,
 			}
 			got := cloner.cloneDeploymentSpec(tt.args.sourceDeployment, tt.args.shadowService)
+
+			buff, _ := yaml.Marshal(got)
+			fmt.Printf("%s\n\n", buff)
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("cloneDeploymentSpec() = %v, \n want %v", got, tt.want)
 			}
