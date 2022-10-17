@@ -47,7 +47,7 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Depl
 
 			err := installbase.DeployConfigMap(&cm, cloner.KubeClient, cm.Namespace)
 			if err != nil {
-				return errors.Wrapf(err, "clone configmap %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+				return errors.Wrapf(err, "deploy shadow configmap %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 			}
 
 			log.Printf("deploy configmap %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
