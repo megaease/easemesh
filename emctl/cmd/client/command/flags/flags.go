@@ -24,6 +24,7 @@ import (
 	"github.com/megaease/easemeshctl/cmd/common"
 
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -123,6 +124,8 @@ spec:
 	DefaultShadowServiceControllerImage = "megaease/easemesh-shadowservice-controller:latest"
 	// DefaultImageRegistryURL is default registry url
 	DefaultImageRegistryURL = "docker.io"
+	// DefaultImagePullPolicy is default image pull policy.
+	DefaultImagePullPolicy = v1.PullIfNotPresent
 )
 
 type (
@@ -137,6 +140,7 @@ type (
 		*OperationGlobal
 
 		ImageRegistryURL string
+		ImagePullPolicy  string
 
 		CleanWhenFailed bool
 
@@ -272,6 +276,7 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&i.HeartbeatInterval, "heartbeat-interval", DefaultHeartbeatInterval, "Heartbeat interval for mesh service")
 
 	cmd.Flags().StringVar(&i.ImageRegistryURL, "image-registry-url", DefaultImageRegistryURL, "Image registry URL")
+	cmd.Flags().StringVar(&i.ImagePullPolicy, "image-pull-policy", string(DefaultImagePullPolicy), "Image pull policy (support Always, IfNotPresent, Never)")
 	cmd.Flags().StringVar(&i.EasegressImage, "easegress-image", DefaultEasegressImage, "Easegress image name")
 	cmd.Flags().StringVar(&i.EaseMeshOperatorImage, "easemesh-operator-image", DefaultEaseMeshOperatorImage, "Mesh operator image name")
 

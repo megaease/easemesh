@@ -105,7 +105,7 @@ func statefulsetContainerSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 		spec := fn(ctx)
 		container, err := installbase.AcceptContainerVisitor("easegress",
 			ctx.Flags.ImageRegistryURL+"/"+ctx.Flags.EasegressImage,
-			v1.PullIfNotPresent,
+			v1.PullPolicy(ctx.Flags.ImagePullPolicy),
 			newContainerVisistor(ctx))
 		if err != nil {
 			common.ExitWithErrorf("generate mesh controlpanel container spec failed: %s", err)
