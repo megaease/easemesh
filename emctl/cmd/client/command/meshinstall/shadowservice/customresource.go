@@ -30,6 +30,10 @@ metadata:
   name: ShadowService
 spec:
   jsonSchema:
+    required:
+      - name
+      - namespace
+      - serviceName
     type: object
     properties:
       name:
@@ -112,14 +116,19 @@ func shadowServiceKindSpec(ctx *installbase.StageContext) installbase.InstallFun
 		client := meshclient.New(entrypoints[0])
 
 		err = client.V2Alpha1().CustomResourceKind().Create(ctx.Cmd.Context(), &kind)
+		if err == nil {
+			return nil
+		}
+
 		if meshclient.IsConflictError(err) {
 			err = client.V2Alpha1().CustomResourceKind().Patch(ctx.Cmd.Context(), &kind)
 			if err != nil {
 				return err
 			}
+			return nil
 		}
 
-		return nil
+		return err
 	}
 }
 
