@@ -67,7 +67,7 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Depl
 
 		err := installbase.DeployDeployment(shadowDeployment, cloner.KubeClient, shadowDeployment.Namespace)
 		if err != nil {
-			return errors.Wrapf(err, "clone deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+			return errors.Wrapf(err, "deploy shadow deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 		}
 
 		log.Printf("deploy deployment %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
