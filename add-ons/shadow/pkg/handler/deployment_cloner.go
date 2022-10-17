@@ -59,7 +59,7 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Depl
 
 			err := installbase.DeploySecret(&secret, cloner.KubeClient, secret.Namespace)
 			if err != nil {
-				return errors.Wrapf(err, "clone secret %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+				return errors.Wrapf(err, "deploy shadow secret %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
 			}
 
 			log.Printf("deploy secret %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
