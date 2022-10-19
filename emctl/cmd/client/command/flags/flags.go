@@ -159,6 +159,7 @@ type (
 		MeshControlPlanePersistVolumeHostPath string
 		MeshControlPlanePersistVolumeCapacity string
 		MeshControlPlaneCheckHealthzMaxTime   int
+		MeshControlPlaneNodeSelectors         map[string]string
 
 		MeshIngressReplicas    int
 		MeshIngressServicePort int32
@@ -269,6 +270,7 @@ func (i *Install) AttachCmd(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&i.MeshControlPlaneStorageClassName, "mesh-storage-class-name", DefaultMeshControlPlaneStorageClassName, "Mesh storage class name")
 	cmd.Flags().StringVar(&i.MeshControlPlanePersistVolumeCapacity, "mesh-control-plane-pv-capacity", DefaultMeshControlPlanePersistVolumeCapacity,
 		MeshControlPlanePVNotExistedHelpStr)
+	cmd.Flags().StringToStringVar(&i.MeshControlPlaneNodeSelectors, "mesh-control-plane-node-selectors", map[string]string{}, "Mesh control plane node selectors")
 
 	cmd.Flags().Int32Var(&i.MeshIngressServicePort, "mesh-ingress-service-port", DefaultMeshIngressServicePort, "Port of mesh ingress controller")
 

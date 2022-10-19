@@ -65,6 +65,7 @@ func baseStatefulSetSpec(fn statefulsetSpecFunc) statefulsetSpecFunc {
 			MatchLabels: labels,
 		}
 
+		spec.Spec.Template.Spec.NodeSelector = ctx.Flags.MeshControlPlaneNodeSelectors
 		replicas := int32(ctx.Flags.EasegressControlPlaneReplicas)
 		spec.Spec.Replicas = &replicas
 		spec.Spec.Template.Labels = labels
