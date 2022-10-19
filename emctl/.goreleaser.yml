@@ -23,7 +23,7 @@ builds:
       - darwin
     ldflags:
       - -s -w
-      - -X github.com/megaease/easemesh/emctl/pkg/version.RELEASE=v2.0.0
+      - -X github.com/megaease/easemesh/emctl/pkg/version.RELEASE=v2.1.0
       - -X github.com/megaease/easemesh/emctl/pkg/version.COMMIT={{.Commit}}
       - -X github.com/megaease/easemesh/emctl/pkg/version.REPO=megaease/easemesh
 
