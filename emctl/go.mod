@@ -11,7 +11,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/json-iterator/go v1.1.12
-	github.com/megaease/easemesh-api v1.4.3
+	github.com/megaease/easemesh-api v1.4.4
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
