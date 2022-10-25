@@ -8,7 +8,7 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
 
 # Version
-RELEASE?=2.1.0
+RELEASE?=2.1.1
 # Git Related
 GIT_REPO_INFO=$(shell cd ${MKFILE_DIR} && git config --get remote.origin.url)
 ifndef GIT_COMMIT
