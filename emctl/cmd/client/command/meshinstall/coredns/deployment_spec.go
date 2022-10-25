@@ -98,7 +98,7 @@ func deploymentBaseSpec(fn deploymentSpecFunc) deploymentSpecFunc {
 
 		container, _ := installbase.AcceptContainerVisitor("coredns",
 			ctx.CoreDNSFlags.Image,
-			v1.PullPolicy(ctx.Flags.ImagePullPolicy),
+			v1.PullPolicy(ctx.CoreDNSFlags.ImagePullPolicy),
 			newVisitor(ctx))
 
 		spec.Spec.Template.Spec.Containers = append(spec.Spec.Template.Spec.Containers, *container)

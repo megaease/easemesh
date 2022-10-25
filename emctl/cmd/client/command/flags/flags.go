@@ -185,6 +185,7 @@ type (
 	CoreDNS struct {
 		*OperationGlobal
 		Replicas        int
+		ImagePullPolicy string
 		Image           string
 		CleanWhenFailed bool
 	}
@@ -249,6 +250,7 @@ func (c *CoreDNS) AttachCmd(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&c.CleanWhenFailed, "clean-when-failed", true, "Clean resources when installation failed")
 	cmd.Flags().IntVar(&c.Replicas, "replicas", 1, "CoreDNS replicas")
+	cmd.Flags().StringVar(&c.ImagePullPolicy, "image-pull-policy", string(DefaultImagePullPolicy), "Image pull policy.")
 	cmd.Flags().StringVar(&c.Image, "image", "megaease/coredns:latest", "CoreDNS image name")
 }
 
