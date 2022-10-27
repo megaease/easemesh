@@ -7,6 +7,7 @@ import (
 	"github.com/megaease/easemesh/mesh-shadow/pkg/handler/fake"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/syncer"
+	"sigs.k8s.io/yaml"
 )
 
 func Test_createShadowServiceCanary(t *testing.T) {
@@ -26,8 +27,11 @@ func Test_createShadowServiceCanary(t *testing.T) {
 		shadowService3,
 	}
 	newCanary := createShadowServiceCanaries(ss)
-	if !reflect.DeepEqual(newCanary, fakeCanary) {
-		t.Errorf("createShadowServiceCanary() = %v, want %v", newCanary, fakeCanary)
+	realCanary := newCanary[shadowService1.CanaryName()]
+	if !reflect.DeepEqual(fakeCanary, realCanary) {
+		newCanaryBuff, _ := yaml.Marshal(realCanary)
+		fakeCanaryBuff, _ := yaml.Marshal(fakeCanary)
+		t.Errorf("createShadowServiceCanary() = %s, want %s", newCanaryBuff, fakeCanaryBuff)
 	}
 }
 
@@ -41,6 +45,9 @@ func TestShadowServiceCanaryHandler_deleteShadowService(t *testing.T) {
 	newServiceCanary, _ := handler.deleteShadowService(shadowService1)
 	fakeServiceCanary := fake.NewDeletedServiceCanary()
 	if !reflect.DeepEqual(newServiceCanary, fakeServiceCanary) {
-		t.Errorf("handler.deleteShadowService() = %v, want %v", newServiceCanary, fakeServiceCanary)
+		newBuff, _ := yaml.Marshal(newServiceCanary)
+		fakeBuff, _ := yaml.Marshal(fakeServiceCanary)
+
+		t.Errorf("handler.deleteShadowService() = %s, want %s", newBuff, fakeBuff)
 	}
 }
