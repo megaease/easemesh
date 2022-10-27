@@ -189,7 +189,7 @@ func (cloner *ShadowServiceCloner) generateShadowDeployment(sourceDeployment *ap
 	deployment := &appsv1.Deployment{
 		TypeMeta: sourceDeployment.TypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        shadowDeploymentName(sourceDeployment.Name),
+			Name:        shadowDeploymentName(sourceDeployment.Name, shadowService),
 			Namespace:   sourceDeployment.Namespace,
 			Labels:      sourceDeployment.Labels,
 			Annotations: sourceDeployment.Annotations,
@@ -278,10 +278,6 @@ func (cloner *ShadowServiceCloner) decorateVolumes(deployment *appsv1.Deployment
 	}
 }
 
-func shadowDeploymentName(name string) string {
-	return name + shadowDeploymentNameSuffix
-}
-
 func shadowEnvs(shadowService *object.ShadowService) []corev1.EnvVar {
 	envs := make(map[string]interface{})
 	envs[databaseShadowConfigEnv] = shadowService.MySQL
@@ -308,8 +304,12 @@ func shadowEnvs(shadowService *object.ShadowService) []corev1.EnvVar {
 	return newEnvs
 }
 
-func sourceName(name string) string {
-	return strings.TrimSuffix(name, shadowDeploymentNameSuffix)
+func shadowDeploymentName(name string, shadowService *object.ShadowService) string {
+	return fmt.Sprintf("%s-%s", name, shadowService.CanaryName())
+}
+
+func sourceName(name string, ss *object.ShadowService) string {
+	return strings.TrimSuffix(name, fmt.Sprintf("-%s", ss.CanaryName()))
 }
 
 func injectShadowLabels(labels map[string]string) {
@@ -320,7 +320,9 @@ func injectShadowAnnotation(deployment *appsv1.Deployment,
 	service *object.ShadowService,
 ) {
 	deployment.Annotations[shadowServiceNameAnnotationKey] = service.Name
-	deployment.Annotations[shadowServiceVersionLabelAnnotationKey] = shadowServiceVersionLabelAnnotationValue
+	deployment.Annotations[shadowServiceVersionLabelAnnotationKey] = fmt.Sprintf(
+		shadowServiceVersionLabelAnnotationValueFormat,
+		service.CanaryName())
 
 	shadowConfigMapIDs := []string{}
 	for _, configMap := range service.ConfigMaps {

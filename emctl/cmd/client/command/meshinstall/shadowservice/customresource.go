@@ -34,6 +34,7 @@ spec:
       - name
       - namespace
       - serviceName
+      - trafficHeaderValue
     type: object
     properties:
       name:
@@ -41,6 +42,8 @@ spec:
       namespace:
         type: string
       serviceName:
+        type: string
+      trafficHeaderValue:
         type: string
       mysql:
         type: object

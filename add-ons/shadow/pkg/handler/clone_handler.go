@@ -45,19 +45,15 @@ const (
 	// E.g: cm01-nginx-shadow,cm02-nginx-shadow
 	shadowSecretsAnnotationKey = "mesh.megaease.com/shadow-secrets"
 
-	shadowServiceVersionLabelAnnotationKey   = "mesh.megaease.com/service-labels"
-	shadowServiceVersionLabelAnnotationValue = "version=shadow"
+	shadowServiceVersionLabelAnnotationKey         = "mesh.megaease.com/service-labels"
+	shadowServiceVersionLabelAnnotationValueFormat = "canary-name=%s"
 
-	shadowServiceCanaryLabelKey        = "version"
-	shadowServiceCanaryLabelValue      = "shadow"
+	shadowServiceCanaryLabelKey        = "canary-name"
 	shadowServiceCanaryHeader          = "X-Mesh-Shadow"
-	shadowServiceCanaryHeaderValue     = "shadow"
 	shadowServiceCanaryDefaultPriority = 5
 
 	shadowLabelKey            = "mesh.megaease.com/shadow-service"
 	shadowAppContainerNameKey = "mesh.megaease.com/app-container-name"
-
-	shadowDeploymentNameSuffix = "-shadow"
 
 	databaseShadowConfigEnv      = "EASE_RESOURCE_DATABASE"
 	kafkaShadowConfigEnv         = "EASE_RESOURCE_KAFKA"

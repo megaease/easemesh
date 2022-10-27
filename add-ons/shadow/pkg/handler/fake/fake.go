@@ -15,32 +15,32 @@ const fakeCanaryYaml = `
 apiVersion: mesh.megaease.com/v2alpha1
 kind: ServiceCanary
 metadata:
-  name: shadow-service-canary
+  name: beijing-shadow
 spec:
   priority: 5
   selector:
     matchServices: [service1, service2, service3]
-    matchInstanceLabels: {version: shadow}
+    matchInstanceLabels: {canary-name: beijing-shadow}
   trafficRules:
     headers:
       X-Mesh-Shadow:
-        exact: shadow
+        exact: beijing
 `
 
 const fakeDeleteCanaryYaml = `
 apiVersion: mesh.megaease.com/v2alpha1
 kind: ServiceCanary
 metadata:
-  name: shadow-service-canary
+  name: beijing-shadow
 spec:
   priority: 5
   selector:
     matchServices: [service1, service2]
-    matchInstanceLabels: {version: shadow}
+    matchInstanceLabels: {canary-name: beijing-shadow}
   trafficRules:
     headers:
       X-Mesh-Shadow:
-        exact: shadow
+        exact: beijing
 `
 
 const sourceDeploymentYaml = `
@@ -162,14 +162,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    mesh.megaease.com/service-labels: version=shadow
+    mesh.megaease.com/service-labels: canary-name=beijing-shadow
     mesh.megaease.com/service-name: visits-service
     mesh.megaease.com/shadow-configmaps: ""
     mesh.megaease.com/shadow-secrets: ""
     mesh.megaease.com/shadow-service-name: shadow-visits-service
   labels:
     mesh.megaease.com/shadow-service: "true"
-  name: visits-service-shadow
+  name: visits-service-beijing-shadow
   namespace: spring-petclinic
 spec:
   replicas: 1
@@ -228,7 +228,7 @@ spec:
           items:
           - key: application-sit-yml
             path: application-sit.yml
-          name: configmap-volume-0-visits-service-shadow
+          name: configmap-volume-0-visits-service-beijing-shadow
         name: configmap-volume-0
 `
 
@@ -251,9 +251,10 @@ func NewDeletedServiceCanary() *resource.ServiceCanary {
 // NewShadowService create fake ShadowService for test.
 func NewShadowService() object.ShadowService {
 	shadowService := object.ShadowService{
-		Name:        "shadow-visits-service",
-		ServiceName: "visits-service",
-		Namespace:   "spring-petclinic",
+		Name:               "shadow-visits-service",
+		ServiceName:        "visits-service",
+		Namespace:          "spring-petclinic",
+		TrafficHeaderValue: "beijing",
 	}
 	return shadowService
 }

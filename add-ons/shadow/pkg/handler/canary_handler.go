@@ -1,16 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/megaease/easemesh-api/v2alpha1"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/syncer"
 	"github.com/megaease/easemeshctl/cmd/client/resource"
-)
-
-const (
-	shadowServiceCanaryName = "shadow-service-canary"
 )
 
 // ShadowServiceCanaryHandler  added or deleted according to the creation and deletion of ShadowService.
@@ -24,38 +21,74 @@ func (handler *ShadowServiceCanaryHandler) GenerateServiceCanary(objs interface{
 	if len(shadowServices) == 0 {
 		return
 	}
-	serviceCanary := createShadowServiceCanary(shadowServices)
-	err := handler.applyShadowServiceCanary(serviceCanary)
+	serviceCanaries := createShadowServiceCanaries(shadowServices)
+	err := handler.applyShadowServiceCanaries(serviceCanaries)
 	if err != nil {
-		log.Printf("Create ServiceCanary for ShadowService failed. error: %s", err)
+		log.Printf("apply service canaries for shadow service failed: %s", err)
+		return
 	}
+
+	log.Printf("apply service canaries for shadow service succeed")
 }
 
 // DeleteShadowService delete service from ServiceCanary's selector when ShadowService is deleted.
 func (handler *ShadowServiceCanaryHandler) DeleteShadowService(obj interface{}) {
 	shadowService := obj.(ShadowServiceBlock).service
+
 	serviceCanary, err := handler.deleteShadowService(shadowService)
-	err = handler.applyShadowServiceCanary(serviceCanary)
 	if err != nil {
-		log.Printf("Update ServiceCanary for ShadowService failed. ShadowService name: %s error: %s", shadowService.Name, err)
+		log.Printf("delete shadow service failed: %v", err)
+		return
 	}
+
+	if len(serviceCanary.Spec.Selector.MatchServices) == 0 {
+		err = handler.Server.DeleteServiceCanary(serviceCanary.Name())
+		if err != nil {
+			log.Printf("delete service canary %s failed: %v", serviceCanary.Name(), err)
+			return
+		}
+
+		log.Printf("delete service canary %s succeed", serviceCanary.Name())
+		return
+	}
+
+	err = handler.Server.PatchServiceCanary(serviceCanary)
+	if err != nil {
+		log.Printf("update service canary %s failed: %v", serviceCanary.Name(), err)
+		return
+	}
+
+	log.Printf("update service canary %s succeed", serviceCanary.Name())
 }
 
-func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanary(serviceCanary *resource.ServiceCanary) error {
-	canary, err := handler.Server.GetServiceCanary(serviceCanary.Name())
-	if canary != nil {
-		err = handler.Server.PatchServiceCanary(serviceCanary)
-	} else {
-		err = handler.Server.CreateServiceCanary(serviceCanary)
+func (handler *ShadowServiceCanaryHandler) applyShadowServiceCanaries(serviceCanaries map[string]*resource.ServiceCanary) error {
+	for _, canary := range serviceCanaries {
+		oldCanary, err := handler.Server.GetServiceCanary(canary.Name())
+
+		if oldCanary != nil {
+			err = handler.Server.PatchServiceCanary(canary)
+			if err != nil {
+				return fmt.Errorf("update service canary %s failed: %v", canary.Name(), err)
+			}
+		} else {
+			err = handler.Server.CreateServiceCanary(canary)
+			if err != nil {
+				return fmt.Errorf("create service canary %s failed: %v", canary.Name(), err)
+			}
+		}
 	}
-	return err
+
+	return nil
 }
 
 func (handler *ShadowServiceCanaryHandler) deleteShadowService(shadowService object.ShadowService) (*resource.ServiceCanary, error) {
-	canary, err := handler.Server.GetServiceCanary(shadowServiceCanaryName)
+	canaryname := shadowService.CanaryName()
+
+	canary, err := handler.Server.GetServiceCanary(canaryname)
 	if canary == nil {
 		return nil, err
 	}
+
 	matchServices := canary.Spec.Selector.MatchServices
 	var newMatchServices []string
 	for _, serviceName := range matchServices {
@@ -65,35 +98,55 @@ func (handler *ShadowServiceCanaryHandler) deleteShadowService(shadowService obj
 		newMatchServices = append(newMatchServices, serviceName)
 	}
 	canary.Spec.Selector.MatchServices = newMatchServices
+
 	return canary, err
 }
 
-func createShadowServiceCanary(services []object.ShadowService) *resource.ServiceCanary {
-	var matchServices []string
-	for _, service := range services {
-		matchServices = append(matchServices, service.ServiceName)
-	}
+func createShadowServiceCanaries(shadowServices []object.ShadowService) map[string]*resource.ServiceCanary {
+	// The key is shadow header value.
+	canaries := map[string]*resource.ServiceCanary{}
+	for _, ss := range shadowServices {
+		canaryName := ss.CanaryName()
 
-	serviceCanary := &resource.ServiceCanary{
-		MeshResource: resource.NewServiceCanaryResource(
-			resource.DefaultAPIVersion, shadowServiceCanaryName,
-		),
-		Spec: &resource.ServiceCanarySpec{
-			Priority: shadowServiceCanaryDefaultPriority,
-			Selector: &v2alpha1.ServiceSelector{
-				MatchServices: matchServices,
-				MatchInstanceLabels: map[string]string{
-					shadowServiceCanaryLabelKey: shadowServiceCanaryLabelValue,
-				},
-			},
-			TrafficRules: &v2alpha1.TrafficRules{
-				Headers: map[string]*v2alpha1.StringMatch{
-					shadowServiceCanaryHeader: {
-						Exact: shadowServiceCanaryHeaderValue,
+		canary, exists := canaries[canaryName]
+		if !exists {
+
+			canary = &resource.ServiceCanary{
+				MeshResource: resource.NewServiceCanaryResource(resource.DefaultAPIVersion, canaryName),
+
+				Spec: &resource.ServiceCanarySpec{
+					Priority: shadowServiceCanaryDefaultPriority,
+					Selector: &v2alpha1.ServiceSelector{
+						MatchServices: []string{ss.ServiceName},
+						MatchInstanceLabels: map[string]string{
+							shadowServiceCanaryLabelKey: canaryName,
+						},
+					},
+					TrafficRules: &v2alpha1.TrafficRules{
+						Headers: map[string]*v2alpha1.StringMatch{
+							shadowServiceCanaryHeader: {
+								Exact: ss.TrafficHeaderValue,
+							},
+						},
 					},
 				},
-			},
-		},
+			}
+
+			canaries[canaryName] = canary
+		}
+
+		appended := false
+		for _, serviceName := range canary.Spec.Selector.MatchServices {
+			if serviceName == ss.ServiceName {
+				appended = true
+				break
+			}
+		}
+
+		if !appended {
+			canary.Spec.Selector.MatchServices = append(canary.Spec.Selector.MatchServices, ss.ServiceName)
+		}
 	}
-	return serviceCanary
+
+	return canaries
 }

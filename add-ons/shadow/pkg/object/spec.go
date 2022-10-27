@@ -55,17 +55,23 @@ type (
 
 	// ShadowService is used to create a shadow service of an existing service.
 	ShadowService struct {
-		Name          string         `yaml:"name" jsonschema:"required"`
-		ServiceName   string         `yaml:"serviceName" jsonschema:"required"`
-		Namespace     string         `yaml:"namespace" jsonschema:"required"`
-		MySQL         *MySQL         `yaml:"mysql" jsonschema:"omitempty"`
-		Kafka         *Kafka         `yaml:"kafka" jsonschema:"omitempty"`
-		Redis         *Redis         `yaml:"redis" jsonschema:"omitempty"`
-		RabbitMQ      *RabbitMQ      `yaml:"rabbitMq" jsonschema:"omitempty"`
-		ElasticSearch *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
+		Name               string         `yaml:"name" jsonschema:"required"`
+		ServiceName        string         `yaml:"serviceName" jsonschema:"required"`
+		Namespace          string         `yaml:"namespace" jsonschema:"required"`
+		TrafficHeaderValue string         `yaml:"trafficHeaderValue" jsonschema:"required"`
+		MySQL              *MySQL         `yaml:"mysql" jsonschema:"omitempty"`
+		Kafka              *Kafka         `yaml:"kafka" jsonschema:"omitempty"`
+		Redis              *Redis         `yaml:"redis" jsonschema:"omitempty"`
+		RabbitMQ           *RabbitMQ      `yaml:"rabbitMq" jsonschema:"omitempty"`
+		ElasticSearch      *ElasticSearch `yaml:"elasticSearch" jsonschema:"omitempty"`
 
 		Envs       map[string]string `yaml:"envs" jsonschema:"omitempty"`
 		ConfigMaps []v1.ConfigMap    `yaml:"configMaps" jsonschema:"omitempty"`
 		Secrets    []v1.Secret       `yaml:"secrets" jsonschema:"omitempty"`
 	}
 )
+
+// CanaryName returns the name of the canary for the shadow service.
+func (ss *ShadowService) CanaryName() string {
+	return ss.TrafficHeaderValue + "-shadow"
+}
