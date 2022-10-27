@@ -25,14 +25,13 @@ func Test_createShadowServiceCanary(t *testing.T) {
 		shadowService2,
 		shadowService3,
 	}
-	newCanary := createShadowServiceCanary(ss)
+	newCanary := createShadowServiceCanaries(ss)
 	if !reflect.DeepEqual(newCanary, fakeCanary) {
 		t.Errorf("createShadowServiceCanary() = %v, want %v", newCanary, fakeCanary)
 	}
 }
 
 func TestShadowServiceCanaryHandler_deleteShadowService(t *testing.T) {
-
 	handler := ShadowServiceCanaryHandler{
 		Server: syncer.NewMockServer(),
 	}

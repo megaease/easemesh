@@ -51,9 +51,9 @@ func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
 		deployment := obj
 		err = utils.DeleteDeployment(deployment.Namespace, deployment.Name, deleter.KubeClient, metav1.DeleteOptions{})
 		if err != nil {
-			log.Printf("Delete ShadowService's Deployment failed. NameSpace: %s, Name: %s. error: %s", deployment.Namespace, deployment.Name, err)
+			log.Printf("delete deployment %s/%s failed: %s", deployment.Namespace, deployment.Name, err)
 		} else {
-			log.Printf("Delete ShadowService's Deployment Success. NameSpace: %s, Name: %s.", deployment.Namespace, deployment.Name)
+			log.Printf("delete deployment %s/%s succeed", deployment.Namespace, deployment.Name)
 		}
 
 		shadowConfigMapIDs := deployment.Annotations[shadowConfigMapsAnnotationKey]
@@ -156,7 +156,10 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 				continue
 			}
 
-			if !sourceDeploymentExistsFn(sourceName(deployment.Name), shadowService.ServiceName) {
+			deploymentSourceName := sourceName(deployment.Name, &shadowService)
+			sourceExisted := sourceDeploymentExistsFn(deploymentSourceName, shadowService.ServiceName)
+
+			if !sourceExisted {
 				deleter.DeleteChan <- ShadowServiceBlock{
 					service:   shadowService,
 					deployObj: deployment,
