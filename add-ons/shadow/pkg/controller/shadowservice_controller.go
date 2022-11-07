@@ -85,7 +85,7 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	deleteChan := make(chan interface{})
 	shadowServiceSearcher := handler.ShadowServiceDeploySearcher{
 		KubeClient: kubernetesClient,
-		ResultChan: cloneChan,
+		CloneChan:  cloneChan,
 	}
 
 	shadowServiceSearcherDeleter := handler.ShadowServiceDeleter{

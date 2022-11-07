@@ -54,7 +54,7 @@ func CoreDNSCmd() *cobra.Command {
 		fmt.Println(warnMessage)
 
 		var err error
-		kubeClient, err := installbase.NewKubernetesClient()
+		kubeClient, clientConfig, err := installbase.NewKubernetesClient()
 		if err != nil {
 			common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 		}
@@ -67,6 +67,7 @@ func CoreDNSCmd() *cobra.Command {
 		ctx := &installbase.StageContext{
 			Cmd:                 cmd,
 			CoreDNSFlags:        flags,
+			ClientConfig:        clientConfig,
 			Client:              kubeClient,
 			APIExtensionsClient: apiExtensionClient,
 		}
@@ -108,7 +109,7 @@ func storeOldCoreDNS(ctx *installbase.StageContext) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(coreDNSSpecFile, buff, 0644)
+	err = ioutil.WriteFile(coreDNSSpecFile, buff, 0o644)
 	if err != nil {
 		return err
 	}

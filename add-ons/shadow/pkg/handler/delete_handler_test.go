@@ -143,7 +143,7 @@ func TestShadowServiceDeleter_Delete(t *testing.T) {
 			select {
 			case obj := <-deleter.DeleteChan:
 				block := obj.(ShadowServiceBlock)
-				if !reflect.DeepEqual(block.deployObj, *clonedDeployment) {
+				if !reflect.DeepEqual(block.deployment, clonedDeployment) {
 					t.Errorf("FindDeletableObjs() = %v, \n want %v", obj, clonedDeployment)
 				}
 				deleter.Delete(obj)

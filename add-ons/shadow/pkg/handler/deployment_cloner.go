@@ -40,6 +40,10 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Depl
 	shadowDeployment := cloner.cloneDeploymentSpec(sourceDeployment, shadowService)
 	shadowConfigmaps := cloner.cloneConfigMapSpecs(shadowDeployment, shadowService)
 	shadowSecrets := cloner.cloneSecretSpecs(shadowDeployment, shadowService)
+
+	log.Printf("shadowservice %s: try to clone deployment %s to %s...",
+		shadowService.Name, sourceDeployment.Name, shadowDeployment.Name)
+
 	return func() error {
 		for _, cm := range shadowConfigmaps {
 			// Clean retrieval data.
@@ -47,10 +51,12 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Depl
 
 			err := installbase.DeployConfigMap(&cm, cloner.KubeClient, cm.Namespace)
 			if err != nil {
-				return errors.Wrapf(err, "deploy shadow configmap %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+				return errors.Wrapf(err, "shadow service %s: deploy configmap %s for deployment %s failed",
+					shadowService.Name, cm.Name, shadowDeployment.Name)
 			}
 
-			log.Printf("deploy configmap %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
+			log.Printf("shadow serviec %s: deploy configmap %s for deployment %s",
+				shadowService.Name, cm.Name, shadowDeployment.Name)
 		}
 
 		for _, secret := range shadowSecrets {
@@ -59,18 +65,21 @@ func (cloner *ShadowServiceCloner) cloneDeployment(sourceDeployment *appsv1.Depl
 
 			err := installbase.DeploySecret(&secret, cloner.KubeClient, secret.Namespace)
 			if err != nil {
-				return errors.Wrapf(err, "deploy shadow secret %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+				return errors.Wrapf(err, "shadow service %s: deploy secret %s for deployment %s failed",
+					shadowService.Name, secret.Name, shadowDeployment.Name)
 			}
 
-			log.Printf("deploy secret %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
+			log.Printf("shadow service %s: deploy secret %s for deployment %s succeed",
+				shadowService.Name, secret.Name, shadowDeployment.Name)
 		}
 
 		err := installbase.DeployDeployment(shadowDeployment, cloner.KubeClient, shadowDeployment.Namespace)
 		if err != nil {
-			return errors.Wrapf(err, "deploy shadow deployment %s for service %s failed", sourceDeployment.Name, shadowService.ServiceName)
+			return errors.Wrapf(err, "deploy shadow deployment %s for service %s failed", shadowDeployment.Name, shadowService.ServiceName)
 		}
 
-		log.Printf("deploy deployment %s for service %s succeed", sourceDeployment.Name, shadowService.ServiceName)
+		log.Printf("shadow service %s: clone deployment %s to %s succeed",
+			shadowService.ServiceName, sourceDeployment.Name, shadowDeployment.Name)
 
 		return nil
 	}
@@ -259,20 +268,22 @@ func (cloner *ShadowServiceCloner) decorateEnvs(deployment *appsv1.Deployment, s
 }
 
 func shadowVolumeName(volumeName, shadowDeploymentName string) string {
-	// shadowDeploymentName contains suffix -shadow already.
+	// shadowDeploymentName has already contained suffix {canary_name}-shadow.
 	// There is no need to repeat it in the shadow volume name.
 	return fmt.Sprintf("%s-%s", volumeName, shadowDeploymentName)
 }
 
 func (cloner *ShadowServiceCloner) decorateVolumes(deployment *appsv1.Deployment, shadowService *object.ShadowService) {
 	for i, volume := range deployment.Spec.Template.Spec.Volumes {
-		shadowName := shadowVolumeName(volume.Name, deployment.Name)
-
 		if volume.ConfigMap != nil {
+			volumeName := deployment.Spec.Template.Spec.Volumes[i].ConfigMap.Name
+			shadowName := shadowVolumeName(volumeName, deployment.Name)
 			deployment.Spec.Template.Spec.Volumes[i].ConfigMap.Name = shadowName
 		}
 
 		if volume.Secret != nil {
+			volumeName := deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName
+			shadowName := shadowVolumeName(volumeName, deployment.Name)
 			deployment.Spec.Template.Spec.Volumes[i].Secret.SecretName = shadowName
 		}
 	}

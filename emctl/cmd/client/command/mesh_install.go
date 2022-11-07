@@ -91,7 +91,7 @@ func uniqueAddOn(addOns []string) []string {
 
 func install(cmd *cobra.Command, flags *flags.Install) {
 	var err error
-	kubeClient, err := installbase.NewKubernetesClient()
+	kubeClient, clientConfig, err := installbase.NewKubernetesClient()
 	if err != nil {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}
@@ -103,6 +103,7 @@ func install(cmd *cobra.Command, flags *flags.Install) {
 
 	context := &installbase.StageContext{
 		Flags:               flags,
+		ClientConfig:        clientConfig,
 		Client:              kubeClient,
 		Cmd:                 cmd,
 		APIExtensionsClient: apiExtensionClient,

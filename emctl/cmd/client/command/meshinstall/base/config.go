@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
 
@@ -124,6 +125,7 @@ type (
 	StageContext struct {
 		Cmd                 *cobra.Command
 		Client              kubernetes.Interface
+		ClientConfig        clientcmd.ClientConfig
 		Flags               *flags.Install
 		CoreDNSFlags        *flags.CoreDNS
 		APIExtensionsClient apiextensions.Interface
