@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, MegaEase
+ * Copyright (c) 2021, MegaEase
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ type MockServer struct {
 	MeshServer     string
 }
 
-//NewMockServer create MockServer for test.
+// NewMockServer create MockServer for test.
 func NewMockServer() *MockServer {
 	return &MockServer{
 		RequestTimeout: time.Second * 10,
