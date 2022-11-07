@@ -31,6 +31,7 @@ func NewStageContextForApply(client kubernetes.Interface,
 	return &installbase.StageContext{
 		Client:              client,
 		APIExtensionsClient: apiextensionsClient,
+		CoreDNSFlags:        &flags.CoreDNS{},
 		Flags: &flags.Install{
 			// Easegress Control Plane params
 			EasegressImage:                "megaease/easegress",

@@ -18,7 +18,6 @@
 package controller
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -143,7 +142,6 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 			case <-stopChan:
 				return
 			case obj := <-s.cloneChan:
-				log.Printf("reveive %T", obj)
 				s.cloner.Clone(obj)
 			}
 		}
