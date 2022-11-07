@@ -75,19 +75,21 @@ type (
 )
 
 // NewKubernetesClient creates Kubernetes client set.
-func NewKubernetesClient() (kubernetes.Interface, error) {
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{}).
-		ClientConfig()
+func NewKubernetesClient() (kubernetes.Interface, clientcmd.ClientConfig, error) {
+	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{})
+
+	clientConfig, err := config.ClientConfig()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(config)
+	kubeClient, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return kubeClient, nil
+
+	return kubeClient, config, nil
 }
 
 // NewKubernetesAPIExtensionsClient creates Kubernetes API extensions client.

@@ -74,7 +74,8 @@ func mutatingWebhookSpec(ctx *installbase.StageContext) installbase.InstallFunc 
 								APIGroups:   []string{"", "apps"},
 								APIVersions: []string{"v1"},
 								Resources: []string{
-									"pods",
+									// NOTE: In case of reinjected for pods generated from deployments.
+									// "pods",
 									"replicasets",
 									"deployments",
 									"statefulsets",

@@ -50,7 +50,7 @@ func (handler *ShadowServiceCanaryHandler) GenerateServiceCanary(objs interface{
 
 // DeleteShadowService delete service from ServiceCanary's selector when ShadowService is deleted.
 func (handler *ShadowServiceCanaryHandler) DeleteShadowService(obj interface{}) {
-	shadowService := obj.(ShadowServiceBlock).service
+	shadowService := obj.(ShadowServiceBlock).shadowService
 
 	serviceCanary, err := handler.deleteShadowService(shadowService)
 	if err != nil {

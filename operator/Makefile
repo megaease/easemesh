@@ -110,7 +110,7 @@ generate: controller-gen
 
 # Build the docker image
 docker-build: test
-	docker build -t ${IMG} .
+	docker buildx build --platform linux/amd64 --load -t ${IMG} .
 
 # Push the docker image
 docker-push:

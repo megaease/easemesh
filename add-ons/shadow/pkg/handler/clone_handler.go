@@ -20,7 +20,6 @@ package handler
 import (
 	"log"
 
-	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -79,16 +78,16 @@ type ShadowServiceCloner struct {
 
 // Clone execute clone operation if there has ShadowService object.
 func (cloner *ShadowServiceCloner) Clone(obj interface{}) {
-	var err error
 	block := obj.(ShadowServiceBlock)
-	switch block.deployObj.(type) {
-	case appv1.Deployment:
-		deployment := block.deployObj.(appv1.Deployment)
-		err = cloner.cloneDeployment(&deployment, &block.service)()
+	if block.deployment == nil {
+		log.Printf("shadow service %s: deployment is nil, skip clone", block.shadowService.ServiceName)
+		return
 	}
+
+	err := cloner.cloneDeployment(block.deployment, &block.shadowService)()
 	if err != nil {
-		log.Printf("clone shadow service failed. service name: %s error: %s", block.service.ServiceName, err)
+		log.Printf("shodow service %s: clone failed: %s", block.shadowService.ServiceName, err)
 	} else {
-		log.Printf("clone shadow service succeed. service name: %s", block.service.ServiceName)
+		log.Printf("shodow service %s: clone succeed", block.shadowService.ServiceName)
 	}
 }

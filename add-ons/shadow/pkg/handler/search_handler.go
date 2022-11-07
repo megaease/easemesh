@@ -19,6 +19,7 @@ package handler
 
 import (
 	"log"
+	"strings"
 
 	"github.com/megaease/easemesh/mesh-shadow/pkg/object"
 	"github.com/megaease/easemesh/mesh-shadow/pkg/utils"
@@ -35,13 +36,13 @@ type Searcher interface {
 // ShadowServiceDeploySearcher search objects from Kubernetes according to ShadowService.
 type ShadowServiceDeploySearcher struct {
 	KubeClient kubernetes.Interface
-	ResultChan chan interface{}
+	CloneChan  chan interface{}
 }
 
 // ShadowServiceBlock is passed by searcher to cloner to perform clone operation.
 type ShadowServiceBlock struct {
-	service   object.ShadowService
-	deployObj interface{}
+	shadowService object.ShadowService
+	deployment    *appsV1.Deployment
 }
 
 // Search finds objects from kubernetes based on ShadowService and sends them to cloner.
@@ -61,10 +62,9 @@ func (searcher *ShadowServiceDeploySearcher) Search(objs interface{}) {
 	}
 
 	for namespace, shadowServiceList := range shadowServicesNamespacesMap {
-
 		shadowServiceNameMap := make(map[string]object.ShadowService)
 		for _, ss := range shadowServiceList {
-			shadowServiceNameMap[ss.ServiceName] = ss
+			shadowServiceNameMap[ss.Name] = ss
 		}
 		searcher.searchDeployment(namespace, shadowServiceNameMap)
 	}
@@ -75,18 +75,40 @@ func (searcher *ShadowServiceDeploySearcher) searchDeployment(namespace string, 
 	if err != nil {
 		log.Printf("Query Deployment for shadow service error. %s", err)
 	}
-	for _, deployment := range deployments {
-		if isShadowDeployment(deployment.Spec) {
-			continue
-		}
-		annotations := deployment.Annotations
-		if serviceName, ok := annotations[meshServiceAnnotation]; ok {
-			if ss, existed := shadowServiceNameMap[serviceName]; existed {
-				searcher.ResultChan <- ShadowServiceBlock{
-					ss,
-					deployment,
-				}
+	for _, ss := range shadowServiceNameMap {
+		for _, deploy := range deployments {
+			deployment := deploy.DeepCopy()
+
+			if isShadowDeployment(deployment.Spec) {
+				continue
 			}
+
+			if strings.HasSuffix(deployment.Name, "-shadow") {
+				continue
+			}
+
+			// NOTE: Don't shadow canary deployments.
+			if strings.HasPrefix(deployment.Name, "canary-") {
+				continue
+			}
+
+			annotations := deployment.Annotations
+			serviceName, ok := annotations[meshServiceAnnotation]
+			if !ok {
+				continue
+			}
+
+			if ss.ServiceName != serviceName {
+				continue
+			}
+
+			log.Printf("send shadowservice %s deployment %s to clone", ss.Name, deployment.Name)
+			searcher.CloneChan <- ShadowServiceBlock{
+				ss,
+				deployment,
+			}
+
+			break
 		}
 	}
 }

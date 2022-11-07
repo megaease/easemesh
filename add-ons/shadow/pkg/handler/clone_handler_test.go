@@ -32,8 +32,8 @@ func TestShadowServiceCloner_Clone(t *testing.T) {
 	sourceDeployment := shadowfake.NewSourceDeployment()
 
 	serviceCloneBlock := ShadowServiceBlock{
-		service:   shadowService,
-		deployObj: sourceDeployment,
+		shadowService: shadowService,
+		deployment:    sourceDeployment,
 	}
 	cloner.Clone(serviceCloneBlock)
 }

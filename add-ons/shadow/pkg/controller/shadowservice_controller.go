@@ -18,6 +18,7 @@
 package controller
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -85,7 +86,7 @@ func NewShadowServiceController(opts ...Opt) (*ShadowServiceController, error) {
 	deleteChan := make(chan interface{})
 	shadowServiceSearcher := handler.ShadowServiceDeploySearcher{
 		KubeClient: kubernetesClient,
-		ResultChan: cloneChan,
+		CloneChan:  cloneChan,
 	}
 
 	shadowServiceSearcherDeleter := handler.ShadowServiceDeleter{
@@ -142,6 +143,7 @@ func (s *ShadowServiceController) Do(wg *sync.WaitGroup, stopChan <-chan struct{
 			case <-stopChan:
 				return
 			case obj := <-s.cloneChan:
+				log.Printf("reveive %T", obj)
 				s.cloner.Clone(obj)
 			}
 		}

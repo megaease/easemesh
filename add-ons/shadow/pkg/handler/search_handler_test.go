@@ -69,7 +69,7 @@ func TestShadowServiceDeploySearcher_Search(t *testing.T) {
 
 	searcher := &ShadowServiceDeploySearcher{
 		KubeClient: prepareClientForTest(),
-		ResultChan: searchChan,
+		CloneChan:  searchChan,
 	}
 
 	sourceDeployment := shadowfake.NewSourceDeployment()
@@ -79,8 +79,8 @@ func TestShadowServiceDeploySearcher_Search(t *testing.T) {
 		defer wg.Done()
 		for {
 			select {
-			case obj := <-searcher.ResultChan:
-				if !reflect.DeepEqual(obj.(ShadowServiceBlock).deployObj, *sourceDeployment) {
+			case obj := <-searcher.CloneChan:
+				if !reflect.DeepEqual(obj.(ShadowServiceBlock).deployment, sourceDeployment) {
 					t.Errorf("Search Deployment Error, Searcher.Search() = %v, \n want %v", obj, sourceDeployment)
 				}
 				return

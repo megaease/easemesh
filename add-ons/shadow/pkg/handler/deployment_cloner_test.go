@@ -18,7 +18,6 @@
 package handler
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -64,11 +63,12 @@ func TestShadowServiceCloner_cloneDeploymentSpec(t *testing.T) {
 			}
 			got := cloner.cloneDeploymentSpec(tt.args.sourceDeployment, tt.args.shadowService)
 
-			buff, _ := yaml.Marshal(got)
-			fmt.Printf("%s\n\n", buff)
+			gotBuff, _ := yaml.Marshal(got)
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("cloneDeploymentSpec() = %v, \n want %v", got, tt.want)
+			wantBuff, _ := yaml.Marshal(tt.want)
+
+			if !reflect.DeepEqual(gotBuff, wantBuff) {
+				t.Errorf("got:\n%s\n---\nwant:\n%s", gotBuff, wantBuff)
 			}
 		})
 	}

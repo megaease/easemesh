@@ -32,7 +32,7 @@ import (
 )
 
 func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
-	kubeClient, err := installbase.NewKubernetesClient()
+	kubeClient, clientConfig, err := installbase.NewKubernetesClient()
 	if err != nil {
 		common.ExitWithErrorf("%s failed: %v", cmd.Short, err)
 	}
@@ -68,6 +68,7 @@ func reset(cmd *cobra.Command, resetFlags *flags.Reset) {
 
 	stageContext := installbase.StageContext{
 		Cmd:                 cmd,
+		ClientConfig:        clientConfig,
 		Client:              kubeClient,
 		Flags:               &flags.Install{OperationGlobal: resetFlags.OperationGlobal},
 		APIExtensionsClient: apiExtensionClient,

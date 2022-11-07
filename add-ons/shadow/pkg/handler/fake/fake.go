@@ -245,7 +245,7 @@ spec:
           items:
           - key: application-sit-yml
             path: application-sit.yml
-          name: configmap-volume-0-visits-service-beijing-shadow
+          name: visits-service-visits-service-beijing-shadow
         name: configmap-volume-0
 `
 

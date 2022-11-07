@@ -45,46 +45,49 @@ type ShadowServiceDeleter struct {
 // Delete execute delete operation.
 func (deleter *ShadowServiceDeleter) Delete(obj interface{}) {
 	block := obj.(ShadowServiceBlock)
-	var err error
-	switch obj := block.deployObj.(type) {
-	case appv1.Deployment:
-		deployment := obj
-		err = utils.DeleteDeployment(deployment.Namespace, deployment.Name, deleter.KubeClient, metav1.DeleteOptions{})
-		if err != nil {
-			log.Printf("delete deployment %s/%s failed: %s", deployment.Namespace, deployment.Name, err)
-		} else {
-			log.Printf("delete deployment %s/%s succeed", deployment.Namespace, deployment.Name)
+	if block.deployment == nil {
+		log.Printf("shadow service %s: deployment is nil, skip delete",
+			block.shadowService.ServiceName)
+		return
+	}
+
+	deployment := block.deployment
+
+	err := utils.DeleteDeployment(deployment.Namespace, deployment.Name, deleter.KubeClient, metav1.DeleteOptions{})
+	if err != nil {
+		log.Printf("delete deployment %s/%s failed: %s", deployment.Namespace, deployment.Name, err)
+	} else {
+		log.Printf("delete deployment %s/%s succeed", deployment.Namespace, deployment.Name)
+	}
+
+	shadowConfigMapIDs := deployment.Annotations[shadowConfigMapsAnnotationKey]
+	for _, shadowConfigMapID := range strings.Split(shadowConfigMapIDs, ",") {
+		id := strings.Split(shadowConfigMapID, "/")
+		if len(id) != 2 {
+			log.Printf("invalid shadow configmap id: %s", id)
+			continue
 		}
 
-		shadowConfigMapIDs := deployment.Annotations[shadowConfigMapsAnnotationKey]
-		for _, shadowConfigMapID := range strings.Split(shadowConfigMapIDs, ",") {
-			id := strings.Split(shadowConfigMapID, "/")
-			if len(id) != 2 {
-				log.Printf("invalid shadow configmap id: %s", id)
-				continue
-			}
+		ns, name := id[0], id[1]
 
-			ns, name := id[0], id[1]
+		configMapResource := [][]string{{"configmaps", name}}
+		installbase.DeleteResources(deleter.KubeClient, configMapResource,
+			ns, installbase.DeleteCoreV1Resource)
+	}
 
-			configMapResource := [][]string{{"configmaps", name}}
-			installbase.DeleteResources(deleter.KubeClient, configMapResource,
-				ns, installbase.DeleteCoreV1Resource)
+	shadowSecretIDs := deployment.Annotations[shadowSecretsAnnotationKey]
+	for _, shadowSecretID := range strings.Split(shadowSecretIDs, ",") {
+		id := strings.Split(shadowSecretID, "/")
+		if len(id) != 2 {
+			log.Printf("invalid shadow secret id: %s", id)
+			continue
 		}
 
-		shadowSecretIDs := deployment.Annotations[shadowSecretsAnnotationKey]
-		for _, shadowSecretID := range strings.Split(shadowSecretIDs, ",") {
-			id := strings.Split(shadowSecretID, "/")
-			if len(id) != 2 {
-				log.Printf("invalid shadow secret id: %s", id)
-				continue
-			}
+		ns, name := id[0], id[1]
 
-			ns, name := id[0], id[1]
-
-			secretResource := [][]string{{"secrets", name}}
-			installbase.DeleteResources(deleter.KubeClient, secretResource,
-				ns, installbase.DeleteCoreV1Resource)
-		}
+		secretResource := [][]string{{"secrets", name}}
+		installbase.DeleteResources(deleter.KubeClient, secretResource,
+			ns, installbase.DeleteCoreV1Resource)
 	}
 }
 
@@ -144,14 +147,16 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 	}
 
 	for _, deployment := range shadowDeployments {
+		deployment := deployment.DeepCopy()
+
 		if shadowServiceName, ok := deployment.Annotations[shadowServiceNameAnnotationKey]; ok {
 			shadowService, _ := shadowServiceNameMap[namespacedName(namespace, shadowServiceName)]
 			if !shadowServiceExists(namespacedName(namespace, shadowServiceName), shadowServiceNameMap) {
 				deleter.DeleteChan <- ShadowServiceBlock{
-					service: object.ShadowService{
+					shadowService: object.ShadowService{
 						Name: shadowServiceName,
 					},
-					deployObj: deployment,
+					deployment: deployment,
 				}
 				continue
 			}
@@ -161,8 +166,8 @@ func (deleter *ShadowServiceDeleter) findDeletableDeployments(namespace string, 
 
 			if !sourceExisted {
 				deleter.DeleteChan <- ShadowServiceBlock{
-					service:   shadowService,
-					deployObj: deployment,
+					shadowService: shadowService,
+					deployment:    deployment,
 				}
 				continue
 			}
