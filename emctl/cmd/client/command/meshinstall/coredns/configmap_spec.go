@@ -59,14 +59,14 @@ func configMapSpec(ctx *installbase.StageContext) installbase.InstallFunc {
 			// ClusterConfiguration.networking.dnsDomain in ConfigMap kube-system/kubeadm-config
 			kubeConfigMap, err := ctx.Client.CoreV1().ConfigMaps("kube-system").Get(context.Background(), "kubeadm-config", metav1.GetOptions{})
 			if err != nil {
-				return errors.Wrap(err, "failed to get kubeadm-config")
+				return errors.Wrap(err, "failed to get kubeadm-config in order to set DNS domain, you can use --dns-domain to specify the DNS domain")
 			}
 
 			clusterBuff := kubeConfigMap.Data["ClusterConfiguration"]
 			clusterConfig := ClusterConfiguration{}
 			err = yaml.Unmarshal([]byte(clusterBuff), &clusterConfig)
 			if err != nil {
-				return errors.Wrap(err, "failed to unmarshal kubeadm-config")
+				return errors.Wrap(err, "failed to unmarshal kubeadm-config in order to set DNS domain, you can use --dns-domain to specify the DNS domain")
 			}
 
 			dnsDomain = clusterConfig.Networking.DNSDomain
