@@ -325,6 +325,13 @@ func sourceName(name string, ss *object.ShadowService) string {
 
 func injectShadowLabels(labels map[string]string) {
 	labels[shadowLabelKey] = "true"
+
+	for k := range labels {
+		// NOTE: Delete EaseStack dedicated labels to avoid conflict.
+		if strings.HasPrefix(k, "esl-") {
+			delete(labels, k)
+		}
+	}
 }
 
 func injectShadowAnnotation(deployment *appsv1.Deployment,
