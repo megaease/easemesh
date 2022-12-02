@@ -32,6 +32,9 @@
     - [Log](#log)
       - [Turn-on Log](#turn-on-log)
       - [Turn-off Log](#turn-off-log)
+  - [Traffic Control](#traffic-control)
+    - [Traffic Group](#traffic-group)
+    - [Traffic Target](#traffic-target)
 
 
 ## Introduction
@@ -158,7 +161,7 @@ metadata:
   namespace: ${your-ns-name}
   name: ${your_service-name}-canary
   annotations:
-    mesh.megaease.com/service-name: ${your_service-name} 
+    mesh.megaease.com/service-name: ${your_service-name}
 spec:
   replicas: 0
   selector:
@@ -173,7 +176,7 @@ spec:
 ...
 ```
 
-## MeshDeployment 
+## MeshDeployment
 
 > It will deprecated in version 1.4.0. We do not encourage to use it. Prefer to using with native deployment with dedicated annotation, refer to [Native deployment](#native-deployment).
 
@@ -697,4 +700,65 @@ metrics:
     interval: 30000
     topic: application-log
     ....
+```
+
+## Traffic Control
+
+Due to services in different tenants can't communicate with each other in default situation, we provide the traffic control to allow the conditional communication. We implement traffic control by following [Service Mesh Interface](https://github.com/servicemeshinterface/smi-spec).
+
+We use `Traffic Group` to group traffic by differnt characteristics, and `Traffic Target` to reference several `Traffic Group` to control the communication traffic between services.
+
+### Traffic Group
+
+Currently, we implement [TrafficGroup of version v1alpha2](https://github.com/servicemeshinterface/smi-spec/blob/main/apis/traffic-specs/v1alpha2/traffic-specs.md). Please notice we don't support TCPRoute for now.
+
+We could use `emctl apply` to create or update the Traffic Group. Here are examples:
+
+```yaml
+apiVersion: mesh.megaease.com/v2alpha1
+kind: HTTPRouteGroup
+metadata:
+  name: group-all
+matches:
+- name: everything
+  pathRegex: ".*"
+  methods: ["*"]
+```
+
+```yaml
+apiVersion: mesh.megaease.com/v2alpha1
+kind: HTTPRouteGroup
+metadata:
+  name: group-metrics
+matches:
+- name: metrics
+  pathRegex: "/metrics"
+  methods: ["GET"]
+```
+
+### Traffic Target
+
+`Traffic Target` use `N:1` model for traffic control, which means it controls traffic from multiple services(sources) to one service (destination).
+
+We could use `emctl apply` to create or update Traffic Control, whose success depends on the existence of referenced Traffic Groups. Here are examples:
+
+```yaml
+apiVersion: mesh.megaease.com/v2alpha1
+kind: TrafficTarget
+metadata:
+  name: control-001
+spec:
+  destination:
+    kind: Service
+    name: delivery-mesh
+  sources:
+  - kind: Service
+    name: order-mesh
+  - kind: Service
+    name: restaurant-mesh
+  rules:
+  - kind: HTTPRouteGroup
+    name: group-metrics
+    matches:
+    - metrics
 ```
