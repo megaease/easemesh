@@ -1,9 +1,11 @@
+
 # EaseMesh Manual
 
 - [EaseMesh Manual](#easemesh-manual)
   - [Introduction](#introduction)
   - [Installation](#installation)
   - [Client command tool](#client-command-tool)
+  - [Admin](#admin)
   - [Mesh service](#mesh-service)
     - [Tenant Spec](#tenant-spec)
     - [MeshService Spec](#meshservice-spec)
@@ -51,6 +53,42 @@ Please check out [install.md](./install.md) to install the EaseMesh.
 ## Client command tool
 
 The client command tool of the EaseMesh is `emctl`, please checkout [emctl.md](./emctl.md) for usages.
+
+## Admin
+
+We implement the object `MeshController` running upon Easegress. The spec of MeshController could affect the general behavior of  control plane. We could use `emctl apply` to update it, and its complete example and explanation would be:
+
+```yaml
+apiVersion: mesh.megaease.com/v2alpha1
+kind: MeshController
+metadata:
+  name: easemesh-controller
+# HeartbeatInterval is the interval for one service instance reporting its heartbeat.
+heartbeatInterval: 5s
+# RegistryType indicates which protocol the registry center accepts.
+registryType: consul
+# APIPort is the port for worker's API server.
+apiPort: 13009
+# IngressPort is the port for http server in mesh ingress.
+ingressPort: 19527
+# External service registry name.
+externalServiceRegistry:
+# Clean old external registry data.
+cleanExternalRegistry: true
+
+security:
+  mtlsMode: permissive # Support permissive, strict
+  certProvider: selfSign # Only support selfSign
+  rootCertTTL: 48h
+  appCertTTL: 24h # Must be less than or equal to rootCertTTL
+
+# Sidecar injection stuff, the values here are default ones
+imageRegistryURL: docker.io
+imagePullPolicy: IfNotPresent
+sidecarImageName: megaease/easegress:server-sidecar
+agentInitializerImageName: megaease/easeagent-initializer:latest
+log4jConfigName: log4j2.xml
+```
 
 ## Mesh service
 
@@ -177,6 +215,8 @@ spec:
 ```
 
 ## MeshDeployment
+
+> This Feature has been DELETED since v2.0.0.
 
 > It will deprecated in version 1.4.0. We do not encourage to use it. Prefer to using with native deployment with dedicated annotation, refer to [Native deployment](#native-deployment).
 
