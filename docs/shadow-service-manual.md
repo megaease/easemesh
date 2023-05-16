@@ -15,7 +15,7 @@ Microservices allow developers to develop and deploy changes faster, but also br
 
 Shadow service makes this possible, with a simple configuration, it replicates existing services to a shadow copy, and the shadow copy is identical to the origin copy by default. A canary rule is deployed at the same time to ensure that production traffic is sent to the original copies and test traffic is sent to the shadow copies. This guarantees the consistency of the shadow copies and the original copies to the greatest extent, and the developer could send test traffic to the shadow copies without impacting the production system.
 
-Shadow service also enables full-link stress tests. To keep the system being highly available, developers usually run a performance test on the test environment for the whole system, or on the production environment for a single service. However, the test environment is very different from the production environment, and we can not get the desired result for the whole system from a single service. With the help of shadow service, we could replicate the whole production environment to a shadow copy, and run the stress against it to get the most authentic data.
+Shadow service also enables full stack stress tests. To keep the system being highly available, developers usually run a performance test on the test environment for the whole system, or on the production environment for a single service. However, the test environment is very different from the production environment, and we can not get the desired result for the whole system from a single service. With the help of shadow service, we could replicate the whole production environment to a shadow copy, and run the stress against it to get the most authentic data.
 
 ## Installation
 
@@ -35,7 +35,7 @@ emctl install --only-add-on --add-ons=ShadowService
 
 Based on the [Spring Pet Clinic](../README.md#71-start-petclinic-in-easemesh) example, we will create shadow services as show in below diagram.
 
-![shadow-service](./../imgs/shadow-service.png)
+![shadow-service](./imgs/shadow-service-manual-01.png)
 
 1. **Create Shadow Services**
 
@@ -85,7 +85,7 @@ spec:
 
 Install the [ModHeader Extension](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?hl=en) to your Chrome browser, and then set header `X-Mesh-Shadow` with value `shadow`.
 
-![plugin](../imgs/shadow-canary.png)
+![plugin](./imgs/shadow-service-manual-02.png)
 
 Access the Pet Clinic website, make some changes, then turn off the `X-Mesh-Shadow` header and refresh the page, we can find the changes we just made disappear; turn on the `X-Mesh-Shadow` header, we can see the changes again.
 
